@@ -19,7 +19,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "../validators";
 import { useAuth } from "@/shared/providers/auth";
 
-
 const LoginForm = () => {
   const [toggle, setToggle] = useState(false);
 
@@ -36,10 +35,13 @@ const LoginForm = () => {
   });
 
   // 4. Form Submission Handler
-  const onSubmit = (data: LoginFormData) => {
-    console.log("Form Submitted Successfully:", data);
-    // Add your API call/authentication logic here
-    login()
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await login(data.emailOrPhone, data.password);
+      console.log("Logged in successfully via Axios!");
+    } catch (error) {
+      console.error("Login failed", error);
+    }
   };
 
   return (

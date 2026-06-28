@@ -5,6 +5,7 @@ import React, {
   type ReactNode,
   useCallback,
 } from "react";
+import { apiClient } from "../api/apiClient";
 
 // Define the shape of your user object
 interface User {
@@ -28,15 +29,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Simulate a login action (e.g. saving a token to localStorage)
-  const login = useCallback(async (token: string, email: string) => {
+  const login = useCallback(async (emailOrPhone: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await apiClient.post("/login", {
+        emailOrPhone,
+        password,
+      });
+      const { token, user } = response.data;
 
-      const fakeUser: User = { id: "1", email, token };
-      setUser(fakeUser);
+      const loggedInUser: User = {
+        id: user.id || "1",
+        email: user.email || emailOrPhone,
+        token,
+      };
+
+      setUser(loggedInUser);
       localStorage.setItem("authToken", token);
+    } catch(error: any) {
+      console.error("Login failed:", error.message);
+      throw error;
     } finally {
       setIsLoading(false);
     }
