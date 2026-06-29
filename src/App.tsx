@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { Phone, Wifi, Tv, Zap, CheckCircle, ArrowRight, Shield, Zap as FastIcon, Percent } from 'lucide-react';
 
 export default function LandingPage() {
@@ -22,9 +22,9 @@ export default function LandingPage() {
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-          <button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition text-white px-8 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-            Get Started Free <ArrowRight className="w-4 h-4" />
-          </button>
+          <Link to="/auth" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition text-white px-8 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
+            Open Auth Page <ArrowRight className="w-4 h-4" />
+          </Link>
           <button className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 border border-slate-800 transition px-8 py-3.5 rounded-xl font-semibold text-slate-300">
             View Pricing API
           </button>

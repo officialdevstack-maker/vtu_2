@@ -20,9 +20,9 @@ export const router = createBrowserRouter([
 
       {
         element: <ProtectedLayout />,
-        children: [...airtimeRouter, {
+        children: [{
           element:<UserLayout />,
-          children: userRouter
+          children: [...userRouter, ...airtimeRouter]
         }],
       },
     ],

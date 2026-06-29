@@ -1,57 +1,55 @@
-import {
-  Box,
-  Typography,
-  Grid,
-  Stack,
-  Button,
-  IconButton,
-} from "@mui/material";
+import { Box, Button, Grid, IconButton, Stack, Typography } from "@mui/material";
 import LayersRoundedIcon from "@mui/icons-material/LayersRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
+import { useState } from "react";
 
 export default function PromoCards() {
+  const [copied, setCopied] = useState(false);
+  const code = "SWIFT-7829-VTU";
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={2.5}>
       {/* Upgrade to Reseller */}
       <Grid size={{ xs: 12, md: 6 }}>
         <Box
           sx={{
-            background: "linear-gradient(135deg, #0D1B3E 0%, #162966 100%)",
+            bgcolor: "#0a0f1e",
             borderRadius: 3,
             p: 3,
             color: "white",
             position: "relative",
             overflow: "hidden",
-            minHeight: 150,
+            minHeight: 160,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
-          <Box
-            sx={{
-              position: "absolute",
-              right: -10,
-              bottom: -20,
-              opacity: 0.08,
-            }}
-          >
-            <LayersRoundedIcon sx={{ fontSize: 120 }} />
+          <Box sx={{ position: "absolute", right: -30, top: -30, width: 140, height: 140, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.05)" }} />
+          <Box sx={{ position: "absolute", right: 10, top: 10, width: 70, height: 70, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.06)" }} />
+
+          <Box>
+            <Box sx={{ bgcolor: "rgba(85,88,227,0.25)", borderRadius: 1.5, p: 0.75, width: 36, height: 36, display: "grid", placeItems: "center", mb: 1.5 }}>
+              <LayersRoundedIcon sx={{ fontSize: 20, color: "#93c5fd" }} />
+            </Box>
+            <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 0.5 }}>Upgrade to Reseller</Typography>
+            <Typography sx={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
+              Unlock wholesale prices and massive discounts on all services.
+            </Typography>
           </Box>
-          <LayersRoundedIcon sx={{ mb: 1.5, opacity: 0.9 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700 }} gutterBottom>
-            Upgrade to Reseller
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.7, mb: 2 }}>
-            Unlock massive discounts on all services.
-          </Typography>
+
           <Button
             endIcon={<ArrowForwardRoundedIcon />}
-            sx={{
-              color: "#4D6EFF",
-              fontWeight: 700,
-              p: 0,
-              "&:hover": { bgcolor: "transparent", opacity: 0.8 },
-            }}
+            sx={{ alignSelf: "flex-start", mt: 2, color: "#93c5fd", fontWeight: 700, textTransform: "none", p: 0, "&:hover": { bgcolor: "transparent", color: "white" } }}
           >
             Get Started
           </Button>
@@ -62,56 +60,42 @@ export default function PromoCards() {
       <Grid size={{ xs: 12, md: 6 }}>
         <Box
           sx={{
-            background: "linear-gradient(135deg, #1A3FE8 0%, #4D6EFF 100%)",
+            bgcolor: "#1e3a8a",
             borderRadius: 3,
             p: 3,
             color: "white",
             position: "relative",
             overflow: "hidden",
-            // minHeight: 150,
-            height: '100%',
+            minHeight: 160,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
-          <Box
-            sx={{ position: "absolute", right: -20, bottom: -20, opacity: 0.1 }}
-          >
-            <PeopleAltRoundedIcon sx={{ fontSize: 130 }} />
+          <Box sx={{ position: "absolute", right: -30, bottom: -30, width: 140, height: 140, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.07)" }} />
+
+          <Box>
+            <Box sx={{ bgcolor: "rgba(255,255,255,0.12)", borderRadius: 1.5, p: 0.75, width: 36, height: 36, display: "grid", placeItems: "center", mb: 1.5 }}>
+              <PeopleAltRoundedIcon sx={{ fontSize: 20, color: "#bfdbfe" }} />
+            </Box>
+            <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 0.5 }}>Refer &amp; Earn</Typography>
+            <Typography sx={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>
+              Earn commission every time a friend completes their first purchase.
+            </Typography>
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }} gutterBottom>
-            Refer &amp; Earn
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
-            Earn commission on your friends' first purchase.
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Box
-              sx={{
-                bgcolor: "rgba(255,255,255,0.15)",
-                borderRadius: 2,
-                px: 2,
-                
-                py: 0.8,
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 700, letterSpacing: 0.5 }}
-              >
-                SWIFT-7829-VTU
-              </Typography>
+
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 2 }}>
+            <Box sx={{ bgcolor: "rgba(255,255,255,0.1)", borderRadius: 2, px: 2, py: 0.75, border: "1px solid rgba(255,255,255,0.15)" }}>
+              <Typography sx={{ fontWeight: 800, fontSize: 13, letterSpacing: 1 }}>{code}</Typography>
             </Box>
             <IconButton
               size="small"
-              sx={{
-                bgcolor: "rgba(255,255,255,0.15)",
-                borderRadius: 1.5,
-                "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-              }}
+              onClick={handleCopy}
+              sx={{ bgcolor: "rgba(255,255,255,0.1)", borderRadius: 1.5, border: "1px solid rgba(255,255,255,0.15)", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" } }}
             >
-              <ContentCopyRoundedIcon
-                fontSize="small"
-                sx={{ color: "white" }}
-              />
+              {copied
+                ? <CheckRoundedIcon sx={{ fontSize: 16, color: "#86efac" }} />
+                : <ContentCopyRoundedIcon sx={{ fontSize: 16, color: "white" }} />}
             </IconButton>
           </Stack>
         </Box>

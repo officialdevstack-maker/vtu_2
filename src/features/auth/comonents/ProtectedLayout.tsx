@@ -1,13 +1,15 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/shared/providers/auth";
 
  const ProtectedRoute = () => {
-    // Replace this with your actual auth hook or state management logic
-    // const { isAuthenticated } = useAuth(); 
-    const isAuthenticated = true;
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return null;
+    }
 
     if (!isAuthenticated) {
-        // Redirect to a login page, or back to your home/index route
-        return <Navigate to="/" replace />;
+        return <Navigate to="/auth" replace />;
     }
 
     return <Outlet />;
