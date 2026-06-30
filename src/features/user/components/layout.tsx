@@ -16,10 +16,10 @@ const UserLayout = () => {
           flexDirection: "column",
         }}
       >
-        <Box sx={{ position: "sticky", top: 0, zIndex: 100, bgcolor: "#F7F8FA", borderBottom: "1px solid #EEF2F6", px: { xs: 2, md: 4 }, pt: 2.5, pb: 0 }}>
+        <Box sx={{ position: "sticky", top: 0, zIndex: 100, bgcolor: "#F7F8FA", borderBottom: "1px solid #EEF2F6", px: { xs: 2, md: 4, xl: 6 }, pt: 2.5, pb: 0 }}>
           <Topbar />
         </Box>
-        <Box sx={{ px: { xs: 2, md: 4 }, py: 3, flexGrow: 1 }}>
+        <Box sx={{ px: { xs: 2, md: 4, xl: 6 }, py: 3, flexGrow: 1 }}>
           <Outlet />
         </Box>
       </Box>

@@ -50,14 +50,14 @@ export default function DashboardPage() {
 
       {/* Wallet + auto-fund */}
       <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, lg: 8 }}><WalletCard /></Grid>
-        <Grid size={{ xs: 12, lg: 4 }}><AutoFundCard /></Grid>
+        <Grid size={{ xs: 12, md: 8 }}><WalletCard /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><AutoFundCard /></Grid>
       </Grid>
 
       {/* Chart + quick services */}
       <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, lg: 8 }}><TransactionChart /></Grid>
-        <Grid size={{ xs: 12, lg: 4 }}><QuickServices /></Grid>
+        <Grid size={{ xs: 12, md: 8 }}><TransactionChart /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><QuickServices /></Grid>
       </Grid>
 
       <PromoCards />

@@ -14,6 +14,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
+import { apiClient } from "@/shared/api/apiClient";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Page =
@@ -189,6 +190,16 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
   const [confirmPin, setConfirmPin] = useState(["", "", "", ""]);
   const [pinStep, setPinStep] = useState<"create" | "confirm">("create");
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [loginForm, setLoginForm] = useState({ login: "", password: "" });
+  const [registerForm, setRegisterForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    referralCode: "",
+  });
 
   const inputCls =
     "w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition";
@@ -201,6 +212,63 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
     if (val && idx < arr.length - 1) {
       const el = document.getElementById(`otp-${idx + 1}`);
       el?.focus();
+    }
+  };
+
+  const persistAuth = (payload: { token?: string }) => {
+    if (payload.token) {
+      localStorage.setItem("authToken", payload.token);
+    }
+    onLogin();
+  };
+
+  const getApiMessage = (error: unknown) => {
+    if (typeof error === "object" && error && "response" in error) {
+      const response = (error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response;
+      const errors = response?.data?.errors;
+      const firstError = errors ? Object.values(errors).flat()[0] : undefined;
+      return firstError || response?.data?.message || "Request failed. Please check your details.";
+    }
+    return "Unable to reach the backend. Please make sure vtu_backend is running.";
+  };
+
+  const handleLogin = async () => {
+    setAuthError("");
+    setLoading(true);
+    try {
+      const fallbackPassword = document.querySelector<HTMLInputElement>('input[type="password"]')?.value ?? "";
+      const { data } = await apiClient.post("/login", {
+        login: loginForm.login,
+        password: loginForm.password || fallbackPassword,
+      });
+      persistAuth(data.data);
+    } catch (error) {
+      setAuthError(getApiMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    setAuthError("");
+    setLoading(true);
+    try {
+      const fullname = `${registerForm.firstName} ${registerForm.lastName}`.trim();
+      const username = registerForm.email.split("@")[0] || registerForm.phone;
+      const { data } = await apiClient.post("/register", {
+        fullname,
+        username,
+        email: registerForm.email,
+        phone: registerForm.phone,
+        password: registerForm.password,
+        password_confirmation: registerForm.password,
+        referred_by: registerForm.referralCode || undefined,
+      });
+      persistAuth(data.data);
+    } catch (error) {
+      setAuthError(getApiMessage(error));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -284,9 +352,20 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                 <p className="text-gray-500 text-sm">Sign in to your SwiftVTU account</p>
               </div>
               <div className="space-y-4">
+                {authError && (
+                  <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+                    {authError}
+                  </div>
+                )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
-                  <input type="email" placeholder="emeka.obi@gmail.com" className={inputCls} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email, phone, or username</label>
+                  <input
+                    type="text"
+                    placeholder="emeka.obi@gmail.com"
+                    className={inputCls}
+                    value={loginForm.login}
+                    onChange={(event) => setLoginForm((form) => ({ ...form, login: event.target.value }))}
+                  />
                 </div>
                 <div>
                   <div className="flex justify-between mb-1.5">
@@ -300,7 +379,7 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                     </button>
                   </div>
                 </div>
-                <LoadingBtn onClick={() => simulateLoading(() => setStep("otp"))} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                <LoadingBtn onClick={handleLogin} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                   Sign in <ArrowRight className="w-4 h-4" />
                 </LoadingBtn>
                 <div className="relative">
@@ -326,19 +405,42 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                 <p className="text-gray-500 text-sm">Join SwiftVTU and start transacting instantly</p>
               </div>
               <div className="space-y-4">
+                {authError && (
+                  <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+                    {authError}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">First name</label>
-                    <input type="text" placeholder="Chukwuemeka" className={inputCls} />
+                    <input
+                      type="text"
+                      placeholder="Chukwuemeka"
+                      className={inputCls}
+                      value={registerForm.firstName}
+                      onChange={(event) => setRegisterForm((form) => ({ ...form, firstName: event.target.value }))}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Last name</label>
-                    <input type="text" placeholder="Obi" className={inputCls} />
+                    <input
+                      type="text"
+                      placeholder="Obi"
+                      className={inputCls}
+                      value={registerForm.lastName}
+                      onChange={(event) => setRegisterForm((form) => ({ ...form, lastName: event.target.value }))}
+                    />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
-                  <input type="email" placeholder="emeka.obi@gmail.com" className={inputCls} />
+                  <input
+                    type="email"
+                    placeholder="emeka.obi@gmail.com"
+                    className={inputCls}
+                    value={registerForm.email}
+                    onChange={(event) => setRegisterForm((form) => ({ ...form, email: event.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone number</label>
@@ -346,23 +448,41 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                     <div className="flex items-center gap-1 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 shrink-0 whitespace-nowrap">
                       🇳🇬 +234
                     </div>
-                    <input type="tel" placeholder="801 234 5678" className={inputCls} />
+                    <input
+                      type="tel"
+                      placeholder="801 234 5678"
+                      className={inputCls}
+                      value={registerForm.phone}
+                      onChange={(event) => setRegisterForm((form) => ({ ...form, phone: event.target.value }))}
+                    />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
                   <div className="relative">
-                    <input type={showPass ? "text" : "password"} placeholder="At least 8 characters" className={inputCls + " pr-10"} />
-                    <button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <input
+                      type={showPass ? "text" : "password"}
+                      placeholder="At least 8 characters"
+                      className={inputCls + " pr-10"}
+                      value={registerForm.password}
+                      onChange={(event) => setRegisterForm((form) => ({ ...form, password: event.target.value }))}
+                    />
+                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Referral code <span className="text-gray-400 font-normal">(optional)</span></label>
-                  <input type="text" placeholder="e.g. EMEKA2024" className={inputCls} />
+                  <input
+                    type="text"
+                    placeholder="e.g. EMEKA2024"
+                    className={inputCls}
+                    value={registerForm.referralCode}
+                    onChange={(event) => setRegisterForm((form) => ({ ...form, referralCode: event.target.value }))}
+                  />
                 </div>
-                <LoadingBtn onClick={() => simulateLoading(() => setStep("otp"))} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                <LoadingBtn onClick={handleRegister} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                   Create account <ArrowRight className="w-4 h-4" />
                 </LoadingBtn>
               </div>
@@ -528,11 +648,12 @@ const adminNavItems = [
 ];
 
 function Sidebar({
-  page, setPage, open, onClose, isAdmin, setIsAdmin,
+  page, setPage, open, onClose, isAdmin, setIsAdmin, onLogout,
 }: {
   page: Page; setPage: (p: Page) => void;
   open: boolean; onClose: () => void;
   isAdmin: boolean; setIsAdmin: (v: boolean) => void;
+  onLogout: () => void;
 }) {
   const navItems = isAdmin ? adminNavItems : userNavItems;
   const bottomItems = isAdmin ? [] : userBottomItems;
@@ -610,7 +731,7 @@ function Sidebar({
             </div>
             <span className="text-xs text-gray-500 font-medium">{isAdmin ? "Switch to User View" : "Switch to Admin"}</span>
           </div>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer group">
+          <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer group text-left">
             <div className="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
               CO
             </div>
@@ -619,7 +740,7 @@ function Sidebar({
               <p className="text-xs text-gray-500 truncate">emeka.obi@gmail.com</p>
             </div>
             <LogOut className="w-4 h-4 text-gray-300 group-hover:text-gray-400 shrink-0" />
-          </div>
+          </button>
         </div>
       </aside>
     </>
@@ -698,7 +819,7 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-6xl mx-auto space-y-5">
+      <div className="p-6 space-y-5">
         <SkeletonLine className="h-4 w-48" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 h-44 bg-gray-100 rounded-2xl animate-pulse" />
@@ -717,7 +838,7 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
   }
 
   return (
-    <div className="p-6 pb-24 lg:pb-6 max-w-6xl mx-auto space-y-5">
+    <div className="p-6 pb-24 lg:pb-6 space-y-4">
       <div>
         <p className="text-gray-800 text-sm font-medium">
           Good afternoon, <span className="text-indigo-600">Chukwuemeka</span> 👋
@@ -727,11 +848,11 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
 
       {/* Balance + stat cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-indigo-700 rounded-2xl p-6 relative overflow-hidden">
+        <div className="lg:col-span-2 bg-indigo-700 rounded-2xl p-5 relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5" />
           <div className="absolute -bottom-16 right-10 w-56 h-56 rounded-full bg-white/5" />
           <div className="relative z-10">
-            <div className="flex items-start justify-between mb-5">
+            <div className="flex items-start justify-between mb-3">
               <div>
                 <p className="text-indigo-300 text-xs font-medium uppercase tracking-wide mb-1">Total Balance</p>
                 <div className="flex items-center gap-3">
@@ -747,15 +868,15 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" /> Active
               </div>
             </div>
-            <div className="flex items-center gap-2 mb-5">
+            <div className="flex items-center gap-2 mb-3">
               <span className="text-indigo-300 text-sm font-mono">{mockUser.accountNumber}</span>
               <button className="text-indigo-400 hover:text-white transition"><Copy className="w-3.5 h-3.5" /></button>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setPage("wallet")} className="flex-1 bg-white text-indigo-700 font-medium text-sm py-2.5 rounded-xl hover:bg-indigo-50 transition flex items-center justify-center gap-1.5">
+              <button onClick={() => setPage("wallet")} className="flex-1 bg-white text-indigo-700 font-medium text-sm py-2 rounded-xl hover:bg-indigo-50 transition flex items-center justify-center gap-1.5">
                 <Plus className="w-4 h-4" /> Fund Wallet
               </button>
-              <button onClick={() => setPage("services")} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-2.5 rounded-xl transition flex items-center justify-center gap-1.5">
+              <button onClick={() => setPage("services")} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium text-sm py-2 rounded-xl transition flex items-center justify-center gap-1.5">
                 <ArrowUpRight className="w-4 h-4" /> Send Money
               </button>
             </div>
@@ -767,16 +888,16 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
             { label: "Spent", amount: 23350, icon: ArrowUpRight, color: "bg-rose-50", icolor: "text-rose-500", trend: "+12%" },
             { label: "Received", amount: 35000, icon: ArrowDownLeft, color: "bg-emerald-50", icolor: "text-emerald-500", trend: "+8%" },
           ].map(item => (
-            <div key={item.label} className="bg-white border border-gray-100 rounded-xl p-4 flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-2">
+            <div key={item.label} className="bg-white border border-gray-100 rounded-xl p-3 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1">
                 <p className="text-gray-400 text-xs font-medium uppercase tracking-wide">{item.label}</p>
-                <div className={`w-7 h-7 ${item.color} rounded-lg flex items-center justify-center`}>
-                  <item.icon className={`w-3.5 h-3.5 ${item.icolor}`} />
+                <div className={`w-6 h-6 ${item.color} rounded-lg flex items-center justify-center`}>
+                  <item.icon className={`w-3 h-3 ${item.icolor}`} />
                 </div>
               </div>
               <div>
-                <p className="text-gray-900 text-xl font-semibold">{fmt(item.amount)}</p>
-                <div className="flex items-center gap-1 mt-1">
+                <p className="text-gray-900 text-lg font-semibold">{fmt(item.amount)}</p>
+                <div className="flex items-center gap-1 mt-0.5">
                   <TrendingUp className="w-3 h-3 text-emerald-500" />
                   <span className="text-emerald-600 text-xs font-medium">{item.trend}</span>
                   <span className="text-gray-400 text-xs">this month</span>
@@ -788,12 +909,12 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white border border-gray-100 rounded-xl p-5">
-        <h3 className="text-gray-900 font-semibold text-sm mb-4">Quick Actions</h3>
+      <div className="bg-white border border-gray-100 rounded-xl p-4">
+        <h3 className="text-gray-900 font-semibold text-sm mb-3">Quick Actions</h3>
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
           {services.map(s => (
-            <button key={s.id} onClick={() => setPage("services")} className="flex flex-col items-center gap-2 group">
-              <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+            <button key={s.id} onClick={() => setPage("services")} className="flex flex-col items-center gap-1.5 group">
+              <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>
                 <s.icon className="w-5 h-5" />
               </div>
               <span className="text-xs text-gray-600 text-center leading-tight">{s.label}</span>
@@ -804,8 +925,8 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
 
       {/* Chart + recent */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div className="lg:col-span-3 bg-white border border-gray-100 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-5">
+        <div className="lg:col-span-3 bg-white border border-gray-100 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-gray-900 font-semibold text-sm">Spending Overview</h3>
               <p className="text-gray-400 text-xs mt-0.5">Last 7 days</p>
@@ -816,7 +937,7 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
               ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={155}>
+          <ResponsiveContainer width="100%" height={130}>
             <AreaChart data={spendingData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
@@ -833,8 +954,8 @@ function DashboardPage({ setPage }: { setPage: (p: Page) => void }) {
           </ResponsiveContainer>
         </div>
 
-        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-gray-900 font-semibold text-sm">Recent Activity</h3>
             <button onClick={() => setPage("transactions")} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-0.5">
               View all <ChevronRight className="w-3 h-3" />
@@ -885,7 +1006,7 @@ function ServicesPage({ setPage }: { setPage: (p: Page) => void }) {
   ];
 
   return (
-    <div className="p-6 pb-24 lg:pb-6 max-w-4xl mx-auto space-y-5">
+    <div className="p-6 pb-24 lg:pb-6 max-w-6xl mx-auto space-y-5">
       {cats.map(cat => (
         <div key={cat.label} className="bg-white border border-gray-100 rounded-xl p-5">
           <h3 className="text-gray-900 font-semibold text-sm mb-4">{cat.label}</h3>
@@ -1067,7 +1188,7 @@ function TransactionsPage() {
   });
 
   return (
-    <div className="p-6 pb-24 lg:pb-6 max-w-4xl mx-auto space-y-4">
+    <div className="p-6 pb-24 lg:pb-6 space-y-4">
       <div className="bg-white border border-gray-100 rounded-xl p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -1242,7 +1363,7 @@ function WalletPage() {
   };
 
   return (
-    <div className="p-6 pb-24 lg:pb-6 max-w-3xl mx-auto space-y-4">
+    <div className="p-6 pb-24 lg:pb-6 max-w-5xl mx-auto space-y-4">
       <div className="bg-indigo-700 rounded-2xl p-6 relative overflow-hidden">
         <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5" />
         <div className="absolute -bottom-16 right-10 w-56 h-56 rounded-full bg-white/5" />
@@ -1324,7 +1445,7 @@ function BeneficiariesPage() {
   );
 
   return (
-    <div className="p-6 pb-24 lg:pb-6 max-w-3xl mx-auto space-y-4">
+    <div className="p-6 pb-24 lg:pb-6 max-w-5xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -1809,7 +1930,7 @@ function AdminStatCard({ label, value, sub, icon: Icon, color, trend }: {
 
 function AdminDashboardPage() {
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 space-y-6">
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <AdminStatCard label="Total Revenue" value="₦8.4M" sub="June 2026" icon={TrendingUp} color="bg-indigo-50 text-indigo-600" trend="+18%" />
@@ -2197,7 +2318,7 @@ function AdminFraudPage() {
 
 function AdminReportsPage() {
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-4">
+    <div className="p-6 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {[
           { icon: FileText, label: "Transaction Report", desc: "Full transaction export with filters", color: "bg-indigo-50 text-indigo-600" },
@@ -2226,11 +2347,43 @@ function AdminReportsPage() {
 // ─── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [authed, setAuthed] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [page, setPage] = useState<Page>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setCheckingAuth(false);
+      return;
+    }
+
+    apiClient.get("/user")
+      .then(() => setAuthed(true))
+      .catch(() => {
+        localStorage.removeItem("authToken");
+        setAuthed(false);
+      })
+      .finally(() => setCheckingAuth(false));
+  }, []);
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-['Inter',sans-serif]">
+        <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
   if (!authed) return <AuthScreen onLogin={() => setAuthed(true)} />;
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    setAuthed(false);
+    setPage("dashboard");
+    setIsAdmin(false);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden font-['Inter',sans-serif]" style={{ background: "#F9FAFB" }}>
@@ -2241,6 +2394,7 @@ export default function App() {
         onClose={() => setSidebarOpen(false)}
         isAdmin={isAdmin}
         setIsAdmin={v => { setIsAdmin(v); }}
+        onLogout={handleLogout}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
