@@ -7,7 +7,6 @@ import {
   useEffect,
 } from "react";
 import { apiClient } from "../api/apiClient";
-import { redirect, useLocation } from "react-router-dom";
 
 // Define the shape of your user object
 interface User {
@@ -32,14 +31,19 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const location = useLocation();
 
   const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setUser(null);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const response = await apiClient.get("/user");
-      setUser(response.data.data.data.user);
+      setUser(response.data.data.user);
     } catch {
       setUser(null);
     } finally {
@@ -60,8 +64,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         password,
       });
+      localStorage.setItem("authToken", data.token);
+      setUser(data.user);
       await checkAuth();
-      console.log(data)
     } catch (error: any) {
       console.error("Login failed:", error.message);
       throw error;
