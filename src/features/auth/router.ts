@@ -21,5 +21,12 @@ export const authRouter: RouteObject[] = [
             const { default: Component } = await import("./pages/login")
             return { Component }
         }
+    },
+    {
+        path: 'register',
+        lazy: async () => {
+            const { default: Component } = await import("./pages/register")
+            return { Component }
+        }
     }
 ];

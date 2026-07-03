@@ -68,45 +68,45 @@ export default function CableTVPage() {
   if (step === "success") {
     return (
       <SuccessScreen
-        title="Subscription Successful!"
+        title="Subscription successful"
         onReset={() => { setStep("form"); setCardNumber(""); setSelectedPkg(null); setVerified(false); }}
         message={
           <>
-            <p>{providers.find((p) => p.id === provider)?.name} {pkg?.name} Package</p>
-            <p>activated for <span className="font-bold text-gray-900">{verifiedName}</span></p>
+            <p>{providers.find((p) => p.id === provider)?.name} {pkg?.name} package</p>
+            <p>Activated for <span className="font-medium text-slate-900">{verifiedName}</span></p>
           </>
         }
-        resetLabel="Renew Again"
+        resetLabel="Renew again"
       />
     );
   }
 
   return (
     <PurchaseShell>
-      <ServiceHeader icon={Tv} iconBg="bg-purple-50" iconColor="text-purple-600" title="Cable TV" subtitle="DSTV, GOtv & Startimes subscriptions" />
+      <ServiceHeader icon={Tv} iconBg="bg-purple-50" iconColor="text-purple-600" title="Cable TV" subtitle="DStv, GOtv & Startimes subscriptions" />
 
       {step === "form" && (
-        <div className="p-6 space-y-5">
+        <div className="p-5 space-y-4">
           <WalletBalanceBanner balance={mockUser.balance} />
 
           <div>
-            <FieldLabel>Select Provider</FieldLabel>
-            <div className="grid grid-cols-3 gap-3">
+            <FieldLabel>Select provider</FieldLabel>
+            <div className="grid grid-cols-3 gap-2">
               {providers.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => { setProvider(p.id); setSelectedPkg(null); }}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${provider === p.id ? "border-indigo-500 bg-indigo-50 shadow-sm" : "border-gray-200 hover:border-gray-300"}`}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-colors ${provider === p.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}
                 >
-                  <div className={`w-12 h-12 ${p.bg} rounded-2xl flex items-center justify-center text-white font-bold text-lg`}>{p.logo}</div>
-                  <span className="text-xs font-bold text-gray-700">{p.name}</span>
+                  <div className={`w-10 h-10 ${p.bg} rounded-lg flex items-center justify-center text-white font-semibold`}>{p.logo}</div>
+                  <span className="text-xs font-medium text-slate-700">{p.name}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <VerifyField
-            label="Smart Card / IUC Number"
+            label="Smart card / IUC number"
             value={cardNumber}
             onChange={(v) => { setCardNumber(v); setVerified(false); setVerifiedName(""); }}
             onVerify={handleVerify}
@@ -118,17 +118,17 @@ export default function CableTVPage() {
           />
 
           <div>
-            <FieldLabel>Select Package</FieldLabel>
-            <div className="grid grid-cols-2 gap-2.5">
+            <FieldLabel>Select package</FieldLabel>
+            <div className="grid grid-cols-2 gap-2">
               {packages[provider].map((p) => (
                 <button
                   key={p.id}
                   onClick={() => setSelectedPkg(p.id)}
-                  className={`p-3.5 rounded-xl border-2 transition-all text-left ${selectedPkg === p.id ? "border-indigo-500 bg-indigo-50 shadow-sm" : "border-gray-200 hover:border-gray-300"}`}
+                  className={`p-3 rounded-lg border transition-colors text-left ${selectedPkg === p.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}
                 >
-                  <p className="font-bold text-gray-900 text-sm">{p.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{p.channels}</p>
-                  <p className="text-sm font-bold text-indigo-600 mt-1.5">{fmt(p.price)}/mo</p>
+                  <p className="font-medium text-slate-900 text-sm">{p.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{p.channels}</p>
+                  <p className="text-sm font-medium text-indigo-600 mt-1">{fmt(p.price)}/mo</p>
                 </button>
               ))}
             </div>
@@ -139,16 +139,16 @@ export default function CableTVPage() {
       )}
 
       {step === "confirm" && pkg && (
-        <div className="p-6">
+        <div className="p-5">
           <ConfirmSummary
-            title="Confirm Subscription"
+            title="Confirm subscription"
             rows={[
               { label: "Provider", value: providers.find((p) => p.id === provider)?.name ?? "" },
               { label: "Package", value: pkg.name },
-              { label: "Smart Card", value: cardNumber },
+              { label: "Smart card", value: cardNumber },
               { label: "Customer", value: verifiedName },
               { label: "Amount", value: fmt(pkg.price) },
-              { label: "Transaction Fee", value: "Free", emphasize: "success" },
+              { label: "Transaction fee", value: "Free", emphasize: "success" },
             ]}
           />
           <ConfirmActions onBack={() => setStep("form")} onConfirm={handleConfirm} loading={loading} />

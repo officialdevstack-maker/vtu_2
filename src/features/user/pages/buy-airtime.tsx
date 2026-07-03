@@ -4,14 +4,14 @@ import { fmt, mockUser } from "../data/mock";
 import {
   PurchaseShell, ServiceHeader, WalletBalanceBanner, FieldLabel,
   NetworkPicker, QuickAmountGrid, ContinueButton, ConfirmSummary,
-  ConfirmActions, SuccessScreen,
+  ConfirmActions, SuccessScreen, inputCls,
 } from "../components/shared-ui";
 
 const networks = [
   { id: "mtn", name: "MTN", bg: "bg-yellow-400", discount: "3% off" },
   { id: "airtel", name: "Airtel", bg: "bg-red-500", discount: "3% off" },
   { id: "glo", name: "Glo", bg: "bg-green-500", discount: "3% off" },
-  { id: "9mobile", name: "9mobile", bg: "bg-cyan-400", discount: "3% off" },
+  { id: "9mobile", name: "9mobile", bg: "bg-cyan-500", discount: "3% off" },
 ];
 
 const quickAmounts = [50, 100, 200, 500, 1000, 2000, 5000];
@@ -34,16 +34,16 @@ export default function BuyAirtimePage() {
   if (step === "success") {
     return (
       <SuccessScreen
-        title="Airtime Sent!"
+        title="Airtime sent"
         onReset={() => { setStep("form"); setPhone(""); setAmount(""); }}
         message={
           <>
-            <p>{selectedNet.name} airtime of <span className="font-bold text-gray-900">{fmt(Number(amount))}</span></p>
-            <p>delivered to <span className="font-mono font-bold text-gray-900">{phone}</span></p>
+            <p>{selectedNet.name} airtime of <span className="font-medium text-slate-900">{fmt(Number(amount))}</span></p>
+            <p>Delivered to <span className="font-mono font-medium text-slate-900">{phone}</span></p>
           </>
         }
       >
-        <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-400 font-mono mb-6">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-slate-400 font-mono mb-5">
           Ref: VTU{Date.now().toString().slice(-10)}
         </div>
       </SuccessScreen>
@@ -51,27 +51,27 @@ export default function BuyAirtimePage() {
   }
 
   return (
-    <PurchaseShell maxWidth="max-w-lg">
-      <ServiceHeader icon={Phone} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Buy Airtime" subtitle="Top up any Nigerian network" />
+    <PurchaseShell maxWidth="max-w-md">
+      <ServiceHeader icon={Phone} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Buy airtime" subtitle="Top up any Nigerian network" />
 
       {step === "form" && (
-        <div className="p-6 space-y-5">
+        <div className="p-5 space-y-4">
           <WalletBalanceBanner balance={mockUser.balance} />
 
           <div>
-            <FieldLabel>Select Network</FieldLabel>
+            <FieldLabel>Select network</FieldLabel>
             <NetworkPicker networks={networks.map((n) => ({ id: n.id, name: n.name, bg: n.bg, extra: n.discount }))} value={network} onChange={setNetwork} />
           </div>
 
           <div>
-            <FieldLabel>Phone Number</FieldLabel>
+            <FieldLabel>Phone number</FieldLabel>
             <input
               type="tel"
               maxLength={11}
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
               placeholder="08012345678"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition font-mono"
+              className={`${inputCls} font-mono`}
             />
             {phone && phone.length !== 11 && (
               <p className="text-xs text-red-500 mt-1">Enter a valid 11-digit phone number</p>
@@ -79,14 +79,14 @@ export default function BuyAirtimePage() {
           </div>
 
           <div>
-            <FieldLabel>Amount (₦)</FieldLabel>
+            <FieldLabel>Amount</FieldLabel>
             <QuickAmountGrid amounts={quickAmounts} value={amount} onChange={setAmount} columns={4} />
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter custom amount"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+              className={inputCls}
             />
           </div>
 
@@ -95,16 +95,16 @@ export default function BuyAirtimePage() {
       )}
 
       {step === "confirm" && (
-        <div className="p-6">
+        <div className="p-5">
           <ConfirmSummary
             rows={[
               { label: "Network", value: selectedNet.name },
-              { label: "Phone Number", value: phone },
+              { label: "Phone number", value: phone },
               { label: "Amount", value: fmt(Number(amount)) },
               { label: "Discount", value: selectedNet.discount, emphasize: "success" },
-              { label: "Transaction Fee", value: "Free", emphasize: "success" },
+              { label: "Transaction fee", value: "Free", emphasize: "success" },
             ]}
-            totalRow={{ label: "Balance After", value: fmt(mockUser.balance - Number(amount)) }}
+            totalRow={{ label: "Balance after", value: fmt(mockUser.balance - Number(amount)) }}
           />
           <ConfirmActions onBack={() => setStep("form")} onConfirm={handleConfirm} loading={loading} />
         </div>

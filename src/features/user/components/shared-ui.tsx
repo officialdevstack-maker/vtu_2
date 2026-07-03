@@ -1,32 +1,137 @@
-import { CheckCircle, XCircle, Clock, AlertCircle, ChevronRight, RefreshCw, User, type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+  CheckCircle2, XCircle, Clock, AlertCircle, ChevronRight, RefreshCw, User,
+  type LucideIcon,
+} from "lucide-react";
+import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 import { fmt } from "../data/mock";
+import { cn } from "@/shared/utils";
+
+// ─── Design primitives ──────────────────────────────────────────────────────
+// Single source of truth for buttons, cards, inputs, tables, badges and page
+// headers so every page shares the same radius, spacing, border and type
+// scale instead of drifting per-file.
+
+export const inputCls =
+  "w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition";
+
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonSize = "sm" | "md";
+
+const buttonVariants: Record<ButtonVariant, string> = {
+  primary: "bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300",
+  secondary: "bg-white text-slate-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50",
+  ghost: "text-slate-600 hover:bg-gray-100 disabled:opacity-50",
+  danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
+};
+
+const buttonSizes: Record<ButtonSize, string> = {
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-4 py-2.5 text-sm",
+};
+
+export function Button({
+  variant = "primary", size = "md", fullWidth, loading, disabled, className = "", children, ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant; size?: ButtonSize; fullWidth?: boolean; loading?: boolean;
+}) {
+  return (
+    <button
+      disabled={disabled || loading}
+      className={cn(
+        "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:cursor-not-allowed",
+        buttonVariants[variant],
+        buttonSizes[size],
+        fullWidth && "w-full",
+        className,
+      )}
+      {...props}
+    >
+      {loading && <RefreshCw className="w-4 h-4 animate-spin" />}
+      {children}
+    </button>
+  );
+}
+
+export function Card({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn("bg-white border border-gray-200 rounded-xl", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div>
+        <h1 className="text-lg font-semibold text-slate-900">{title}</h1>
+        {description && <p className="text-sm text-slate-500 mt-0.5">{description}</p>}
+      </div>
+      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+    </div>
+  );
+}
+
+type Tone = "neutral" | "success" | "warning" | "danger";
+
+const toneStyles: Record<Tone, string> = {
+  neutral: "bg-indigo-50 text-indigo-600",
+  success: "bg-emerald-50 text-emerald-600",
+  warning: "bg-amber-50 text-amber-600",
+  danger: "bg-red-50 text-red-600",
+};
+
+export function StatCard({ label, value, icon: Icon, tone = "neutral", meta }: {
+  label: string; value: string; icon: LucideIcon; tone?: Tone; meta?: string;
+}) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-2.5">
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${toneStyles[tone]}`}>
+          <Icon className="w-4 h-4" />
+        </div>
+      </div>
+      <p className="text-xl font-semibold text-slate-900 tabular-nums">{value}</p>
+      {meta && <p className="text-xs text-slate-400 mt-1">{meta}</p>}
+    </Card>
+  );
+}
+
+export function EmptyState({ icon: Icon, title, description, action }: {
+  icon: LucideIcon; title: string; description?: string; action?: ReactNode;
+}) {
+  return (
+    <div className="py-14 text-center">
+      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <Icon className="w-5 h-5 text-slate-400" />
+      </div>
+      <p className="text-sm font-medium text-slate-700">{title}</p>
+      {description && <p className="text-xs text-slate-400 mt-1">{description}</p>}
+      {action && <div className="mt-3">{action}</div>}
+    </div>
+  );
+}
+
+const statusMap: Record<string, { dot: string; text: string; label: string }> = {
+  success: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Successful" },
+  successful: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Successful" },
+  pending: { dot: "bg-amber-500", text: "text-amber-700 bg-amber-50", label: "Pending" },
+  processing: { dot: "bg-blue-500", text: "text-blue-700 bg-blue-50", label: "Processing" },
+  failed: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Failed" },
+  verified: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Verified" },
+  active: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Active" },
+  suspended: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Suspended" },
+  inactive: { dot: "bg-slate-400", text: "text-slate-600 bg-slate-100", label: "Inactive" },
+  unverified: { dot: "bg-slate-400", text: "text-slate-600 bg-slate-100", label: "Unverified" },
+};
 
 export function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    success: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    failed: "bg-red-50 text-red-700 border-red-100",
-    pending: "bg-amber-50 text-amber-700 border-amber-100",
-    verified: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    active: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    suspended: "bg-red-50 text-red-700 border-red-100",
-    inactive: "bg-gray-100 text-gray-500 border-gray-200",
-    unverified: "bg-gray-100 text-gray-500 border-gray-200",
-  };
-  const icons: Record<string, React.ReactElement> = {
-    success: <CheckCircle className="w-3 h-3" />,
-    failed: <XCircle className="w-3 h-3" />,
-    pending: <Clock className="w-3 h-3" />,
-    verified: <CheckCircle className="w-3 h-3" />,
-    active: <CheckCircle className="w-3 h-3" />,
-    suspended: <XCircle className="w-3 h-3" />,
-    inactive: <Clock className="w-3 h-3" />,
-    unverified: <AlertCircle className="w-3 h-3" />,
-  };
+  const s = statusMap[status.toLowerCase()] ?? statusMap.pending;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${styles[status] ?? styles.pending}`}>
-      {icons[status] ?? icons.pending}
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${s.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      {s.label}
     </span>
   );
 }
@@ -35,9 +140,9 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`w-11 h-6 rounded-full transition-colors relative shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${value ? "bg-indigo-600" : "bg-gray-200"}`}
+      className={`w-10 h-5.5 rounded-full transition-colors relative shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 ${value ? "bg-indigo-600" : "bg-gray-300"}`}
     >
-      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? "translate-x-6" : "translate-x-1"}`} />
+      <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full shadow-sm transition-transform ${value ? "translate-x-5" : "translate-x-0.5"}`} />
     </button>
   );
 }
@@ -48,14 +153,14 @@ export function SkeletonLine({ className = "" }: { className?: string }) {
 
 export function SkeletonCard() {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 space-y-3">
+    <Card className="p-4 space-y-3">
       <div className="flex items-center justify-between">
         <SkeletonLine className="h-3 w-24" />
-        <SkeletonLine className="h-7 w-7 rounded-lg" />
+        <SkeletonLine className="h-8 w-8 rounded-lg" />
       </div>
-      <SkeletonLine className="h-7 w-32" />
+      <SkeletonLine className="h-6 w-32" />
       <SkeletonLine className="h-3 w-16" />
-    </div>
+    </Card>
   );
 }
 
@@ -63,10 +168,10 @@ export function SkeletonCard() {
 // Shared building blocks for the "select → confirm → success" pattern used by
 // buy-airtime, buy-data, cable-tv, and electricity.
 
-export function PurchaseShell({ children, maxWidth = "max-w-2xl" }: { children: ReactNode; maxWidth?: string }) {
+export function PurchaseShell({ children, maxWidth = "max-w-xl" }: { children: ReactNode; maxWidth?: string }) {
   return (
-    <div className={`p-4 lg:p-6 ${maxWidth} mx-auto`}>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">{children}</div>
+    <div className={`${maxWidth} mx-auto`}>
+      <Card className="overflow-hidden">{children}</Card>
     </div>
   );
 }
@@ -75,14 +180,14 @@ export function ServiceHeader({
   icon: Icon, iconBg, iconColor, title, subtitle,
 }: { icon: LucideIcon; iconBg: string; iconColor: string; title: string; subtitle: string }) {
   return (
-    <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+    <div className="px-5 pt-5 pb-4 border-b border-gray-100">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center`}>
-          <Icon className={`w-5 h-5 ${iconColor}`} />
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconBg}`}>
+          <Icon className={`w-4.5 h-4.5 ${iconColor}`} />
         </div>
         <div>
-          <h2 className="font-bold text-gray-900">{title}</h2>
-          <p className="text-xs text-gray-400">{subtitle}</p>
+          <h2 className="font-semibold text-slate-900 text-sm">{title}</h2>
+          <p className="text-xs text-slate-400">{subtitle}</p>
         </div>
       </div>
     </div>
@@ -91,15 +196,20 @@ export function ServiceHeader({
 
 export function WalletBalanceBanner({ balance }: { balance: number }) {
   return (
-    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3.5 flex items-center justify-between">
-      <span className="text-sm text-indigo-700 font-medium">Wallet Balance</span>
-      <span className="text-sm font-bold text-indigo-900">{fmt(balance)}</span>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-3 flex items-center justify-between">
+      <span className="text-sm text-slate-500">Wallet balance</span>
+      <span className="text-sm font-semibold text-slate-900">{fmt(balance)}</span>
     </div>
   );
 }
 
-export function FieldLabel({ children }: { children: ReactNode }) {
-  return <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">{children}</label>;
+export function FieldLabel({ children, hint }: { children: ReactNode; hint?: string }) {
+  return (
+    <div className="flex items-baseline justify-between mb-1.5">
+      <label className="block text-xs font-medium text-slate-600">{children}</label>
+      {hint && <span className="text-xs text-slate-400">{hint}</span>}
+    </div>
+  );
 }
 
 export type NetworkOption = { id: string; name: string; bg: string; extra?: string };
@@ -113,11 +223,11 @@ export function NetworkPicker({ networks, value, onChange }: {
         <button
           key={n.id}
           onClick={() => onChange(n.id)}
-          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${value === n.id ? "border-indigo-500 bg-indigo-50 shadow-sm" : "border-gray-200 hover:border-gray-300"}`}
+          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border transition-colors ${value === n.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}
         >
-          <div className={`w-9 h-9 ${n.bg} rounded-xl flex items-center justify-center text-white text-xs font-bold`}>{n.name[0]}</div>
-          <span className="text-xs font-semibold text-gray-700">{n.name}</span>
-          {n.extra && <span className="text-xs text-emerald-600 font-medium">{n.extra}</span>}
+          <div className={`w-8 h-8 ${n.bg} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>{n.name[0]}</div>
+          <span className="text-xs font-medium text-slate-700">{n.name}</span>
+          {n.extra && <span className="text-xs text-emerald-600">{n.extra}</span>}
         </button>
       ))}
     </div>
@@ -133,7 +243,7 @@ export function QuickAmountGrid({ amounts, value, onChange, columns = 3 }: {
         <button
           key={a}
           onClick={() => onChange(String(a))}
-          className={`py-2.5 text-xs font-bold rounded-xl border-2 transition-all ${value === String(a) ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}
+          className={`py-2 text-xs font-medium rounded-lg border transition-colors ${value === String(a) ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}
         >
           ₦{a >= 1000 ? `${a / 1000}k` : a}
         </button>
@@ -166,24 +276,20 @@ export function VerifyField({
           value={value}
           onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
           placeholder={placeholder}
-          className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition font-mono"
+          className={`${inputCls} flex-1 font-mono`}
         />
-        <button
-          onClick={onVerify}
-          disabled={verifying}
-          className="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition"
-        >
-          {verifying ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Verify"}
-        </button>
+        <Button variant="secondary" onClick={onVerify} disabled={verifying} loading={verifying}>
+          {verifying ? "" : "Verify"}
+        </Button>
       </div>
       {verified && (
-        <div className="mt-2 bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-          <div className="flex items-center gap-2 text-emerald-700 mb-1">
-            <User className="w-4 h-4" />
-            <span className="text-sm font-bold">{verifiedLabel}</span>
-            <CheckCircle className="w-4 h-4 ml-auto" />
+        <div className="mt-2 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
+          <div className="flex items-center gap-2 text-emerald-700">
+            <User className="w-3.5 h-3.5" />
+            <span className="text-sm font-medium">{verifiedLabel}</span>
+            <CheckCircle2 className="w-3.5 h-3.5 ml-auto" />
           </div>
-          {verifiedSub && <p className="text-xs text-emerald-600">{verifiedSub}</p>}
+          {verifiedSub && <p className="text-xs text-emerald-600 mt-0.5">{verifiedSub}</p>}
         </div>
       )}
     </div>
@@ -194,61 +300,51 @@ export function ContinueButton({ onClick, disabled, children = "Continue" }: {
   onClick: () => void; disabled?: boolean; children?: ReactNode;
 }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-sm transition shadow-md shadow-indigo-100 flex items-center justify-center gap-1"
-    >
+    <Button onClick={onClick} disabled={disabled} fullWidth size="md" className="py-3">
       {children} <ChevronRight className="w-4 h-4" />
-    </button>
+    </Button>
   );
 }
 
 export type ConfirmRow = { label: string; value: string; emphasize?: "success" };
 
-export function ConfirmSummary({ title = "Confirm Purchase", rows, totalRow }: {
+export function ConfirmSummary({ title = "Confirm purchase", rows, totalRow }: {
   title?: string; rows: ConfirmRow[]; totalRow?: { label: string; value: string };
 }) {
   return (
-    <div className="bg-gray-50 rounded-xl p-5 mb-5 space-y-3.5">
-      {title && <h3 className="text-sm font-bold text-gray-900 mb-3">{title}</h3>}
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-5 space-y-3">
+      {title && <h3 className="text-sm font-semibold text-slate-900 mb-1">{title}</h3>}
       {rows.map((r) => (
         <div key={r.label} className="flex justify-between text-sm">
-          <span className="text-gray-500">{r.label}</span>
-          <span className={`font-semibold ${r.emphasize === "success" ? "text-emerald-600" : "text-gray-900"}`}>{r.value}</span>
+          <span className="text-slate-500">{r.label}</span>
+          <span className={`font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}>{r.value}</span>
         </div>
       ))}
       {totalRow && (
-        <div className="border-t border-gray-200 pt-3 flex justify-between font-bold">
+        <div className="border-t border-gray-200 pt-3 flex justify-between text-sm font-semibold text-slate-900">
           <span>{totalRow.label}</span>
-          <span className="text-gray-900">{totalRow.value}</span>
+          <span>{totalRow.value}</span>
         </div>
       )}
     </div>
   );
 }
 
-export function ConfirmActions({ onBack, onConfirm, loading, confirmLabel = "Confirm & Pay" }: {
+export function ConfirmActions({ onBack, onConfirm, loading, confirmLabel = "Confirm & pay" }: {
   onBack: () => void; onConfirm: () => void; loading: boolean; confirmLabel?: string;
 }) {
   return (
     <div className="flex gap-3">
-      <button onClick={onBack} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm transition">
-        Back
-      </button>
-      <button
-        onClick={onConfirm}
-        disabled={loading}
-        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-70"
-      >
-        {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : confirmLabel}
-      </button>
+      <Button variant="secondary" onClick={onBack} fullWidth className="py-3">Back</Button>
+      <Button onClick={onConfirm} disabled={loading} loading={loading} fullWidth className="py-3">
+        {loading ? "" : confirmLabel}
+      </Button>
     </div>
   );
 }
 
 export function SuccessScreen({
-  title, message, onReset, resetLabel = "Buy Again", secondaryLabel = "View Receipt", onSecondary, children,
+  title, message, onReset, resetLabel = "Make another payment", secondaryLabel = "View receipt", onSecondary, children,
 }: {
   title: string;
   message: ReactNode;
@@ -259,23 +355,21 @@ export function SuccessScreen({
   children?: ReactNode;
 }) {
   return (
-    <div className="p-4 lg:p-6 max-w-lg mx-auto pt-10">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5">
-          <CheckCircle className="w-10 h-10 text-emerald-500" />
+    <div className="max-w-md mx-auto">
+      <Card className="p-8 text-center">
+        <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="w-6 h-6 text-emerald-600" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">{title}</h2>
-        <div className="text-gray-500 text-sm mb-6">{message}</div>
+        <h2 className="text-base font-semibold text-slate-900 mb-1">{title}</h2>
+        <div className="text-slate-500 text-sm mb-5">{message}</div>
         {children}
         <div className="flex gap-3">
-          <button onClick={onReset} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm transition">
-            {resetLabel}
-          </button>
-          <button onClick={onSecondary} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-sm transition">
-            {secondaryLabel}
-          </button>
+          <Button variant="secondary" onClick={onReset} fullWidth>{resetLabel}</Button>
+          <Button onClick={onSecondary} fullWidth>{secondaryLabel}</Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
+
+export { CheckCircle2, XCircle, Clock, AlertCircle };

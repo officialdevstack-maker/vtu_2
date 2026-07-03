@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Shield, Bell, Database, ChevronRight } from "lucide-react";
-import { Toggle } from "../components/shared-ui";
+import { Toggle, PageHeader, Card, Button } from "../components/shared-ui";
 
 export default function SettingsPage() {
   const [twoFA, setTwoFA] = useState(true);
@@ -11,92 +11,93 @@ export default function SettingsPage() {
   const [smsNotifs, setSmsNotifs] = useState(true);
 
   return (
-    <div className="p-6 pb-24 lg:pb-6 max-w-2xl mx-auto space-y-4">
-      <div className="bg-white border border-gray-100 rounded-xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Shield className="w-4 h-4 text-indigo-600" />
-          <h3 className="text-gray-900 font-semibold text-sm">Security</h3>
+    <div className="max-w-2xl mx-auto space-y-4">
+      <PageHeader title="Settings" description="Manage your security, notifications and account preferences" />
+
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Shield className="w-4 h-4 text-slate-400" />
+          <h3 className="text-slate-900 font-semibold text-sm">Security</h3>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-100">
           {[
-            { label: "Two-Factor Authentication", desc: "Require OTP for all sign-ins", value: twoFA, onChange: setTwoFA },
+            { label: "Two-factor authentication", desc: "Require OTP for all sign-ins", value: twoFA, onChange: setTwoFA },
             { label: "Transaction PIN", desc: "Require PIN for all transactions", value: txPin, onChange: setTxPin },
-            { label: "Biometric Login", desc: "Use fingerprint or Face ID", value: biometric, onChange: setBiometric },
+            { label: "Biometric login", desc: "Use fingerprint or Face ID", value: biometric, onChange: setBiometric },
           ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between py-3.5">
+            <div key={item.label} className="flex items-center justify-between py-3">
               <div>
-                <p className="text-gray-900 text-sm font-medium">{item.label}</p>
-                <p className="text-gray-400 text-xs mt-0.5">{item.desc}</p>
+                <p className="text-slate-900 text-sm font-medium">{item.label}</p>
+                <p className="text-slate-400 text-xs mt-0.5">{item.desc}</p>
               </div>
               <Toggle value={item.value} onChange={item.onChange} />
             </div>
           ))}
-          <div className="flex items-center justify-between py-3.5">
+          <div className="flex items-center justify-between py-3">
             <div>
-              <p className="text-gray-900 text-sm font-medium">Change Password</p>
-              <p className="text-gray-400 text-xs mt-0.5">Last updated 3 months ago</p>
+              <p className="text-slate-900 text-sm font-medium">Change password</p>
+              <p className="text-slate-400 text-xs mt-0.5">Last updated 3 months ago</p>
             </div>
-            <button className="text-xs text-indigo-600 font-medium border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition">Update</button>
+            <Button variant="secondary" size="sm">Update</Button>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="bg-white border border-gray-100 rounded-xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Bell className="w-4 h-4 text-indigo-600" />
-          <h3 className="text-gray-900 font-semibold text-sm">Notifications</h3>
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Bell className="w-4 h-4 text-slate-400" />
+          <h3 className="text-slate-900 font-semibold text-sm">Notifications</h3>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-100">
           {[
-            { label: "Push Notifications", desc: "In-app alerts for transactions", value: pushNotifs, onChange: setPushNotifs },
-            { label: "Email Notifications", desc: "Receipts and account updates", value: emailNotifs, onChange: setEmailNotifs },
-            { label: "SMS Alerts", desc: "Transaction confirmations via SMS", value: smsNotifs, onChange: setSmsNotifs },
+            { label: "Push notifications", desc: "In-app alerts for transactions", value: pushNotifs, onChange: setPushNotifs },
+            { label: "Email notifications", desc: "Receipts and account updates", value: emailNotifs, onChange: setEmailNotifs },
+            { label: "SMS alerts", desc: "Transaction confirmations via SMS", value: smsNotifs, onChange: setSmsNotifs },
           ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between py-3.5">
+            <div key={item.label} className="flex items-center justify-between py-3">
               <div>
-                <p className="text-gray-900 text-sm font-medium">{item.label}</p>
-                <p className="text-gray-400 text-xs mt-0.5">{item.desc}</p>
+                <p className="text-slate-900 text-sm font-medium">{item.label}</p>
+                <p className="text-slate-400 text-xs mt-0.5">{item.desc}</p>
               </div>
               <Toggle value={item.value} onChange={item.onChange} />
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
-      <div className="bg-white border border-gray-100 rounded-xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Database className="w-4 h-4 text-indigo-600" />
-          <h3 className="text-gray-900 font-semibold text-sm">Account</h3>
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Database className="w-4 h-4 text-slate-400" />
+          <h3 className="text-slate-900 font-semibold text-sm">Account</h3>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {[
-            { label: "Linked Bank Accounts", desc: "3 accounts connected" },
-            { label: "Saved Beneficiaries", desc: "6 saved recipients" },
-            { label: "API Access", desc: "Developer integrations" },
-            { label: "Business Profile", desc: "Upgrade to business account" },
+            { label: "Linked bank accounts", desc: "3 accounts connected" },
+            { label: "Saved beneficiaries", desc: "6 saved recipients" },
+            { label: "API access", desc: "Developer integrations" },
+            { label: "Business profile", desc: "Upgrade to business account" },
           ].map((item) => (
-            <button key={item.label} className="w-full flex items-center justify-between p-3.5 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition text-left">
+            <button key={item.label} className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-left">
               <div>
-                <p className="text-gray-900 text-sm font-medium">{item.label}</p>
-                <p className="text-gray-400 text-xs mt-0.5">{item.desc}</p>
+                <p className="text-slate-900 text-sm font-medium">{item.label}</p>
+                <p className="text-slate-400 text-xs mt-0.5">{item.desc}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
             </button>
           ))}
         </div>
-      </div>
+      </Card>
 
-      <div className="bg-white border border-red-100 rounded-xl p-5">
-        <h3 className="text-red-600 font-semibold text-sm mb-3">Danger Zone</h3>
-        <button className="w-full flex items-center justify-between p-3.5 rounded-xl border border-red-100 hover:bg-red-50 transition text-left">
+      <Card className="p-5 border-red-100">
+        <h3 className="text-red-600 font-semibold text-sm mb-3">Danger zone</h3>
+        <button className="w-full flex items-center justify-between p-3 rounded-lg border border-red-100 hover:bg-red-50 transition-colors text-left">
           <div>
-            <p className="text-red-700 text-sm font-medium">Deactivate Account</p>
+            <p className="text-red-700 text-sm font-medium">Deactivate account</p>
             <p className="text-red-400 text-xs mt-0.5">Temporarily disable your account</p>
           </div>
           <ChevronRight className="w-4 h-4 text-red-300 shrink-0" />
         </button>
-      </div>
+      </Card>
     </div>
   );
 }
-

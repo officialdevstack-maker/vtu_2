@@ -1,112 +1,111 @@
 import { Link } from 'react-router-dom';
-import { Phone, Wifi, Tv, Zap, CheckCircle, ArrowRight, Shield, Zap as FastIcon, Percent } from 'lucide-react';
+import { Phone, Wifi, Tv, Zap, ShieldCheck, ArrowRight, Clock, Users } from 'lucide-react';
+
+const services = [
+  { icon: Phone, label: 'Airtime top-up', description: 'MTN, Airtel, Glo and 9mobile, delivered instantly.' },
+  { icon: Wifi, label: 'Data bundles', description: 'SME and gifting data plans at competitive rates.' },
+  { icon: Tv, label: 'Cable TV', description: 'Renew DStv, GOtv and Startimes subscriptions.' },
+  { icon: Zap, label: 'Electricity', description: 'Prepaid and postpaid tokens for every disco.' },
+];
+
+const trustPoints = [
+  { icon: ShieldCheck, title: 'Secure by design', description: 'Bank-level encryption and dedicated virtual accounts for every wallet.' },
+  { icon: Clock, title: 'Instant delivery', description: 'Transactions are processed automatically, with most completing in seconds.' },
+  { icon: Users, title: 'Built for Nigeria', description: 'Local payment rails, all four networks, and every major disco supported.' },
+];
 
 export default function LandingPage() {
   return (
-    <div className="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
-      
-      {/* Hero Section */}
-      <header className="relative max-w-6xl mx-auto px-4 pt-16 pb-24 text-center overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
-        
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-6">
-          <Percent className="w-3.5 h-3.5" /> Get up to 5% cashback on top-ups
-        </span>
-        
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight max-w-3xl mx-auto leading-[1.15]">
-          Ultra-Fast <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-500">VTU & Bill Payments</span> At Cheaper Rates
-        </h1>
-        
-        <p className="mt-6 text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
-          Instantly buy cheap data bundles, top up airtime, print recharge cards, and pay electricity or cable TV bills—all from one secure automated platform.
-        </p>
-
-        <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-          <Link to="/auth" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition text-white px-8 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-            Open Auth Page <ArrowRight className="w-4 h-4" />
-          </Link>
-          <button className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 border border-slate-800 transition px-8 py-3.5 rounded-xl font-semibold text-slate-300">
-            View Pricing API
-          </button>
+    <div className="min-h-screen bg-white text-slate-900">
+      {/* Nav */}
+      <header className="border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold text-slate-900">KORA</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+              Sign in
+            </Link>
+            <Link to="/register" className="text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+              Get started
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Services Grid */}
-      <section className="max-w-6xl mx-auto px-4 py-16 border-t border-slate-900">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Our VTU Offerings</h2>
-          <p className="text-slate-400 text-sm mt-2">Automated services instantly delivered to any network terminal.</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-slate-900/50 border border-slate-800/80 p-6 rounded-2xl hover:border-slate-700 transition">
-            <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl w-fit mb-4">
-              <Phone className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold text-lg">Instant Airtime</h3>
-            <p className="text-slate-400 text-sm mt-2">Top up MTN, Airtel, Glo, and 9mobile instantly with discounts.</p>
-          </div>
-
-          <div className="bg-slate-900/50 border border-slate-800/80 p-6 rounded-2xl hover:border-slate-700 transition">
-            <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl w-fit mb-4">
-              <Wifi className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold text-lg">SME & Corporate Data</h3>
-            <p className="text-slate-400 text-sm mt-2">Low-cost data plans with 30 days validity. Automated API delivery.</p>
-          </div>
-
-          <div className="bg-slate-900/50 border border-slate-800/80 p-6 rounded-2xl hover:border-slate-700 transition">
-            <div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl w-fit mb-4">
-              <Tv className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold text-lg">Cable TV Bills</h3>
-            <p className="text-slate-400 text-sm mt-2">Renew DSTV, GOTV, and Startimes quickly without extra charge friction.</p>
-          </div>
-
-          <div className="bg-slate-900/50 border border-slate-800/80 p-6 rounded-2xl hover:border-slate-700 transition">
-            <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl w-fit mb-4">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="font-semibold text-lg">Electricity Tokens</h3>
-            <p className="text-slate-400 text-sm mt-2">Pay prepaid/postpaid disco meters instantly and fetch activation keys.</p>
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-4 pt-16 pb-14">
+        <div className="max-w-2xl">
+          <span className="inline-flex items-center text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1 mb-5">
+            Trusted by 150,000+ customers across Nigeria
+          </span>
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.15] text-slate-900">
+            Airtime, data and bill payments, <span className="text-indigo-600">without the wait.</span>
+          </h1>
+          <p className="mt-5 text-slate-500 text-base leading-relaxed max-w-xl">
+            KORA is a single platform for buying data, topping up airtime, and paying electricity or cable
+            bills — automated, secure, and built for everyday use.
+          </p>
+          <div className="mt-8 flex items-center gap-3">
+            <Link to="/register" className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+              Create free account <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link to="/pricing" className="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-slate-700 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+              View pricing
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="max-w-6xl mx-auto px-4 py-16 bg-slate-900/20 border-y border-slate-900 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="flex gap-4">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg h-fit">
-            <FastIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="font-semibold">100% Automated</h4>
-            <p className="text-slate-400 text-sm mt-1">Transactions are instantly processed via ultra-reliable API nodes without delay.</p>
-          </div>
-        </div>
-        <div className="flex gap-4">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg h-fit">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="font-semibold">Secure Wallet Funding</h4>
-            <p className="text-slate-400 text-sm mt-1">Get your unique dedicated bank account numbers for auto-wallet funding.</p>
-          </div>
-        </div>
-        <div className="flex gap-4">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg h-fit">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="font-semibold">Developer Friendly</h4>
-            <p className="text-slate-400 text-sm mt-1">Integrate our robust API endpoints into your own apps to resell data seamlessly.</p>
-          </div>
+      {/* Services */}
+      <section className="max-w-6xl mx-auto px-4 py-14 border-t border-gray-200">
+        <h2 className="text-lg font-semibold text-slate-900 mb-1">What you can do on KORA</h2>
+        <p className="text-sm text-slate-500 mb-8">Every service settles automatically through our provider network.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {services.map((s) => (
+            <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors">
+              <div className="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mb-4">
+                <s.icon className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="font-medium text-slate-900 text-sm">{s.label}</h3>
+              <p className="text-slate-500 text-sm mt-1.5 leading-relaxed">{s.description}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Simple Footer */}
-      <footer className="max-w-6xl mx-auto px-4 py-8 text-center text-slate-500 text-xs">
-        <p>&copy; {new Date().getFullYear()} KORA. All rights reserved.</p>
+      {/* Trust */}
+      <section className="border-t border-gray-200 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-14 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {trustPoints.map((t) => (
+            <div key={t.title} className="flex gap-3.5">
+              <div className="w-9 h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center shrink-0">
+                <t.icon className="w-4.5 h-4.5 text-indigo-600" />
+              </div>
+              <div>
+                <h4 className="font-medium text-slate-900 text-sm">{t.title}</h4>
+                <p className="text-slate-500 text-sm mt-1 leading-relaxed">{t.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-slate-400 text-xs">&copy; {new Date().getFullYear()} KORA. All rights reserved.</p>
+          <div className="flex items-center gap-5 text-xs text-slate-500">
+            <a href="#" className="hover:text-slate-800 transition-colors">Terms</a>
+            <a href="#" className="hover:text-slate-800 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-slate-800 transition-colors">Support</a>
+          </div>
+        </div>
       </footer>
     </div>
   );

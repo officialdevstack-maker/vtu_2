@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Plug, CheckCircle, Copy } from "lucide-react";
+import { Plug, CheckCircle2, Copy } from "lucide-react";
 import { fmt, mockUser } from "../data/mock";
 import {
   PurchaseShell, ServiceHeader, WalletBalanceBanner, FieldLabel,
   VerifyField, QuickAmountGrid, ContinueButton, ConfirmSummary, ConfirmActions,
+  Card, Button, inputCls,
 } from "../components/shared-ui";
 
 const discos = [
@@ -58,69 +59,66 @@ export default function ElectricityPage() {
 
   if (step === "success") {
     return (
-      <div className="p-4 lg:p-6 max-w-lg mx-auto pt-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="bg-brand-gradient p-6 text-center relative overflow-hidden">
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-              <CheckCircle className="w-8 h-8 text-white" />
-            </div>
-            <p className="text-white/80 text-xs uppercase tracking-widest mb-1">Token Generated</p>
-            <p className="text-white font-bold text-2xl">{fmt(Number(amount))}</p>
-            <p className="text-white/70 text-sm mt-1">{selectedDisco.name} {meterType} purchase</p>
+      <div className="max-w-md mx-auto">
+        <Card className="p-6 text-center">
+          <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-6 h-6 text-emerald-600" />
           </div>
+          <h2 className="text-base font-semibold text-slate-900 mb-1">Token generated</h2>
+          <p className="text-slate-500 text-sm mb-5">{selectedDisco.name} {meterType} purchase · {fmt(Number(amount))}</p>
 
-          <div className="p-6">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Your Electricity Token</p>
-            <div className="bg-gray-50 border-2 border-dashed border-indigo-200 rounded-xl p-4 flex items-center justify-between gap-3 mb-4">
-              <span className="font-mono font-bold text-indigo-900 text-xl tracking-widest">{token}</span>
+          <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4 mb-2">
+            <p className="text-xs text-slate-500 mb-2">Your electricity token</p>
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-mono font-semibold text-slate-900 text-lg tracking-wide">{token}</span>
               <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                className="text-indigo-500 hover:text-indigo-700 transition">
-                {copied ? <CheckCircle className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
+                className="text-slate-400 hover:text-slate-600 transition-colors shrink-0">
+                {copied ? <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" /> : <Copy className="w-4.5 h-4.5" />}
               </button>
             </div>
-            <p className="text-xs text-gray-400 mb-5 text-center">Enter this token on your electricity meter to load units</p>
-            <ConfirmSummary
-              title=""
-              rows={[
-                { label: "Meter Number", value: meterNumber },
-                { label: "Customer", value: verifiedName },
-                { label: "Units", value: `~${Math.round(Number(amount) * 0.85)} kWh` },
-              ]}
-            />
-            <div className="flex gap-3">
-              <button onClick={() => { setStep("form"); setMeterNumber(""); setAmount(""); setVerified(false); setToken(""); }}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm transition">Buy Again</button>
-              <button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-sm transition">Download Receipt</button>
-            </div>
           </div>
-        </div>
+          <p className="text-xs text-slate-400 mb-5">Enter this token on your electricity meter to load units</p>
+
+          <ConfirmSummary
+            title=""
+            rows={[
+              { label: "Meter number", value: meterNumber },
+              { label: "Customer", value: verifiedName },
+              { label: "Units", value: `~${Math.round(Number(amount) * 0.85)} kWh` },
+            ]}
+          />
+          <div className="flex gap-3">
+            <Button variant="secondary" fullWidth onClick={() => { setStep("form"); setMeterNumber(""); setAmount(""); setVerified(false); setToken(""); }}>
+              Buy again
+            </Button>
+            <Button fullWidth>Download receipt</Button>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
     <PurchaseShell>
-      <ServiceHeader icon={Plug} iconBg="bg-yellow-50" iconColor="text-yellow-600" title="Electricity" subtitle="Prepaid & postpaid meter recharge" />
+      <ServiceHeader icon={Plug} iconBg="bg-amber-50" iconColor="text-amber-600" title="Electricity" subtitle="Prepaid & postpaid meter recharge" />
 
       {step === "form" && (
-        <div className="p-6 space-y-5">
+        <div className="p-5 space-y-4">
           <WalletBalanceBanner balance={mockUser.balance} />
 
           <div>
-            <FieldLabel>Distribution Company</FieldLabel>
-            <select value={disco} onChange={(e) => setDisco(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition">
+            <FieldLabel>Distribution company</FieldLabel>
+            <select value={disco} onChange={(e) => setDisco(e.target.value)} className={inputCls}>
               {discos.map((d) => <option key={d.id} value={d.id}>{d.name} — {d.area}</option>)}
             </select>
           </div>
 
           <div>
-            <FieldLabel>Meter Type</FieldLabel>
-            <div className="grid grid-cols-2 gap-3">
+            <FieldLabel>Meter type</FieldLabel>
+            <div className="grid grid-cols-2 gap-2">
               {(["prepaid", "postpaid"] as const).map((t) => (
                 <button key={t} onClick={() => setMeterType(t)}
-                  className={`py-3 rounded-xl border-2 text-sm font-semibold capitalize transition-all ${meterType === t ? "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>
+                  className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${meterType === t ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}>
                   {t}
                 </button>
               ))}
@@ -128,7 +126,7 @@ export default function ElectricityPage() {
           </div>
 
           <VerifyField
-            label="Meter Number"
+            label="Meter number"
             value={meterNumber}
             onChange={(v) => { setMeterNumber(v); setVerified(false); setVerifiedName(""); setVerifyAddress(""); }}
             onVerify={handleVerify}
@@ -141,11 +139,11 @@ export default function ElectricityPage() {
           />
 
           <div>
-            <FieldLabel>Amount (₦)</FieldLabel>
+            <FieldLabel>Amount</FieldLabel>
             <QuickAmountGrid amounts={quickAmounts} value={amount} onChange={setAmount} />
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter custom amount (min ₦500)"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition" />
+              className={inputCls} />
           </div>
 
           <ContinueButton onClick={() => setStep("confirm")} disabled={!isValid} />
@@ -153,19 +151,19 @@ export default function ElectricityPage() {
       )}
 
       {step === "confirm" && (
-        <div className="p-6">
+        <div className="p-5">
           <ConfirmSummary
             rows={[
-              { label: "DISCO", value: selectedDisco.name },
-              { label: "Meter Type", value: meterType.charAt(0).toUpperCase() + meterType.slice(1) },
-              { label: "Meter Number", value: meterNumber },
+              { label: "Disco", value: selectedDisco.name },
+              { label: "Meter type", value: meterType.charAt(0).toUpperCase() + meterType.slice(1) },
+              { label: "Meter number", value: meterNumber },
               { label: "Customer", value: verifiedName },
               { label: "Amount", value: fmt(Number(amount)) },
-              { label: "Transaction Fee", value: "Free", emphasize: "success" },
+              { label: "Transaction fee", value: "Free", emphasize: "success" },
             ]}
-            totalRow={{ label: "Balance After", value: fmt(mockUser.balance - Number(amount)) }}
+            totalRow={{ label: "Balance after", value: fmt(mockUser.balance - Number(amount)) }}
           />
-          <ConfirmActions onBack={() => setStep("form")} onConfirm={handleConfirm} loading={loading} confirmLabel="Confirm & Buy" />
+          <ConfirmActions onBack={() => setStep("form")} onConfirm={handleConfirm} loading={loading} confirmLabel="Confirm & buy" />
         </div>
       )}
     </PurchaseShell>

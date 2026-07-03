@@ -1,11 +1,10 @@
 import {
-  Users, TrendingUp, Wallet, Receipt, CheckCircle, XCircle,
-  Activity, AlertTriangle, Download, Search, MoreHorizontal,
-  Phone, Wifi, Tv, Plug, Eye,
+  Users, TrendingUp, Wallet, XCircle, CheckCircle2, AlertTriangle, Download,
+  Search, Eye, Wand2, X, Phone, Wifi, Tv, Plug,
 } from "lucide-react";
 import { useState } from "react";
 import { fmt } from "../data/mock";
-import { StatusBadge } from "../components/shared-ui";
+import { StatusBadge, StatCard, PageHeader, Card, Button, ConfirmSummary, inputCls } from "../components/shared-ui";
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
 } from "recharts";
@@ -13,35 +12,35 @@ import {
 const chartValue = (v: unknown) => (typeof v === "number" ? v : Number(v ?? 0));
 
 const revenueData = [
-  { month: "Jan", revenue: 4200000, transactions: 18420 },
-  { month: "Feb", revenue: 5100000, transactions: 22300 },
-  { month: "Mar", revenue: 4800000, transactions: 20100 },
-  { month: "Apr", revenue: 6300000, transactions: 27400 },
-  { month: "May", revenue: 7100000, transactions: 31200 },
-  { month: "Jun", revenue: 8400000, transactions: 36800 },
+  { month: "Jan", revenue: 4200000 },
+  { month: "Feb", revenue: 5100000 },
+  { month: "Mar", revenue: 4800000 },
+  { month: "Apr", revenue: 6300000 },
+  { month: "May", revenue: 7100000 },
+  { month: "Jun", revenue: 8400000 },
 ];
 
 const serviceBreakdown = [
-  { name: "Airtime", value: 38, color: "#4F46E5" },
-  { name: "Data", value: 27, color: "#10B981" },
-  { name: "Electricity", value: 18, color: "#F59E0B" },
-  { name: "Cable TV", value: 10, color: "#8B5CF6" },
-  { name: "Others", value: 7, color: "#6B7280" },
+  { name: "Airtime", value: 38 },
+  { name: "Data", value: 27 },
+  { name: "Electricity", value: 18 },
+  { name: "Cable TV", value: 10 },
+  { name: "Others", value: 7 },
 ];
 
 const providerBalances = [
-  { name: "MTN Airtime", icon: Phone, color: "bg-yellow-50 text-yellow-600", balance: 285000, status: "ok", threshold: 100000 },
-  { name: "Airtel Data", icon: Wifi, color: "bg-red-50 text-red-600", balance: 42000, status: "low", threshold: 100000 },
-  { name: "DStv/GOtv", icon: Tv, color: "bg-blue-50 text-blue-600", balance: 165000, status: "ok", threshold: 50000 },
-  { name: "Electricity", icon: Plug, color: "bg-yellow-50 text-yellow-600", balance: 320000, status: "ok", threshold: 100000 },
+  { name: "MTN airtime", icon: Phone, balance: 285000, status: "ok" },
+  { name: "Airtel data", icon: Wifi, balance: 42000, status: "low" },
+  { name: "DStv / GOtv", icon: Tv, balance: 165000, status: "ok" },
+  { name: "Electricity", icon: Plug, balance: 320000, status: "ok" },
 ];
 
 const recentUsers = [
-  { id: "USR001", name: "Chukwuemeka Obi", email: "emeka@gmail.com", balance: 45820, status: "active", kyc: "verified", joined: "Mar 2024", txns: 47 },
-  { id: "USR002", name: "Adaeze Nwosu", email: "adaeze@outlook.com", balance: 12300, status: "active", kyc: "verified", joined: "Apr 2024", txns: 23 },
-  { id: "USR003", name: "Kunle Adeleke", email: "kunle@gmail.com", balance: 89700, status: "active", kyc: "pending", joined: "Jan 2024", txns: 112 },
-  { id: "USR004", name: "Fatima Bello", email: "fatima@yahoo.com", balance: 5100, status: "suspended", kyc: "verified", joined: "May 2024", txns: 8 },
-  { id: "USR005", name: "Tunde Bakare", email: "tunde@gmail.com", balance: 0, status: "inactive", kyc: "unverified", joined: "Jun 2024", txns: 2 },
+  { id: "USR001", name: "Chukwuemeka Obi", email: "emeka@gmail.com", balance: 45820, status: "active", kyc: "verified", txns: 47 },
+  { id: "USR002", name: "Adaeze Nwosu", email: "adaeze@outlook.com", balance: 12300, status: "active", kyc: "verified", txns: 23 },
+  { id: "USR003", name: "Kunle Adeleke", email: "kunle@gmail.com", balance: 89700, status: "active", kyc: "pending", txns: 112 },
+  { id: "USR004", name: "Fatima Bello", email: "fatima@yahoo.com", balance: 5100, status: "suspended", kyc: "verified", txns: 8 },
+  { id: "USR005", name: "Tunde Bakare", email: "tunde@gmail.com", balance: 0, status: "inactive", kyc: "unverified", txns: 2 },
 ];
 
 const recentTxns = [
@@ -52,204 +51,211 @@ const recentTxns = [
   { ref: "VTU005", user: "Tunde Bakare", type: "Airtime", amount: 1000, status: "pending", date: "Jun 27, 9:30 AM" },
 ];
 
+type FundTarget = { id: string; name: string } | null;
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "transactions">("overview");
   const [userSearch, setUserSearch] = useState("");
   const [txSearch, setTxSearch] = useState("");
+  const [fundTarget, setFundTarget] = useState<FundTarget>(null);
+  const [fundAmount, setFundAmount] = useState("");
+  const [fundStep, setFundStep] = useState<"form" | "confirm" | "done">("form");
 
   const filteredUsers = recentUsers.filter((u) =>
     u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.email.toLowerCase().includes(userSearch.toLowerCase())
   );
 
+  const openFunding = (target: { id: string; name: string }) => {
+    setFundTarget(target);
+    setFundAmount("");
+    setFundStep("form");
+  };
+  const closeFunding = () => setFundTarget(null);
+
   const statCards = [
-    { label: "Total Users", value: "12,847", change: "+234 this month", icon: Users, bg: "bg-indigo-50", color: "text-indigo-600" },
-    { label: "Total Revenue", value: "\u20A68.4M", change: "+18% vs last month", icon: TrendingUp, bg: "bg-emerald-50", color: "text-emerald-600" },
-    { label: "Wallet Balances", value: "\u20A6142M", change: "Combined user walances", icon: Wallet, bg: "bg-blue-50", color: "text-blue-600" },
-    { label: "Transactions", value: "36,800", change: "This month", icon: Receipt, bg: "bg-purple-50", color: "text-purple-600" },
-    { label: "Success Rate", value: "94.8%", change: "+1.2% vs last month", icon: CheckCircle, bg: "bg-emerald-50", color: "text-emerald-600" },
-    { label: "Failed Txns", value: "1,920", change: "Require attention", icon: XCircle, bg: "bg-red-50", color: "text-red-600" },
-    { label: "Total Deposits", value: "\u20A6245M", change: "This month", icon: Activity, bg: "bg-amber-50", color: "text-amber-600" },
-    { label: "Pending Issues", value: "47", change: "Requires review", icon: AlertTriangle, bg: "bg-orange-50", color: "text-orange-600" },
+    { label: "Total users", value: "12,847", meta: "+234 this month", icon: Users, tone: "neutral" as const },
+    { label: "Total wallet balance", value: "₦142M", meta: "Combined across users", icon: Wallet, tone: "neutral" as const },
+    { label: "Total sales", value: "₦8.4M", meta: "+18% vs last month", icon: TrendingUp, tone: "success" as const },
+    { label: "Successful transactions", value: "34,880", meta: "94.8% success rate", icon: CheckCircle2, tone: "success" as const },
+    { label: "Failed transactions", value: "1,920", meta: "Requires attention", icon: XCircle, tone: "danger" as const },
+    { label: "Pending issues", value: "47", meta: "Awaiting review", icon: AlertTriangle, tone: "warning" as const },
   ];
 
   return (
-    <div className="p-4 lg:p-6 max-w-7xl mx-auto space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Platform overview and management</p>
-        </div>
-        <div className="flex gap-2">
-          {(["overview", "users", "transactions"] as const).map((t) => (
-            <button key={t} onClick={() => setActiveTab(t)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-all ${activeTab === t ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-white border border-gray-200 text-gray-600 hover:border-indigo-300"}`}>
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto space-y-5">
+      <PageHeader
+        title="Admin dashboard"
+        description="Platform overview and operations"
+        actions={
+          <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg">
+            {(["overview", "users", "transactions"] as const).map((t) => (
+              <button key={t} onClick={() => setActiveTab(t)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-colors ${activeTab === t ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       {activeTab === "overview" && (
         <>
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {statCards.map((s) => (
-              <div key={s.label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide leading-tight">{s.label}</p>
-                  <div className={`w-8 h-8 ${s.bg} ${s.color} rounded-lg flex items-center justify-center shrink-0`}>
-                    <s.icon className="w-4 h-4" />
-                  </div>
-                </div>
-                <p className="text-xl font-bold text-gray-900">{s.value}</p>
-                <p className="text-xs text-gray-400 mt-1">{s.change}</p>
-              </div>
+              <StatCard key={s.label} label={s.label} value={s.value} meta={s.meta} icon={s.icon} tone={s.tone} />
             ))}
           </div>
 
-          {/* Provider balances - LOW BALANCE ALERTS */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-900">API / Provider Balances</h3>
-              <button className="text-xs text-indigo-600 font-semibold hover:text-indigo-700">Fund All</button>
+          {/* Provider balances */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-900">API / provider balances</h3>
+              <Button variant="secondary" size="sm">Fund all</Button>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {providerBalances.map((p) => (
-                <div key={p.name} className={`p-4 rounded-xl border ${p.status === "low" ? "border-red-200 bg-red-50" : "border-gray-100 bg-gray-50"}`}>
+                <div key={p.name} className={`p-3 rounded-lg border ${p.status === "low" ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50"}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-8 h-8 ${p.color} rounded-lg flex items-center justify-center`}>
-                      <p.icon className="w-4 h-4" />
+                    <div className="w-7 h-7 bg-white border border-gray-200 rounded-lg flex items-center justify-center">
+                      <p.icon className="w-3.5 h-3.5 text-slate-500" />
                     </div>
                     {p.status === "low" && <AlertTriangle className="w-3.5 h-3.5 text-red-500 ml-auto" />}
                   </div>
-                  <p className="text-xs font-semibold text-gray-700">{p.name}</p>
-                  <p className={`font-bold text-sm mt-1 ${p.status === "low" ? "text-red-600" : "text-gray-900"}`}>{fmt(p.balance)}</p>
-                  {p.status === "low" && <p className="text-xs text-red-500 mt-0.5 font-medium">LOW BALANCE</p>}
+                  <p className="text-xs font-medium text-slate-600">{p.name}</p>
+                  <p className={`font-semibold text-sm mt-1 ${p.status === "low" ? "text-red-600" : "text-slate-900"}`}>{fmt(p.balance)}</p>
+                  {p.status === "low" && <p className="text-xs text-red-500 mt-0.5">Low balance</p>}
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Revenue chart */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <Card className="lg:col-span-2 p-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900">Revenue Overview</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Last 6 months</p>
+                  <h3 className="text-sm font-semibold text-slate-900">Revenue overview</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Last 6 months</p>
                 </div>
-                <button className="text-xs text-indigo-600 font-semibold flex items-center gap-1 hover:text-indigo-700">
+                <button className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1">
                   <Download className="w-3.5 h-3.5" /> Export
                 </button>
               </div>
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={170}>
                 <BarChart data={revenueData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#9CA3AF" }} axisLine={false} tickLine={false} tickFormatter={(v) => `\u20A6${(v / 1000000).toFixed(1)}M`} />
-                  <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px", fontSize: "12px" }} formatter={(v) => [fmt(chartValue(v)), "Revenue"]} />
-                  <Bar dataKey="revenue" fill="#4F46E5" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₦${(v / 1000000).toFixed(1)}M`} />
+                  <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "8px", fontSize: "12px" }} formatter={(v) => [fmt(chartValue(v)), "Revenue"]} />
+                  <Bar dataKey="revenue" fill="#4f46e5" radius={[3, 3, 0, 0]} maxBarSize={36} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </Card>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-bold text-gray-900 mb-4">Service Breakdown</h3>
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3.5">Service breakdown</h3>
               <div className="space-y-3">
                 {serviceBreakdown.map((s) => (
                   <div key={s.name}>
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-semibold text-gray-700">{s.name}</span>
-                      <span className="text-gray-500">{s.value}%</span>
+                      <span className="text-slate-600">{s.name}</span>
+                      <span className="text-slate-400">{s.value}%</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${s.value}%`, backgroundColor: s.color }} />
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-indigo-500" style={{ width: `${s.value}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Recent transactions */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="text-sm font-bold text-gray-900">Recent Transactions</h3>
-              <button onClick={() => setActiveTab("transactions")} className="text-xs text-indigo-600 font-semibold hover:text-indigo-700">View All</button>
+          <Card className="overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-slate-900">Recent transactions</h3>
+              <button onClick={() => setActiveTab("transactions")} className="text-xs text-indigo-600 font-medium hover:text-indigo-700">View all</button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[560px]">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Reference</th>
-                    <th className="text-left px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">User</th>
-                    <th className="text-left px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Type</th>
-                    <th className="text-right px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Amount</th>
-                    <th className="text-left px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Status</th>
-                    <th className="text-right px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Date</th>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left px-4 py-2 text-xs font-medium text-slate-500">Reference</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">User</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Type</th>
+                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-500">Amount</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Status</th>
+                    <th className="text-right px-4 py-2 text-xs font-medium text-slate-500">Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100">
                   {recentTxns.map((tx) => (
-                    <tr key={tx.ref} className="hover:bg-gray-50 transition">
-                      <td className="px-5 py-3.5 font-mono text-xs text-gray-500">{tx.ref}</td>
-                      <td className="px-3 py-3.5 font-semibold text-gray-900 text-xs">{tx.user}</td>
-                      <td className="px-3 py-3.5 text-xs text-gray-500">{tx.type}</td>
-                      <td className="px-3 py-3.5 text-right font-bold text-gray-900 text-xs">{fmt(tx.amount)}</td>
-                      <td className="px-3 py-3.5"><StatusBadge status={tx.status} /></td>
-                      <td className="px-5 py-3.5 text-right text-xs text-gray-400">{tx.date}</td>
+                    <tr key={tx.ref} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-slate-400">{tx.ref}</td>
+                      <td className="px-3 py-3 font-medium text-slate-900 text-xs">{tx.user}</td>
+                      <td className="px-3 py-3 text-xs text-slate-500">{tx.type}</td>
+                      <td className="px-3 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">{fmt(tx.amount)}</td>
+                      <td className="px-3 py-3"><StatusBadge status={tx.status} /></td>
+                      <td className="px-4 py-3 text-right text-xs text-slate-400 whitespace-nowrap">{tx.date}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
         </>
       )}
 
       {activeTab === "users" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
-            <h3 className="text-sm font-bold text-gray-900">User Management</h3>
-            <div className="flex items-center gap-3">
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-wrap gap-3">
+            <h3 className="text-sm font-semibold text-slate-900">User management</h3>
+            <div className="flex items-center gap-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input value={userSearch} onChange={(e) => setUserSearch(e.target.value)} placeholder="Search users..." className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input value={userSearch} onChange={(e) => setUserSearch(e.target.value)} placeholder="Search users" className={`${inputCls} pl-9 py-2 w-52`} />
               </div>
-              <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"><Download className="w-4 h-4" /> Export</button>
+              <Button variant="secondary" size="sm"><Download className="w-3.5 h-3.5" /> Export</Button>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[720px]">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
+                <tr className="border-b border-gray-100">
                   {["User", "Email", "Balance", "Transactions", "KYC", "Status", "Actions"].map((h) => (
-                    <th key={h} className={`px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide ${h === "Balance" || h === "Transactions" ? "text-right" : "text-left"}`}>{h}</th>
+                    <th key={h} className={`px-4 py-2 text-xs font-medium text-slate-500 ${h === "Balance" || h === "Transactions" ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-3.5">
+                  <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
+                        <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
                           {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                         </div>
-                        <span className="font-semibold text-gray-900 text-xs">{u.name}</span>
+                        <span className="font-medium text-slate-900 text-xs">{u.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-gray-500">{u.email}</td>
-                    <td className="px-4 py-3.5 text-right font-bold text-gray-900 text-xs">{fmt(u.balance)}</td>
-                    <td className="px-4 py-3.5 text-right text-xs text-gray-500">{u.txns}</td>
-                    <td className="px-4 py-3.5"><StatusBadge status={u.kyc} /></td>
-                    <td className="px-4 py-3.5"><StatusBadge status={u.status} /></td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3 text-xs text-slate-500">{u.email}</td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">{fmt(u.balance)}</td>
+                    <td className="px-4 py-3 text-right text-xs text-slate-500">{u.txns}</td>
+                    <td className="px-4 py-3"><StatusBadge status={u.kyc} /></td>
+                    <td className="px-4 py-3"><StatusBadge status={u.status} /></td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition"><Eye className="w-3.5 h-3.5" /></button>
-                        <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition"><MoreHorizontal className="w-3.5 h-3.5" /></button>
+                        <button className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors" title="View">
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => openFunding({ id: u.id, name: u.name })}
+                          className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 hover:text-indigo-600 transition-colors"
+                          title="Fund wallet"
+                        >
+                          <Wand2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -257,43 +263,120 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {activeTab === "transactions" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-wrap gap-3">
-            <h3 className="text-sm font-bold text-gray-900">All Transactions</h3>
-            <div className="flex items-center gap-3">
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-wrap gap-3">
+            <h3 className="text-sm font-semibold text-slate-900">All transactions</h3>
+            <div className="flex items-center gap-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input value={txSearch} onChange={(e) => setTxSearch(e.target.value)} placeholder="Search..." className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input value={txSearch} onChange={(e) => setTxSearch(e.target.value)} placeholder="Search" className={`${inputCls} pl-9 py-2 w-52`} />
               </div>
-              <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition"><Download className="w-4 h-4" /> Export</button>
+              <Button variant="secondary" size="sm"><Download className="w-3.5 h-3.5" /> Export</Button>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[560px]">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
+                <tr className="border-b border-gray-100">
                   {["Reference", "User", "Type", "Amount", "Status", "Date"].map((h) => (
-                    <th key={h} className={`px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide ${h === "Amount" ? "text-right" : "text-left"}`}>{h}</th>
+                    <th key={h} className={`px-4 py-2 text-xs font-medium text-slate-500 ${h === "Amount" ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100">
                 {recentTxns.filter((tx) => tx.user.toLowerCase().includes(txSearch.toLowerCase()) || tx.ref.includes(txSearch)).map((tx) => (
-                  <tr key={tx.ref} className="hover:bg-gray-50 transition">
-                    <td className="px-4 py-3.5 font-mono text-xs text-gray-500">{tx.ref}</td>
-                    <td className="px-4 py-3.5 font-semibold text-gray-900 text-xs">{tx.user}</td>
-                    <td className="px-4 py-3.5 text-xs text-gray-500">{tx.type}</td>
-                    <td className="px-4 py-3.5 text-right font-bold text-gray-900 text-xs">{fmt(tx.amount)}</td>
-                    <td className="px-4 py-3.5"><StatusBadge status={tx.status} /></td>
-                    <td className="px-4 py-3.5 text-xs text-gray-400">{tx.date}</td>
+                  <tr key={tx.ref} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-slate-400">{tx.ref}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900 text-xs">{tx.user}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500">{tx.type}</td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">{fmt(tx.amount)}</td>
+                    <td className="px-4 py-3"><StatusBadge status={tx.status} /></td>
+                    <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">{tx.date}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Manual funding modal */}
+      {fundTarget && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900 text-sm">Fund user wallet</h3>
+              <button onClick={closeFunding} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {fundStep === "form" && (
+              <div className="p-4 space-y-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5">
+                  <p className="text-xs text-slate-500">Crediting wallet for</p>
+                  <p className="text-sm font-medium text-slate-900">{fundTarget.name}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Amount to credit</label>
+                  <input
+                    type="number"
+                    value={fundAmount}
+                    onChange={(e) => setFundAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Reason</label>
+                  <select className={inputCls} defaultValue="manual-credit">
+                    <option value="manual-credit">Manual credit / support request</option>
+                    <option value="reversal">Failed transaction reversal</option>
+                    <option value="promo">Promotional credit</option>
+                  </select>
+                </div>
+                <Button fullWidth disabled={!fundAmount || Number(fundAmount) <= 0} onClick={() => setFundStep("confirm")}>
+                  Review and confirm
+                </Button>
+              </div>
+            )}
+
+            {fundStep === "confirm" && (
+              <div className="p-4">
+                <div className="bg-amber-50 border border-amber-100 rounded-lg px-3.5 py-2.5 mb-4 flex gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800">This action credits the user's wallet immediately and cannot be undone automatically.</p>
+                </div>
+                <ConfirmSummary
+                  title=""
+                  rows={[
+                    { label: "User", value: fundTarget.name },
+                    { label: "Amount", value: fmt(Number(fundAmount)) },
+                  ]}
+                />
+                <div className="flex gap-3">
+                  <Button variant="secondary" fullWidth onClick={() => setFundStep("form")}>Back</Button>
+                  <Button fullWidth onClick={() => setFundStep("done")}>Confirm & credit</Button>
+                </div>
+              </div>
+            )}
+
+            {fundStep === "done" && (
+              <div className="p-6 text-center">
+                <div className="w-11 h-11 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                </div>
+                <p className="text-sm font-medium text-slate-900 mb-1">Wallet credited</p>
+                <p className="text-sm text-slate-500 mb-5">
+                  {fmt(Number(fundAmount))} was added to {fundTarget.name}'s wallet.
+                </p>
+                <Button fullWidth onClick={closeFunding}>Done</Button>
+              </div>
+            )}
           </div>
         </div>
       )}

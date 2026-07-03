@@ -45,6 +45,9 @@ export const spendingData = [
 ];
 
 // ─── Transactions ──────────────────────────────────────────────────────────────
+export type ServiceType = "airtime" | "data" | "cable" | "electricity" | "wallet" | "transfer" | "education" | "giftcard";
+export type Period = "today" | "yesterday" | "this_week" | "earlier";
+
 export type Transaction = {
   id: string;
   icon: LucideIcon;
@@ -55,20 +58,33 @@ export type Transaction = {
   status: string;
   ref: string;
   network: string;
+  service: ServiceType;
+  period: Period;
 };
 
 export const transactions: Transaction[] = [
-  { id: "TXN001", icon: Phone, desc: "MTN Airtime", detail: "08012345678", amount: -500, date: "Today, 2:30 PM", status: "success", ref: "VTU20240629001", network: "MTN" },
-  { id: "TXN002", icon: Wifi, desc: "Airtel Data Bundle", detail: "2GB · 30 Days", amount: -1500, date: "Today, 11:15 AM", status: "success", ref: "VTU20240629002", network: "Airtel" },
-  { id: "TXN003", icon: ArrowDownLeft, desc: "Wallet Funding", detail: "Bank Transfer", amount: 20000, date: "Yesterday, 4:00 PM", status: "success", ref: "VTU20240628001", network: "" },
-  { id: "TXN004", icon: Zap, desc: "EKEDC Prepaid", detail: "0101234567890", amount: -5000, date: "Yesterday, 2:18 PM", status: "success", ref: "VTU20240628002", network: "" },
-  { id: "TXN005", icon: Tv, desc: "DSTV Subscription", detail: "Compact Package", amount: -7900, date: "Jun 27, 9:30 AM", status: "success", ref: "VTU20240627001", network: "" },
-  { id: "TXN006", icon: ArrowUpRight, desc: "Bank Transfer", detail: "First Bank · John Doe", amount: -10000, date: "Jun 26, 3:45 PM", status: "failed", ref: "VTU20240626001", network: "" },
-  { id: "TXN007", icon: Phone, desc: "Glo Airtime", detail: "08087654321", amount: -1000, date: "Jun 26, 1:20 PM", status: "success", ref: "VTU20240626002", network: "Glo" },
-  { id: "TXN008", icon: ArrowDownLeft, desc: "Wallet Funding", detail: "Paystack", amount: 15000, date: "Jun 25, 8:00 AM", status: "pending", ref: "VTU20240625001", network: "" },
-  { id: "TXN009", icon: GraduationCap, desc: "WAEC Registration", detail: "2024/2025 Session", amount: -17500, date: "Jun 24, 10:00 AM", status: "success", ref: "VTU20240624001", network: "" },
-  { id: "TXN010", icon: Gift, desc: "Amazon Gift Card", detail: "$50 USD", amount: -48000, date: "Jun 23, 3:15 PM", status: "success", ref: "VTU20240623001", network: "" },
+  { id: "TXN001", icon: Phone, desc: "MTN Airtime", detail: "08012345678", amount: -500, date: "Today, 2:30 PM", status: "success", ref: "VTU20240629001", network: "MTN", service: "airtime", period: "today" },
+  { id: "TXN002", icon: Wifi, desc: "Airtel Data Bundle", detail: "2GB · 30 Days", amount: -1500, date: "Today, 11:15 AM", status: "success", ref: "VTU20240629002", network: "Airtel", service: "data", period: "today" },
+  { id: "TXN003", icon: ArrowDownLeft, desc: "Wallet Funding", detail: "Bank Transfer", amount: 20000, date: "Yesterday, 4:00 PM", status: "success", ref: "VTU20240628001", network: "", service: "wallet", period: "yesterday" },
+  { id: "TXN004", icon: Zap, desc: "EKEDC Prepaid", detail: "0101234567890", amount: -5000, date: "Yesterday, 2:18 PM", status: "success", ref: "VTU20240628002", network: "", service: "electricity", period: "yesterday" },
+  { id: "TXN005", icon: Tv, desc: "DSTV Subscription", detail: "Compact Package", amount: -7900, date: "Jun 27, 9:30 AM", status: "success", ref: "VTU20240627001", network: "", service: "cable", period: "this_week" },
+  { id: "TXN006", icon: ArrowUpRight, desc: "Bank Transfer", detail: "First Bank · John Doe", amount: -10000, date: "Jun 26, 3:45 PM", status: "failed", ref: "VTU20240626001", network: "", service: "transfer", period: "this_week" },
+  { id: "TXN007", icon: Phone, desc: "Glo Airtime", detail: "08087654321", amount: -1000, date: "Jun 26, 1:20 PM", status: "success", ref: "VTU20240626002", network: "Glo", service: "airtime", period: "this_week" },
+  { id: "TXN008", icon: ArrowDownLeft, desc: "Wallet Funding", detail: "Paystack", amount: 15000, date: "Jun 25, 8:00 AM", status: "pending", ref: "VTU20240625001", network: "", service: "wallet", period: "this_week" },
+  { id: "TXN009", icon: GraduationCap, desc: "WAEC Registration", detail: "2024/2025 Session", amount: -17500, date: "Jun 24, 10:00 AM", status: "success", ref: "VTU20240624001", network: "", service: "education", period: "earlier" },
+  { id: "TXN010", icon: Gift, desc: "Amazon Gift Card", detail: "$50 USD", amount: -48000, date: "Jun 23, 3:15 PM", status: "success", ref: "VTU20240623001", network: "", service: "giftcard", period: "earlier" },
 ];
+
+export const serviceLabels: Record<ServiceType, string> = {
+  airtime: "Airtime",
+  data: "Data",
+  cable: "Cable TV",
+  electricity: "Electricity",
+  wallet: "Wallet funding",
+  transfer: "Bank transfer",
+  education: "Education",
+  giftcard: "Gift cards",
+};
 
 // ─── Services ──────────────────────────────────────────────────────────────────
 export type Service = {
