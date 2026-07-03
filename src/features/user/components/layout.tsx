@@ -1,29 +1,8 @@
-<<<<<<< HEAD
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "../../../shared/components/sidebar";
-import { Box } from "@mui/material";
-import Topbar from "../../../shared/components/topbar";
-=======
-import { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./sidebar";
+import { Box } from "@mui/material";
 import Topbar from "./topbar";
-import {
-  LayoutDashboard, Zap, Receipt, Wallet, User,
-} from "lucide-react";
-import { useLocation } from "react-router-dom";
-
-const mobileNavItems = [
-  { path: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { path: "/buy-airtime", icon: Zap, label: "Services" },
-  { path: "/transactions", icon: Receipt, label: "History" },
-  { path: "/wallet", icon: Wallet, label: "Wallet" },
-  { path: "/profile", icon: User, label: "Profile" },
-];
-
-const SIDEBAR_COLLAPSED_KEY = "kora-sidebar-collapsed";
->>>>>>> bc44dfcd405678cf589df1fe65d1a22756f88065
 
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
