@@ -15,16 +15,31 @@ const mobileNavItems = [
   { path: "/profile", icon: User, label: "Profile" },
 ];
 
+const SIDEBAR_COLLAPSED_KEY = "kora-sidebar-collapsed";
+
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1"
+  );
   const location = useLocation();
   const navigate = useNavigate();
+
+  const toggleCollapsed = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      return next;
+    });
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-app-bg">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={toggleCollapsed}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

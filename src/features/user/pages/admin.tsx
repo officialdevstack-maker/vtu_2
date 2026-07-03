@@ -1,6 +1,6 @@
 import {
   Users, TrendingUp, Wallet, XCircle, CheckCircle2, AlertTriangle, Download,
-  Search, Eye, Wand2, X, Phone, Wifi, Tv, Plug,
+  Search, Eye, Wand2, X, Phone, Wifi, Tv, Plug, RefreshCw, UserCheck, ShieldAlert, ArrowRight,
 } from "lucide-react";
 import { useState } from "react";
 import { fmt } from "../data/mock";
@@ -73,6 +73,40 @@ export default function AdminPage() {
   };
   const closeFunding = () => setFundTarget(null);
 
+  const lowBalanceProviders = providerBalances.filter((p) => p.status === "low");
+  const pendingKyc = recentUsers.filter((u) => u.kyc === "pending");
+  const failedTxns = recentTxns.filter((t) => t.status === "failed");
+
+  const alerts = [
+    ...lowBalanceProviders.map((p) => ({
+      key: `provider-${p.name}`,
+      icon: p.icon,
+      tone: "danger" as const,
+      title: `${p.name} balance is low`,
+      description: `${fmt(p.balance)} remaining — fund before it runs out.`,
+      actionLabel: "Fund now",
+      onAction: () => {},
+    })),
+    ...pendingKyc.map((u) => ({
+      key: `kyc-${u.id}`,
+      icon: UserCheck,
+      tone: "warning" as const,
+      title: `${u.name} — KYC pending review`,
+      description: "Verification documents submitted, awaiting approval.",
+      actionLabel: "Review",
+      onAction: () => setActiveTab("users"),
+    })),
+    ...failedTxns.map((t) => ({
+      key: `txn-${t.ref}`,
+      icon: ShieldAlert,
+      tone: "danger" as const,
+      title: `Failed transaction — ${t.ref}`,
+      description: `${t.user} · ${t.type} · ${fmt(t.amount)}`,
+      actionLabel: "Investigate",
+      onAction: () => setActiveTab("transactions"),
+    })),
+  ];
+
   const statCards = [
     { label: "Total users", value: "12,847", meta: "+234 this month", icon: Users, tone: "neutral" as const },
     { label: "Total wallet balance", value: "₦142M", meta: "Combined across users", icon: Wallet, tone: "neutral" as const },
@@ -84,8 +118,27 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-5">
+      {/* System status strip */}
+      <div className="flex items-center justify-between flex-wrap gap-2 bg-slate-50 border border-gray-200 rounded-lg px-3.5 py-2">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="text-xs text-slate-600">All systems operational</span>
+          </div>
+          <span className="text-xs text-slate-400 hidden sm:inline">Last synced 2 minutes ago</span>
+        </div>
+        <button className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1">
+          <RefreshCw className="w-3 h-3" /> Sync now
+        </button>
+      </div>
+
       <PageHeader
-        title="Admin dashboard"
+        title={
+          <span className="inline-flex items-center gap-2">
+            Admin dashboard
+            <span className="text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">Super admin</span>
+          </span>
+        }
         description="Platform overview and operations"
         actions={
           <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg">
@@ -106,6 +159,32 @@ export default function AdminPage() {
               <StatCard key={s.label} label={s.label} value={s.value} meta={s.meta} icon={s.icon} tone={s.tone} />
             ))}
           </div>
+
+          {/* Needs attention */}
+          {alerts.length > 0 && (
+            <Card className="overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-slate-900">Needs your attention</h3>
+                <span className="text-xs font-medium text-red-700 bg-red-50 border border-red-100 rounded-full px-2 py-0.5">{alerts.length} open</span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {alerts.map((a) => (
+                  <div key={a.key} className="flex items-center gap-3 px-4 py-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${a.tone === "danger" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+                      <a.icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{a.title}</p>
+                      <p className="text-xs text-slate-400 truncate">{a.description}</p>
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={a.onAction} className="shrink-0">
+                      {a.actionLabel} <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Provider balances */}
           <Card className="p-4">

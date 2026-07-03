@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import {
   Wallet, ArrowDownLeft, ShoppingBag, CheckCircle2, AlertTriangle, TrendingUp,
-  Plus, ChevronRight, Phone, Wifi, Tv, Plug, RefreshCw,
+  Plus, ChevronRight, Phone, Wifi, Tv, Plug, RefreshCw, Eye, EyeOff, Copy, Check, Receipt,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { fmt, chartValue, mockUser, spendingData, transactions } from "../data/mock";
-import { SkeletonCard, StatusBadge, StatCard, Card, PageHeader, Button } from "../components/shared-ui";
+import { SkeletonCard, StatusBadge, StatCard, Card, Button } from "../components/shared-ui";
 
 const networkStatus = [
   { name: "MTN", status: "operational", uptime: "99.9%" },
@@ -35,6 +35,8 @@ const todaySpend = transactions
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [balanceVisible, setBalanceVisible] = useState(true);
+  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,25 +55,59 @@ export default function DashboardPage() {
   }
 
   const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = mockUser.name.split(" ")[0];
 
   return (
     <div className="max-w-7xl mx-auto space-y-5">
-      <PageHeader
-        title="Dashboard"
-        description={now.toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-        actions={
-          <Button onClick={() => navigate("/wallet")}>
-            <Plus className="w-4 h-4" /> Fund wallet
-          </Button>
-        }
-      />
+      <div>
+        <h1 className="text-lg font-semibold text-slate-900">{greeting}, {firstName}</h1>
+        <p className="text-sm text-slate-500 mt-0.5">
+          {now.toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+        </p>
+      </div>
+
+      {/* Balance banner */}
+      <Card className="p-5 bg-slate-900 border-slate-900">
+        <div className="flex items-start justify-between flex-wrap gap-5">
+          <div>
+            <p className="text-slate-400 text-xs mb-1.5">Available balance</p>
+            <div className="flex items-center gap-3">
+              <span className="text-white text-3xl font-semibold tabular-nums">
+                {balanceVisible ? fmt(mockUser.balance) : "₦ ••••••"}
+              </span>
+              <button onClick={() => setBalanceVisible((v) => !v)} className="text-slate-400 hover:text-white transition-colors">
+                {balanceVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-slate-400 text-sm font-mono">{mockUser.accountNumber}</span>
+              <button
+                onClick={() => { navigator.clipboard?.writeText(mockUser.accountNumber); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                className="text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+              <span className="text-slate-500 text-xs">· Providus Bank</span>
+            </div>
+          </div>
+          <div className="flex gap-2.5 shrink-0">
+            <Button onClick={() => navigate("/wallet")} className="bg-white text-slate-900 hover:bg-gray-100">
+              <Plus className="w-4 h-4" /> Fund wallet
+            </Button>
+            <Button variant="secondary" onClick={() => navigate("/transactions")} className="bg-white/10 border-white/10 text-white hover:bg-white/15">
+              <Receipt className="w-4 h-4" /> History
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Wallet balance" value={fmt(mockUser.balance)} icon={Wallet} tone="neutral" meta="Available now" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard label="Total deposits" value={fmt(totalDeposits)} icon={ArrowDownLeft} tone="success" meta="This month" />
         <StatCard label="Total purchases" value={fmt(totalPurchases)} icon={ShoppingBag} tone="neutral" meta="This month" />
-        <StatCard label="Successful transactions" value={String(successfulCount)} icon={CheckCircle2} tone="success" meta={`${transactions.length} total this month`} />
+        <StatCard label="Successful" value={String(successfulCount)} icon={CheckCircle2} tone="success" meta={`of ${transactions.length} this month`} />
         <StatCard label="Pending / failed" value={String(attentionCount)} icon={AlertTriangle} tone="warning" meta="Needs attention" />
         <StatCard label="Today's spend" value={fmt(todaySpend)} icon={TrendingUp} tone="neutral" meta="Across all services" />
       </div>

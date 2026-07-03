@@ -60,7 +60,7 @@ export function Card({ className = "", children, ...props }: HTMLAttributes<HTML
   );
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+export function PageHeader({ title, description, actions }: { title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap">
       <div>
