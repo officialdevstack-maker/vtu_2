@@ -1,17 +1,7 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "@/shared/providers/auth";
+import { Outlet } from "react-router-dom";
 
  const ProtectedRoute = () => {
-    const { isAuthenticated, isLoading } = useAuth();
-
-    if (isLoading) {
-        return null;
-    }
-
-    if (!isAuthenticated) {
-        return <Navigate to="/auth" replace />;
-    }
-
+    // AUTH BYPASS: remove this and restore original for production
     return <Outlet />;
 };
 

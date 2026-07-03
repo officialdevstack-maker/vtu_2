@@ -106,7 +106,7 @@ export default function LandingPage() {
 
       {/* Simple Footer */}
       <footer className="max-w-6xl mx-auto px-4 py-8 text-center text-slate-500 text-xs">
-        <p>&copy; {new Date().getFullYear()} VTU Platform. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} KORA. All rights reserved.</p>
       </footer>
     </div>
   );

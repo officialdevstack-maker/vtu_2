@@ -1,23 +1,6 @@
-import {
-  Box,
-  Card,
-  Grid,
-  Typography,
-  TextField,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  InputAdornment,
-  IconButton,
-  CircularProgress,
-} from "@mui/material";
-import { Person2Outlined as PersonOutlineIcon } from "@mui/icons-material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import { Link as RouterLink } from "react-router-dom";
-import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
-import Stack from "@mui/material/Stack";
 import { useState } from "react";
+import { Eye, EyeOff, Zap, Shield, Activity, Users, Lock, Mail } from "lucide-react";
+import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "../validators";
@@ -25,149 +8,197 @@ import { useAuth } from "@/shared/providers/auth";
 import { useNavigate } from "react-router-dom";
 
 const LoginForm = () => {
-  const [toggle, setToggle] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // 3. Initialize React Hook Form with Zod Resolver
   const {
     register,
     handleSubmit,
-
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  // 4. Form Submission Handler
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data.login, data.password);
-      console.log("Logged in successfully via Axios!");
       navigate("/dashboard", { replace: true });
-    } catch (error) {
-      // console.log(error.response);
+    } catch {
+      setError("root", { message: "Invalid credentials. Please try again." });
     }
   };
 
   return (
-    <Box component="main" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", p: 2, bgcolor: "background.default" }}>
-      <Card sx={{ width: "100%", maxWidth: 980, borderRadius: 3, overflow: "hidden", boxShadow: 2 }}>
-        <Grid container>
-          <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", justifyContent: "space-between", bgcolor: "#0f172a", p: 6, color: "white" }}>
-            <Box>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 4 }}>
-                <Box sx={{ bgcolor: "#2563eb", borderRadius: 2, width: 40, height: 40, display: "grid", placeItems: "center" }}>
-                  <BoltRoundedIcon />
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: "white" }}>SwiftVTU</Typography>
-              </Stack>
-              <Typography variant="h4" sx={{ fontWeight: 800, lineHeight: 1.2, mb: 2 }}>
-                VTU services,<br />simplified.
-              </Typography>
-              <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.62)", maxWidth: 280 }}>
-                Recharge airtime, buy data, pay utility bills and more — all in one place.
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: "white" }}>150K+</Typography>
-                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.56)" }}>Customers</Typography>
-              </Box>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: "white" }}>98.2%</Typography>
-                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.56)" }}>Uptime</Typography>
-              </Box>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: "white" }}>24/7</Typography>
-                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.56)" }}>Support</Typography>
-              </Box>
-            </Stack>
-          </Grid>
+    <div className="min-h-screen flex bg-app-bg">
+      {/* Left brand panel */}
+      <div className="hidden lg:flex lg:w-[480px] flex-col justify-between p-12 relative overflow-hidden shrink-0 bg-brand-gradient-dark">
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5" />
+        <div className="absolute top-1/3 left-20 w-48 h-48 rounded-full bg-white/5" />
+        <div className="absolute -bottom-10 -left-10 w-56 h-56 rounded-full bg-white/5" />
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ p: { xs: 4, md: 6 } }}>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>Welcome Back</Typography>
-                <Typography variant="body2" color="text.secondary">Securely access your SwiftVTU account</Typography>
-              </Box>
+        {/* Logo */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-10">
+            <div className="w-11 h-11 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-white font-black text-xl tracking-tight leading-tight">KORA</p>
+              <p className="text-indigo-300 text-xs font-semibold">VTU Platform</p>
+            </div>
+          </div>
 
-              <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                <TextField
-                  fullWidth
-                  label="Email or phone"
-                  placeholder="you@company.com or 0801xxxxxxx"
-                  variant="outlined"
-                  margin="normal"
-                  sx={{ mb: 2 }}
-                  {...register("login")}
-                  error={!!errors.login}
-                  helperText={errors.login?.message}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PersonOutlineIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                      'aria-label': 'email or phone',
-                    },
-                  }}
-                />
+          <h1 className="text-4xl font-black text-white leading-tight mb-4">
+            Nigeria's Most<br />Reliable VTU<br />Platform
+          </h1>
+          <p className="text-indigo-200 text-base leading-relaxed mb-10 max-w-[300px]">
+            Buy airtime, data, pay electricity bills, cable TV subscriptions and more \u2014 instantly and securely.
+          </p>
 
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Password</Typography>
-                  <Button component={RouterLink} to="/forgot-password" size="small" variant="text" sx={{ textTransform: "none" }}>Forgot password?</Button>
-                </Box>
+          <div className="space-y-3">
+            {[
+              { icon: Shield, text: "Bank-grade encryption on every transaction" },
+              { icon: Activity, text: "99.9% uptime \u2014 always available when you need it" },
+              { icon: Users, text: "Trusted by 150,000+ Nigerians nationwide" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3 text-indigo-200 text-sm">
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-indigo-300" />
+                </div>
+                {text}
+              </div>
+            ))}
+          </div>
+        </div>
 
-                <TextField
-                  fullWidth
-                  label="Password"
-                  placeholder="Enter your password"
-                  type={toggle ? "text" : "password"}
-                  variant="outlined"
-                  sx={{ mb: 2 }}
-                  {...register("password")}
-                  error={!!errors.password}
-                  helperText={errors.password?.message}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <LockOutlinedIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton edge="end" size="small" onClick={() => setToggle(!toggle)} aria-label="toggle password visibility">
-                            <VisibilityOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                      'aria-label': 'password',
-                    },
-                  }}
-                />
+        {/* Stats */}
+        <div className="relative z-10 grid grid-cols-3 gap-3">
+          {[["150K+", "Customers"], ["99.9%", "Uptime"], ["24/7", "Support"]].map(([val, label]) => (
+            <div key={label} className="bg-white/10 rounded-2xl p-4 border border-white/10 text-center">
+              <p className="text-white font-black text-xl">{val}</p>
+              <p className="text-indigo-300 text-xs mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
-                <FormControlLabel control={<Checkbox size="small" {...register("rememberMe")} />} label={<Typography variant="body2">Remember me for 30 days</Typography>} sx={{ mb: 3 }} />
+      {/* Right form panel */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-black text-gray-900 text-lg">KORA</span>
+          </div>
 
-                <Button fullWidth type="submit" variant="contained" size="large" disableElevation sx={{ py: 1.5, mb: 2 }} disabled={isSubmitting} startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}>
-                  {isSubmitting ? "Logging in..." : "Login to Account"}
-                </Button>
+          <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 p-8 border border-gray-100">
+            <div className="mb-7">
+              <h2 className="text-2xl font-black text-gray-900 mb-1">Welcome back</h2>
+              <p className="text-gray-400 text-sm">Sign in to your KORA account to continue</p>
+            </div>
 
-                <Typography sx={{ textAlign: "center" }} variant="body2">
-                  Don't have an account?{' '}
-                  <RouterLink to="/register" style={{ color: 'var(--mui-palette-primary-main)', fontWeight: 700, textDecoration: 'none' }}>
-                    Create an account
+            {errors.root && (
+              <div className="mb-5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm font-medium">
+                {errors.root.message}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+              {/* Email/Phone */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Email or Phone Number
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="you@email.com or 08012345678"
+                    {...register("login")}
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-gray-50 focus:bg-white ${errors.login ? "border-red-300 bg-red-50" : "border-gray-200"}`}
+                  />
+                </div>
+                {errors.login && <p className="text-red-500 text-xs mt-1">{errors.login.message}</p>}
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Password</label>
+                  <RouterLink to="/forgot-password" className="text-xs text-indigo-600 font-semibold hover:text-indigo-700">
+                    Forgot password?
                   </RouterLink>
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
-      </Card>
-    </Box>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                    {...register("password")}
+                    className={`w-full pl-10 pr-11 py-3 rounded-xl border text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition bg-gray-50 focus:bg-white ${errors.password ? "border-red-300 bg-red-50" : "border-gray-200"}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+              </div>
+
+              {/* Remember me */}
+              <div className="flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  {...register("rememberMe")}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400 cursor-pointer"
+                />
+                <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer select-none">
+                  Remember me for 30 days
+                </label>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Signing in...
+                  </>
+                ) : "Sign In to Account"}
+              </button>
+            </form>
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              Don't have an account?{" "}
+              <RouterLink to="/register" className="text-indigo-600 font-bold hover:text-indigo-700">
+                Create account
+              </RouterLink>
+            </p>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
+            By signing in, you agree to our{" "}
+            <a href="#" className="text-indigo-500 hover:underline">Terms of Service</a> and{" "}
+            <a href="#" className="text-indigo-500 hover:underline">Privacy Policy</a>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

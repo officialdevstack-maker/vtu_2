@@ -1,128 +1,161 @@
 import {
-  Box,
-  Chip,
-  Divider,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
-import PhoneAndroidRoundedIcon from "@mui/icons-material/PhoneAndroidRounded";
-import WifiRoundedIcon from "@mui/icons-material/WifiRounded";
-import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
-import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import LayersRoundedIcon from "@mui/icons-material/LayersRounded";
-import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
-import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
+  LayoutDashboard, Bell, Settings, User, LogOut, Receipt,
+  Wallet, HelpCircle, Share2, Users, Phone, Wifi, Tv, Plug,
+  CreditCard, Zap,
+} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const NAV_ITEMS = [
-  { label: "Dashboard", path: "/dashboard", icon: <DashboardRoundedIcon fontSize="small" /> },
-  { label: "Buy Airtime", path: "/airtime", icon: <PhoneAndroidRoundedIcon fontSize="small" /> },
-  { label: "Buy Data", path: "/data", icon: <WifiRoundedIcon fontSize="small" /> },
-  { label: "Utility Bills", path: "/bills", icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: "Transactions", path: "/transactions", icon: <LayersRoundedIcon fontSize="small" /> },
-  { label: "Settings", path: "/settings", icon: <SettingsRoundedIcon fontSize="small" /> },
+type NavItem = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  path: string;
+  badge?: number;
+};
+
+const sections: { label: string; items: NavItem[] }[] = [
+  {
+    label: "MAIN",
+    items: [
+      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+      { id: "wallet", label: "Fund Wallet", icon: Wallet, path: "/wallet" },
+      { id: "transactions", label: "Transactions", icon: Receipt, path: "/transactions" },
+    ],
+  },
+  {
+    label: "SERVICES",
+    items: [
+      { id: "buy-airtime", label: "Buy Airtime", icon: Phone, path: "/buy-airtime" },
+      { id: "buy-data", label: "Buy Data", icon: Wifi, path: "/buy-data" },
+      { id: "cable-tv", label: "Cable TV", icon: Tv, path: "/cable-tv" },
+      { id: "electricity", label: "Electricity", icon: Plug, path: "/electricity" },
+    ],
+  },
+  {
+    label: "EXPLORE",
+    items: [
+      { id: "pricing", label: "Pricing", icon: CreditCard, path: "/pricing" },
+      { id: "referral", label: "Referral", icon: Share2, path: "/referral" },
+      { id: "beneficiaries", label: "Beneficiaries", icon: Users, path: "/beneficiaries" },
+      { id: "notifications", label: "Notifications", icon: Bell, path: "/notifications", badge: 3 },
+      { id: "support", label: "Support", icon: HelpCircle, path: "/support" },
+    ],
+  },
 ];
 
-export default function Sidebar() {
+const bottomItems: NavItem[] = [
+  { id: "profile", label: "Profile", icon: User, path: "/profile" },
+  { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
+];
+
+export default function Sidebar({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const go = (path: string) => {
+    navigate(path);
+    onClose();
+  };
+
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
+
   return (
-    <Box
-      sx={{
-        width: 240,
-        flexShrink: 0,
-        bgcolor: "#0D1117",
-        color: "white",
-        display: { xs: "none", md: "flex" },
-        flexDirection: "column",
-        height: "100vh",
-        position: "sticky",
-        top: 0,
-        borderRight: "1px solid rgba(255,255,255,0.05)",
-      }}
-    >
-      {/* Logo */}
-      <Box sx={{ px: 3, pt: 3, pb: 2.5 }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <Box sx={{ width: 32, height: 32, borderRadius: 1, bgcolor: "#5558E3", display: "grid", placeItems: "center", flexShrink: 0 }}>
-            <BoltRoundedIcon sx={{ fontSize: 18 }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: 15, lineHeight: 1.1, color: "white" }}>SwiftVTU</Typography>
-            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>Premium services</Typography>
-          </Box>
-        </Stack>
-      </Box>
+    <>
+      {open && (
+        <div className="fixed inset-0 bg-black/60 z-20 lg:hidden" onClick={onClose} />
+      )}
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 flex flex-col transition-transform duration-200 shrink-0 bg-indigo-950 ${
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        {/* Logo */}
+        <div className="h-16 flex items-center px-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-base tracking-tight leading-tight">KORA</p>
+              <p className="text-indigo-300 text-xs font-medium">VTU Platform</p>
+            </div>
+          </div>
+        </div>
 
-      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mx: 2 }} />
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-5">
+          {sections.map((section) => (
+            <div key={section.label}>
+              <p className="text-xs font-bold tracking-widest mb-2 px-3" style={{ color: "rgba(255,255,255,0.25)" }}>
+                {section.label}
+              </p>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const active = isActive(item.path);
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => go(item.path)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                        active
+                          ? "bg-white text-indigo-700 shadow-md"
+                          : "text-white/65 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      <item.icon className={`w-4 h-4 shrink-0 ${active ? "text-indigo-600" : ""}`} />
+                      <span>{item.label}</span>
+                      {"badge" in item && (
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                          {String(item.badge)}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
 
-      {/* Nav label */}
-      <Typography variant="caption" sx={{ px: 3, pt: 2.5, pb: 1, color: "rgba(255,255,255,0.32)", fontWeight: 700, letterSpacing: 1, fontSize: 10, textTransform: "uppercase" }}>
-        Main menu
-      </Typography>
-
-      {/* Nav items */}
-      <List disablePadding sx={{ flexGrow: 1, px: 1.5 }}>
-        {NAV_ITEMS.map(({ label, icon, path }) => {
-          const active = location.pathname === path;
-          return (
-            <Tooltip key={label} title="" placement="right">
-              <ListItemButton
-                  selected={active}
-                onClick={() => navigate(path)}
-                sx={{
-                  borderRadius: 1,
-                  mb: 0.25,
-                  py: 0.875,
-                  pl: active ? "calc(12px - 2px)" : "12px",
-                  pr: 1.5,
-                  color: active ? "white" : "rgba(255,255,255,0.45)",
-                  borderLeft: active ? "2px solid #5558E3" : "2px solid transparent",
-                  transition: "all 0.12s",
-                  "&.Mui-selected": {
-                    bgcolor: "rgba(85,88,227,0.08)",
-                    color: "white",
-                    "& .MuiListItemIcon-root": { color: "#8B8FF8" },
-                    "&:hover": { bgcolor: "rgba(85,88,227,0.12)" },
-                  },
-                  "&:hover:not(.Mui-selected)": { bgcolor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.8)" },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 34, color: "inherit" }}>{icon}</ListItemIcon>
-                <Typography sx={{ fontSize: 13.5, fontWeight: active ? 700 : 500 }}>{label}</Typography>
-              </ListItemButton>
-            </Tooltip>
-          );
-        })}
-      </List>
-
-      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mx: 2 }} />
-
-      {/* User account strip */}
-      <Box sx={{ px: 2, py: 2 }}>
-        <Box sx={{ bgcolor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 2, p: 1.5 }}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1.5 }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: "50%", bgcolor: "rgba(85,88,227,0.2)", display: "grid", placeItems: "center" }}>
-                <AccountCircleRoundedIcon fontSize="small" sx={{ color: "#A5B4FC" }} />
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, color: "white", lineHeight: 1.2 }}>John Doe</Typography>
-              <Chip label="Admin" size="small" sx={{ height: 16, fontSize: 10, bgcolor: "rgba(85,88,227,0.2)", color: "#A5B4FC", fontWeight: 700, mt: 0.25 }} />
-            </Box>
-          </Stack>
-          <ListItemButton onClick={() => {}} sx={{ borderRadius: 1.5, py: 0.6, px: 1, color: "#fca5a5", "&:hover": { bgcolor: "rgba(252,165,165,0.08)" } }}>
-            <ListItemIcon sx={{ minWidth: 28, color: "inherit" }}><LogoutRoundedIcon sx={{ fontSize: 16 }} /></ListItemIcon>
-            <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Logout</Typography>
-          </ListItemButton>
-        </Box>
-      </Box>
-    </Box>
+        {/* Bottom items */}
+        <div className="px-3 pb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="pt-2 space-y-0.5 mb-2">
+            {bottomItems.map((item) => {
+              const active = isActive(item.path);
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => go(item.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                    active ? "bg-white text-indigo-700 shadow-md" : "text-white/65 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* User footer */}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-white/10 transition-all group">
+            <div className="w-8 h-8 bg-indigo-400 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0">
+              CO
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white truncate leading-tight">Chukwuemeka</p>
+              <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.45)" }}>emeka.obi@gmail.com</p>
+            </div>
+            <LogOut className="w-4 h-4 text-white/30 group-hover:text-white/60 shrink-0" />
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

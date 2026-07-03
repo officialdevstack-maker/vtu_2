@@ -1,117 +1,86 @@
-import {
-  Avatar,
-  Badge,
-  Box,
-  Button,
-  Chip,
-  Divider,
-  IconButton,
-  InputAdornment,
-  Menu,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
-import { useState } from "react";
+import { Bell, Menu, Search, Settings } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-export default function Topbar() {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const pageTitles: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/services": "All Services",
+  "/transactions": "Transactions",
+  "/wallet": "Fund Wallet",
+  "/notifications": "Notifications",
+  "/profile": "My Profile",
+  "/settings": "Settings",
+  "/support": "Support",
+  "/referral": "Referral Program",
+  "/beneficiaries": "Beneficiaries",
+  "/buy-airtime": "Buy Airtime",
+  "/buy-data": "Buy Data",
+  "/cable-tv": "Cable TV",
+  "/electricity": "Electricity",
+  "/pricing": "Pricing",
+  "/admin": "Admin Dashboard",
+};
 
-  const now = new Date();
-  const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+export default function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const title = pageTitles[location.pathname] ?? "KORA";
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 2,
-        mb: 3.5,
-        flexWrap: "wrap",
-      }}
-    >
-      {/* Left: greeting */}
-      <Box>
-        <Typography sx={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>
-          {greeting}, John 👋
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-          Here's what's happening with your account today.
-        </Typography>
-      </Box>
+    <header className="h-16 bg-white border-b border-gray-100 flex items-center px-4 lg:px-6 gap-3 shrink-0 shadow-sm">
+      <button
+        onClick={onToggleSidebar}
+        className="lg:hidden p-2 -ml-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
 
-      {/* Right: actions */}
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <TextField
-          size="small"
-          placeholder="Search…"
-          sx={{
-            display: { xs: "none", lg: "flex" },
-            width: 220,
-            "& .MuiOutlinedInput-root": {
-              bgcolor: "white",
-              borderRadius: 2,
-              fontSize: 13,
-            },
-          }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRoundedIcon sx={{ fontSize: 18, color: "text.disabled" }} />
-                </InputAdornment>
-              ),
-            },
-          }}
+      <h1 className="text-gray-900 font-semibold text-sm sm:text-base truncate">{title}</h1>
+
+      {/* Search bar - hidden on mobile */}
+      <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-64 hover:border-indigo-300 transition-colors focus-within:border-indigo-400 focus-within:bg-white">
+        <Search className="w-4 h-4 text-gray-400 shrink-0" />
+        <input
+          type="text"
+          placeholder="Search here..."
+          className="bg-transparent text-sm text-gray-700 placeholder:text-gray-400 outline-none w-full"
         />
+      </div>
 
-        <Button
-          variant="contained"
-          startIcon={<AddRoundedIcon />}
-          disableElevation
-          sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, px: 2, whiteSpace: "nowrap" }}
+      <div className="ml-auto flex items-center gap-2">
+        {/* Notification */}
+        <button
+          onClick={() => navigate("/notifications")}
+          className="relative p-2.5 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-indigo-600 transition group"
         >
-          Fund Wallet
-        </Button>
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+        </button>
 
-        <IconButton
-          sx={{ bgcolor: "white", border: "1px solid #e5e7eb", borderRadius: 2, width: 38, height: 38 }}
+        {/* Settings shortcut */}
+        <button
+          onClick={() => navigate("/settings")}
+          className="p-2.5 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-indigo-600 transition hidden sm:flex"
         >
-          <Badge variant="dot" color="error">
-            <NotificationsNoneRoundedIcon sx={{ fontSize: 19 }} />
-          </Badge>
-        </IconButton>
+          <Settings className="w-5 h-5" />
+        </button>
 
-        <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
 
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ alignItems: "center", cursor: "pointer", py: 0.5, px: 1, borderRadius: 2, "&:hover": { bgcolor: "#f1f5f9" } }}
-          onClick={(e) => setAnchorEl(e.currentTarget)}
+        {/* User profile */}
+        <button
+          onClick={() => navigate("/profile")}
+          className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-100 transition"
         >
-          <Avatar sx={{ width: 32, height: 32, bgcolor: "#1e3a8a", fontSize: 13, fontWeight: 800 }}>JD</Avatar>
-          <Box sx={{ display: { xs: "none", sm: "block" } }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>John Doe</Typography>
-            <Chip label="Admin" size="small" sx={{ height: 16, fontSize: 10, bgcolor: "#eff6ff", color: "#2563eb", fontWeight: 700 }} />
-          </Box>
-          <KeyboardArrowDownRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-        </Stack>
-
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)} sx={{ mt: 1 }}>
-          <MenuItem dense>Profile</MenuItem>
-          <MenuItem dense>Settings</MenuItem>
-          <Divider />
-          <MenuItem dense sx={{ color: "error.main" }}>Logout</MenuItem>
-        </Menu>
-      </Stack>
-    </Box>
+          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm">
+            CO
+          </div>
+          <div className="hidden sm:block text-left">
+            <p className="text-sm font-semibold text-gray-900 leading-tight">Rara Avis</p>
+            <p className="text-xs text-gray-400 leading-tight">User</p>
+          </div>
+        </button>
+      </div>
+    </header>
   );
 }
