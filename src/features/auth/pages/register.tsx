@@ -3,15 +3,14 @@ import { Eye, EyeOff, Zap } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginFormData } from "../validators";
-import { useAuth } from "@/shared/providers/auth";
+import { registerSchema, type RegisterFormData } from "../validators";
+import { apiClient } from "@/shared/api/apiClient";
 
 const inputCls =
   "w-full px-3.5 py-2.5 rounded-lg border bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition";
 
-const LoginForm = () => {
+export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -19,16 +18,20 @@ const LoginForm = () => {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     try {
-      await login(data.login, data.password);
-      navigate("/dashboard", { replace: true });
+      await apiClient.post("/register", {
+        name: data.name,
+        login: data.login,
+        password: data.password,
+      });
+      navigate("/login", { replace: true });
     } catch {
-      setError("root", { message: "Invalid credentials. Please try again." });
+      setError("root", { message: "Could not create account. Please try again." });
     }
   };
 
@@ -47,8 +50,8 @@ const LoginForm = () => {
         <div className="w-full max-w-sm">
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="mb-6">
-              <h1 className="text-lg font-semibold text-slate-900">Sign in</h1>
-              <p className="text-slate-500 text-sm mt-0.5">Enter your details to access your account</p>
+              <h1 className="text-lg font-semibold text-slate-900">Create an account</h1>
+              <p className="text-slate-500 text-sm mt-0.5">Start using KORA to manage airtime, data and bills</p>
             </div>
 
             {errors.root && (
@@ -59,9 +62,18 @@ const LoginForm = () => {
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  Email or phone number
-                </label>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Full name</label>
+                <input
+                  type="text"
+                  placeholder="Emeka Obi"
+                  {...register("name")}
+                  className={`${inputCls} ${errors.name ? "border-red-300" : "border-gray-300"}`}
+                />
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Email or phone number</label>
                 <input
                   type="text"
                   placeholder="you@email.com or 08012345678"
@@ -72,12 +84,7 @@ const LoginForm = () => {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-slate-600">Password</label>
-                  <RouterLink to="/forgot-password" className="text-xs text-indigo-600 font-medium hover:text-indigo-700">
-                    Forgot password?
-                  </RouterLink>
-                </div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -96,38 +103,49 @@ const LoginForm = () => {
                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Confirm password</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...register("confirmPassword")}
+                  className={`${inputCls} ${errors.confirmPassword ? "border-red-300" : "border-gray-300"}`}
+                />
+                {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
+              </div>
+
+              <div className="flex items-start gap-2">
                 <input
                   type="checkbox"
-                  id="remember"
-                  {...register("rememberMe")}
-                  className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer"
+                  id="acceptTerms"
+                  {...register("acceptTerms")}
+                  className="w-3.5 h-3.5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer"
                 />
-                <label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer select-none">
-                  Remember me for 30 days
+                <label htmlFor="acceptTerms" className="text-sm text-slate-600 cursor-pointer select-none">
+                  I agree to the <a href="#" className="text-indigo-600 font-medium hover:text-indigo-700">Terms of Service</a> and{" "}
+                  <a href="#" className="text-indigo-600 font-medium hover:text-indigo-700">Privacy Policy</a>
                 </label>
               </div>
+              {errors.acceptTerms && <p className="text-red-500 text-xs -mt-2">{errors.acceptTerms.message}</p>}
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-medium py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
               >
-                {isSubmitting ? "Signing in..." : "Sign in"}
+                {isSubmitting ? "Creating account..." : "Create account"}
               </button>
             </form>
           </div>
 
           <p className="text-center text-sm text-slate-500 mt-5">
-            Don't have an account?{" "}
-            <RouterLink to="/register" className="text-indigo-600 font-medium hover:text-indigo-700">
-              Create one
+            Already have an account?{" "}
+            <RouterLink to="/login" className="text-indigo-600 font-medium hover:text-indigo-700">
+              Sign in
             </RouterLink>
           </p>
         </div>
       </div>
     </div>
   );
-};
-
-export default LoginForm;
+}

@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "./route-layout";
-import { airtimeRouter } from "@features/airtime";
 import { authRouter, ProtectedLayout } from "@/features/auth";
 import App from "@/App";
 import { UserLayout, userRouter } from "@/features/user";
@@ -20,9 +19,9 @@ export const router = createBrowserRouter([
 
       {
         element: <ProtectedLayout />,
-        children: [...airtimeRouter, {
+        children: [{
           element:<UserLayout />,
-          children: userRouter
+          children: [...userRouter]
         }],
       },
     ],
