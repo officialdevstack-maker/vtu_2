@@ -326,41 +326,39 @@ export default function CustomersPage() {
         ) : (
           <>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[900px]">
+            <table className="w-full text-sm table-fixed min-w-[600px] lg:min-w-0">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Name", "Email", "Phone", "Wallet balance", "Transactions", "Status", "Date joined", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-2 text-xs font-medium text-slate-500 whitespace-nowrap ${
-                        h === "Wallet balance" || h === "Transactions" ? "text-right" : h === "Actions" ? "text-center" : "text-left"
-                      }`}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  <th className="w-[28%] lg:w-[19%] px-4 py-2 text-left text-xs font-medium text-slate-500">Name</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Email</th>
+                  <th className="hidden lg:table-cell lg:w-[15%] px-4 py-2 text-left text-xs font-medium text-slate-500">Phone</th>
+                  <th className="hidden lg:table-cell lg:w-[13%] px-4 py-2 text-right text-xs font-medium text-slate-500">Balance</th>
+                  <th className="hidden lg:table-cell lg:w-[7%] px-4 py-2 text-right text-xs font-medium text-slate-500">Txns</th>
+                  <th className="w-[26%] lg:w-[13%] px-4 py-2 text-left text-xs font-medium text-slate-500">Status</th>
+                  <th className="hidden lg:table-cell lg:w-[10%] px-4 py-2 text-left text-xs font-medium text-slate-500">Joined</th>
+                  <th className="w-14 px-2 py-2 text-center text-xs font-medium text-slate-500 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {paginated.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
                           {initials(c.name)}
                         </div>
-                        <span className="font-medium text-slate-900 text-xs whitespace-nowrap">{c.name}</span>
+                        <span className="font-medium text-slate-900 text-xs truncate">{c.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{c.email}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{c.phone}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">{fmt(c.balance)}</td>
-                    <td className="px-4 py-3 text-right text-xs text-slate-500">{c.txns}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 truncate">{c.email}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{c.phone}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums whitespace-nowrap">{fmt(c.balance)}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-right text-xs text-slate-500">{c.txns}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={c.status} />
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">{formatDate(c.dateJoined)}</td>
-                    <td className="px-4 py-3">
+                    <td className="hidden lg:table-cell px-4 py-3 text-xs text-slate-400 whitespace-nowrap">{formatDate(c.dateJoined)}</td>
+                    <td className="px-2 py-3">
                       <div className="relative flex justify-center">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
