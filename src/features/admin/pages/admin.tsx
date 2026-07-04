@@ -19,7 +19,7 @@ import {
   ShieldAlert,
   ArrowRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { fmt } from "../../user/data/mock";
 import {
   StatusBadge,
@@ -28,6 +28,8 @@ import {
   Card,
   Button,
   ConfirmSummary,
+  SkeletonRows,
+  SkeletonStatGrid,
   inputCls,
 } from "../../user/components/shared-ui";
 import {
@@ -160,6 +162,7 @@ const recentTxns = [
 type FundTarget = { id: string; name: string } | null;
 
 export default function AdminPage() {
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "overview" | "users" | "transactions"
   >("overview");
@@ -168,6 +171,19 @@ export default function AdminPage() {
   const [fundTarget, setFundTarget] = useState<FundTarget>(null);
   const [fundAmount, setFundAmount] = useState("");
   const [fundStep, setFundStep] = useState<"form" | "confirm" | "done">("form");
+  const [funding, setFunding] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const confirmFunding = async () => {
+    setFunding(true);
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    setFunding(false);
+    setFundStep("done");
+  };
 
   const filteredUsers = recentUsers.filter(
     (u) =>
@@ -310,6 +326,9 @@ export default function AdminPage() {
 
       {activeTab === "overview" && (
         <>
+          {loading ? (
+            <SkeletonStatGrid count={6} className="grid grid-cols-2 lg:grid-cols-3 gap-4" />
+          ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {statCards.map((s) => (
               <StatCard
@@ -322,6 +341,7 @@ export default function AdminPage() {
               />
             ))}
           </div>
+          )}
 
           {/* Needs attention */}
           {alerts.length > 0 && (
@@ -496,6 +516,9 @@ export default function AdminPage() {
                 View all
               </button>
             </div>
+            {loading ? (
+              <SkeletonRows count={5} />
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm table-fixed min-w-[440px] lg:min-w-0">
                 <thead>
@@ -549,6 +572,7 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+            )}
           </Card>
         </>
       )}
@@ -574,6 +598,9 @@ export default function AdminPage() {
               </Button>
             </div>
           </div>
+          {loading ? (
+            <SkeletonRows count={5} />
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm table-fixed min-w-[560px] lg:min-w-0">
               <thead>
@@ -643,6 +670,7 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+          )}
         </Card>
       )}
 
@@ -667,6 +695,9 @@ export default function AdminPage() {
               </Button>
             </div>
           </div>
+          {loading ? (
+            <SkeletonRows count={5} />
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm table-fixed min-w-[440px] lg:min-w-0">
               <thead>
@@ -714,6 +745,7 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+          )}
         </Card>
       )}
 
@@ -797,12 +829,13 @@ export default function AdminPage() {
                   <Button
                     variant="secondary"
                     fullWidth
+                    disabled={funding}
                     onClick={() => setFundStep("form")}
                   >
                     Back
                   </Button>
-                  <Button fullWidth onClick={() => setFundStep("done")}>
-                    Confirm & credit
+                  <Button fullWidth loading={funding} disabled={funding} onClick={confirmFunding}>
+                    {funding ? "" : "Confirm & credit"}
                   </Button>
                 </div>
               </div>

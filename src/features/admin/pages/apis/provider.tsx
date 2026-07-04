@@ -24,8 +24,8 @@ import {
   StatCard,
   StatusBadge,
   EmptyState,
-  SkeletonLine,
   SkeletonCard,
+  SkeletonRows,
   inputCls,
 } from "../../../user/components/shared-ui";
 import {
@@ -683,19 +683,7 @@ const ProviderPage = () => {
         {/* Table / card list */}
         <Card className="overflow-hidden">
           {loading ? (
-            <div className="p-4 space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <SkeletonLine className="h-8 w-8 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-1.5">
-                    <SkeletonLine className="h-3 w-32" />
-                    <SkeletonLine className="h-2.5 w-20" />
-                  </div>
-                  <SkeletonLine className="h-5 w-16 rounded-md" />
-                  <SkeletonLine className="h-5 w-5 rounded" />
-                </div>
-              ))}
-            </div>
+            <SkeletonRows count={5} />
           ) : providers.length === 0 ? (
             <EmptyState
               icon={Plug}

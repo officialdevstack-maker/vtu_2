@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate, useNavigation } from "react-router-dom";
 import {
   Bell,
   BellRing,
@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../../shared/providers/auth";
+import { TopLoadingBar } from "../../user/components/shared-ui";
 
 type NavChild = {
   label: string;
@@ -113,6 +114,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const navigation = useNavigation();
   const { logout } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -259,6 +261,7 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen bg-app-bg text-slate-900">
+      <TopLoadingBar active={navigation.state === "loading"} />
       <div className="flex min-h-screen">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-100 bg-white lg:sticky lg:top-0 lg:h-screen lg:flex">
           {renderSidebarContent()}

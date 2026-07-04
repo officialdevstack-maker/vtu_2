@@ -26,7 +26,8 @@ import {
   Card,
   EmptyState,
   PageHeader,
-  SkeletonLine,
+  SkeletonRows,
+  SkeletonStatGrid,
   StatCard,
   inputCls,
 } from "../../../user/components/shared-ui";
@@ -345,6 +346,7 @@ export default function TransactionsPage() {
   const [confirmTarget, setConfirmTarget] = useState<ConfirmTarget | null>(
     null,
   );
+  const [processing, setProcessing] = useState(false);
   const [reverseReason, setReverseReason] = useState("");
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -489,10 +491,18 @@ export default function TransactionsPage() {
     setOpenMenuId(null);
   };
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     if (!confirmTarget) return;
 
     const { action, transaction } = confirmTarget;
+
+    if (action === "reverse" && !reverseReason.trim()) {
+      showToast("Enter a reason before reversing this transaction.", "error");
+      return;
+    }
+
+    setProcessing(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     if (action === "retry") {
       const nextStatus = transaction.status === "Failed" ? "Pending" : "Successful";
@@ -507,10 +517,6 @@ export default function TransactionsPage() {
     }
 
     if (action === "reverse") {
-      if (!reverseReason.trim()) {
-        showToast("Enter a reason before reversing this transaction.", "error");
-        return;
-      }
       updateTransactionStatus(
         transaction.id,
         "Reversed",
@@ -528,6 +534,7 @@ export default function TransactionsPage() {
       showToast(`${transaction.id} marked as successful.`);
     }
 
+    setProcessing(false);
     setConfirmTarget(null);
     setReverseReason("");
   };
@@ -563,16 +570,7 @@ export default function TransactionsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {loading ? (
-          Array.from({ length: 4 }, (_, index) => (
-            <Card key={index} className="p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <SkeletonLine className="h-3 w-28" />
-                <SkeletonLine className="h-8 w-8 rounded-lg" />
-              </div>
-              <SkeletonLine className="h-6 w-20" />
-              <SkeletonLine className="mt-2 h-3 w-32" />
-            </Card>
-          ))
+          <SkeletonStatGrid count={4} className="contents" />
         ) : (
           <>
             <StatCard
@@ -683,17 +681,7 @@ export default function TransactionsPage() {
         </div>
 
         {loading ? (
-          <div className="p-4">
-            {Array.from({ length: 8 }, (_, index) => (
-              <div key={index} className="flex items-center gap-4 py-3">
-                <SkeletonLine className="h-8 w-8 rounded-full" />
-                <SkeletonLine className="h-3 flex-1" />
-                <SkeletonLine className="h-3 w-24" />
-                <SkeletonLine className="h-3 w-20" />
-                <SkeletonLine className="h-7 w-7 rounded-md" />
-              </div>
-            ))}
-          </div>
+          <SkeletonRows count={8} />
         ) : filteredTransactions.length === 0 ? (
           <EmptyState
             icon={Inbox}
@@ -1052,6 +1040,7 @@ export default function TransactionsPage() {
                 <Button
                   variant="secondary"
                   fullWidth
+                  disabled={processing}
                   onClick={() => setConfirmTarget(null)}
                 >
                   Cancel
@@ -1061,9 +1050,11 @@ export default function TransactionsPage() {
                     confirmTarget.action === "reverse" ? "danger" : "primary"
                   }
                   fullWidth
+                  loading={processing}
+                  disabled={processing}
                   onClick={confirmAction}
                 >
-                  Confirm
+                  {processing ? "" : "Confirm"}
                 </Button>
               </div>
             </div>
