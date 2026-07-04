@@ -88,11 +88,10 @@ export type NetworkType = {
     type?: string | null;
     min?: string | number | null;
     max?: string | number | null;
-    adex_discount?: string | number | null;
-    spurs_discount?: string | number | null;
-    msorg_discount?: string | number | null;
-    vtpass_discount?: string | number | null;
-    payscribe_discount?: string | number | null;
+    user_discount?: string | number | null;
+    agent_discount?: string | number | null;
+    api_discount?: string | number | null;
+    bonanza_discount?: string | number | null;
     isActive?: boolean | null;
   } | null;
 };
@@ -139,15 +138,15 @@ export const networkTypeService = {
 export type Discount = {
   id: string | number;
   name: string;
+  network?: string | null;
   category?: string | null;
   type?: string | null;
   min?: string | number | null;
   max?: string | number | null;
-  adex_discount?: string | number | null;
-  spurs_discount?: string | number | null;
-  msorg_discount?: string | number | null;
-  vtpass_discount?: string | number | null;
-  payscribe_discount?: string | number | null;
+  user_discount?: string | number | null;
+  agent_discount?: string | number | null;
+  api_discount?: string | number | null;
+  bonanza_discount?: string | number | null;
   isActive?: boolean | null;
   active?: boolean | null;
   created_at?: string | null;
@@ -155,16 +154,15 @@ export type Discount = {
 };
 
 export type DiscountPayload = {
-  network: string;
+  name: string;
   category?: string | null;
   type?: string | null;
   min?: string | number | null;
   max?: string | number | null;
-  adex_discount?: string | number | null;
-  spurs_discount?: string | number | null;
-  msorg_discount?: string | number | null;
-  vtpass_discount?: string | number | null;
-  payscribe_discount?: string | number | null;
+  user_discount?: string | number | null;
+  agent_discount?: string | number | null;
+  api_discount?: string | number | null;
+  bonanza_discount?: string | number | null;
   isActive?: boolean | null;
 };
 

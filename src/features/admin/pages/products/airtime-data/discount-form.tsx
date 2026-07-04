@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
-import { ChevronLeft, Plus, Search, X } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import {
   PageHeader,
   Card,
@@ -15,14 +15,10 @@ import {
   type Discount,
   type Network,
 } from "./service";
-import { providerService, type Provider } from "../../apis/providerService";
-import { apiClient } from "@shared/api/apiClient";
 
 const BACK = "/admin/products/airtime-data?tab=airtime";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type AdminRole = { id: string | number; name: string; description?: string };
 
 type FormState = {
   name: string;
@@ -31,7 +27,10 @@ type FormState = {
   min: string;
   max: string;
   isActive: boolean;
-  vendorDiscounts: Record<string, string>; // { vendorCode → "5" }
+  userDiscount: string;
+  agentDiscount: string;
+  apiDiscount: string;
+  bonanzaDiscount: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -56,7 +55,9 @@ function Field({
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5">
-        <label className="block text-xs font-medium text-slate-600">{label}</label>
+        <label className="block text-xs font-medium text-slate-600">
+          {label}
+        </label>
         {hint && <span className="text-xs text-slate-400">{hint}</span>}
       </div>
       {children}
@@ -107,6 +108,7 @@ const blankForm = (): FormState => ({
 });
 
 const toForm = (d: Discount): FormState => {
+  console.log({ d });
   const vendorDiscounts: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(d)) {
@@ -118,7 +120,7 @@ const toForm = (d: Discount): FormState => {
   }
 
   return {
-    name: d.network ?? "",
+    name: d.name ?? "",
     category: d.category ?? "",
     type: d.type ?? "",
     min: d.min != null ? String(d.min) : "",
@@ -162,10 +164,8 @@ const toPayload = (form: FormState): Record<string, unknown> => {
 function ProviderPicker({
   vendors,
   selected,
-  discounts,
   onAdd,
   onRemove,
-  onDiscountChange,
 }: {
   vendors: Provider[];
   selected: string[];
@@ -174,108 +174,30 @@ function ProviderPicker({
   onRemove: (code: string) => void;
   onDiscountChange: (code: string, value: string) => void;
 }) {
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const available = vendors.filter(
-    (v) =>
-      v.code &&
-      !selected.includes(v.code.toLowerCase()) &&
-      v.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  console.log({ vendors, selected });
+  const selectedCode = selected[0] ?? "";
 
   return (
-    <div className="space-y-3">
-      {selected.length === 0 && (
-        <p className="text-xs text-slate-400 text-center py-2">
-          No providers added. Click "Add provider" below to configure discounts.
-        </p>
-      )}
-
-      {selected.map((code) => {
-        const vendor = vendors.find((v) => v.code?.toLowerCase() === code);
-        return (
-          <div key={code} className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-700 truncate">
-                {vendor?.name ?? code}
-              </p>
-              {vendor?.code && vendor.code.toLowerCase() !== vendor.name.toLowerCase() && (
-                <p className="text-[10px] text-slate-400">{vendor.code}</p>
-              )}
-            </div>
-            <div className="w-28 shrink-0">
-              <NumberInput
-                value={discounts[code] ?? ""}
-                onChange={(v) => onDiscountChange(code, v)}
-                placeholder="0"
-                suffix="%"
-              />
-            </div>
-            <button
-              onClick={() => onRemove(code)}
-              className="p-1.5 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        );
-      })}
-
-      <div className="relative" ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors mt-1"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add provider
-        </button>
-
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute left-0 top-7 z-20 w-64 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-              <div className="p-2 border-b border-gray-100">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-                  <input
-                    autoFocus
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search providers..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                  />
-                </div>
-              </div>
-              <div className="max-h-48 overflow-y-auto py-1">
-                {available.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-3">
-                    {vendors.length === 0 ? "Loading providers…" : "All providers added"}
-                  </p>
-                ) : (
-                  available.map((v) => (
-                    <button
-                      key={v.id}
-                      onClick={() => {
-                        onAdd(v.code!.toLowerCase());
-                        setSearch("");
-                        setOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
-                    >
-                      <span className="font-medium">{v.name}</span>
-                      {v.code && (
-                        <span className="ml-1 text-slate-400">({v.code})</span>
-                      )}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+    <div className="flex items-center gap-2">
+      <select
+        value={selectedCode}
+        onChange={(e) => {
+          if (e.target.value) onAdd(e.target.value);
+          else if (selectedCode) onRemove(selectedCode);
+        }}
+        className={`${inputCls} flex-1 min-w-0`}
+      >
+        <option value="">
+          {vendors.length === 0 ? "Loading providers…" : "Select a provider…"}
+        </option>
+        {vendors
+          .filter((v) => v.name)
+          .map((v) => (
+            <option key={v.id} value={v.name!.toLowerCase()}>
+              {v.name}
+            </option>
+          ))}
+      </select>
     </div>
   );
 }
@@ -291,7 +213,8 @@ function RoleDiscountsSection({
 }) {
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
-  const [discounts, setDiscounts] = useState<Record<string, string>>(initialValues);
+  const [discounts, setDiscounts] =
+    useState<Record<string, string>>(initialValues);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -326,11 +249,11 @@ function RoleDiscountsSection({
   };
 
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between mb-4">
+    <Card className="">
+      <div className="flex items-start justify-between mb-4 p-5">
         <div>
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            Role-based discounts
+            Pricing
           </h3>
           <p className="text-[10px] text-slate-400 mt-0.5">
             Override the base discount for users of a specific role.
@@ -350,11 +273,11 @@ function RoleDiscountsSection({
       </div>
 
       {!discountId ? (
-        <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
+        <p className="p-5 text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
           Save the discount record first to configure role-based overrides.
         </p>
       ) : loading ? (
-        <div className="space-y-3">
+        <div className="space-y-3 p-5">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-3">
               <SkeletonLine className="h-4 flex-1" />
@@ -363,13 +286,15 @@ function RoleDiscountsSection({
           ))}
         </div>
       ) : roles.length === 0 ? (
-        <p className="text-xs text-slate-400 text-center py-2">No roles found.</p>
+        <p className="text-xs text-slate-400 text-center py-2">
+          No roles found.
+        </p>
       ) : (
         <div className="divide-y divide-gray-100">
           {roles.map((role) => (
             <div
               key={role.id}
-              className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+              className="flex items-center gap-3 p-5 py-2.5 first:pt-0"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-slate-700 truncate">
@@ -419,13 +344,20 @@ export default function DiscountFormPage() {
   const [networks, setNetworks] = useState<Network[]>([]);
   const [vendors, setVendors] = useState<Provider[]>([]);
   const [saving, setSaving] = useState(false);
-  const [roleInitialValues, setRoleInitialValues] = useState<Record<string, string>>(
-    stateDiscount ? extractRoleDiscounts(stateDiscount) : {},
-  );
+  const [roleInitialValues, setRoleInitialValues] = useState<
+    Record<string, string>
+  >(stateDiscount ? extractRoleDiscounts(stateDiscount) : {});
 
   useEffect(() => {
-    networkService.getAll().then(setNetworks).catch(() => {});
-    providerService.getAll().then(setVendors).catch(() => {});
+    networkService
+      .getAll()
+      .then(setNetworks)
+      .catch(() => {});
+    providerService
+      .getAll()
+      .then(setVendors)
+      .catch(() => {});
+    // console.log(vendors)
   }, []);
 
   useEffect(() => {
@@ -518,12 +450,16 @@ export default function DiscountFormPage() {
         }
         description={
           initial
-            ? `Editing discount for ${initial.network}`
+            ? `Editing discount for ${initial.name}`
             : "Configure a new airtime discount for a network."
         }
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(BACK)}
+            >
               Cancel
             </Button>
             <Button
@@ -628,6 +564,10 @@ export default function DiscountFormPage() {
               onDiscountChange={setVendorDiscount}
             />
           </Card>
+          <RoleDiscountsSection
+            discountId={initial ? String(initial.id) : undefined}
+            initialValues={roleInitialValues}
+          />
 
           {/* Settings */}
           <Card className="p-5">
@@ -649,10 +589,6 @@ export default function DiscountFormPage() {
       </div>
 
       {/* ── Role discounts — separate section, own save action ── */}
-      <RoleDiscountsSection
-        discountId={initial ? String(initial.id) : undefined}
-        initialValues={roleInitialValues}
-      />
     </div>
   );
 }

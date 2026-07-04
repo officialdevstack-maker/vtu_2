@@ -206,6 +206,7 @@ const GatewayDetailPage = () => {
       .then(setGateway)
       .finally(() => setLoadingGateway(false));
   }, [id]);
+  console.log(gateway)
 
   const handleSave = async (payload: GatewayPayload) => {
     if (!id) return;
@@ -355,8 +356,8 @@ const GatewayDetailPage = () => {
               </div>
               <div className="px-5 py-1">
                 {row("API key / username",
-                  gateway.username
-                    ? <span className="font-mono break-all">{gateway.username}</span>
+                  (gateway.api_key ?? gateway.username)
+                    ? <span className="font-mono break-all">{gateway.api_key ?? gateway.username}</span>
                     : null
                 )}
                 {row(

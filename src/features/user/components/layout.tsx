@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
+import { WelcomeMessageGate } from "./welcome-message-gate";
 import { LayoutDashboard, Zap, Receipt, Wallet, User } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
@@ -84,6 +85,8 @@ const UserLayout = () => {
           );
         })}
       </nav>
+
+      <WelcomeMessageGate />
     </div>
   );
 };

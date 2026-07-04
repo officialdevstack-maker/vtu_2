@@ -68,6 +68,11 @@ export type FundingRecord = {
   payment_provider?: { id: number; name: string } | null;
 };
 
+export type ProviderBank = {
+  code: string;
+  name: string;
+};
+
 export type PageResult = { data: Provider[]; meta: PaginatedMeta };
 
 const BASE = "/table/vendors";
@@ -132,6 +137,11 @@ export const providerService = {
         params: { category: "payment" },
       })
       .then((r) => r.data.data.data),
+
+  getBanksForProvider: (providerId: string | number): Promise<ProviderBank[]> =>
+    apiClient
+      .get<ApiEnvelope<{ banks: ProviderBank[] }>>(`/admin/vendor/${providerId}/banks`)
+      .then((r) => r.data.data.banks ?? []),
 
   getFundingHistory: (vendorId: string): Promise<FundingRecord[]> =>
     apiClient

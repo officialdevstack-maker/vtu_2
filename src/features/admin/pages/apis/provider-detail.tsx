@@ -29,37 +29,8 @@ import {
   type ProviderPayload,
   type AutoFundPayload,
   type FundingRecord,
+  type ProviderBank,
 } from "./providerService";
-
-// ─── Nigerian bank list ───────────────────────────────────────────────────────
-
-const BANKS: { code: string; name: string }[] = [
-  { code: "044", name: "Access Bank" },
-  { code: "023", name: "Citibank Nigeria" },
-  { code: "050", name: "Ecobank Nigeria" },
-  { code: "070", name: "Fidelity Bank" },
-  { code: "011", name: "First Bank of Nigeria" },
-  { code: "214", name: "First City Monument Bank (FCMB)" },
-  { code: "058", name: "Guaranty Trust Bank (GTBank)" },
-  { code: "030", name: "Heritage Bank" },
-  { code: "301", name: "Jaiz Bank" },
-  { code: "082", name: "Keystone Bank" },
-  { code: "526", name: "Moniepoint MFB" },
-  { code: "090267", name: "Kuda Bank" },
-  { code: "076", name: "Polaris Bank" },
-  { code: "101", name: "Providus Bank" },
-  { code: "221", name: "Stanbic IBTC Bank" },
-  { code: "068", name: "Standard Chartered Bank" },
-  { code: "232", name: "Sterling Bank" },
-  { code: "100", name: "Suntrust Bank" },
-  { code: "032", name: "Union Bank of Nigeria" },
-  { code: "033", name: "United Bank for Africa (UBA)" },
-  { code: "215", name: "Unity Bank" },
-  { code: "035", name: "Wema Bank" },
-  { code: "057", name: "Zenith Bank" },
-  { code: "100004", name: "Opay" },
-  { code: "100033", name: "Palmpay" },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -82,13 +53,16 @@ const toForm = (p: Provider): ProviderPayload => ({
 
 const toAutoFundForm = (p: Provider) => ({
   auto_fund_enabled: p.auto_fund_enabled ?? false,
-  auto_fund_threshold: p.auto_fund_threshold != null ? String(p.auto_fund_threshold) : "",
-  auto_fund_amount: p.auto_fund_amount != null ? String(p.auto_fund_amount) : "",
+  auto_fund_threshold:
+    p.auto_fund_threshold != null ? String(p.auto_fund_threshold) : "",
+  auto_fund_amount:
+    p.auto_fund_amount != null ? String(p.auto_fund_amount) : "",
   account_number: p.account_number ?? "",
   account_name: p.account_name ?? "",
   bank_code: p.bank_code ?? "",
   bank_name: p.bank_name ?? "",
-  funding_provider_id: p.funding_provider_id != null ? String(p.funding_provider_id) : "",
+  funding_provider_id:
+    p.funding_provider_id != null ? String(p.funding_provider_id) : "",
 });
 
 type AutoFundForm = ReturnType<typeof toAutoFundForm>;
@@ -116,8 +90,13 @@ function EditModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
       <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 text-sm">Edit provider</h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+          <h3 className="font-semibold text-slate-900 text-sm">
+            Edit provider
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -126,10 +105,16 @@ function EditModal({
             <label className="block text-xs font-medium text-slate-600 mb-1.5">
               Provider name <span className="text-red-400">*</span>
             </label>
-            <input value={form.name} onChange={(e) => set("name", e.target.value)} className={inputCls} />
+            <input
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
+              className={inputCls}
+            />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Code</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Code
+            </label>
             <input
               value={form.code ?? ""}
               onChange={(e) => set("code", e.target.value.toUpperCase())}
@@ -138,7 +123,9 @@ function EditModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Sub category</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Sub category
+            </label>
             <input
               value={form.sub_category ?? ""}
               onChange={(e) => set("sub_category", e.target.value)}
@@ -146,7 +133,9 @@ function EditModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">API username</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              API username
+            </label>
             <input
               value={form.username ?? ""}
               onChange={(e) => set("username", e.target.value)}
@@ -155,7 +144,9 @@ function EditModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">API password / secret</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              API password / secret
+            </label>
             <div className="relative">
               <input
                 type={showPw ? "text" : "password"}
@@ -169,12 +160,18 @@ function EditModal({
                 onClick={() => setShowPw((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPw ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Connection</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Connection
+            </label>
             <select
               value={form.connection ? "true" : "false"}
               onChange={(e) => set("connection", e.target.value === "true")}
@@ -185,8 +182,15 @@ function EditModal({
             </select>
           </div>
           <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-            <Button fullWidth disabled={!valid || saving} loading={saving} onClick={() => onSave(form)}>
+            <Button variant="secondary" fullWidth onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              disabled={!valid || saving}
+              loading={saving}
+              onClick={() => onSave(form)}
+            >
               Save changes
             </Button>
           </div>
@@ -199,9 +203,15 @@ function EditModal({
 // ─── Delete confirm ───────────────────────────────────────────────────────────
 
 function DeleteConfirm({
-  name, onConfirm, onClose, deleting,
+  name,
+  onConfirm,
+  onClose,
+  deleting,
 }: {
-  name: string; onConfirm: () => void; onClose: () => void; deleting: boolean;
+  name: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  deleting: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
@@ -209,12 +219,21 @@ function DeleteConfirm({
         <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
           <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
           <p className="text-xs text-red-800">
-            This permanently removes <strong>{name}</strong> and cannot be undone.
+            This permanently removes <strong>{name}</strong> and cannot be
+            undone.
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button variant="danger" fullWidth disabled={deleting} loading={deleting} onClick={onConfirm}>
+          <Button variant="secondary" fullWidth onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            fullWidth
+            disabled={deleting}
+            loading={deleting}
+            onClick={onConfirm}
+          >
             Delete provider
           </Button>
         </div>
@@ -275,6 +294,8 @@ const ProviderDetailPage = () => {
     funding_provider_id: "",
   });
   const [paymentProviders, setPaymentProviders] = useState<Provider[]>([]);
+  const [banks, setBanks] = useState<ProviderBank[]>([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
   const [savingAutoFund, setSavingAutoFund] = useState(false);
   const [autoFundSaved, setAutoFundSaved] = useState(false);
 
@@ -283,6 +304,9 @@ const ProviderDetailPage = () => {
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   const back = () => navigate("/admin/apis/provider");
+
+  const setAF = <K extends keyof AutoFundForm>(k: K, v: AutoFundForm[K]) =>
+    setAutoFundForm((f) => ({ ...f, [k]: v }));
 
   // fetch provider if not in state
   useEffect(() => {
@@ -302,8 +326,49 @@ const ProviderDetailPage = () => {
   }, [id]);
 
   useEffect(() => {
-    providerService.getPaymentProviders().then(setPaymentProviders).catch(() => {});
+    providerService
+      .getPaymentProviders()
+      .then(setPaymentProviders)
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const providerId = autoFundForm.funding_provider_id;
+
+    if (!providerId) {
+      setBanks([]);
+      setLoadingBanks(false);
+      return;
+    }
+
+    let isActive = true;
+    setLoadingBanks(true);
+
+    providerService
+      .getBanksForProvider(providerId)
+      .then((response) => {
+        if (!isActive) return;
+        setBanks(response);
+        if (
+          response.length > 0 &&
+          !response.some((bank) => bank.code === autoFundForm.bank_code)
+        ) {
+          setAF("bank_code", "");
+          setAF("bank_name", "");
+        }
+      })
+      .catch(() => {
+        if (!isActive) return;
+        setBanks([]);
+      })
+      .finally(() => {
+        if (isActive) setLoadingBanks(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [autoFundForm.funding_provider_id]);
 
   useEffect(() => {
     if (!id) return;
@@ -367,9 +432,6 @@ const ProviderDetailPage = () => {
     }
   };
 
-  const setAF = <K extends keyof AutoFundForm>(k: K, v: AutoFundForm[K]) =>
-    setAutoFundForm((f) => ({ ...f, [k]: v }));
-
   // ── Loading state ─────────────────────────────────────────────────────────
   if (loadingProvider) {
     return (
@@ -380,11 +442,15 @@ const ProviderDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-5">
             <Card className="p-5 space-y-3">
-              {[...Array(4)].map((_, i) => <SkeletonLine key={i} className="h-4 w-full" />)}
+              {[...Array(4)].map((_, i) => (
+                <SkeletonLine key={i} className="h-4 w-full" />
+              ))}
             </Card>
           </div>
           <Card className="p-5 space-y-3">
-            {[...Array(5)].map((_, i) => <SkeletonLine key={i} className="h-4 w-full" />)}
+            {[...Array(5)].map((_, i) => (
+              <SkeletonLine key={i} className="h-4 w-full" />
+            ))}
           </Card>
         </div>
       </div>
@@ -404,7 +470,9 @@ const ProviderDetailPage = () => {
         />
         <Card className="p-10 text-center">
           <p className="text-sm text-slate-500 mb-3">Provider not found.</p>
-          <Button variant="secondary" size="sm" onClick={back}>Go back</Button>
+          <Button variant="secondary" size="sm" onClick={back}>
+            Go back
+          </Button>
         </Card>
       </div>
     );
@@ -412,7 +480,9 @@ const ProviderDetailPage = () => {
 
   const row = (label: string, value: React.ReactNode) => (
     <div className="flex items-start gap-4 py-3 border-b border-gray-50 last:border-0">
-      <span className="text-xs text-slate-400 w-28 shrink-0 pt-0.5">{label}</span>
+      <span className="text-xs text-slate-400 w-28 shrink-0 pt-0.5">
+        {label}
+      </span>
       <span className="text-xs text-slate-800 flex-1">{value ?? "—"}</span>
     </div>
   );
@@ -434,7 +504,11 @@ const ProviderDetailPage = () => {
               <Button size="sm" onClick={() => setEditing(true)}>
                 <Pencil className="w-3.5 h-3.5" /> Edit
               </Button>
-              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+              >
                 Delete
               </Button>
             </div>
@@ -444,25 +518,26 @@ const ProviderDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* ── Left column: Details + History ── */}
           <div className="lg:col-span-2 space-y-5">
-
             {/* Details card */}
             <Card>
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
                 <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                   Provider details
                 </h2>
-                <StatusBadge status={provider.connection ? "active" : "inactive"} />
+                <StatusBadge
+                  status={provider.connection ? "active" : "inactive"}
+                />
               </div>
               <div className="px-5 py-1">
-                {row("Code", provider.code ? (
-                  <span className="font-mono">{provider.code}</span>
-                ) : null)}
+                {row(
+                  "Code",
+                  provider.code ? (
+                    <span className="font-mono">{provider.code}</span>
+                  ) : null,
+                )}
                 {row("Sub category", provider.sub_category)}
                 {row("Balance", fmt(provider.balance))}
-                {row(
-                  "Username",
-                  provider.username || null,
-                )}
+                {row("Username", provider.username || null)}
                 {row(
                   "Password",
                   provider.password ? (
@@ -475,9 +550,11 @@ const ProviderDetailPage = () => {
                         onClick={() => setShowPw((v) => !v)}
                         className="text-slate-400 hover:text-slate-600"
                       >
-                        {showPw
-                          ? <EyeOff className="w-3.5 h-3.5" />
-                          : <Eye className="w-3.5 h-3.5" />}
+                        {showPw ? (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5" />
+                        )}
                       </button>
                     </span>
                   ) : null,
@@ -485,8 +562,16 @@ const ProviderDetailPage = () => {
               </div>
               {(provider.created_at || provider.updated_at) && (
                 <div className="px-5 py-1 border-t border-gray-50">
-                  {provider.created_at && row("Created", new Date(provider.created_at).toLocaleString())}
-                  {provider.updated_at && row("Updated", new Date(provider.updated_at).toLocaleString())}
+                  {provider.created_at &&
+                    row(
+                      "Created",
+                      new Date(provider.created_at).toLocaleString(),
+                    )}
+                  {provider.updated_at &&
+                    row(
+                      "Updated",
+                      new Date(provider.updated_at).toLocaleString(),
+                    )}
                 </div>
               )}
             </Card>
@@ -498,7 +583,9 @@ const ProviderDetailPage = () => {
                   Funding history
                 </h2>
                 {!loadingHistory && history.length > 0 && (
-                  <span className="text-xs text-slate-400">{history.length} records</span>
+                  <span className="text-xs text-slate-400">
+                    {history.length} records
+                  </span>
                 )}
               </div>
 
@@ -515,7 +602,9 @@ const ProviderDetailPage = () => {
               ) : history.length === 0 ? (
                 <div className="px-5 py-10 text-center">
                   <RefreshCw className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                  <p className="text-xs text-slate-400">No funding events yet.</p>
+                  <p className="text-xs text-slate-400">
+                    No funding events yet.
+                  </p>
                   <p className="text-xs text-slate-300 mt-0.5">
                     Auto-fund transfers will appear here.
                   </p>
@@ -525,7 +614,13 @@ const ProviderDetailPage = () => {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-gray-100">
-                        {["Date", "Amount", "Balance before", "Gateway", "Status"].map((h) => (
+                        {[
+                          "Date",
+                          "Amount",
+                          "Balance before",
+                          "Gateway",
+                          "Status",
+                        ].map((h) => (
                           <th
                             key={h}
                             className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap"
@@ -537,7 +632,10 @@ const ProviderDetailPage = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {history.map((r) => (
-                        <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={r.id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
                           <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                             {new Date(r.created_at).toLocaleString()}
                           </td>
@@ -602,26 +700,34 @@ const ProviderDetailPage = () => {
                       : "bg-gray-50 text-slate-400"
                   }`}
                 >
-                  {enabled
-                    ? <Zap className="w-3.5 h-3.5 shrink-0" />
-                    : <ZapOff className="w-3.5 h-3.5 shrink-0" />}
+                  {enabled ? (
+                    <Zap className="w-3.5 h-3.5 shrink-0" />
+                  ) : (
+                    <ZapOff className="w-3.5 h-3.5 shrink-0" />
+                  )}
                   {enabled
                     ? "Auto-funding is active. Configure thresholds below."
                     : "Enable to configure automatic top-ups for this provider."}
                 </div>
 
                 {/* Thresholds */}
-                <div className={`space-y-3 transition-opacity ${enabled ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                <div
+                  className={`space-y-3 transition-opacity ${enabled ? "opacity-100" : "opacity-40 pointer-events-none"}`}
+                >
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       Threshold (₦)
-                      <span className="ml-1 font-normal text-slate-400">— triggers top-up below this</span>
+                      <span className="ml-1 font-normal text-slate-400">
+                        — triggers top-up below this
+                      </span>
                     </label>
                     <input
                       type="number"
                       min={0}
                       value={autoFundForm.auto_fund_threshold}
-                      onChange={(e) => setAF("auto_fund_threshold", e.target.value)}
+                      onChange={(e) =>
+                        setAF("auto_fund_threshold", e.target.value)
+                      }
                       placeholder="e.g. 5000"
                       className={inputCls}
                     />
@@ -635,7 +741,9 @@ const ProviderDetailPage = () => {
                       type="number"
                       min={0}
                       value={autoFundForm.auto_fund_amount}
-                      onChange={(e) => setAF("auto_fund_amount", e.target.value)}
+                      onChange={(e) =>
+                        setAF("auto_fund_amount", e.target.value)
+                      }
                       placeholder="e.g. 50000"
                       className={inputCls}
                     />
@@ -647,7 +755,9 @@ const ProviderDetailPage = () => {
                     </label>
                     <select
                       value={autoFundForm.funding_provider_id}
-                      onChange={(e) => setAF("funding_provider_id", e.target.value)}
+                      onChange={(e) =>
+                        setAF("funding_provider_id", e.target.value)
+                      }
                       className={inputCls}
                     >
                       <option value="">Select gateway…</option>
@@ -661,47 +771,73 @@ const ProviderDetailPage = () => {
 
                   {/* Divider */}
                   <div className="border-t border-gray-100 pt-1">
-                    <p className="text-xs font-medium text-slate-500 mb-3">Bank account</p>
+                    <p className="text-xs font-medium text-slate-500 mb-3">
+                      Bank account
+                    </p>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Account number</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                          Account number
+                        </label>
                         <input
                           type="text"
                           value={autoFundForm.account_number}
-                          onChange={(e) => setAF("account_number", e.target.value)}
+                          onChange={(e) =>
+                            setAF("account_number", e.target.value)
+                          }
                           placeholder="0123456789"
                           maxLength={10}
                           className={`${inputCls} font-mono`}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Account name</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                          Account name
+                        </label>
                         <input
                           type="text"
                           value={autoFundForm.account_name}
-                          onChange={(e) => setAF("account_name", e.target.value)}
+                          onChange={(e) =>
+                            setAF("account_name", e.target.value)
+                          }
                           placeholder="e.g. Adex VTU Nigeria"
                           className={inputCls}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Bank</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                          Bank
+                        </label>
                         <select
                           value={autoFundForm.bank_code}
                           onChange={(e) => {
-                            const bank = BANKS.find((b) => b.code === e.target.value);
+                            const selectedBank = banks.find(
+                              (bank) => bank.code === e.target.value,
+                            );
                             setAF("bank_code", e.target.value);
-                            setAF("bank_name", bank?.name ?? "");
+                            setAF("bank_name", selectedBank?.name ?? "");
                           }}
                           className={inputCls}
+                          disabled={
+                            loadingBanks || !autoFundForm.funding_provider_id
+                          }
                         >
-                          <option value="">Select bank…</option>
-                          {BANKS.map((b) => (
-                            <option key={b.code} value={b.code}>
-                              {b.name}
+                          <option value="">
+                            {loadingBanks ? "Loading banks…" : "Select bank…"}
+                          </option>
+                          {banks.map((bank) => (
+                            <option key={bank.code} value={bank.code}>
+                              {bank.name}
                             </option>
                           ))}
                         </select>
+                        {!loadingBanks &&
+                          autoFundForm.funding_provider_id &&
+                          banks.length === 0 && (
+                            <p className="mt-1 text-xs text-amber-600">
+                              No banks are available for this gateway yet.
+                            </p>
+                          )}
                         {autoFundForm.bank_code && (
                           <p className="mt-1 text-xs text-slate-400 font-mono">
                             Code: {autoFundForm.bank_code}
@@ -721,9 +857,14 @@ const ProviderDetailPage = () => {
                   variant={autoFundSaved ? "secondary" : "primary"}
                 >
                   {savingAutoFund ? (
-                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</>
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…
+                    </>
                   ) : autoFundSaved ? (
-                    <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Saved</>
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />{" "}
+                      Saved
+                    </>
                   ) : (
                     "Save settings"
                   )}
