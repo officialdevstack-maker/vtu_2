@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Plus,
   MoreVertical,
@@ -404,6 +404,7 @@ function RowMenu({
   toggling,
   refreshing,
   onToggleOpen,
+  onShow,
   onToggleConnection,
   onRefreshToken,
   onDelete,
@@ -413,6 +414,7 @@ function RowMenu({
   toggling: boolean;
   refreshing: boolean;
   onToggleOpen: () => void;
+  onShow: () => void;
   onToggleConnection: () => void;
   onRefreshToken: () => void;
   onDelete: () => void;
@@ -430,6 +432,13 @@ function RowMenu({
         <>
           <div className="fixed inset-0 z-10" onClick={onToggleOpen} />
           <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+            <button
+              onClick={onShow}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
+            >
+              <Eye className="w-3.5 h-3.5" /> Show
+            </button>
+
             <button
               disabled={toggling}
               onClick={onToggleConnection}
@@ -474,6 +483,7 @@ type ModalState =
   | null;
 
 const ProviderPage = () => {
+  const navigate = useNavigate();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -611,6 +621,10 @@ const ProviderPage = () => {
       toggling: toggling === id,
       refreshing: refreshingId === id,
       onToggleOpen: () => setOpenMenuId((prev) => (prev === id ? null : id)),
+      onShow: () => {
+        setOpenMenuId(null);
+        navigate(`/admin/apis/provider/${id}`, { state: { provider: p } });
+      },
       onToggleConnection: () => void handleToggle(p),
       onRefreshToken: () => void handleRefreshToken(p),
       onDelete: () => {

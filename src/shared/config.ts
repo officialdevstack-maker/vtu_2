@@ -4,12 +4,12 @@ export const config = {
     api: {
 
     },
-    auth: {
-        routes: {
-            login: '/login',
-            logout: '/logout',
-            me: '/me',
-            register: '/register',
-        }
+  auth: {
+    routes: {
+      login: '/login',
+      logout: '/logout',
+      me: '/user',
+      register: '/register',
     }
+  },
 }

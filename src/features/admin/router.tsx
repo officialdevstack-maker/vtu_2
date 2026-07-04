@@ -51,6 +51,15 @@ export const adminRouter: RouteObject[] = [
           return { Component };
         },
       },
+      {
+        path: "apis/gateway/:id",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/gateway-detail"
+          );
+          return { Component };
+        },
+      },
       // Products
       {
         path: "products/airtime-data",

@@ -22,6 +22,15 @@ export type Provider = {
   sub_category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  // auto-fund fields
+  auto_fund_enabled?: boolean | null;
+  auto_fund_threshold?: string | number | null;
+  auto_fund_amount?: string | number | null;
+  account_number?: string | null;
+  account_name?: string | null;
+  bank_code?: string | null;
+  bank_name?: string | null;
+  funding_provider_id?: number | null;
 };
 
 export type ProviderPayload = {
@@ -31,6 +40,32 @@ export type ProviderPayload = {
   password?: string | null;
   sub_category?: string | null;
   connection?: boolean;
+};
+
+export type AutoFundPayload = {
+  auto_fund_enabled: boolean;
+  auto_fund_threshold?: number | null;
+  auto_fund_amount?: number | null;
+  account_number?: string | null;
+  account_name?: string | null;
+  bank_code?: string | null;
+  bank_name?: string | null;
+  funding_provider_id?: number | null;
+};
+
+export type FundingRecord = {
+  id: number;
+  vendor_id: number;
+  payment_provider_id: number | null;
+  amount: string;
+  reference: string;
+  status: "pending" | "success" | "failed";
+  balance_before: string | null;
+  gateway_response?: unknown;
+  created_at: string;
+  updated_at?: string | null;
+  vendor?: { id: number; name: string } | null;
+  payment_provider?: { id: number; name: string } | null;
 };
 
 export type PageResult = { data: Provider[]; meta: PaginatedMeta };
@@ -50,6 +85,11 @@ export const providerService = {
     apiClient
       .get<ApiEnvelope<Paginated<Provider>>>(BASE)
       .then((r) => r.data.data.data),
+
+  getById: (id: string): Promise<Provider> =>
+    apiClient
+      .get<ApiEnvelope<Provider>>(`${BASE}/${id}`)
+      .then((r) => r.data.data),
 
   create: (payload: ProviderPayload): Promise<Provider> =>
     apiClient
@@ -77,4 +117,30 @@ export const providerService = {
         `/admin/vendor/${id}/refresh-token`,
       )
       .then((r) => r.data.data.identifier),
+
+  updateAutoFund: (
+    id: string,
+    payload: AutoFundPayload,
+  ): Promise<Provider> =>
+    apiClient
+      .put<ApiEnvelope<Provider>>(`${BASE}/${id}`, payload)
+      .then((r) => r.data.data),
+
+  getPaymentProviders: (): Promise<Provider[]> =>
+    apiClient
+      .get<ApiEnvelope<Provider[]>>("/table/providers", {
+        params: { category: "payment" },
+      })
+      .then((r) => r.data.data.data),
+
+  getFundingHistory: (vendorId: string): Promise<FundingRecord[]> =>
+    apiClient
+      .get<ApiEnvelope<FundingRecord[]>>("/table/vendor_fundings", {
+        params: {
+          vendor_id: vendorId,
+          sort: "created_at,desc",
+          with: "paymentProvider",
+        },
+      })
+      .then((r) => r.data.data),
 };

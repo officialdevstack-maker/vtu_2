@@ -5,25 +5,21 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
-} from "react";
-import { apiClient } from "../api/apiClient";
-import { config } from "../config";
+} from 'react';
+import { apiClient } from '../api/apiClient';
+import { config } from '../config';
 
-// Define the shape of your user object
 interface User {
   id: string;
-  email: string;
-  token: string;
+  email?: string;
+  [key: string]: any;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (
-    token: string,
-    email: string,
-  ) => Promise<void | { redirectTo: string }>;
+  login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -34,21 +30,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const checkAuth = useCallback(async () => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      setUser(null);
-      return;
-    }
-
-    setIsLoading(true);
-
     try {
-      const response = await apiClient.get("/user");
-      setUser(response.data.data.user);
+      const response = await apiClient.get('/user');
+      setUser(response.data.data?.user ?? response.data.data ?? null);
     } catch {
       setUser(null);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -56,59 +42,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, [checkAuth]);
 
-  // Simulate a login action (e.g. saving a token to localStorage)
-  const login = useCallback(async (login: string, password: string) => {
-    setIsLoading(true);
-    try {
-      await apiClient.get("/sanctum/csrf-cookie");
-      const {
-        data: { data },
-      } = await apiClient.post("/login", {
-        login,
-        password,
-      });
-      localStorage.setItem("authToken", data.token);
-      setUser(data.user);
-      await checkAuth();
-    } catch (error: any) {
-      console.error("Login failed:", error.message);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const login = useCallback(
+    async (login: string, password: string) => {
+      setIsLoading(true);
+      try {
+        await apiClient.get('/sanctum/csrf-cookie');
+        const payload = login.includes('@')
+          ? { email: login, password }
+          : { phone: login, password };
 
-  // Logout action
+        await apiClient.post('/login', payload);
+        await checkAuth();
+      } catch (error: any) {
+        console.error('Login failed:', error?.response?.data ?? error.message);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [checkAuth],
+  );
+
   const logout = useCallback(async () => {
     setIsLoading(true);
 
     try {
       await apiClient.post(config.auth.routes.logout);
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error('Logout failed:', error);
     } finally {
       setUser(null);
-      localStorage.removeItem("authToken");
       setIsLoading(false);
     }
   }, []);
 
-  const value = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-    login,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// Custom hook to consume the Auth context easily
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

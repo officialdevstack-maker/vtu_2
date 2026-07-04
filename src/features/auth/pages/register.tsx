@@ -24,14 +24,20 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await apiClient.post("/register", {
-        name: data.name,
-        login: data.login,
+      await apiClient.post('/register', {
+        fullname: data.fullname,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        pin: data.pin,
         password: data.password,
       });
-      navigate("/login", { replace: true });
-    } catch {
-      setError("root", { message: "Could not create account. Please try again." });
+      navigate('/login', { replace: true });
+    } catch (error: any) {
+      setError('root', {
+        message:
+          error?.response?.data?.message || 'Could not create account. Please try again.',
+      });
     }
   };
 
@@ -66,31 +72,65 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   placeholder="Emeka Obi"
-                  {...register("name")}
-                  className={`${inputCls} ${errors.name ? "border-red-300" : "border-gray-300"}`}
+                  {...register('fullname')}
+                  className={`${inputCls} ${errors.fullname ? 'border-red-300' : 'border-gray-300'}`}
                 />
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+                {errors.fullname && <p className="text-red-500 text-xs mt-1">{errors.fullname.message}</p>}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">Email or phone number</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Username</label>
                 <input
                   type="text"
-                  placeholder="you@email.com or 08012345678"
-                  {...register("login")}
-                  className={`${inputCls} ${errors.login ? "border-red-300" : "border-gray-300"}`}
+                  placeholder="emekaobi"
+                  {...register('username')}
+                  className={`${inputCls} ${errors.username ? 'border-red-300' : 'border-gray-300'}`}
                 />
-                {errors.login && <p className="text-red-500 text-xs mt-1">{errors.login.message}</p>}
+                {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  placeholder="you@email.com"
+                  {...register('email')}
+                  className={`${inputCls} ${errors.email ? 'border-red-300' : 'border-gray-300'}`}
+                />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Phone number</label>
+                <input
+                  type="tel"
+                  placeholder="08012345678"
+                  {...register('phone')}
+                  className={`${inputCls} ${errors.phone ? 'border-red-300' : 'border-gray-300'}`}
+                />
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">Transaction PIN</label>
+                <input
+                  type="text"
+                  maxLength={4}
+                  placeholder="1234"
+                  {...register('pin')}
+                  className={`${inputCls} ${errors.pin ? 'border-red-300' : 'border-gray-300'}`}
+                />
+                {errors.pin && <p className="text-red-500 text-xs mt-1">{errors.pin.message}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">Password</label>
                 <div className="relative">
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    {...register("password")}
-                    className={`${inputCls} pr-10 ${errors.password ? "border-red-300" : "border-gray-300"}`}
+                    {...register('password')}
+                    className={`${inputCls} pr-10 ${errors.password ? 'border-red-300' : 'border-gray-300'}`}
                   />
                   <button
                     type="button"
