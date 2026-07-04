@@ -198,13 +198,16 @@ export default function RolesPage() {
         title="Roles & permissions"
         description="Define what each team member can see and do across the admin console"
         actions={
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} className="hidden sm:inline-flex">
             <Plus className="w-4 h-4" /> Create role
           </Button>
         }
       />
+      <Button onClick={openCreate} fullWidth className="sm:hidden">
+        <Plus className="w-4 h-4" /> Create role
+      </Button>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           [...Array(4)].map((_, i) => (
             <Card key={i} className="p-4 space-y-3">
