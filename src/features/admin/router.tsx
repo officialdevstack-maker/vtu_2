@@ -95,6 +95,22 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "products/airtime-data/data-plans/new",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/products/airtime-data/data-plan-form");
+          return { Component };
+        },
+      },
+      {
+        path: "products/airtime-data/data-plans/:id/edit",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/products/airtime-data/data-plan-form");
+          return { Component };
+        },
+      },
+      {
         path: "products/cable",
         lazy: async () => {
           const { default: Component } = await import("./pages/products/cable");

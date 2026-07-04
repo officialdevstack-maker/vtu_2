@@ -67,7 +67,7 @@ export function AirtimeTab() {
   });
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-visible">
       <Toolbar>
         <SelectFilter
           placeholder="All networks"
@@ -116,28 +116,21 @@ export function AirtimeTab() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                {[
-                  "Network",
-                  "Min amount (₦)",
-                  "Max amount (₦)",
-                  "Enabled",
-                  "Last updated",
-                  "Actions",
-                ].map((h, i) => (
-                  <th
-                    key={h}
-                    className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 5 ? "text-left" : i === 0 ? "text-left" : "text-right"}`}
-                  >
-                    {h}
-                  </th>
-                ))}
+                {["Network|Type", "Min|Max (₦)", "Status", "Actions"].map(
+                  (h, i) => (
+                    <th
+                      key={h}
+                      className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 5 ? "text-left" : i === 0 ? "text-left" : "text-right"}`}
+                    >
+                      {h}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.map((discount) => {
-                const isEnabled = Boolean(
-                  discount.isActive ?? discount.active ?? false,
-                );
+                const isEnabled = Boolean(discount.active ?? false);
                 const currentId = toId(discount.id);
 
                 return (
@@ -146,22 +139,17 @@ export function AirtimeTab() {
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-4 py-3 text-xs font-medium text-slate-900">
-                      {discount.network}
+                      {discount.network}|{discount.category}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
-                      {formatCurrency(discount.min)}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-600 text-right">
+                      {formatCurrency(discount.min)}|
                       {formatCurrency(discount.max)}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-600">
+
+                    <td className="px-4 py-3 text-xs text-slate-600 text-right">
                       <StatusBadge status={isEnabled ? "active" : "inactive"} />
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      {discount.updated_at
-                        ? new Date(discount.updated_at).toLocaleDateString()
-                        : "—"}
-                    </td>
+
                     <td className="px-4 py-3 text-center">
                       <div className="relative inline-flex justify-center">
                         <button
@@ -179,10 +167,10 @@ export function AirtimeTab() {
                         {openMenuId === currentId && (
                           <>
                             <div
-                              className="fixed inset-0 z-10"
+                              className="fixed inset-0 z-20"
                               onClick={() => setOpenMenuId(null)}
                             />
-                            <div className="absolute right-0 top-8 z-20 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                            <div className="absolute right-0 top-full mt-1 z-30 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

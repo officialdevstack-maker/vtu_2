@@ -1,6 +1,8 @@
 import { apiClient } from "@shared/api/apiClient";
 
-type ApiEnvelope<T> = { status: boolean; message: string; data: T };
+// The real payload sits exactly one `.data` deep: r.data.data (see
+// backend/app/Http/Middleware/HandleRequest.php).
+type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
 export type Gateway = {
   id: string | number;
@@ -8,11 +10,18 @@ export type Gateway = {
   code?: string | null;
   balance?: string | number | null;
   connection?: boolean | null;
+  // Each gateway integration reads a different combination of these —
+  // Flutterwave: api_key only. Monnify: api_key + secret_key + username.
+  // PaymentPoint: password + api_key. Kept distinct rather than merged.
   username?: string | null;
   password?: string | null;
+  api_key?: string | null;
+  secret_key?: string | null;
   category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  identifier?: string | null;
+  webhook?: string | null;
 };
 
 export type GatewayPayload = {
@@ -20,6 +29,8 @@ export type GatewayPayload = {
   code?: string | null;
   username?: string | null;
   password?: string | null;
+  api_key?: string | null;
+  secret_key?: string | null;
   connection?: boolean;
 };
 
@@ -38,10 +49,10 @@ export const gatewaySupportsTransfer = (name: string) =>
 export const gatewayService = {
   getAll: (): Promise<Gateway[]> =>
     apiClient
-      .get<ApiEnvelope<{ data: Gateway[] }>>(BASE, {
+      .get<ApiEnvelope<Gateway[]>>(BASE, {
         params: { category: "payment" },
       })
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   getById: (id: string): Promise<Gateway> =>
     apiClient
@@ -67,4 +78,13 @@ export const gatewayService = {
         connection: !g.connection,
       })
       .then((r) => r.data.data),
+
+  // Provider and Vendor share the same `providers` table/column, so the
+  // vendor-prefixed refresh-token route works for payment gateways too.
+  refreshToken: (id: string): Promise<string> =>
+    apiClient
+      .get<ApiEnvelope<{ identifier: string }>>(
+        `/admin/vendor/${id}/refresh-token`,
+      )
+      .then((r) => r.data.data.identifier),
 };

@@ -11,6 +11,8 @@ import {
   ZapOff,
   Power,
   CreditCard,
+  RefreshCw,
+  KeyRound,
 } from "lucide-react";
 import {
   PageHeader,
@@ -19,6 +21,7 @@ import {
   StatusBadge,
   SkeletonLine,
   inputCls,
+  CopyButton,
 } from "../../../user/components/shared-ui";
 import {
   gatewayService,
@@ -42,6 +45,8 @@ const toForm = (g: Gateway): GatewayPayload => ({
   code: g.code ?? "",
   username: g.username ?? "",
   password: g.password ?? "",
+  api_key: g.api_key ?? "",
+  secret_key: g.secret_key ?? "",
   connection: g.connection ?? false,
 });
 
@@ -57,6 +62,7 @@ function EditModal({
 }) {
   const [form, setForm] = useState<GatewayPayload>(initial);
   const [showPw, setShowPw] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
   const set = <K extends keyof GatewayPayload>(k: K, v: GatewayPayload[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
   const valid = form.name.trim().length > 0;
@@ -91,30 +97,66 @@ function EditModal({
             />
           </div>
           <div className="border-t border-gray-100 pt-3">
-            <p className="text-xs font-medium text-slate-500 mb-3">API credentials</p>
+            <p className="text-xs font-medium text-slate-500 mb-1">API credentials</p>
+            <p className="text-xs text-slate-400 mb-3">
+              Not every field applies to every gateway — Flutterwave uses API
+              key only; Monnify uses API key + Secret key + Username; PaymentPoint
+              uses Password + API key.
+            </p>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  API key / username
+                  API key
+                </label>
+                <input
+                  value={form.api_key ?? ""}
+                  onChange={(e) => set("api_key", e.target.value)}
+                  placeholder="Public/API key"
+                  className={`${inputCls} font-mono`}
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  Secret key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSecret ? "text" : "password"}
+                    value={form.secret_key ?? ""}
+                    onChange={(e) => set("secret_key", e.target.value)}
+                    placeholder="Secret key"
+                    className={`${inputCls} pr-10 font-mono`}
+                    autoComplete="new-password"
+                  />
+                  <button type="button" onClick={() => setShowSecret((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  Username / contract code
                 </label>
                 <input
                   value={form.username ?? ""}
                   onChange={(e) => set("username", e.target.value)}
-                  placeholder="Public key or username"
+                  placeholder="Username or contract code"
                   className={inputCls}
                   autoComplete="off"
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  Secret key / password
+                  Password / token
                 </label>
                 <div className="relative">
                   <input
                     type={showPw ? "text" : "password"}
                     value={form.password ?? ""}
                     onChange={(e) => set("password", e.target.value)}
-                    placeholder="Secret key"
+                    placeholder="Password or token"
                     className={`${inputCls} pr-10`}
                     autoComplete="new-password"
                   />
@@ -190,11 +232,13 @@ const GatewayDetailPage = () => {
   const [loadingGateway, setLoadingGateway] = useState(!gateway);
 
   const [showPw, setShowPw] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [togglingConn, setTogglingConn] = useState(false);
+  const [refreshingToken, setRefreshingToken] = useState(false);
 
   const back = () => navigate("/admin/apis/gateway");
 
@@ -233,6 +277,18 @@ const GatewayDetailPage = () => {
       const updated = await gatewayService.toggleConnection(gateway);
       setGateway(updated);
     } finally { setTogglingConn(false); }
+  };
+
+  const handleRefreshToken = async () => {
+    if (!id) return;
+    setRefreshingToken(true);
+    try {
+      await gatewayService.refreshToken(id);
+      // Re-fetch rather than build the URL client-side — the backend owns
+      // the exact webhook URL format (host + sub_category + identifier).
+      const refreshed = await gatewayService.getById(id);
+      setGateway(refreshed);
+    } finally { setRefreshingToken(false); }
   };
 
   // ── Loading ───────────────────────────────────────────────────────────────
@@ -278,7 +334,7 @@ const GatewayDetailPage = () => {
   const row = (label: string, value: React.ReactNode) => (
     <div className="flex items-start gap-4 py-3 border-b border-gray-50 last:border-0">
       <span className="text-xs text-slate-400 w-28 shrink-0 pt-0.5">{label}</span>
-      <span className="text-xs text-slate-800 flex-1">{value ?? "—"}</span>
+      <span className="text-xs text-slate-800 flex-1 min-w-0">{value ?? "—"}</span>
     </div>
   );
 
@@ -334,6 +390,38 @@ const GatewayDetailPage = () => {
                   : null)}
                 {row("Balance", fmt(gateway.balance))}
                 {row("Category", gateway.category ?? "payment")}
+                {row(
+                  "Webhook URL",
+                  gateway.webhook ? (
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono truncate flex-1 min-w-0" title={gateway.webhook}>
+                        {gateway.webhook}
+                      </span>
+                      <CopyButton value={gateway.webhook} label="webhook URL" />
+                      <button
+                        type="button"
+                        onClick={() => void handleRefreshToken()}
+                        disabled={refreshingToken}
+                        title="Regenerate webhook token"
+                        className="text-slate-400 hover:text-slate-600 disabled:opacity-50 shrink-0"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${refreshingToken ? "animate-spin" : ""}`}
+                        />
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleRefreshToken()}
+                      disabled={refreshingToken}
+                      className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      {refreshingToken ? "Generating…" : "Generate webhook URL"}
+                    </button>
+                  ),
+                )}
               </div>
               {(gateway.created_at || gateway.updated_at) && (
                 <div className="px-5 py-1 border-t border-gray-50">
@@ -354,27 +442,53 @@ const GatewayDetailPage = () => {
                 </p>
               </div>
               <div className="px-5 py-1">
-                {row("API key / username",
-                  gateway.username
-                    ? <span className="font-mono break-all">{gateway.username}</span>
-                    : null
+                {row(
+                  "API key",
+                  gateway.api_key ? (
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono break-all">{gateway.api_key}</span>
+                      <CopyButton value={gateway.api_key} label="API key" />
+                    </span>
+                  ) : null,
                 )}
                 {row(
-                  "Secret / password",
+                  "Secret key",
+                  gateway.secret_key ? (
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono break-all">
+                        {showSecret ? gateway.secret_key : "••••••••"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowSecret((v) => !v)}
+                        className="text-slate-400 hover:text-slate-600 shrink-0"
+                      >
+                        {showSecret
+                          ? <EyeOff className="w-3.5 h-3.5" />
+                          : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <CopyButton value={gateway.secret_key} label="secret key" />
+                    </span>
+                  ) : null,
+                )}
+                {row("Username / contract code", gateway.username || null)}
+                {row(
+                  "Password / token",
                   gateway.password ? (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 min-w-0">
                       <span className="font-mono">
                         {showPw ? gateway.password : "••••••••"}
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowPw((v) => !v)}
-                        className="text-slate-400 hover:text-slate-600"
+                        className="text-slate-400 hover:text-slate-600 shrink-0"
                       >
                         {showPw
                           ? <EyeOff className="w-3.5 h-3.5" />
                           : <Eye className="w-3.5 h-3.5" />}
                       </button>
+                      <CopyButton value={gateway.password} label="password" />
                     </span>
                   ) : null,
                 )}

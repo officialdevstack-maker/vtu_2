@@ -1,8 +1,9 @@
 import {
   CheckCircle2, XCircle, Clock, AlertCircle, ChevronLeft, ChevronRight, Loader2, RefreshCw, User,
+  Copy, Check,
   type LucideIcon,
 } from "lucide-react";
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import { useState, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
 import { fmt } from "../data/mock";
 import { cn } from "@/shared/utils";
 
@@ -133,6 +134,36 @@ export function StatusBadge({ status }: { status: string }) {
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {s.label}
     </span>
+  );
+}
+
+export function CopyButton({ value, label }: { value: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable or permission denied — nothing to fall
+      // back to safely, so just leave the value selectable for manual copy.
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleCopy()}
+      className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+      title={`Copy ${label ?? "value"}`}
+    >
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-emerald-500" />
+      ) : (
+        <Copy className="w-3.5 h-3.5" />
+      )}
+    </button>
   );
 }
 

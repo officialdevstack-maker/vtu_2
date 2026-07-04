@@ -1,11 +1,17 @@
 import { apiClient } from "@shared/api/apiClient";
 
-// Envelope returned by all API endpoints: { status, message, data }
-type ApiEnvelope<T> = { status: boolean; message: string; data: T };
-
-// List endpoints return a Laravel paginator nested inside the envelope:
-// { status, message, data: { data: T[], current_page, last_page, total, ... } }
-type Paginated<T> = { data: T[]; current_page: number; last_page: number; total: number };
+// Every JSON response is wrapped once before it reaches the browser, by the
+// global HandleRequest middleware, which merges its own `meta` into the
+// controller's own response body: { message, success, data: <payload>, type,
+// meta }. So the real payload — single record or list alike — always sits
+// exactly one `.data` deep: r.data.data.
+type ApiEnvelope<T> = {
+  message: string;
+  success: boolean;
+  data: T;
+  type: string;
+  meta: unknown;
+};
 
 // ─── Network ──────────────────────────────────────────────────────────────────
 // Uses the Universal Table API: /table/networks
@@ -24,14 +30,10 @@ const NET = "/table/networks";
 
 export const networkService = {
   getAll: (): Promise<Network[]> =>
-    apiClient
-      .get<ApiEnvelope<Paginated<Network>>>(NET)
-      .then((r) => r.data.data.data),
+    apiClient.get<ApiEnvelope<Network[]>>(NET).then((r) => r.data.data),
 
   create: (payload: NetworkPayload): Promise<Network> =>
-    apiClient
-      .post<ApiEnvelope<Network>>(NET, payload)
-      .then((r) => r.data.data),
+    apiClient.post<ApiEnvelope<Network>>(NET, payload).then((r) => r.data.data),
 
   update: (id: string, payload: Partial<NetworkPayload>): Promise<Network> =>
     apiClient
@@ -88,12 +90,7 @@ export type NetworkType = {
     type?: string | null;
     min?: string | number | null;
     max?: string | number | null;
-    adex_discount?: string | number | null;
-    spurs_discount?: string | number | null;
-    msorg_discount?: string | number | null;
-    vtpass_discount?: string | number | null;
-    payscribe_discount?: string | number | null;
-    isActive?: boolean | null;
+    active?: boolean | null;
   } | null;
 };
 
@@ -108,9 +105,7 @@ const TYPE = "/table/network_types";
 
 export const networkTypeService = {
   getAll: (): Promise<NetworkType[]> =>
-    apiClient
-      .get<ApiEnvelope<Paginated<NetworkType>>>(TYPE)
-      .then((r) => r.data.data.data),
+    apiClient.get<ApiEnvelope<NetworkType[]>>(TYPE).then((r) => r.data.data),
 
   create: (payload: NetworkTypePayload): Promise<NetworkType> =>
     apiClient
@@ -139,42 +134,30 @@ export const networkTypeService = {
 export type Discount = {
   id: string | number;
   name: string;
+  network?: string | null;
   category?: string | null;
   type?: string | null;
   min?: string | number | null;
   max?: string | number | null;
-  adex_discount?: string | number | null;
-  spurs_discount?: string | number | null;
-  msorg_discount?: string | number | null;
-  vtpass_discount?: string | number | null;
-  payscribe_discount?: string | number | null;
-  isActive?: boolean | null;
   active?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
 
 export type DiscountPayload = {
-  network: string;
+  name: string;
   category?: string | null;
   type?: string | null;
   min?: string | number | null;
   max?: string | number | null;
-  adex_discount?: string | number | null;
-  spurs_discount?: string | number | null;
-  msorg_discount?: string | number | null;
-  vtpass_discount?: string | number | null;
-  payscribe_discount?: string | number | null;
-  isActive?: boolean | null;
+  active?: boolean | null;
 };
 
 const DISCOUNT = "/table/discounts";
 
 export const discountService = {
   getAll: (): Promise<Discount[]> =>
-    apiClient
-      .get<ApiEnvelope<Paginated<Discount>>>(DISCOUNT)
-      .then((r) => r.data.data.data),
+    apiClient.get<ApiEnvelope<Discount[]>>(DISCOUNT).then((r) => r.data.data),
 
   getById: (id: string): Promise<Discount> =>
     apiClient
@@ -197,7 +180,157 @@ export const discountService = {
   toggleStatus: (discount: Discount): Promise<Discount> =>
     apiClient
       .put<ApiEnvelope<Discount>>(`${DISCOUNT}/${discount.id}`, {
-        isActive: !(discount.isActive ?? discount.active ?? false),
+        active: !(discount.active ?? false),
+      })
+      .then((r) => r.data.data),
+};
+
+// ─── Discount role pricing ─────────────────────────────────────────────────────
+// Per-role discount percentage for a given discount (network) record.
+// Uses the Universal Table API: /table/discount_role
+
+export type Role = {
+  id: string | number;
+  name: string;
+  slug?: string;
+  description?: string | null;
+};
+
+export type DiscountRolePrice = {
+  id: string | number;
+  discount_id: string | number;
+  role_id: string | number;
+  discount: string | number;
+};
+
+const DISCOUNT_ROLE = "/table/discount_role";
+
+export const roleService = {
+  // /admin/roles isn't behind the Universal Table API — its controller body
+  // is { success, data } rather than { message, success, data, type } — but
+  // it still passes through the same HandleRequest merge, so the real array
+  // still sits exactly one `.data` deep.
+  getAll: (): Promise<Role[]> =>
+    apiClient
+      .get<{ success: boolean; data: Role[]; meta: unknown }>("/admin/roles")
+      .then((r) => r.data.data),
+};
+
+export const discountRoleService = {
+  getForDiscount: (discountId: string): Promise<DiscountRolePrice[]> =>
+    apiClient
+      .get<ApiEnvelope<DiscountRolePrice[]>>(
+        `${DISCOUNT_ROLE}?discount_id=${discountId}`,
+      )
+      .then((r) => r.data.data),
+
+  create: (payload: {
+    discount_id: string | number;
+    role_id: string | number;
+    discount: number;
+  }): Promise<DiscountRolePrice> =>
+    apiClient
+      .post<ApiEnvelope<DiscountRolePrice>>(DISCOUNT_ROLE, payload)
+      .then((r) => r.data.data),
+
+  update: (
+    id: string | number,
+    payload: { discount: number },
+  ): Promise<DiscountRolePrice> =>
+    apiClient
+      .put<ApiEnvelope<DiscountRolePrice>>(`${DISCOUNT_ROLE}/${id}`, payload)
+      .then((r) => r.data.data),
+};
+
+// ─── Data plan ──────────────────────────────────────────────────────────────
+// Uses the Universal Table API: /table/data_plans
+
+export type DataPlanProvider = {
+  id: string | number;
+  name: string;
+  pivot?: {
+    cost_price?: string | number | null;
+    server_id?: string | number | null;
+    provider_id?: string | number | null;
+  } | null;
+} | null;
+
+// A role's pricing entry: either a plain legacy fiat number, or the new
+// { type, value } shape — "percentage" is a markup over the plan's cost
+// price (see DataPlan::getPriceAttribute() / resolveCostPrice() backend-side).
+export type DataPlanPriceEntry =
+  | string
+  | number
+  | { type: "fiat" | "percentage"; value: string | number };
+
+export type DataPlan = {
+  id: string | number;
+  network: string;
+  plan_name: string; // numeric amount, e.g. "1"
+  plan_size: string; // unit, e.g. "GB" | "MB"
+  plan_type: string; // e.g. "sme"
+  plan?: string; // computed "1GB"
+  validity: string;
+  active: boolean;
+  status?: string;
+  sort_order?: number | string | null;
+  // Keyed by role name (e.g. "user", "agent", "customer care").
+  pricing?: Record<string, DataPlanPriceEntry> | null;
+  price?: string | number | null;
+  price_ngn?: string | null;
+  cost_price?: string | number | null;
+  server_id?: string | number | null;
+  provider_id?: string | number | null;
+  provider?: DataPlanProvider;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type DataPlanPayload = {
+  network: string;
+  plan_name: string;
+  plan_size: string;
+  plan_type: string;
+  validity: string;
+  active: boolean;
+  sort_order?: number | null;
+  pricing?: Record<string, { type: "fiat" | "percentage"; value: number }> | null;
+  use_provider_as_providerable?: boolean;
+  providerable?: {
+    provider_id: string | number | null;
+    cost_price?: number;
+    server_id?: string | number | null;
+  };
+};
+
+const DATA_PLAN = "/table/data_plans";
+
+export const dataPlanService = {
+  getAll: (): Promise<DataPlan[]> =>
+    apiClient.get<ApiEnvelope<DataPlan[]>>(DATA_PLAN).then((r) => r.data.data),
+
+  getById: (id: string): Promise<DataPlan> =>
+    apiClient
+      .get<ApiEnvelope<DataPlan>>(`${DATA_PLAN}/${id}`)
+      .then((r) => r.data.data),
+
+  create: (payload: DataPlanPayload): Promise<DataPlan> =>
+    apiClient
+      .post<ApiEnvelope<DataPlan>>(DATA_PLAN, payload)
+      .then((r) => r.data.data),
+
+  update: (id: string, payload: Partial<DataPlanPayload>): Promise<DataPlan> =>
+    apiClient
+      .put<ApiEnvelope<DataPlan>>(`${DATA_PLAN}/${id}`, payload)
+      .then((r) => r.data.data),
+
+  remove: (id: string): Promise<void> =>
+    apiClient.delete(`${DATA_PLAN}/${id}`).then(() => undefined),
+
+  toggleStatus: (plan: DataPlan): Promise<DataPlan> =>
+    apiClient
+      .put<ApiEnvelope<DataPlan>>(`${DATA_PLAN}/${plan.id}`, {
+        active: !plan.active,
       })
       .then((r) => r.data.data),
 };

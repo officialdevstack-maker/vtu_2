@@ -1,6 +1,8 @@
 import { apiClient } from "@shared/api/apiClient";
 
-type ApiEnvelope<T> = { status: boolean; message: string; data: T };
+// The real payload sits exactly one `.data` deep: r.data.data (see
+// backend/app/Http/Middleware/HandleRequest.php).
+type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 export type PaginatedMeta = {
   current_page: number;
   last_page: number;
@@ -9,7 +11,6 @@ export type PaginatedMeta = {
   from: number | null;
   to: number | null;
 };
-type Paginated<T> = { data: T[] } & PaginatedMeta;
 
 export type Provider = {
   id: string | number;
@@ -22,6 +23,8 @@ export type Provider = {
   sub_category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  identifier?: string | null;
+  webhook?: string | null;
   // auto-fund fields
   auto_fund_enabled?: boolean | null;
   auto_fund_threshold?: string | number | null;
@@ -68,23 +71,16 @@ export type FundingRecord = {
   payment_provider?: { id: number; name: string } | null;
 };
 
-export type PageResult = { data: Provider[]; meta: PaginatedMeta };
+export type ProviderBank = {
+  code: string;
+  name: string;
+};
 
 const BASE = "/table/vendors";
 
 export const providerService = {
-  getPage: (page: number): Promise<PageResult> =>
-    apiClient
-      .get<ApiEnvelope<Paginated<Provider>>>(BASE, { params: { page } })
-      .then((r) => {
-        const { data, ...meta } = r.data.data;
-        return { data, meta };
-      }),
-
   getAll: (): Promise<Provider[]> =>
-    apiClient
-      .get<ApiEnvelope<Paginated<Provider>>>(BASE)
-      .then((r) => r.data.data.data),
+    apiClient.get<ApiEnvelope<Provider[]>>(BASE).then((r) => r.data.data),
 
   getById: (id: string): Promise<Provider> =>
     apiClient
@@ -131,7 +127,12 @@ export const providerService = {
       .get<ApiEnvelope<Provider[]>>("/table/providers", {
         params: { category: "payment" },
       })
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
+
+  getBanksForProvider: (providerId: string | number): Promise<ProviderBank[]> =>
+    apiClient
+      .get<ApiEnvelope<{ banks: ProviderBank[] }>>(`/admin/vendor/${providerId}/banks`)
+      .then((r) => r.data.data.banks ?? []),
 
   getFundingHistory: (vendorId: string): Promise<FundingRecord[]> =>
     apiClient

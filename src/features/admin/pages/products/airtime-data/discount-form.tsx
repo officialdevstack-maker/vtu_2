@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
-import { ChevronLeft, Plus, Search, X } from "lucide-react";
+import { ChevronLeft, AlertCircle } from "lucide-react";
+import axios from "axios";
+import { z } from "zod";
 import {
   PageHeader,
   Card,
@@ -12,17 +14,18 @@ import {
 import {
   discountService,
   networkService,
+  networkTypeService,
+  roleService,
+  discountRoleService,
   type Discount,
   type Network,
+  type Role,
+  type DiscountRolePrice,
 } from "./service";
-import { providerService, type Provider } from "../../apis/providerService";
-import { apiClient } from "@shared/api/apiClient";
 
 const BACK = "/admin/products/airtime-data?tab=airtime";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type AdminRole = { id: string | number; name: string; description?: string };
 
 type FormState = {
   name: string;
@@ -30,8 +33,7 @@ type FormState = {
   type: string;
   min: string;
   max: string;
-  isActive: boolean;
-  vendorDiscounts: Record<string, string>; // { vendorCode → "5" }
+  active: boolean;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -47,21 +49,70 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function Field({
   label,
   hint,
+  error,
   children,
 }: {
   label: string;
   hint?: string;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5">
-        <label className="block text-xs font-medium text-slate-600">{label}</label>
-        {hint && <span className="text-xs text-slate-400">{hint}</span>}
+        <label className="block text-xs font-medium text-slate-600">
+          {label}
+        </label>
+        {hint && !error && <span className="text-xs text-slate-400">{hint}</span>}
       </div>
       {children}
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
+}
+
+// ─── Error banner ─────────────────────────────────────────────────────────────
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
+      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+// Every backend failure here is either a validation-shaped 4xx or the
+// generic `fail()` 500 wrapper — both put a human-readable string at
+// response.data.message once unwrapped through the (single) envelope.
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as
+      | { message?: string; errors?: Record<string, string[]> }
+      | undefined;
+    const validationErrors = data?.errors;
+    if (validationErrors && Object.keys(validationErrors).length > 0) {
+      return Object.values(validationErrors).flat().join(" ");
+    }
+    if (typeof data?.message === "string") {
+      return data.message;
+    }
+    if (err.message) return err.message;
+  }
+  return "Something went wrong. Please try again.";
+}
+
+// Role pricing is a percentage — keep it inside a sane 0–100 range.
+const percentSchema = z
+  .string()
+  .refine(
+    (v) => v === "" || (!Number.isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 100),
+    { message: "0–100 only" },
+  );
+
+function validatePercent(v: string): string | undefined {
+  const result = percentSchema.safeParse(v);
+  return result.success ? undefined : result.error.issues[0]?.message;
 }
 
 function NumberInput({
@@ -96,265 +147,212 @@ function NumberInput({
 
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 
+// `type` is a fixed DB enum (airtime/exam/electricity/...) — this page only
+// ever edits airtime discounts, so it's always "airtime", never user-edited.
+const DISCOUNT_TYPE = "airtime";
+
 const blankForm = (): FormState => ({
   name: "",
   category: "",
-  type: "",
+  type: DISCOUNT_TYPE,
   min: "",
   max: "",
-  isActive: true,
-  vendorDiscounts: {},
+  active: true,
 });
 
-const toForm = (d: Discount): FormState => {
-  const vendorDiscounts: Record<string, string> = {};
+const toForm = (d: Discount): FormState => ({
+  name: d.name ?? "",
+  category: d.category ?? "",
+  type: d.type ?? DISCOUNT_TYPE,
+  min: d.min != null ? String(d.min) : "",
+  max: d.max != null ? String(d.max) : "",
+  active: d.active ?? true,
+});
 
-  for (const [key, value] of Object.entries(d)) {
-    if (value == null || value === "") continue;
-    if (!key.startsWith("role_") && key.endsWith("_discount")) {
-      const code = key.slice(0, -"_discount".length);
-      vendorDiscounts[code] = String(value);
-    }
-  }
+const toPayload = (form: FormState): Record<string, unknown> => ({
+  name: form.name,
+  category: form.category || null,
+  type: form.type || DISCOUNT_TYPE,
+  min: form.min || null,
+  max: form.max || null,
+  active: form.active,
+});
 
-  return {
-    name: d.network ?? "",
-    category: d.category ?? "",
-    type: d.type ?? "",
-    min: d.min != null ? String(d.min) : "",
-    max: d.max != null ? String(d.max) : "",
-    isActive: d.isActive ?? d.active ?? true,
-    vendorDiscounts,
-  };
-};
+const amountSchema = z
+  .string()
+  .refine((v) => v === "" || (!Number.isNaN(Number(v)) && Number(v) >= 0), {
+    message: "Enter a valid non-negative amount.",
+  });
 
-const extractRoleDiscounts = (d: Discount): Record<string, string> => {
-  const roleDiscounts: Record<string, string> = {};
-  for (const [key, value] of Object.entries(d)) {
-    if (value == null || value === "") continue;
-    if (key.startsWith("role_") && key.endsWith("_discount")) {
-      const roleId = key.slice("role_".length, -"_discount".length);
-      roleDiscounts[roleId] = String(value);
-    }
-  }
-  return roleDiscounts;
-};
-
-const toPayload = (form: FormState): Record<string, unknown> => {
-  const payload: Record<string, unknown> = {
-    network: form.name,
-    category: form.category || null,
-    type: form.type || null,
-    min: form.min || null,
-    max: form.max || null,
-    isActive: form.isActive,
-  };
-
-  for (const [code, value] of Object.entries(form.vendorDiscounts)) {
-    if (value !== "") payload[`${code}_discount`] = parseFloat(value);
-  }
-
-  return payload;
-};
-
-// ─── Provider picker ──────────────────────────────────────────────────────────
-
-function ProviderPicker({
-  vendors,
-  selected,
-  discounts,
-  onAdd,
-  onRemove,
-  onDiscountChange,
-}: {
-  vendors: Provider[];
-  selected: string[];
-  discounts: Record<string, string>;
-  onAdd: (code: string) => void;
-  onRemove: (code: string) => void;
-  onDiscountChange: (code: string, value: string) => void;
-}) {
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const available = vendors.filter(
-    (v) =>
-      v.code &&
-      !selected.includes(v.code.toLowerCase()) &&
-      v.name.toLowerCase().includes(search.toLowerCase()),
+const discountFormSchema = z
+  .object({
+    name: z.string().trim().min(1, { message: "Select a network." }),
+    category: z.string(),
+    type: z.string(),
+    min: amountSchema,
+    max: amountSchema,
+    active: z.boolean(),
+  })
+  .refine(
+    (data) =>
+      data.min === "" || data.max === "" || Number(data.max) >= Number(data.min),
+    {
+      message: "Maximum must be greater than or equal to minimum.",
+      path: ["max"],
+    },
   );
 
-  return (
-    <div className="space-y-3">
-      {selected.length === 0 && (
-        <p className="text-xs text-slate-400 text-center py-2">
-          No providers added. Click "Add provider" below to configure discounts.
-        </p>
-      )}
+type FormErrors = Partial<Record<"name" | "min" | "max", string>>;
 
-      {selected.map((code) => {
-        const vendor = vendors.find((v) => v.code?.toLowerCase() === code);
-        return (
-          <div key={code} className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-700 truncate">
-                {vendor?.name ?? code}
-              </p>
-              {vendor?.code && vendor.code.toLowerCase() !== vendor.name.toLowerCase() && (
-                <p className="text-[10px] text-slate-400">{vendor.code}</p>
-              )}
-            </div>
-            <div className="w-28 shrink-0">
-              <NumberInput
-                value={discounts[code] ?? ""}
-                onChange={(v) => onDiscountChange(code, v)}
-                placeholder="0"
-                suffix="%"
-              />
-            </div>
-            <button
-              onClick={() => onRemove(code)}
-              className="p-1.5 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        );
-      })}
+function validateForm(form: FormState): FormErrors {
+  const result = discountFormSchema.safeParse(form);
+  if (result.success) return {};
 
-      <div className="relative" ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors mt-1"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add provider
-        </button>
-
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute left-0 top-7 z-20 w-64 bg-white border border-slate-200/70 rounded-xl shadow-md overflow-hidden">
-              <div className="p-2 border-b border-gray-100">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-                  <input
-                    autoFocus
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search providers..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                  />
-                </div>
-              </div>
-              <div className="max-h-48 overflow-y-auto py-1">
-                {available.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-3">
-                    {vendors.length === 0 ? "Loading providers…" : "All providers added"}
-                  </p>
-                ) : (
-                  available.map((v) => (
-                    <button
-                      key={v.id}
-                      onClick={() => {
-                        onAdd(v.code!.toLowerCase());
-                        setSearch("");
-                        setOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
-                    >
-                      <span className="font-medium">{v.name}</span>
-                      {v.code && (
-                        <span className="ml-1 text-slate-400">({v.code})</span>
-                      )}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
+  const errors: FormErrors = {};
+  for (const issue of result.error.issues) {
+    const key = issue.path[0] as keyof FormErrors | undefined;
+    if (key && !errors[key]) errors[key] = issue.message;
+  }
+  return errors;
 }
 
-// ─── Role discounts — separate section with its own save ─────────────────────
+// ─── Role pricing — dynamic per-role discount, own save action ───────────────
 
-function RoleDiscountsSection({
+function RolePricingSection({
   discountId,
-  initialValues,
+  pendingValues,
+  onPendingChange,
 }: {
   discountId: string | undefined;
-  initialValues: Record<string, string>;
+  pendingValues: Record<string, string>;
+  onPendingChange: (values: Record<string, string>) => void;
 }) {
-  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [existing, setExisting] = useState<DiscountRolePrice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [discounts, setDiscounts] = useState<Record<string, string>>(initialValues);
+  const [values, setValues] = useState<Record<string, string>>(pendingValues);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
+  const percentErrors: Record<string, string> = {};
+  for (const role of roles) {
+    const err = validatePercent(values[String(role.id)] ?? "");
+    if (err) percentErrors[String(role.id)] = err;
+  }
+  const hasPercentErrors = Object.keys(percentErrors).length > 0;
+
+  // Roles always load, even before the discount itself is saved, so a new
+  // discount's pricing can be filled in up front instead of only after a
+  // save-then-reopen round trip.
   useEffect(() => {
-    apiClient
-      .get("/admin/roles")
-      .then((r) => {
-        const raw = r.data?.data;
-        const arr = Array.isArray(raw) ? raw : (raw?.data ?? []);
-        setRoles(arr);
-      })
-      .catch(() => setRoles([]))
-      .finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    roleService
+      .getAll()
+      .catch(() => [])
+      .then((roleList) => {
+        setRoles(roleList);
+        if (!discountId) {
+          setLoading(false);
+          return;
+        }
+        discountRoleService
+          .getForDiscount(discountId)
+          .catch(() => [])
+          .then((priceList) => {
+            setExisting(priceList);
+            const initialValues: Record<string, string> = {};
+            for (const p of priceList) {
+              initialValues[String(p.role_id)] = String(p.discount ?? "");
+            }
+            setValues(initialValues);
+            onPendingChange(initialValues);
+            setLoading(false);
+          });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discountId]);
+
+  const setValue = (roleId: string, v: string) => {
+    setValues((s) => {
+      const next = { ...s, [roleId]: v };
+      onPendingChange(next);
+      return next;
+    });
+  };
 
   const handleSave = async () => {
-    if (!discountId) return;
+    if (!discountId || hasPercentErrors) return;
     setSaving(true);
+    setSaveError(null);
     try {
-      const payload: Record<string, unknown> = {};
-      for (const [roleId, value] of Object.entries(discounts)) {
-        payload[`role_${roleId}_discount`] =
-          value === "" ? null : parseFloat(value);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await discountService.update(discountId, payload as any);
+      await Promise.all(
+        roles.map((role) => {
+          const roleId = String(role.id);
+          const raw = values[roleId] ?? "";
+          const found = existing.find((p) => String(p.role_id) === roleId);
+          const percent = raw === "" ? 0 : parseFloat(raw);
+
+          if (found) {
+            return discountRoleService.update(found.id, { discount: percent });
+          }
+          return discountRoleService.create({
+            discount_id: discountId,
+            role_id: role.id,
+            discount: percent,
+          });
+        }),
+      );
+      const refreshed = await discountRoleService.getForDiscount(discountId);
+      setExisting(refreshed);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(extractErrorMessage(err));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between mb-4">
+    <Card className="">
+      <div className="flex items-start justify-between mb-4 p-5">
         <div>
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            Role-based discounts
+            Pricing by role
           </h3>
           <p className="text-[10px] text-slate-400 mt-0.5">
-            Override the base discount for users of a specific role.
+            Discount percentage applied when this network is charged, per
+            account role. New roles show up here automatically.
           </p>
         </div>
         {discountId && (
           <Button
             size="sm"
             variant={saved ? "secondary" : "primary"}
-            disabled={saving}
+            disabled={saving || roles.length === 0 || hasPercentErrors}
             loading={saving}
             onClick={handleSave}
           >
-            {saved ? "Saved" : "Save roles"}
+            {saved ? "Saved" : "Save pricing"}
           </Button>
         )}
       </div>
 
-      {!discountId ? (
-        <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
-          Save the discount record first to configure role-based overrides.
+      {saveError && (
+        <div className="mx-5 mb-4">
+          <ErrorBanner message={saveError} />
+        </div>
+      )}
+
+      {!discountId && roles.length > 0 && !loading && (
+        <p className="mx-5 mb-4 text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
+          These percentages save automatically once you create the discount.
         </p>
-      ) : loading ? (
-        <div className="space-y-3">
+      )}
+
+      {loading ? (
+        <div className="space-y-3 p-5">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-3">
               <SkeletonLine className="h-4 flex-1" />
@@ -363,13 +361,15 @@ function RoleDiscountsSection({
           ))}
         </div>
       ) : roles.length === 0 ? (
-        <p className="text-xs text-slate-400 text-center py-2">No roles found.</p>
+        <p className="text-xs text-slate-400 text-center py-2">
+          No roles found. Create a role first to price this network for it.
+        </p>
       ) : (
         <div className="divide-y divide-gray-100">
           {roles.map((role) => (
             <div
               key={role.id}
-              className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+              className="flex items-center gap-3 p-5 py-2.5 first:pt-0"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-slate-700 truncate">
@@ -383,13 +383,16 @@ function RoleDiscountsSection({
               </div>
               <div className="w-28 shrink-0">
                 <NumberInput
-                  value={discounts[String(role.id)] ?? ""}
-                  onChange={(v) =>
-                    setDiscounts((d) => ({ ...d, [String(role.id)]: v }))
-                  }
+                  value={values[String(role.id)] ?? ""}
+                  onChange={(v) => setValue(String(role.id), v)}
                   placeholder="0"
                   suffix="%"
                 />
+                {percentErrors[String(role.id)] && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {percentErrors[String(role.id)]}
+                  </p>
+                )}
               </div>
             </div>
           ))}
@@ -417,15 +420,32 @@ export default function DiscountFormPage() {
     stateDiscount ? toForm(stateDiscount) : blankForm(),
   );
   const [networks, setNetworks] = useState<Network[]>([]);
-  const [vendors, setVendors] = useState<Provider[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const [roleInitialValues, setRoleInitialValues] = useState<Record<string, string>>(
-    stateDiscount ? extractRoleDiscounts(stateDiscount) : {},
-  );
+  const [pendingRolePricing, setPendingRolePricing] = useState<
+    Record<string, string>
+  >({});
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    networkService.getAll().then(setNetworks).catch(() => {});
-    providerService.getAll().then(setVendors).catch(() => {});
+    networkService
+      .getAll()
+      .then(setNetworks)
+      .catch(() => {});
+    networkTypeService
+      .getAll()
+      .then((all) => {
+        const names = Array.from(
+          new Set(
+            all
+              .filter((t) => t.active && t.service_type === "airtime")
+              .map((t) => t.name),
+          ),
+        );
+        setTypes(names);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -435,48 +455,64 @@ export default function DiscountFormPage() {
         .then((d) => {
           setInitial(d);
           setForm(toForm(d));
-          setRoleInitialValues(extractRoleDiscounts(d));
         })
         .finally(() => setFetchingInitial(false));
     }
   }, [id, stateDiscount]);
 
-  const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
-
-  const addVendor = (code: string) =>
-    setForm((f) => ({
-      ...f,
-      vendorDiscounts: { ...f.vendorDiscounts, [code]: "" },
-    }));
-
-  const removeVendor = (code: string) =>
-    setForm((f) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { [code]: _, ...rest } = f.vendorDiscounts;
-      return { ...f, vendorDiscounts: rest };
-    });
-
-  const setVendorDiscount = (code: string, value: string) =>
-    setForm((f) => ({
-      ...f,
-      vendorDiscounts: { ...f.vendorDiscounts, [code]: value },
-    }));
+    setErrors((e) => (e[k as keyof FormErrors] ? { ...e, [k]: undefined } : e));
+  };
 
   const valid = String(form.name).trim().length > 0;
 
   const handleSubmit = async () => {
-    if (!valid) return;
+    const formErrors = validateForm(form);
+    const rolePricingInvalid = Object.values(pendingRolePricing).some(
+      (v) => validatePercent(v) !== undefined,
+    );
+    setErrors(formErrors);
+    setSubmitError(
+      rolePricingInvalid
+        ? "Fix the invalid role pricing percentages before saving."
+        : null,
+    );
+    if (Object.keys(formErrors).length > 0 || rolePricingInvalid) return;
+
     setSaving(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload = toPayload(form) as any;
       if (initial) {
         await discountService.update(String(initial.id), payload);
+        navigate(BACK);
       } else {
-        await discountService.create(payload);
+        // Stay on the page after creating so the "Pricing by role" card
+        // becomes usable immediately, instead of bouncing back to the list
+        // and forcing a second trip through Edit to set role pricing.
+        const created = await discountService.create(payload);
+
+        await Promise.all(
+          Object.entries(pendingRolePricing)
+            .filter(([, v]) => v !== "")
+            .map(([roleId, v]) =>
+              discountRoleService.create({
+                discount_id: created.id,
+                role_id: roleId,
+                discount: parseFloat(v),
+              }),
+            ),
+        );
+
+        setInitial(created);
+        navigate(`/admin/products/airtime-data/discounts/${created.id}/edit`, {
+          replace: true,
+          state: { discount: created },
+        });
       }
-      navigate(BACK);
+    } catch (err) {
+      setSubmitError(extractErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -518,12 +554,16 @@ export default function DiscountFormPage() {
         }
         description={
           initial
-            ? `Editing discount for ${initial.network}`
+            ? `Editing discount for ${initial.name}`
             : "Configure a new airtime discount for a network."
         }
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(BACK)}
+            >
               Cancel
             </Button>
             <Button
@@ -538,6 +578,8 @@ export default function DiscountFormPage() {
         }
       />
 
+      {submitError && <ErrorBanner message={submitError} />}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* ── Left column ── */}
         <div className="space-y-5">
@@ -545,7 +587,7 @@ export default function DiscountFormPage() {
           <Card className="p-5">
             <SectionTitle>General</SectionTitle>
             <div className="space-y-4">
-              <Field label="Network">
+              <Field label="Network" error={errors.name}>
                 {networks.length > 0 ? (
                   <select
                     value={String(form.name)}
@@ -569,22 +611,28 @@ export default function DiscountFormPage() {
                 )}
               </Field>
 
-              <Field label="Category" hint="optional">
-                <input
-                  value={String(form.category ?? "")}
-                  onChange={(e) => set("category", e.target.value)}
-                  placeholder="e.g. airtime"
-                  className={inputCls}
-                />
-              </Field>
-
               <Field label="Type" hint="optional">
-                <input
-                  value={String(form.type ?? "")}
-                  onChange={(e) => set("type", e.target.value)}
-                  placeholder="e.g. VTU"
-                  className={inputCls}
-                />
+                {types.length > 0 ? (
+                  <select
+                    value={String(form.category ?? "")}
+                    onChange={(e) => set("category", e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="">Select a type</option>
+                    {types.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    value={String(form.category ?? "")}
+                    onChange={(e) => set("category", e.target.value)}
+                    placeholder="e.g. VTU"
+                    className={inputCls}
+                  />
+                )}
               </Field>
             </div>
           </Card>
@@ -593,7 +641,7 @@ export default function DiscountFormPage() {
           <Card className="p-5">
             <SectionTitle>Pricing</SectionTitle>
             <div className="space-y-4">
-              <Field label="Minimum amount" hint="optional">
+              <Field label="Minimum amount" hint="optional" error={errors.min}>
                 <NumberInput
                   value={form.min}
                   onChange={(v) => set("min", v)}
@@ -602,7 +650,7 @@ export default function DiscountFormPage() {
                 />
               </Field>
 
-              <Field label="Maximum amount" hint="optional">
+              <Field label="Maximum amount" hint="optional" error={errors.max}>
                 <NumberInput
                   value={form.max}
                   onChange={(v) => set("max", v)}
@@ -616,18 +664,11 @@ export default function DiscountFormPage() {
 
         {/* ── Right column ── */}
         <div className="space-y-5">
-          {/* Provider discounts */}
-          <Card className="p-5">
-            <SectionTitle>Provider discounts</SectionTitle>
-            <ProviderPicker
-              vendors={vendors}
-              selected={Object.keys(form.vendorDiscounts)}
-              discounts={form.vendorDiscounts}
-              onAdd={addVendor}
-              onRemove={removeVendor}
-              onDiscountChange={setVendorDiscount}
-            />
-          </Card>
+          <RolePricingSection
+            discountId={initial ? String(initial.id) : undefined}
+            pendingValues={pendingRolePricing}
+            onPendingChange={setPendingRolePricing}
+          />
 
           {/* Settings */}
           <Card className="p-5">
@@ -640,19 +681,13 @@ export default function DiscountFormPage() {
                 </p>
               </div>
               <Toggle
-                value={Boolean(form.isActive)}
-                onChange={(v) => set("isActive", v)}
+                value={Boolean(form.active)}
+                onChange={(v) => set("active", v)}
               />
             </div>
           </Card>
         </div>
       </div>
-
-      {/* ── Role discounts — separate section, own save action ── */}
-      <RoleDiscountsSection
-        discountId={initial ? String(initial.id) : undefined}
-        initialValues={roleInitialValues}
-      />
     </div>
   );
 }
