@@ -24,69 +24,15 @@ import {
   Toggle,
   inputCls,
 } from "../../../user/components/shared-ui";
+import { roleService, type Role } from "./service";
 
 type PermissionGroup = "Customers" | "Wallets" | "Transactions" | "Support" | "Settings";
-type RoleStatus = "active" | "inactive";
 
-type Role = {
-  id: string;
-  name: string;
-  description: string;
-  usersAssigned: number;
-  permissions: PermissionGroup[];
-  status: RoleStatus;
-  isSystem: boolean;
-};
+// The backend role model has no permissions field, so permission-group
+// assignments are kept in local state only and are never sent to the API.
+type RoleRecord = Role & { permissions: PermissionGroup[] };
 
 const permissionGroups: PermissionGroup[] = ["Customers", "Wallets", "Transactions", "Support", "Settings"];
-
-const initialRoles: Role[] = [
-  {
-    id: "ROLE001",
-    name: "Super Admin",
-    description: "Full access to every module, including system settings and role management.",
-    usersAssigned: 2,
-    permissions: ["Customers", "Wallets", "Transactions", "Support", "Settings"],
-    status: "active",
-    isSystem: true,
-  },
-  {
-    id: "ROLE002",
-    name: "Admin",
-    description: "Manage customers, transactions, and support tickets across the platform.",
-    usersAssigned: 5,
-    permissions: ["Customers", "Wallets", "Transactions", "Support"],
-    status: "active",
-    isSystem: true,
-  },
-  {
-    id: "ROLE003",
-    name: "Support Staff",
-    description: "Handle customer support tickets and view transaction history for context.",
-    usersAssigned: 8,
-    permissions: ["Customers", "Support"],
-    status: "active",
-    isSystem: true,
-  },
-  {
-    id: "ROLE004",
-    name: "Finance Officer",
-    description: "Approve wallet funding requests and reconcile provider transactions.",
-    usersAssigned: 3,
-    permissions: ["Wallets", "Transactions"],
-    status: "active",
-    isSystem: true,
-  },
-  {
-    id: "ROLE005",
-    name: "Compliance Reviewer",
-    description: "Review KYC submissions and flag suspicious customer accounts.",
-    usersAssigned: 1,
-    permissions: ["Customers"],
-    status: "inactive",
-    isSystem: false,
-  },
-];
 
 const emptyForm = { name: "", description: "", permissions: [] as PermissionGroup[], status: true };
 
@@ -94,23 +40,52 @@ type ModalMode = "create" | "edit" | "view" | null;
 
 export default function RolesPage() {
   const [loading, setLoading] = useState(true);
-  const [roles, setRoles] = useState<Role[]>(initialRoles);
+  const [roles, setRoles] = useState<RoleRecord[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
-  const [activeRole, setActiveRole] = useState<Role | null>(null);
+  const [activeRole, setActiveRole] = useState<RoleRecord | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RoleRecord | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
+    let mounted = true;
+
+    const loadRoles = async () => {
+      try {
+        const data = await roleService.getAll();
+        if (mounted) {
+          setRoles((prev) =>
+            data.map((r) => ({
+              ...r,
+              permissions: prev.find((p) => p.id === r.id)?.permissions ?? [],
+            })),
+          );
+          setError(null);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError("Could not load roles from the API. Please try refreshing the page.");
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadRoles();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const totalRoles = roles.length;
   const adminUsers = roles
-    .filter((r) => r.name === "Super Admin" || r.name === "Admin")
+    .filter((r) => r.slug.includes("admin"))
     .reduce((sum, r) => sum + r.usersAssigned, 0);
-  const supportStaff = roles.find((r) => r.name === "Support Staff")?.usersAssigned ?? 0;
+  const supportStaff = roles
+    .filter((r) => r.slug.includes("support"))
+    .reduce((sum, r) => sum + r.usersAssigned, 0);
   const customRoles = roles.filter((r) => !r.isSystem).length;
 
   const togglePermission = (p: PermissionGroup) => {
@@ -126,34 +101,37 @@ export default function RolesPage() {
     setModalMode("create");
   };
 
-  const openView = (r: Role) => {
+  const openView = (r: RoleRecord) => {
     setActiveRole(r);
     setModalMode("view");
     setOpenMenuId(null);
   };
 
-  const openEdit = (r: Role) => {
+  const openEdit = (r: RoleRecord) => {
     setActiveRole(r);
     setForm({ name: r.name, description: r.description, permissions: r.permissions, status: r.status === "active" });
     setModalMode("edit");
     setOpenMenuId(null);
   };
 
-  const duplicateRole = (r: Role) => {
-    const copy: Role = {
-      ...r,
-      id: `ROLE${Math.floor(Math.random() * 90000 + 10000)}`,
-      name: `${r.name} (copy)`,
-      usersAssigned: 0,
-      isSystem: false,
-    };
-    setRoles((prev) => {
-      const idx = prev.findIndex((x) => x.id === r.id);
-      const next = [...prev];
-      next.splice(idx + 1, 0, copy);
-      return next;
-    });
+  const duplicateRole = async (r: RoleRecord) => {
     setOpenMenuId(null);
+    setError(null);
+    try {
+      const created = await roleService.create({
+        name: `${r.name} (copy)`,
+        description: r.description,
+        status: r.status,
+      });
+      setRoles((prev) => {
+        const idx = prev.findIndex((x) => x.id === r.id);
+        const next = [...prev];
+        next.splice(idx + 1, 0, { ...created, permissions: r.permissions });
+        return next;
+      });
+    } catch (err) {
+      setError("The role could not be duplicated right now.");
+    }
   };
 
   const closeModal = () => {
@@ -161,35 +139,50 @@ export default function RolesPage() {
     setActiveRole(null);
   };
 
-  const saveRole = () => {
+  const saveRole = async () => {
     if (!form.name.trim()) return;
-    if (modalMode === "edit" && activeRole) {
-      setRoles((prev) =>
-        prev.map((r) =>
-          r.id === activeRole.id
-            ? { ...r, name: form.name, description: form.description, permissions: form.permissions, status: form.status ? "active" : "inactive" }
-            : r,
-        ),
-      );
-    } else {
-      const newRole: Role = {
-        id: `ROLE${Math.floor(Math.random() * 90000 + 10000)}`,
-        name: form.name,
-        description: form.description,
-        usersAssigned: 0,
-        permissions: form.permissions,
-        status: form.status ? "active" : "inactive",
-        isSystem: false,
-      };
-      setRoles((prev) => [...prev, newRole]);
+    setSaving(true);
+    setError(null);
+    try {
+      if (modalMode === "edit" && activeRole) {
+        const updated = await roleService.update(
+          activeRole.id,
+          {
+            name: form.name,
+            description: form.description,
+            status: form.status ? "active" : "inactive",
+          },
+          activeRole.slug,
+        );
+        setRoles((prev) =>
+          prev.map((r) => (r.id === activeRole.id ? { ...updated, permissions: form.permissions } : r)),
+        );
+      } else {
+        const created = await roleService.create({
+          name: form.name,
+          description: form.description,
+          status: form.status ? "active" : "inactive",
+        });
+        setRoles((prev) => [...prev, { ...created, permissions: form.permissions }]);
+      }
+      closeModal();
+    } catch (err) {
+      setError("The role could not be saved right now. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    closeModal();
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    setRoles((prev) => prev.filter((r) => r.id !== deleteTarget.id));
-    setDeleteTarget(null);
+    try {
+      await roleService.remove(deleteTarget.id);
+      setRoles((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+    } catch (err) {
+      setError("The role could not be deleted right now.");
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -206,6 +199,12 @@ export default function RolesPage() {
       <Button onClick={openCreate} fullWidth className="sm:hidden">
         <Plus className="w-4 h-4" /> Create role
       </Button>
+
+      {error && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
@@ -427,8 +426,8 @@ export default function RolesPage() {
                 </div>
                 <div className="flex gap-3 pt-1">
                   <Button variant="secondary" fullWidth onClick={closeModal}>Cancel</Button>
-                  <Button fullWidth disabled={!form.name.trim()} onClick={saveRole}>
-                    {modalMode === "edit" ? "Save changes" : "Create role"}
+                  <Button fullWidth disabled={!form.name.trim() || saving} loading={saving} onClick={saveRole}>
+                    {saving ? "Saving..." : modalMode === "edit" ? "Save changes" : "Create role"}
                   </Button>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { apiClient } from "../../../../shared/api/apiClient";
+import { apiClient } from "@shared/api/apiClient";
 
 type CustomerStatus = "active" | "suspended" | "inactive";
 type KycStatus = "verified" | "pending" | "unverified";
@@ -126,5 +126,89 @@ export const customerService = {
       status: nextStatus,
     });
     return mapCustomer(unwrapObject(response.data));
+  },
+};
+
+// ─── Roles ────────────────────────────────────────────────────────────────────
+// Uses /admin/roles — see API_DOCUMENTATION.md section 10.
+
+type RoleEnvelope<T> = { success: boolean; message?: string; data: T };
+
+export type RoleStatus = "active" | "inactive";
+
+// Account tiers referenced elsewhere in the API (see section 5.3 "Upgrade Account")
+// — these are built-in roles the backend relies on and shouldn't be deletable from the UI.
+const SYSTEM_ROLE_SLUGS = new Set(["admin", "user", "agent", "bonanza", "api"]);
+
+export type Role = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  usersAssigned: number;
+  status: RoleStatus;
+  isSystem: boolean;
+};
+
+export type RolePayload = {
+  name: string;
+  slug?: string;
+  description: string;
+  status: RoleStatus;
+};
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "role";
+
+const mapRole = (item: any): Role => {
+  const slug = String(item?.slug ?? "");
+  return {
+    id: String(item?.id ?? ""),
+    name: item?.name ?? "",
+    slug,
+    description: item?.description ?? "",
+    usersAssigned: Array.isArray(item?.users)
+      ? item.users.length
+      : Number(item?.users_count ?? 0),
+    status: item?.is_active === false ? "inactive" : "active",
+    isSystem: SYSTEM_ROLE_SLUGS.has(slug.toLowerCase()),
+  };
+};
+
+const toRoleBody = (payload: RolePayload, existingSlug?: string) => ({
+  name: payload.name,
+  slug: payload.slug || existingSlug || slugify(payload.name),
+  description: payload.description,
+  is_active: payload.status === "active",
+});
+
+export const roleService = {
+  getAll: async (): Promise<Role[]> => {
+    const response = await apiClient.get<RoleEnvelope<any[]>>("/admin/roles");
+    return (response.data.data.data ?? []).map(mapRole);
+  },
+
+  create: async (payload: RolePayload): Promise<Role> => {
+    const response = await apiClient.post<RoleEnvelope<any>>(
+      "/admin/roles",
+      toRoleBody(payload),
+    );
+    return mapRole(response.data.data);
+  },
+
+  update: async (id: string, payload: RolePayload, existingSlug?: string): Promise<Role> => {
+    const response = await apiClient.put<RoleEnvelope<any>>(
+      `/admin/roles/${id}`,
+      toRoleBody(payload, existingSlug),
+    );
+    return mapRole(response.data.data);
+  },
+
+  remove: async (id: string): Promise<void> => {
+    await apiClient.delete(`/admin/roles/${id}`);
   },
 };

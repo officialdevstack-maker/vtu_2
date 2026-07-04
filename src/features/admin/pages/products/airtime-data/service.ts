@@ -138,7 +138,7 @@ export const networkTypeService = {
 
 export type Discount = {
   id: string | number;
-  network: string;
+  name: string;
   category?: string | null;
   type?: string | null;
   min?: string | number | null;

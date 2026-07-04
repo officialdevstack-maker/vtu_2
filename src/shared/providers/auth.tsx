@@ -47,11 +47,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       try {
         await apiClient.get("/sanctum/csrf-cookie");
-        const payload = login.includes("@")
-          ? { email: login, password }
-          : { phone: login, password };
 
-        await apiClient.post("/login", payload);
+        await apiClient.post("/login", { login, password });
         await checkAuth();
       } catch (error: any) {
         console.error("Login failed:", error?.response?.data ?? error.message);

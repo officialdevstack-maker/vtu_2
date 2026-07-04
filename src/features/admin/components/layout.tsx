@@ -73,7 +73,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
       },
       {
         label: "Customers",
-        path: "/admin/customers",
+        path: "/admin/customers/users",
         icon: Users,
         children: [
           { label: "All Customers", path: "/admin/customers/users" },

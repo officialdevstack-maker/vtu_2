@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Plus, Search, X } from "lucide-react";
 import {
   PageHeader,
   Card,
@@ -13,13 +13,28 @@ import {
   discountService,
   networkService,
   type Discount,
-  type DiscountPayload,
   type Network,
 } from "./service";
+import { providerService, type Provider } from "../../apis/providerService";
+import { apiClient } from "@shared/api/apiClient";
 
 const BACK = "/admin/products/airtime-data?tab=airtime";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type AdminRole = { id: string | number; name: string; description?: string };
+
+type FormState = {
+  name: string;
+  category: string;
+  type: string;
+  min: string;
+  max: string;
+  isActive: boolean;
+  vendorDiscounts: Record<string, string>; // { vendorCode → "5" }
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -79,45 +94,310 @@ function NumberInput({
   );
 }
 
-// ─── Providers config ─────────────────────────────────────────────────────────
-
-const PROVIDERS: { key: keyof DiscountPayload; label: string }[] = [
-  { key: "adex_discount", label: "Adex" },
-  { key: "spurs_discount", label: "Spurs" },
-  { key: "msorg_discount", label: "Msorg" },
-  { key: "vtpass_discount", label: "VTpass" },
-  { key: "payscribe_discount", label: "Payscribe" },
-];
-
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 
-const blankForm = (): DiscountPayload => ({
-  network: "",
+const blankForm = (): FormState => ({
+  name: "",
   category: "",
   type: "",
   min: "",
   max: "",
-  adex_discount: "",
-  spurs_discount: "",
-  msorg_discount: "",
-  vtpass_discount: "",
-  payscribe_discount: "",
   isActive: true,
+  vendorDiscounts: {},
 });
 
-const toForm = (d: Discount): DiscountPayload => ({
-  network: d.network ?? "",
-  category: d.category ?? "",
-  type: d.type ?? "",
-  min: d.min ?? "",
-  max: d.max ?? "",
-  adex_discount: d.adex_discount ?? "",
-  spurs_discount: d.spurs_discount ?? "",
-  msorg_discount: d.msorg_discount ?? "",
-  vtpass_discount: d.vtpass_discount ?? "",
-  payscribe_discount: d.payscribe_discount ?? "",
-  isActive: d.isActive ?? d.active ?? true,
-});
+const toForm = (d: Discount): FormState => {
+  const vendorDiscounts: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(d)) {
+    if (value == null || value === "") continue;
+    if (!key.startsWith("role_") && key.endsWith("_discount")) {
+      const code = key.slice(0, -"_discount".length);
+      vendorDiscounts[code] = String(value);
+    }
+  }
+
+  return {
+    name: d.network ?? "",
+    category: d.category ?? "",
+    type: d.type ?? "",
+    min: d.min != null ? String(d.min) : "",
+    max: d.max != null ? String(d.max) : "",
+    isActive: d.isActive ?? d.active ?? true,
+    vendorDiscounts,
+  };
+};
+
+const extractRoleDiscounts = (d: Discount): Record<string, string> => {
+  const roleDiscounts: Record<string, string> = {};
+  for (const [key, value] of Object.entries(d)) {
+    if (value == null || value === "") continue;
+    if (key.startsWith("role_") && key.endsWith("_discount")) {
+      const roleId = key.slice("role_".length, -"_discount".length);
+      roleDiscounts[roleId] = String(value);
+    }
+  }
+  return roleDiscounts;
+};
+
+const toPayload = (form: FormState): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {
+    network: form.name,
+    category: form.category || null,
+    type: form.type || null,
+    min: form.min || null,
+    max: form.max || null,
+    isActive: form.isActive,
+  };
+
+  for (const [code, value] of Object.entries(form.vendorDiscounts)) {
+    if (value !== "") payload[`${code}_discount`] = parseFloat(value);
+  }
+
+  return payload;
+};
+
+// ─── Provider picker ──────────────────────────────────────────────────────────
+
+function ProviderPicker({
+  vendors,
+  selected,
+  discounts,
+  onAdd,
+  onRemove,
+  onDiscountChange,
+}: {
+  vendors: Provider[];
+  selected: string[];
+  discounts: Record<string, string>;
+  onAdd: (code: string) => void;
+  onRemove: (code: string) => void;
+  onDiscountChange: (code: string, value: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const available = vendors.filter(
+    (v) =>
+      v.code &&
+      !selected.includes(v.code.toLowerCase()) &&
+      v.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <div className="space-y-3">
+      {selected.length === 0 && (
+        <p className="text-xs text-slate-400 text-center py-2">
+          No providers added. Click "Add provider" below to configure discounts.
+        </p>
+      )}
+
+      {selected.map((code) => {
+        const vendor = vendors.find((v) => v.code?.toLowerCase() === code);
+        return (
+          <div key={code} className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-slate-700 truncate">
+                {vendor?.name ?? code}
+              </p>
+              {vendor?.code && vendor.code.toLowerCase() !== vendor.name.toLowerCase() && (
+                <p className="text-[10px] text-slate-400">{vendor.code}</p>
+              )}
+            </div>
+            <div className="w-28 shrink-0">
+              <NumberInput
+                value={discounts[code] ?? ""}
+                onChange={(v) => onDiscountChange(code, v)}
+                placeholder="0"
+                suffix="%"
+              />
+            </div>
+            <button
+              onClick={() => onRemove(code)}
+              className="p-1.5 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        );
+      })}
+
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors mt-1"
+        >
+          <Plus className="w-3.5 h-3.5" /> Add provider
+        </button>
+
+        {open && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+            <div className="absolute left-0 top-7 z-20 w-64 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <div className="p-2 border-b border-gray-100">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                  <input
+                    autoFocus
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search providers..."
+                    className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                  />
+                </div>
+              </div>
+              <div className="max-h-48 overflow-y-auto py-1">
+                {available.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-3">
+                    {vendors.length === 0 ? "Loading providers…" : "All providers added"}
+                  </p>
+                ) : (
+                  available.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => {
+                        onAdd(v.code!.toLowerCase());
+                        setSearch("");
+                        setOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                    >
+                      <span className="font-medium">{v.name}</span>
+                      {v.code && (
+                        <span className="ml-1 text-slate-400">({v.code})</span>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Role discounts — separate section with its own save ─────────────────────
+
+function RoleDiscountsSection({
+  discountId,
+  initialValues,
+}: {
+  discountId: string | undefined;
+  initialValues: Record<string, string>;
+}) {
+  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [discounts, setDiscounts] = useState<Record<string, string>>(initialValues);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    apiClient
+      .get("/admin/roles")
+      .then((r) => {
+        const raw = r.data?.data;
+        const arr = Array.isArray(raw) ? raw : (raw?.data ?? []);
+        setRoles(arr);
+      })
+      .catch(() => setRoles([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!discountId) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = {};
+      for (const [roleId, value] of Object.entries(discounts)) {
+        payload[`role_${roleId}_discount`] =
+          value === "" ? null : parseFloat(value);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await discountService.update(discountId, payload as any);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Role-based discounts
+          </h3>
+          <p className="text-[10px] text-slate-400 mt-0.5">
+            Override the base discount for users of a specific role.
+          </p>
+        </div>
+        {discountId && (
+          <Button
+            size="sm"
+            variant={saved ? "secondary" : "primary"}
+            disabled={saving}
+            loading={saving}
+            onClick={handleSave}
+          >
+            {saved ? "Saved" : "Save roles"}
+          </Button>
+        )}
+      </div>
+
+      {!discountId ? (
+        <p className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
+          Save the discount record first to configure role-based overrides.
+        </p>
+      ) : loading ? (
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <SkeletonLine className="h-4 flex-1" />
+              <SkeletonLine className="h-8 w-28" />
+            </div>
+          ))}
+        </div>
+      ) : roles.length === 0 ? (
+        <p className="text-xs text-slate-400 text-center py-2">No roles found.</p>
+      ) : (
+        <div className="divide-y divide-gray-100">
+          {roles.map((role) => (
+            <div
+              key={role.id}
+              className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-slate-700 truncate">
+                  {role.name}
+                </p>
+                {role.description && (
+                  <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                    {role.description}
+                  </p>
+                )}
+              </div>
+              <div className="w-28 shrink-0">
+                <NumberInput
+                  value={discounts[String(role.id)] ?? ""}
+                  onChange={(v) =>
+                    setDiscounts((d) => ({ ...d, [String(role.id)]: v }))
+                  }
+                  placeholder="0"
+                  suffix="%"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -133,14 +413,19 @@ export default function DiscountFormPage() {
   const [fetchingInitial, setFetchingInitial] = useState(
     id != null && !stateDiscount,
   );
-  const [form, setForm] = useState<DiscountPayload>(
+  const [form, setForm] = useState<FormState>(
     stateDiscount ? toForm(stateDiscount) : blankForm(),
   );
   const [networks, setNetworks] = useState<Network[]>([]);
+  const [vendors, setVendors] = useState<Provider[]>([]);
   const [saving, setSaving] = useState(false);
+  const [roleInitialValues, setRoleInitialValues] = useState<Record<string, string>>(
+    stateDiscount ? extractRoleDiscounts(stateDiscount) : {},
+  );
 
   useEffect(() => {
     networkService.getAll().then(setNetworks).catch(() => {});
+    providerService.getAll().then(setVendors).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -150,24 +435,46 @@ export default function DiscountFormPage() {
         .then((d) => {
           setInitial(d);
           setForm(toForm(d));
+          setRoleInitialValues(extractRoleDiscounts(d));
         })
         .finally(() => setFetchingInitial(false));
     }
   }, [id, stateDiscount]);
 
-  const set = (k: keyof DiscountPayload, v: string | boolean | null) =>
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const valid = String(form.network).trim().length > 0;
+  const addVendor = (code: string) =>
+    setForm((f) => ({
+      ...f,
+      vendorDiscounts: { ...f.vendorDiscounts, [code]: "" },
+    }));
+
+  const removeVendor = (code: string) =>
+    setForm((f) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [code]: _, ...rest } = f.vendorDiscounts;
+      return { ...f, vendorDiscounts: rest };
+    });
+
+  const setVendorDiscount = (code: string, value: string) =>
+    setForm((f) => ({
+      ...f,
+      vendorDiscounts: { ...f.vendorDiscounts, [code]: value },
+    }));
+
+  const valid = String(form.name).trim().length > 0;
 
   const handleSubmit = async () => {
     if (!valid) return;
     setSaving(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload = toPayload(form) as any;
       if (initial) {
-        await discountService.update(String(initial.id), form);
+        await discountService.update(String(initial.id), payload);
       } else {
-        await discountService.create(form);
+        await discountService.create(payload);
       }
       navigate(BACK);
     } finally {
@@ -234,7 +541,6 @@ export default function DiscountFormPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* ── Left column ── */}
         <div className="space-y-5">
-
           {/* General */}
           <Card className="p-5">
             <SectionTitle>General</SectionTitle>
@@ -242,8 +548,8 @@ export default function DiscountFormPage() {
               <Field label="Network">
                 {networks.length > 0 ? (
                   <select
-                    value={String(form.network)}
-                    onChange={(e) => set("network", e.target.value)}
+                    value={String(form.name)}
+                    onChange={(e) => set("name", e.target.value)}
                     className={inputCls}
                   >
                     <option value="">Select a network</option>
@@ -255,8 +561,8 @@ export default function DiscountFormPage() {
                   </select>
                 ) : (
                   <input
-                    value={String(form.network)}
-                    onChange={(e) => set("network", e.target.value)}
+                    value={String(form.name)}
+                    onChange={(e) => set("name", e.target.value)}
                     placeholder="e.g. MTN"
                     className={inputCls}
                   />
@@ -310,22 +616,17 @@ export default function DiscountFormPage() {
 
         {/* ── Right column ── */}
         <div className="space-y-5">
-
           {/* Provider discounts */}
           <Card className="p-5">
             <SectionTitle>Provider discounts</SectionTitle>
-            <div className="space-y-4">
-              {PROVIDERS.map(({ key, label }) => (
-                <Field key={key} label={label} hint="optional">
-                  <NumberInput
-                    value={form[key] as string | number | null | undefined}
-                    onChange={(v) => set(key, v)}
-                    placeholder="0"
-                    suffix="%"
-                  />
-                </Field>
-              ))}
-            </div>
+            <ProviderPicker
+              vendors={vendors}
+              selected={Object.keys(form.vendorDiscounts)}
+              discounts={form.vendorDiscounts}
+              onAdd={addVendor}
+              onRemove={removeVendor}
+              onDiscountChange={setVendorDiscount}
+            />
           </Card>
 
           {/* Settings */}
@@ -346,6 +647,12 @@ export default function DiscountFormPage() {
           </Card>
         </div>
       </div>
+
+      {/* ── Role discounts — separate section, own save action ── */}
+      <RoleDiscountsSection
+        discountId={initial ? String(initial.id) : undefined}
+        initialValues={roleInitialValues}
+      />
     </div>
   );
 }
