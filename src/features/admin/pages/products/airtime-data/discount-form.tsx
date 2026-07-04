@@ -235,7 +235,7 @@ function ProviderPicker({
         {open && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute left-0 top-7 z-20 w-64 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+            <div className="absolute left-0 top-7 z-20 w-64 bg-white border border-slate-200/70 rounded-xl shadow-md overflow-hidden">
               <div className="p-2 border-b border-gray-100">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />

@@ -1,10 +1,17 @@
+import { Sparkles } from "lucide-react";
+import { PageHeader, Card, EmptyState } from "../../user/components/shared-ui";
+
 const ServiceControlPage = () => {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">Service Control</h2>
-      <p className="mt-2 text-sm text-slate-600">
-        Placeholder page for service control settings.
-      </p>
+    <div className="space-y-5">
+      <PageHeader title="Service Control" description="Enable, disable, and monitor platform services" />
+      <Card>
+        <EmptyState
+          icon={Sparkles}
+          title="Service control coming soon"
+          description="Live toggles for airtime, data, cable, and bill services will appear here."
+        />
+      </Card>
     </div>
   );
 };

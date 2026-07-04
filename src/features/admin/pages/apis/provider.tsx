@@ -147,8 +147,8 @@ function TokenDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 text-sm">
             New token generated
@@ -229,8 +229,8 @@ function ProviderFormModal({
   const valid = form.name.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 text-sm">
             {isEdit ? "Edit provider" : "Add provider"}
@@ -368,8 +368,8 @@ function DeleteConfirm({
   deleting: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-xl w-full max-w-sm shadow-lg p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl p-4">
         <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
           <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
           <p className="text-xs text-red-800">
@@ -431,7 +431,7 @@ function RowMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={onToggleOpen} />
-          <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+          <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-slate-200/70 rounded-xl shadow-md py-1">
             <button
               onClick={onShow}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"

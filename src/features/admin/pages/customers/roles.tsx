@@ -252,36 +252,32 @@ export default function RolesPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[880px]">
+            <table className="w-full text-sm table-fixed min-w-[480px] lg:min-w-0">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Role name", "Description", "Users assigned", "Permissions", "Status", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-2 text-xs font-medium text-slate-500 whitespace-nowrap ${
-                        h === "Users assigned" ? "text-right" : h === "Actions" ? "text-center" : "text-left"
-                      }`}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  <th className="w-[26%] lg:w-[14%] px-4 py-2 text-left text-xs font-medium text-slate-500 whitespace-nowrap">Role name</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 whitespace-nowrap">Description</th>
+                  <th className="hidden lg:table-cell lg:w-[12%] px-4 py-2 text-right text-xs font-medium text-slate-500 whitespace-nowrap">Users assigned</th>
+                  <th className="hidden lg:table-cell lg:w-[22%] px-4 py-2 text-left text-xs font-medium text-slate-500 whitespace-nowrap">Permissions</th>
+                  <th className="w-[20%] lg:w-[10%] px-4 py-2 text-left text-xs font-medium text-slate-500 whitespace-nowrap">Status</th>
+                  <th className="w-14 px-2 py-2 text-center text-xs font-medium text-slate-500 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {roles.map((r) => (
                   <tr key={r.id} className="hover:bg-gray-50 transition-colors align-top">
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900 text-xs whitespace-nowrap">{r.name}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-slate-900 text-xs">{r.name}</span>
                         {r.isSystem && (
                           <span className="text-[10px] font-medium text-slate-500 bg-slate-100 rounded-full px-1.5 py-0.5">System</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 max-w-[240px]">{r.description}</td>
-                    <td className="px-4 py-3 text-right text-xs text-slate-500 tabular-nums whitespace-nowrap">{r.usersAssigned}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1 max-w-[220px]">
+                    <td className="px-4 py-3 text-xs text-slate-500">{r.description}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-right text-xs text-slate-500 tabular-nums whitespace-nowrap">{r.usersAssigned}</td>
+                    <td className="hidden lg:table-cell px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
                         {r.permissions.map((p) => (
                           <span key={p} className="text-[10px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5 whitespace-nowrap">
                             {p}
@@ -292,7 +288,7 @@ export default function RolesPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={r.status} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-3">
                       <div className="relative flex justify-center">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id)}
@@ -304,7 +300,7 @@ export default function RolesPage() {
                         {openMenuId === r.id && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                            <div className="absolute right-0 top-8 z-20 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                            <div className="absolute right-0 top-8 z-20 w-40 bg-white border border-slate-200/70 rounded-xl shadow-md py-1">
                               <button
                                 onClick={() => openView(r)}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
@@ -346,8 +342,8 @@ export default function RolesPage() {
 
       {/* Create / Edit / View modal */}
       {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-xl w-full max-w-md shadow-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
               <h3 className="font-semibold text-slate-900 text-sm">
                 {modalMode === "create" ? "Create role" : modalMode === "edit" ? "Edit role" : "Role details"}
@@ -411,7 +407,7 @@ export default function RolesPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-2">Permission groups</label>
-                  <div className="space-y-1 border border-gray-200 rounded-lg divide-y divide-gray-100">
+                  <div className="space-y-1 border border-slate-200/70 rounded-xl divide-y divide-gray-100">
                     {permissionGroups.map((p) => (
                       <div key={p} className="flex items-center justify-between px-3 py-2.5">
                         <span className="text-sm text-slate-700">{p}</span>
@@ -420,7 +416,7 @@ export default function RolesPage() {
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2.5">
+                <div className="flex items-center justify-between border border-slate-200/70 rounded-xl px-3 py-2.5">
                   <span className="text-sm text-slate-700">Active</span>
                   <Toggle value={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
                 </div>
@@ -438,8 +434,8 @@ export default function RolesPage() {
 
       {/* Delete confirm */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-xl w-full max-w-sm shadow-lg p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl p-4">
             <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <p className="text-xs text-red-800">

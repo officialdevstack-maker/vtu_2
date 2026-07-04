@@ -148,13 +148,13 @@ const Layout = () => {
 
   const renderSidebarContent = () => (
     <>
-      <div className="border-b border-white/10 px-5 py-5">
+      <div className="border-b border-slate-100 px-5 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-600/20">
-            <LayoutGrid className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-600/20">
+            <LayoutGrid className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold">Admin Center</p>
+            <p className="text-sm font-semibold text-slate-900">Admin Center</p>
             <p className="text-xs text-slate-400">Operations control</p>
           </div>
         </div>
@@ -163,7 +163,7 @@ const Layout = () => {
       <nav className="flex-1 overflow-y-auto px-3 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {navGroups.map((group) => (
           <div key={group.title} className="mb-4">
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">
               {group.title}
             </p>
             <div className="space-y-1">
@@ -177,15 +177,15 @@ const Layout = () => {
 
                 return (
                   <div key={item.path}>
-                    <div className="flex items-center rounded-lg">
+                    <div className="flex items-center rounded-xl">
                       <NavLink
                         to={item.path}
                         onClick={() => setMobileSidebarOpen(false)}
                         className={({ isActive: linkActive }) =>
-                          `flex flex-1 items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+                          `flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                             linkActive || active
-                              ? "bg-white/10 text-white"
-                              : "text-slate-300 hover:bg-white/5 hover:text-white"
+                              ? "bg-indigo-50 text-indigo-700 font-medium"
+                              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                           }`
                         }
                       >
@@ -197,7 +197,7 @@ const Layout = () => {
                         <button
                           type="button"
                           onClick={() => toggleExpanded(item.path)}
-                          className="rounded-r-lg px-2 py-2.5 text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
+                          className="rounded-r-xl px-2 py-2.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700"
                           aria-label={`Toggle ${item.label}`}
                         >
                           <ChevronRight
@@ -210,17 +210,17 @@ const Layout = () => {
                     </div>
 
                     {item.children && isExpanded ? (
-                      <div className="ml-7 mt-1 space-y-1 border-l border-white/10 pl-3">
+                      <div className="ml-7 mt-1 space-y-1 border-l border-slate-100 pl-3">
                         {item.children.map((child) => (
                           <NavLink
                             key={child.path}
                             to={child.path}
                             onClick={() => setMobileSidebarOpen(false)}
                             className={({ isActive: childActive }) =>
-                              `flex items-center rounded-md px-2 py-1.5 text-sm transition-colors ${
+                              `flex items-center rounded-lg px-2 py-1.5 text-sm transition-colors ${
                                 childActive
-                                  ? "text-white"
-                                  : "text-slate-400 hover:text-slate-200"
+                                  ? "text-indigo-700 font-medium"
+                                  : "text-slate-400 hover:text-slate-700"
                               }`
                             }
                           >
@@ -237,17 +237,17 @@ const Layout = () => {
         ))}
       </nav>
 
-      <div className="border-t border-white/10 px-3 py-3">
+      <div className="border-t border-slate-100 px-3 py-3">
         <button
           type="button"
           onClick={() => setShowLogoutModal(true)}
-          className="flex w-full items-center gap-2.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-left transition-colors hover:bg-white/10"
+          className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:bg-slate-100"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-semibold text-indigo-200">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
             CO
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-white">
+            <p className="truncate text-sm font-medium text-slate-900">
               Chukwuemeka Obi
             </p>
             <p className="truncate text-xs text-slate-400">Super admin</p>
@@ -260,17 +260,17 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-app-bg text-slate-900">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-gray-900 text-slate-100 shadow-2xl lg:sticky lg:top-0 lg:h-screen lg:flex">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-100 bg-white lg:sticky lg:top-0 lg:h-screen lg:flex">
           {renderSidebarContent()}
         </aside>
 
         <main className="min-w-0 flex-1">
-          <header className="sticky top-0 z-20 h-14 border-b border-gray-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+          <header className="sticky top-0 z-20 h-14 border-b border-slate-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
             <div className="flex h-full items-center gap-2 px-3 sm:px-4 lg:px-6">
               <button
                 type="button"
                 onClick={() => setMobileSidebarOpen(true)}
-                className="rounded-md p-2 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700 lg:hidden"
+                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 lg:hidden"
                 aria-label="Open admin navigation"
                 aria-expanded={mobileSidebarOpen}
               >
@@ -287,7 +287,7 @@ const Layout = () => {
                   </h1>
                 </div>
 
-                <div className="ml-auto hidden items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors focus-within:border-indigo-400 focus-within:bg-white md:flex md:w-56 lg:w-64">
+                <div className="ml-auto hidden items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 md:flex md:w-56 lg:w-64">
                   <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                   <input
                     type="text"
@@ -298,18 +298,18 @@ const Layout = () => {
               </div>
 
               <div className="ml-auto flex items-center gap-1 sm:gap-2">
-                <button className="relative rounded-md p-2 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700">
+                <button className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700">
                   <Bell className="h-4.5 w-4.5" />
                   <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
                 </button>
 
-                <button className="hidden rounded-md p-2 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700 sm:flex">
+                <button className="hidden rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 sm:flex">
                   <Settings className="h-4.5 w-4.5" />
                 </button>
 
-                <div className="mx-1 hidden h-5 w-px bg-gray-200 sm:block" />
+                <div className="mx-1 hidden h-5 w-px bg-slate-200 sm:block" />
 
-                <button className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-gray-100">
+                <button className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
                     CO
                   </div>
@@ -338,11 +338,11 @@ const Layout = () => {
             className="absolute inset-0 bg-black/50"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <aside className="relative flex h-full w-[min(20rem,86vw)] flex-col border-r border-white/10 bg-gray-900 text-slate-100 shadow-2xl">
+          <aside className="relative flex h-full w-[min(20rem,86vw)] flex-col border-r border-slate-100 bg-white shadow-xl">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute right-3 top-3 z-10 rounded-md p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+              className="absolute right-3 top-3 z-10 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
               aria-label="Close admin navigation"
             >
               <X className="h-4 w-4" />
@@ -353,8 +353,8 @@ const Layout = () => {
       ) : null}
 
       {showLogoutModal ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200/70 bg-white p-6 shadow-xl">
             <p className="text-lg font-semibold text-slate-900">Sign out?</p>
             <p className="mt-2 text-sm text-slate-600">
               Your session will end and you’ll be redirected to the login page.
@@ -365,7 +365,7 @@ const Layout = () => {
                 type="button"
                 onClick={() => setShowLogoutModal(false)}
                 disabled={isLoggingOut}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -373,7 +373,7 @@ const Layout = () => {
                 type="button"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isLoggingOut ? "Signing out..." : "Yes, sign out"}
               </button>

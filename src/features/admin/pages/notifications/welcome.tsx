@@ -1,27 +1,17 @@
 import { Mail } from "lucide-react";
+import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui";
 
 export default function WelcomePage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-indigo-100 p-3">
-          <Mail className="h-6 w-6 text-indigo-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Welcome Messages
-          </h1>
-          <p className="text-sm text-slate-600">
-            Configure messages sent to new users
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-4 rounded-lg border border-slate-200 bg-white p-8 text-center">
-        <p className="text-slate-500">
-          Welcome message configuration coming soon
-        </p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Welcome Messages" description="Configure messages sent to new users" />
+      <Card>
+        <EmptyState
+          icon={Mail}
+          title="Welcome message configuration coming soon"
+          description="Editing the message new users receive will appear here."
+        />
+      </Card>
     </div>
   );
 }
