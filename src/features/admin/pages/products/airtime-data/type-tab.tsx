@@ -19,31 +19,27 @@ import {
 } from "../../../../user/components/shared-ui";
 import { Toolbar, SelectFilter } from "./shared";
 import {
-  networkService,
   networkTypeService,
-  type Network,
   type NetworkType,
   type NetworkTypePayload,
 } from "./service";
 
 // ─── Form modal ───────────────────────────────────────────────────────────────
 
-const emptyForm = (networks: Network[]): NetworkTypePayload => ({
+const emptyForm = (): NetworkTypePayload => ({
   name: "",
-  network_id: networks[0]?.id ?? "",
+  service: "airtime",
   description: "",
   status: "active",
 });
 
 function TypeFormModal({
   initial,
-  networks,
   onSave,
   onClose,
   saving,
 }: {
   initial: NetworkTypePayload;
-  networks: Network[];
   onSave: (payload: NetworkTypePayload) => void;
   onClose: () => void;
   saving: boolean;
@@ -53,7 +49,7 @@ function TypeFormModal({
     setForm((f) => ({ ...f, [k]: v }));
 
   const isEdit = Boolean(initial.name);
-  const valid = form.name.trim() && form.network_id;
+  const valid = form.name.trim() && form.service;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
@@ -85,25 +81,24 @@ function TypeFormModal({
 
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Network
+              Service
             </label>
             <select
-              value={form.network_id}
-              onChange={(e) => set("network_id", e.target.value)}
+              value={form.service}
+              onChange={(e) => set("service", e.target.value)}
               className={inputCls}
             >
-              {networks.map((n) => (
-                <option key={n.id} value={n.id}>
-                  {n.name}
-                </option>
-              ))}
+              <option value="airtime">Airtime</option>
+              <option value="data">Data</option>
             </select>
           </div>
 
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">
               Description
-              <span className="text-slate-400 font-normal ml-1">(optional)</span>
+              <span className="text-slate-400 font-normal ml-1">
+                (optional)
+              </span>
             </label>
             <input
               value={form.description}
@@ -198,29 +193,23 @@ type ModalState =
 
 export function TypeTab() {
   const [types, setTypes] = useState<NetworkType[]>([]);
-  const [networks, setNetworks] = useState<Network[]>([]);
   const [loading, setLoading] = useState(true);
-  const [networkFilter, setNetworkFilter] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([networkTypeService.getAll(), networkService.getAll()])
-      .then(([t, n]) => {
-        setTypes(t);
-        setNetworks(n);
-      })
+    networkTypeService
+      .getAll()
+      .then(setTypes)
       .finally(() => setLoading(false));
   }, []);
 
   const filtered = types.filter(
-    (t) => !networkFilter || t.network_id === networkFilter,
+    (t) => !serviceFilter || t.service === serviceFilter,
   );
-
-  const networkName = (id: string) =>
-    networks.find((n) => n.id === id)?.name ?? id;
 
   const handleAdd = async (payload: NetworkTypePayload) => {
     setSaving(true);
@@ -261,7 +250,7 @@ export function TypeTab() {
     setToggling(type.id);
     setOpenMenuId(null);
     try {
-      const updated = await networkTypeService.toggleStatus(type.id);
+      const updated = await networkTypeService.toggleStatus(type);
       setTypes((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     } finally {
       setToggling(null);
@@ -273,10 +262,13 @@ export function TypeTab() {
       <Card className="overflow-hidden">
         <Toolbar>
           <SelectFilter
-            placeholder="All networks"
-            options={networks.map((n) => ({ value: n.id, label: n.name }))}
-            value={networkFilter}
-            onChange={setNetworkFilter}
+            placeholder="All services"
+            options={[
+              { value: "airtime", label: "Airtime" },
+              { value: "data", label: "Data" },
+            ]}
+            value={serviceFilter}
+            onChange={setServiceFilter}
           />
           <div className="flex-1" />
           <Button size="sm" onClick={() => setModal({ kind: "add" })}>
@@ -301,17 +293,17 @@ export function TypeTab() {
           <EmptyState
             icon={Layers}
             title={
-              networkFilter
-                ? "No types for this network"
-                : "No network types configured"
+              serviceFilter
+                ? "No types for this service"
+                : "No service types configured"
             }
             description={
-              networkFilter
-                ? "Try a different network or add a type for this one."
-                : "Types define how a network is sold — e.g. VTU, SME, CG, or Gift."
+              serviceFilter
+                ? "Try a different service or add a type for this one."
+                : "Types define how a service is sold — e.g. VTU, SME, CG, or Gift."
             }
             action={
-              !networkFilter ? (
+              !serviceFilter ? (
                 <Button size="sm" onClick={() => setModal({ kind: "add" })}>
                   <Plus className="w-3.5 h-3.5" /> Add type
                 </Button>
@@ -323,16 +315,20 @@ export function TypeTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Type name", "Network", "Description", "Status", "Actions"].map(
-                    (h, i) => (
-                      <th
-                        key={h}
-                        className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 4 ? "text-center" : "text-left"}`}
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Type name",
+                    "Service",
+                    "Description",
+                    "Status",
+                    "Actions",
+                  ].map((h, i) => (
+                    <th
+                      key={h}
+                      className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 4 ? "text-center" : "text-left"}`}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -348,8 +344,8 @@ export function TypeTab() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      {networkName(t.network_id)}
+                    <td className="px-4 py-3 text-xs text-slate-500 capitalize">
+                      {t.service}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-400 max-w-[220px] truncate">
                       {t.description || "—"}
@@ -390,7 +386,9 @@ export function TypeTab() {
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
                               >
                                 <Power className="w-3.5 h-3.5" />
-                                {t.status === "active" ? "Deactivate" : "Activate"}
+                                {t.status === "active"
+                                  ? "Deactivate"
+                                  : "Activate"}
                               </button>
                               <button
                                 onClick={() => {
@@ -416,8 +414,7 @@ export function TypeTab() {
 
       {modal?.kind === "add" && (
         <TypeFormModal
-          initial={emptyForm(networks)}
-          networks={networks}
+          initial={emptyForm()}
           onSave={handleAdd}
           onClose={() => setModal(null)}
           saving={saving}
@@ -428,11 +425,10 @@ export function TypeTab() {
         <TypeFormModal
           initial={{
             name: modal.type.name,
-            network_id: modal.type.network_id,
+            service: modal.type.service,
             description: modal.type.description,
             status: modal.type.status,
           }}
-          networks={networks}
           onSave={handleEdit}
           onClose={() => setModal(null)}
           saving={saving}

@@ -239,7 +239,7 @@ export function NetworkTab() {
     setToggling(network.id);
     setOpenMenuId(null);
     try {
-      const updated = await networkService.toggleStatus(network.id);
+      const updated = await networkService.toggleStatus(network);
       setNetworks((prev) =>
         prev.map((n) => (n.id === updated.id ? updated : n)),
       );
