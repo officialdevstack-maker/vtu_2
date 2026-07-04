@@ -15,6 +15,21 @@ export const adminRouter: RouteObject[] = [
       },
       // APIs
       {
+        path: "customers/users",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/customers/users");
+          return { Component };
+        },
+      },
+      {
+        path: "customers/roles",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/customers/roles");
+          return { Component };
+        },
+      },
+      {
+        path: "*",
         path: "apis/provider",
         lazy: async () => {
           const { default: Component } = await import("./pages/apis/provider");
