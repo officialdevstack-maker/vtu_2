@@ -1,5 +1,4 @@
-import { apiClient } from "../../../../shared/api/apiClient";
-
+import { apiClient } from "@shared/api/apiClient"
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type Network = {
