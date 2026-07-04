@@ -241,3 +241,96 @@ export const discountRoleService = {
       .put<ApiEnvelope<DiscountRolePrice>>(`${DISCOUNT_ROLE}/${id}`, payload)
       .then((r) => r.data.data),
 };
+
+// ─── Data plan ──────────────────────────────────────────────────────────────
+// Uses the Universal Table API: /table/data_plans
+
+export type DataPlanProvider = {
+  id: string | number;
+  name: string;
+  pivot?: {
+    cost_price?: string | number | null;
+    server_id?: string | number | null;
+    provider_id?: string | number | null;
+  } | null;
+} | null;
+
+// A role's pricing entry: either a plain legacy fiat number, or the new
+// { type, value } shape — "percentage" is a markup over the plan's cost
+// price (see DataPlan::getPriceAttribute() / resolveCostPrice() backend-side).
+export type DataPlanPriceEntry =
+  | string
+  | number
+  | { type: "fiat" | "percentage"; value: string | number };
+
+export type DataPlan = {
+  id: string | number;
+  network: string;
+  plan_name: string; // numeric amount, e.g. "1"
+  plan_size: string; // unit, e.g. "GB" | "MB"
+  plan_type: string; // e.g. "sme"
+  plan?: string; // computed "1GB"
+  validity: string;
+  active: boolean;
+  status?: string;
+  sort_order?: number | string | null;
+  // Keyed by role name (e.g. "user", "agent", "customer care").
+  pricing?: Record<string, DataPlanPriceEntry> | null;
+  price?: string | number | null;
+  price_ngn?: string | null;
+  cost_price?: string | number | null;
+  server_id?: string | number | null;
+  provider_id?: string | number | null;
+  provider?: DataPlanProvider;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type DataPlanPayload = {
+  network: string;
+  plan_name: string;
+  plan_size: string;
+  plan_type: string;
+  validity: string;
+  active: boolean;
+  sort_order?: number | null;
+  pricing?: Record<string, { type: "fiat" | "percentage"; value: number }> | null;
+  use_provider_as_providerable?: boolean;
+  providerable?: {
+    provider_id: string | number | null;
+    cost_price?: number;
+    server_id?: string | number | null;
+  };
+};
+
+const DATA_PLAN = "/table/data_plans";
+
+export const dataPlanService = {
+  getAll: (): Promise<DataPlan[]> =>
+    apiClient.get<ApiEnvelope<DataPlan[]>>(DATA_PLAN).then((r) => r.data.data),
+
+  getById: (id: string): Promise<DataPlan> =>
+    apiClient
+      .get<ApiEnvelope<DataPlan>>(`${DATA_PLAN}/${id}`)
+      .then((r) => r.data.data),
+
+  create: (payload: DataPlanPayload): Promise<DataPlan> =>
+    apiClient
+      .post<ApiEnvelope<DataPlan>>(DATA_PLAN, payload)
+      .then((r) => r.data.data),
+
+  update: (id: string, payload: Partial<DataPlanPayload>): Promise<DataPlan> =>
+    apiClient
+      .put<ApiEnvelope<DataPlan>>(`${DATA_PLAN}/${id}`, payload)
+      .then((r) => r.data.data),
+
+  remove: (id: string): Promise<void> =>
+    apiClient.delete(`${DATA_PLAN}/${id}`).then(() => undefined),
+
+  toggleStatus: (plan: DataPlan): Promise<DataPlan> =>
+    apiClient
+      .put<ApiEnvelope<DataPlan>>(`${DATA_PLAN}/${plan.id}`, {
+        active: !plan.active,
+      })
+      .then((r) => r.data.data),
+};

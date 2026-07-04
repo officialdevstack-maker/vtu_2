@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import axios from "axios";
+import { z } from "zod";
 import {
   PageHeader,
   Card,
@@ -102,11 +103,16 @@ function extractErrorMessage(err: unknown): string {
 }
 
 // Role pricing is a percentage — keep it inside a sane 0–100 range.
+const percentSchema = z
+  .string()
+  .refine(
+    (v) => v === "" || (!Number.isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 100),
+    { message: "0–100 only" },
+  );
+
 function validatePercent(v: string): string | undefined {
-  if (v === "") return undefined;
-  const n = Number(v);
-  if (Number.isNaN(n) || n < 0 || n > 100) return "0–100 only";
-  return undefined;
+  const result = percentSchema.safeParse(v);
+  return result.success ? undefined : result.error.issues[0]?.message;
 }
 
 function NumberInput({
@@ -172,28 +178,41 @@ const toPayload = (form: FormState): Record<string, unknown> => ({
   active: form.active,
 });
 
+const amountSchema = z
+  .string()
+  .refine((v) => v === "" || (!Number.isNaN(Number(v)) && Number(v) >= 0), {
+    message: "Enter a valid non-negative amount.",
+  });
+
+const discountFormSchema = z
+  .object({
+    name: z.string().trim().min(1, { message: "Select a network." }),
+    category: z.string(),
+    type: z.string(),
+    min: amountSchema,
+    max: amountSchema,
+    active: z.boolean(),
+  })
+  .refine(
+    (data) =>
+      data.min === "" || data.max === "" || Number(data.max) >= Number(data.min),
+    {
+      message: "Maximum must be greater than or equal to minimum.",
+      path: ["max"],
+    },
+  );
+
 type FormErrors = Partial<Record<"name" | "min" | "max", string>>;
 
 function validateForm(form: FormState): FormErrors {
+  const result = discountFormSchema.safeParse(form);
+  if (result.success) return {};
+
   const errors: FormErrors = {};
-
-  if (!form.name.trim()) {
-    errors.name = "Select a network.";
+  for (const issue of result.error.issues) {
+    const key = issue.path[0] as keyof FormErrors | undefined;
+    if (key && !errors[key]) errors[key] = issue.message;
   }
-
-  const min = form.min === "" ? null : Number(form.min);
-  const max = form.max === "" ? null : Number(form.max);
-
-  if (form.min !== "" && (min === null || Number.isNaN(min) || min < 0)) {
-    errors.min = "Enter a valid non-negative amount.";
-  }
-  if (form.max !== "" && (max === null || Number.isNaN(max) || max < 0)) {
-    errors.max = "Enter a valid non-negative amount.";
-  }
-  if (!errors.min && !errors.max && min != null && max != null && max < min) {
-    errors.max = "Maximum must be greater than or equal to minimum.";
-  }
-
   return errors;
 }
 
