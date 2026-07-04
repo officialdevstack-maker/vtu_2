@@ -29,7 +29,6 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
-        path: "*",
         path: "apis/provider",
         lazy: async () => {
           const { default: Component } = await import("./pages/apis/provider");

@@ -18,8 +18,9 @@ export function NetworkTab() {
           { label: "Code" },
           { label: "Provider" },
           { label: "Status" },
-          { label: "Actions", align: "center" },
+          { label: "Actions", align: "center",  },
         ]}
+
         emptyIcon={Network}
         emptyTitle="No networks configured"
         emptyDescription="Add a network to get started with airtime and data products."
