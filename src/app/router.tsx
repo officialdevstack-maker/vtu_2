@@ -3,6 +3,7 @@ import RootLayout from "./route-layout";
 import { authRouter, ProtectedLayout } from "@/features/auth";
 import App from "@/App";
 import { UserLayout, userRouter } from "@/features/user";
+import { adminRouter } from "@/features/admin";
 
 export const router = createBrowserRouter([
   {
@@ -19,10 +20,16 @@ export const router = createBrowserRouter([
 
       {
         element: <ProtectedLayout />,
-        children: [{
-          element:<UserLayout />,
-          children: [...userRouter]
-        }],
+        children: [
+          {
+            element: <UserLayout />,
+            children: [...userRouter],
+          },
+        ],
+      },
+      // admin routes
+      {
+        children: [...adminRouter],
       },
     ],
   },

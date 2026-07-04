@@ -170,7 +170,7 @@ export function SkeletonCard() {
 
 export function PurchaseShell({ children, maxWidth = "max-w-xl" }: { children: ReactNode; maxWidth?: string }) {
   return (
-    <div className={`${maxWidth} mx-auto`}>
+    <div className={""}>
       <Card className="overflow-hidden">{children}</Card>
     </div>
   );

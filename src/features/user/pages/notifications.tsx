@@ -26,7 +26,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="space-y-4">
       <PageHeader
         title="Notifications"
         description={`${notifs.filter((n) => !n.read).length} unread`}

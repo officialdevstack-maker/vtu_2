@@ -60,7 +60,7 @@ export default function DashboardPage() {
   const firstName = mockUser.name.split(" ")[0];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5">
+    <div className="space-y-5">
       <div>
         <h1 className="text-lg font-semibold text-slate-900">{greeting}, {firstName}</h1>
         <p className="text-sm text-slate-500 mt-0.5">

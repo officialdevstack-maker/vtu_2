@@ -11,7 +11,7 @@ export default function SettingsPage() {
   const [smsNotifs, setSmsNotifs] = useState(true);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
+    <div className="space-y-4">
       <PageHeader title="Settings" description="Manage your security, notifications and account preferences" />
 
       <Card className="p-5">
