@@ -135,9 +135,7 @@ export function AirtimeTab() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.map((discount) => {
-                const isEnabled = Boolean(
-                  discount.isActive ?? discount.active ?? false,
-                );
+                const isEnabled = Boolean(discount.active ?? false);
                 const currentId = toId(discount.id);
 
                 return (
