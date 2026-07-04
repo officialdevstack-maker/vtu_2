@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   LayoutDashboard,
   Bell,
@@ -20,6 +21,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../shared/providers/auth";
 
 type NavItem = {
   id: string;
@@ -109,6 +111,9 @@ export default function Sidebar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const go = (path: string) => {
     navigate(path);
@@ -117,6 +122,14 @@ export default function Sidebar({
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setShowLogoutModal(false);
+    setIsLoggingOut(false);
+    navigate("/login");
+  };
 
   return (
     <>
@@ -229,8 +242,10 @@ export default function Sidebar({
             })}
           </div>
           {/* User footer */}
-          <div
-            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors group ${collapsed ? "lg:justify-center" : ""}`}
+          <button
+            type="button"
+            onClick={() => setShowLogoutModal(true)}
+            className={`flex w-full items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors group ${collapsed ? "lg:justify-center" : ""}`}
           >
             <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center text-xs font-medium text-white shrink-0">
               CO
@@ -246,9 +261,40 @@ export default function Sidebar({
             <LogOut
               className={`w-3.5 h-3.5 text-white/30 group-hover:text-white/60 shrink-0 ${collapsed ? "lg:hidden" : ""}`}
             />
-          </div>
+          </button>
         </div>
       </aside>
+
+      {showLogoutModal ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white p-6 shadow-2xl">
+            <p className="text-lg font-semibold text-slate-900">Sign out?</p>
+            <p className="mt-2 text-sm text-slate-600">
+              You’ll be redirected to the login screen after your session is
+              ended.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isLoggingOut ? "Signing out..." : "Yes, sign out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

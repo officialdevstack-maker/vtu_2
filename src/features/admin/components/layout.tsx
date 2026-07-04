@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
+  Bell,
   BellRing,
   BookOpenCheck,
   Cable,
@@ -9,6 +10,7 @@ import {
   Megaphone,
   PlugZap,
   ReceiptText,
+  Search,
   Settings,
   SlidersHorizontal,
   Sparkles,
@@ -16,6 +18,7 @@ import {
   Wallet2,
   Wifi,
 } from "lucide-react";
+import { useAuth } from "../../../shared/providers/auth";
 
 type NavChild = {
   label: string;
@@ -107,7 +110,11 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
 
 const Layout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const isActive = (path: string) => {
     if (path === "/admin") {
@@ -127,10 +134,18 @@ const Layout = () => {
     );
   };
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setShowLogoutModal(false);
+    setIsLoggingOut(false);
+    navigate("/login");
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-app-bg text-slate-900">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-slate-950 text-slate-100 lg:sticky lg:top-0 lg:h-screen lg:flex">
+        <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-gray-900 text-slate-100 shadow-2xl lg:sticky lg:top-0 lg:h-screen lg:flex">
           <div className="border-b border-white/10 px-5 py-5">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-600/20">
@@ -221,7 +236,11 @@ const Layout = () => {
           </nav>
 
           <div className="border-t border-white/10 px-3 py-3">
-            <div className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5">
+            <button
+              type="button"
+              onClick={() => setShowLogoutModal(true)}
+              className="flex w-full items-center gap-2.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-left transition-colors hover:bg-white/10"
+            >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 text-sm font-semibold text-indigo-200">
                 CO
               </div>
@@ -231,23 +250,58 @@ const Layout = () => {
                 </p>
                 <p className="truncate text-xs text-slate-400">Super admin</p>
               </div>
-            </div>
+            </button>
           </div>
         </aside>
 
         <main className="flex-1">
-          <header className="border-b border-slate-200 bg-white/80 px-4 py-4 backdrop-blur sm:px-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-600">
-                  Management
-                </p>
-                <h1 className="text-lg font-semibold text-slate-900">
-                  Admin control panel
-                </h1>
+          <header className="sticky top-0 z-20 h-14 border-b border-gray-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+            <div className="flex h-full items-center gap-2 px-3 sm:px-4 lg:px-6">
+              <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600">
+                    Management
+                  </p>
+                  <h1 className="truncate text-sm font-semibold text-slate-900">
+                    Admin control panel
+                  </h1>
+                </div>
+
+                <div className="ml-auto hidden items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors focus-within:border-indigo-400 focus-within:bg-white md:flex md:w-56 lg:w-64">
+                  <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                  />
+                </div>
               </div>
-              <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-600">
-                Super admin access
+
+              <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                <button className="relative rounded-md p-2 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700">
+                  <Bell className="h-4.5 w-4.5" />
+                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                </button>
+
+                <button className="hidden rounded-md p-2 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700 sm:flex">
+                  <Settings className="h-4.5 w-4.5" />
+                </button>
+
+                <div className="mx-1 hidden h-5 w-px bg-gray-200 sm:block" />
+
+                <button className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-gray-100">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
+                    CO
+                  </div>
+                  <div className="hidden text-left sm:block">
+                    <p className="text-xs font-medium leading-tight text-slate-900">
+                      Chukwuemeka Obi
+                    </p>
+                    <p className="text-[11px] leading-tight text-slate-400">
+                      Super admin
+                    </p>
+                  </div>
+                </button>
               </div>
             </div>
           </header>
@@ -257,6 +311,36 @@ const Layout = () => {
           </div>
         </main>
       </div>
+
+      {showLogoutModal ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white p-6 shadow-2xl">
+            <p className="text-lg font-semibold text-slate-900">Sign out?</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Your session will end and you’ll be redirected to the login page.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                disabled={isLoggingOut}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isLoggingOut ? "Signing out..." : "Yes, sign out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

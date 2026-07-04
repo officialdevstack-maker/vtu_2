@@ -7,6 +7,7 @@ import {
   useEffect,
 } from "react";
 import { apiClient } from "../api/apiClient";
+import { config } from "../config";
 
 // Define the shape of your user object
 interface User {
@@ -23,7 +24,7 @@ interface AuthContextType {
     token: string,
     email: string,
   ) => Promise<void | { redirectTo: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -60,7 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       await apiClient.get("/sanctum/csrf-cookie");
-      const { data: { data } } = await apiClient.post("/login", {
+      const {
+        data: { data },
+      } = await apiClient.post("/login", {
         login,
         password,
       });
@@ -76,9 +79,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Logout action
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem("authToken");
+  const logout = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      await apiClient.post(config.auth.routes.logout);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("authToken");
+      setIsLoading(false);
+    }
   }, []);
 
   const value = {
