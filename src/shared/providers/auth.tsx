@@ -5,9 +5,9 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
-} from 'react';
-import { apiClient } from '../api/apiClient';
-import { config } from '../config';
+} from "react";
+import { apiClient } from "../api/apiClient";
+import { config } from "../config";
 
 interface User {
   id: string;
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await apiClient.get('/user');
+      const response = await apiClient.get("/user");
       setUser(response.data.data?.user ?? response.data.data ?? null);
     } catch {
       setUser(null);
@@ -46,15 +46,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (login: string, password: string) => {
       setIsLoading(true);
       try {
-        await apiClient.get('/sanctum/csrf-cookie');
-        const payload = login.includes('@')
+        await apiClient.get("/sanctum/csrf-cookie");
+        const payload = login.includes("@")
           ? { email: login, password }
           : { phone: login, password };
 
-        await apiClient.post('/login', payload);
+        await apiClient.post("/login", payload);
         await checkAuth();
       } catch (error: any) {
-        console.error('Login failed:', error?.response?.data ?? error.message);
+        console.error("Login failed:", error?.response?.data ?? error.message);
         throw error;
       } finally {
         setIsLoading(false);
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await apiClient.post(config.auth.routes.logout);
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     } finally {
       setUser(null);
       setIsLoading(false);
@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
