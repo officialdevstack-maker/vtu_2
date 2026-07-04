@@ -292,7 +292,7 @@ const makeMockTransactions = (): Transaction[] =>
 
 const TransactionStatusBadge = ({ status }: { status: TransactionStatus }) => (
   <span
-    className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${statusTone[status]}`}
+    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusTone[status]}`}
   >
     <span className={`h-1.5 w-1.5 rounded-full ${statusDot[status]}`} />
     {status}
@@ -710,33 +710,18 @@ export default function TransactionsPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] text-sm">
+              <table className="w-full table-fixed min-w-[520px] lg:min-w-0 text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    {[
-                      "Transaction ID",
-                      "Customer",
-                      "Type",
-                      "Provider",
-                      "Amount",
-                      "Status",
-                      "Payment Method",
-                      "Date",
-                      "Actions",
-                    ].map((heading) => (
-                      <th
-                        key={heading}
-                        className={`whitespace-nowrap px-4 py-2 text-xs font-medium text-slate-500 ${
-                          heading === "Amount"
-                            ? "text-right"
-                            : heading === "Actions"
-                              ? "text-center"
-                              : "text-left"
-                        }`}
-                      >
-                        {heading}
-                      </th>
-                    ))}
+                    <th className="hidden lg:table-cell lg:w-[11%] whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-slate-500">Transaction ID</th>
+                    <th className="w-[42%] lg:w-[20%] whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-slate-500">Customer</th>
+                    <th className="hidden lg:table-cell lg:w-[9%] whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-slate-500">Type</th>
+                    <th className="hidden lg:table-cell lg:w-[10%] whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-slate-500">Provider</th>
+                    <th className="w-[20%] lg:w-[11%] whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-slate-500">Amount</th>
+                    <th className="w-[22%] lg:w-[12%] whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-slate-500">Status</th>
+                    <th className="hidden lg:table-cell lg:w-[12%] whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-slate-500">Payment Method</th>
+                    <th className="hidden lg:table-cell lg:w-[9%] whitespace-nowrap px-4 py-2 text-left text-xs font-medium text-slate-500">Date</th>
+                    <th className="w-14 whitespace-nowrap px-2 py-2 text-center text-xs font-medium text-slate-500">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -745,11 +730,11 @@ export default function TransactionsPage() {
                       key={transaction.id}
                       className="transition-colors hover:bg-gray-50"
                     >
-                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">
+                      <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">
                         {transaction.id}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-medium text-indigo-700">
                             {initials(transaction.customerName)}
                           </div>
@@ -763,10 +748,10 @@ export default function TransactionsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600">
+                      <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs text-slate-600">
                         {transaction.type}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">
+                      <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs text-slate-500">
                         {transaction.provider}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold tabular-nums text-slate-900">
@@ -775,13 +760,13 @@ export default function TransactionsPage() {
                       <td className="whitespace-nowrap px-4 py-3">
                         <TransactionStatusBadge status={transaction.status} />
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">
+                      <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs text-slate-500">
                         {transaction.paymentMethod}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-400">
+                      <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs text-slate-400">
                         {dateLabel(transaction.dateTime)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-3">
                         <div className="relative flex justify-center">
                           <button
                             type="button"
@@ -803,7 +788,7 @@ export default function TransactionsPage() {
                                 className="fixed inset-0 z-10"
                                 onClick={() => setOpenMenuId(null)}
                               />
-                              <div className="absolute right-0 top-8 z-20 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                              <div className="absolute right-0 top-8 z-20 w-52 rounded-xl border border-slate-200/70 bg-white py-1 shadow-md">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -911,12 +896,12 @@ export default function TransactionsPage() {
       </Card>
 
       {detailTransaction ? (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-sm">
           <div
             className="hidden flex-1 sm:block"
             onClick={() => setDetailTransaction(null)}
           />
-          <div className="flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl">
+          <div className="flex h-full w-full max-w-2xl flex-col bg-white shadow-xl border-l border-slate-200/70">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
               <div>
                 <p className="text-sm font-semibold text-slate-900">
@@ -1014,8 +999,8 @@ export default function TransactionsPage() {
       ) : null}
 
       {confirmTarget ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-lg">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm p-4 sm:items-center">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200/70 bg-white shadow-xl">
             <div className="border-b border-gray-100 px-4 py-3">
               <p className="text-sm font-semibold text-slate-900">
                 {confirmTarget.action === "retry"

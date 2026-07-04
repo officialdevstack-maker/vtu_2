@@ -194,7 +194,134 @@ function validateForm(form: FormState): FormErrors {
     errors.max = "Maximum must be greater than or equal to minimum.";
   }
 
+<<<<<<< HEAD
   return errors;
+=======
+  return payload;
+};
+
+// ─── Provider picker ──────────────────────────────────────────────────────────
+
+function ProviderPicker({
+  vendors,
+  selected,
+  discounts,
+  onAdd,
+  onRemove,
+  onDiscountChange,
+}: {
+  vendors: Provider[];
+  selected: string[];
+  discounts: Record<string, string>;
+  onAdd: (code: string) => void;
+  onRemove: (code: string) => void;
+  onDiscountChange: (code: string, value: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const available = vendors.filter(
+    (v) =>
+      v.code &&
+      !selected.includes(v.code.toLowerCase()) &&
+      v.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <div className="space-y-3">
+      {selected.length === 0 && (
+        <p className="text-xs text-slate-400 text-center py-2">
+          No providers added. Click "Add provider" below to configure discounts.
+        </p>
+      )}
+
+      {selected.map((code) => {
+        const vendor = vendors.find((v) => v.code?.toLowerCase() === code);
+        return (
+          <div key={code} className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-slate-700 truncate">
+                {vendor?.name ?? code}
+              </p>
+              {vendor?.code && vendor.code.toLowerCase() !== vendor.name.toLowerCase() && (
+                <p className="text-[10px] text-slate-400">{vendor.code}</p>
+              )}
+            </div>
+            <div className="w-28 shrink-0">
+              <NumberInput
+                value={discounts[code] ?? ""}
+                onChange={(v) => onDiscountChange(code, v)}
+                placeholder="0"
+                suffix="%"
+              />
+            </div>
+            <button
+              onClick={() => onRemove(code)}
+              className="p-1.5 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        );
+      })}
+
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors mt-1"
+        >
+          <Plus className="w-3.5 h-3.5" /> Add provider
+        </button>
+
+        {open && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+            <div className="absolute left-0 top-7 z-20 w-64 bg-white border border-slate-200/70 rounded-xl shadow-md overflow-hidden">
+              <div className="p-2 border-b border-gray-100">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                  <input
+                    autoFocus
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search providers..."
+                    className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+                  />
+                </div>
+              </div>
+              <div className="max-h-48 overflow-y-auto py-1">
+                {available.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-3">
+                    {vendors.length === 0 ? "Loading providers…" : "All providers added"}
+                  </p>
+                ) : (
+                  available.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => {
+                        onAdd(v.code!.toLowerCase());
+                        setSearch("");
+                        setOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                    >
+                      <span className="font-medium">{v.name}</span>
+                      {v.code && (
+                        <span className="ml-1 text-slate-400">({v.code})</span>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+>>>>>>> 88e37ed236caa72838c204af5b8c71cb2402129b
 }
 
 // ─── Role pricing — dynamic per-role discount, own save action ───────────────

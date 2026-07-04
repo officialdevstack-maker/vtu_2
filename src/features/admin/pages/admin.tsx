@@ -497,25 +497,25 @@ export default function AdminPage() {
               </button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[560px]">
+              <table className="w-full text-sm table-fixed min-w-[440px] lg:min-w-0">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="text-left px-4 py-2 text-xs font-medium text-slate-500">
+                    <th className="w-[22%] text-left px-4 py-2 text-xs font-medium text-slate-500">
                       Reference
                     </th>
                     <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">
                       User
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">
+                    <th className="hidden lg:table-cell w-[14%] text-left px-3 py-2 text-xs font-medium text-slate-500">
                       Type
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-500">
+                    <th className="w-[18%] text-right px-3 py-2 text-xs font-medium text-slate-500">
                       Amount
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">
+                    <th className="w-[16%] text-left px-3 py-2 text-xs font-medium text-slate-500">
                       Status
                     </th>
-                    <th className="text-right px-4 py-2 text-xs font-medium text-slate-500">
+                    <th className="hidden lg:table-cell w-[14%] text-right px-4 py-2 text-xs font-medium text-slate-500">
                       Date
                     </th>
                   </tr>
@@ -526,22 +526,22 @@ export default function AdminPage() {
                       key={tx.ref}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                      <td className="px-4 py-3 font-mono text-xs text-slate-400 truncate">
                         {tx.ref}
                       </td>
-                      <td className="px-3 py-3 font-medium text-slate-900 text-xs">
+                      <td className="px-3 py-3 font-medium text-slate-900 text-xs truncate">
                         {tx.user}
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-500">
+                      <td className="hidden lg:table-cell px-3 py-3 text-xs text-slate-500 truncate">
                         {tx.type}
                       </td>
-                      <td className="px-3 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">
+                      <td className="px-3 py-3 text-right font-medium text-slate-900 text-xs tabular-nums whitespace-nowrap">
                         {fmt(tx.amount)}
                       </td>
                       <td className="px-3 py-3">
                         <StatusBadge status={tx.status} />
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-slate-400 whitespace-nowrap">
+                      <td className="hidden lg:table-cell px-4 py-3 text-right text-xs text-slate-400 whitespace-nowrap">
                         {tx.date}
                       </td>
                     </tr>
@@ -575,32 +575,23 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[720px]">
+            <table className="w-full text-sm table-fixed min-w-[560px] lg:min-w-0">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {[
-                    "User",
-                    "Email",
-                    "Balance",
-                    "Transactions",
-                    "KYC",
-                    "Status",
-                    "Actions",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-2 text-xs font-medium text-slate-500 ${h === "Balance" || h === "Transactions" ? "text-right" : "text-left"}`}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  <th className="w-[24%] px-4 py-2 text-left text-xs font-medium text-slate-500">User</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Email</th>
+                  <th className="hidden lg:table-cell w-[12%] px-4 py-2 text-right text-xs font-medium text-slate-500">Balance</th>
+                  <th className="hidden lg:table-cell w-[9%] px-4 py-2 text-right text-xs font-medium text-slate-500">Txns</th>
+                  <th className="hidden lg:table-cell w-[11%] px-4 py-2 text-left text-xs font-medium text-slate-500">KYC</th>
+                  <th className="w-[14%] px-4 py-2 text-left text-xs font-medium text-slate-500">Status</th>
+                  <th className="w-16 px-2 py-2 text-center text-xs font-medium text-slate-500">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
                           {u.name
                             .split(" ")
@@ -608,28 +599,28 @@ export default function AdminPage() {
                             .join("")
                             .slice(0, 2)}
                         </div>
-                        <span className="font-medium text-slate-900 text-xs">
+                        <span className="font-medium text-slate-900 text-xs truncate">
                           {u.name}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
+                    <td className="px-4 py-3 text-xs text-slate-500 truncate">
                       {u.email}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">
+                    <td className="hidden lg:table-cell px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums whitespace-nowrap">
                       {fmt(u.balance)}
                     </td>
-                    <td className="px-4 py-3 text-right text-xs text-slate-500">
+                    <td className="hidden lg:table-cell px-4 py-3 text-right text-xs text-slate-500">
                       {u.txns}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden lg:table-cell px-4 py-3">
                       <StatusBadge status={u.kyc} />
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={u.status} />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
+                    <td className="px-2 py-3">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                           title="View"
@@ -677,24 +668,15 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[560px]">
+            <table className="w-full text-sm table-fixed min-w-[440px] lg:min-w-0">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {[
-                    "Reference",
-                    "User",
-                    "Type",
-                    "Amount",
-                    "Status",
-                    "Date",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-2 text-xs font-medium text-slate-500 ${h === "Amount" ? "text-right" : "text-left"}`}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  <th className="w-[22%] px-4 py-2 text-left text-xs font-medium text-slate-500">Reference</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-500">User</th>
+                  <th className="hidden lg:table-cell w-[14%] px-4 py-2 text-left text-xs font-medium text-slate-500">Type</th>
+                  <th className="w-[18%] px-4 py-2 text-right text-xs font-medium text-slate-500">Amount</th>
+                  <th className="w-[16%] px-4 py-2 text-left text-xs font-medium text-slate-500">Status</th>
+                  <th className="hidden lg:table-cell w-[14%] px-4 py-2 text-left text-xs font-medium text-slate-500">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -709,22 +691,22 @@ export default function AdminPage() {
                       key={tx.ref}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                      <td className="px-4 py-3 font-mono text-xs text-slate-400 truncate">
                         {tx.ref}
                       </td>
-                      <td className="px-4 py-3 font-medium text-slate-900 text-xs">
+                      <td className="px-4 py-3 font-medium text-slate-900 text-xs truncate">
                         {tx.user}
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="hidden lg:table-cell px-4 py-3 text-xs text-slate-500 truncate">
                         {tx.type}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">
+                      <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums whitespace-nowrap">
                         {fmt(tx.amount)}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={tx.status} />
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
+                      <td className="hidden lg:table-cell px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
                         {tx.date}
                       </td>
                     </tr>
@@ -737,8 +719,8 @@ export default function AdminPage() {
 
       {/* Manual funding modal */}
       {fundTarget && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-900 text-sm">
                 Fund user wallet

@@ -12,15 +12,15 @@ import { cn } from "@/shared/utils";
 // scale instead of drifting per-file.
 
 export const inputCls =
-  "w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition";
+  "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md";
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary: "bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300",
-  secondary: "bg-white text-slate-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50",
-  ghost: "text-slate-600 hover:bg-gray-100 disabled:opacity-50",
+  primary: "bg-indigo-600 text-white shadow-sm shadow-indigo-600/10 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:shadow-none",
+  secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-50",
+  ghost: "text-slate-600 hover:bg-slate-100 disabled:opacity-50",
   danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
 };
 
@@ -38,7 +38,7 @@ export function Button({
     <button
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-colors disabled:cursor-not-allowed",
         buttonVariants[variant],
         buttonSizes[size],
         fullWidth && "w-full",
@@ -54,7 +54,7 @@ export function Button({
 
 export function Card({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("bg-white border border-gray-200 rounded-xl", className)} {...props}>
+    <div className={cn("bg-white border border-slate-200/70 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)]", className)} {...props}>
       {children}
     </div>
   );
@@ -64,7 +64,7 @@ export function PageHeader({ title, description, actions }: { title: ReactNode; 
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900">{title}</h1>
+        <h1 className="text-lg font-semibold text-slate-900 tracking-tight">{title}</h1>
         {description && <p className="text-sm text-slate-500 mt-0.5">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
@@ -88,7 +88,7 @@ export function StatCard({ label, value, icon: Icon, tone = "neutral", meta }: {
     <Card className="p-4">
       <div className="flex items-center justify-between mb-2.5">
         <p className="text-xs font-medium text-slate-500">{label}</p>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${toneStyles[tone]}`}>
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${toneStyles[tone]}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
@@ -103,7 +103,7 @@ export function EmptyState({ icon: Icon, title, description, action }: {
 }) {
   return (
     <div className="py-14 text-center">
-      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+      <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
         <Icon className="w-5 h-5 text-slate-400" />
       </div>
       <p className="text-sm font-medium text-slate-700">{title}</p>
@@ -129,7 +129,7 @@ const statusMap: Record<string, { dot: string; text: string; label: string }> = 
 export function StatusBadge({ status }: { status: string }) {
   const s = statusMap[status?.toLowerCase()] ?? statusMap.pending;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${s.text}`}>
+    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${s.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {s.label}
     </span>
@@ -140,7 +140,7 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`w-10 h-5.5 rounded-full transition-colors relative shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 ${value ? "bg-indigo-600" : "bg-gray-300"}`}
+      className={`w-10 h-5.5 rounded-full transition-colors relative shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 ${value ? "bg-indigo-600" : "bg-slate-200"}`}
     >
       <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full shadow-sm transition-transform ${value ? "translate-x-5" : "translate-x-0.5"}`} />
     </button>
@@ -148,7 +148,7 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
 }
 
 export function SkeletonLine({ className = "" }: { className?: string }) {
-  return <div className={`bg-gray-100 rounded animate-pulse ${className}`} />;
+  return <div className={`bg-slate-100 rounded animate-pulse ${className}`} />;
 }
 
 export function SkeletonCard() {
@@ -156,7 +156,7 @@ export function SkeletonCard() {
     <Card className="p-4 space-y-3">
       <div className="flex items-center justify-between">
         <SkeletonLine className="h-3 w-24" />
-        <SkeletonLine className="h-8 w-8 rounded-lg" />
+        <SkeletonLine className="h-8 w-8 rounded-xl" />
       </div>
       <SkeletonLine className="h-6 w-32" />
       <SkeletonLine className="h-3 w-16" />

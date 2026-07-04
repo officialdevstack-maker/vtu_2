@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from "react";
 import { Mail, Eye, Trash2, CheckCircle2 } from "lucide-react";
 import {
@@ -14,6 +15,10 @@ import {
   saveWelcomeMessage,
   type WelcomeMessage,
 } from "@shared/welcome-message";
+=======
+import { Mail } from "lucide-react";
+import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui";
+>>>>>>> 88e37ed236caa72838c204af5b8c71cb2402129b
 
 export default function WelcomePage() {
   const existing = getWelcomeMessage();
@@ -44,6 +49,7 @@ export default function WelcomePage() {
 
   return (
     <div className="space-y-5">
+<<<<<<< HEAD
       <PageHeader
         title={
           <div className="flex items-center gap-3">
@@ -140,6 +146,16 @@ export default function WelcomePage() {
         message={body}
         onClose={() => setPreviewing(false)}
       />
+=======
+      <PageHeader title="Welcome Messages" description="Configure messages sent to new users" />
+      <Card>
+        <EmptyState
+          icon={Mail}
+          title="Welcome message configuration coming soon"
+          description="Editing the message new users receive will appear here."
+        />
+      </Card>
+>>>>>>> 88e37ed236caa72838c204af5b8c71cb2402129b
     </div>
   );
 }

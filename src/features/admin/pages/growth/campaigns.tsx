@@ -1,23 +1,17 @@
 import { Megaphone } from "lucide-react";
+import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui";
 
 export default function CampaignsPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-indigo-100 p-3">
-          <Megaphone className="h-6 w-6 text-indigo-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Campaigns</h1>
-          <p className="text-sm text-slate-600">
-            Manage marketing campaigns and events
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-4 rounded-lg border border-slate-200 bg-white p-8 text-center">
-        <p className="text-slate-500">Campaign management coming soon</p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Campaigns" description="Manage marketing campaigns and events" />
+      <Card>
+        <EmptyState
+          icon={Megaphone}
+          title="Campaign management coming soon"
+          description="Creating and scheduling campaigns and events will appear here."
+        />
+      </Card>
     </div>
   );
 }

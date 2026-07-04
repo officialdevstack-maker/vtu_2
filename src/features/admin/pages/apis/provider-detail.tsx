@@ -87,8 +87,8 @@ function EditModal({
   const valid = form.name.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 text-sm">
             Edit provider
@@ -214,8 +214,8 @@ function DeleteConfirm({
   deleting: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-xl w-full max-w-sm shadow-lg p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl p-4">
         <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
           <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
           <p className="text-xs text-red-800">
