@@ -26,7 +26,7 @@ import { networkService, type Network, type NetworkPayload } from "./service";
 const emptyForm: NetworkPayload = {
   name: "",
   code: "",
-  provider: "",
+  provider: "VTpass",
   status: "active",
 };
 
@@ -35,34 +35,22 @@ function NetworkFormModal({
   onSave,
   onClose,
   saving,
-  inline = false,
 }: {
   initial: NetworkPayload;
   onSave: (payload: NetworkPayload) => void;
   onClose: () => void;
   saving: boolean;
-  inline?: boolean;
 }) {
   const [form, setForm] = useState<NetworkPayload>(initial);
   const set = (k: keyof NetworkPayload, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
 
   const isEdit = Boolean((initial as Partial<Network>).name);
-  const valid = form.name.trim() && form.code.trim() && form.provider.trim();
+  const valid = form.name.trim() && form.code.trim();
 
   return (
-    <div
-      className={
-        inline
-          ? "rounded-xl border border-gray-200 bg-white shadow-sm"
-          : "fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40"
-      }
-    >
-      <div
-        className={
-          inline ? "w-full" : "bg-white rounded-xl w-full max-w-sm shadow-lg"
-        }
-      >
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
+      <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 text-sm">
             {isEdit ? "Edit network" : "Add network"}
@@ -98,18 +86,6 @@ function NetworkFormModal({
               placeholder="e.g. MTN"
               maxLength={10}
               className={`${inputCls} font-mono uppercase`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Provider
-            </label>
-            <input
-              value={form.provider}
-              onChange={(e) => set("provider", e.target.value)}
-              placeholder="e.g. VTpass"
-              className={inputCls}
             />
           </div>
 
@@ -202,7 +178,6 @@ export function NetworkTab() {
   const [search, setSearch] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
@@ -228,7 +203,7 @@ export function NetworkTab() {
     try {
       const created = await networkService.create(payload);
       setNetworks((prev) => [...prev, created]);
-      setShowCreateForm(false);
+      setModal(null);
     } finally {
       setSaving(false);
     }
@@ -286,39 +261,13 @@ export function NetworkTab() {
               className={`${inputCls} pl-9 py-2`}
             />
           </div>
-          <Button size="sm" onClick={() => setShowCreateForm(true)}>
+          <Button size="sm" onClick={() => setModal({ kind: "add" })}>
             <Plus className="w-3.5 h-3.5" />
             Add network
           </Button>
         </Toolbar>
 
-        {showCreateForm ? (
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Create network
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Add a new network for airtime and data products.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowCreateForm(false)}
-                className="text-xs font-medium text-slate-500 hover:text-slate-700"
-              >
-                Back to list
-              </button>
-            </div>
-            <NetworkFormModal
-              initial={emptyForm}
-              onSave={handleAdd}
-              onClose={() => setShowCreateForm(false)}
-              saving={saving}
-              inline
-            />
-          </div>
-        ) : loading ? (
+        {loading ? (
           <div className="p-4 space-y-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -345,7 +294,7 @@ export function NetworkTab() {
             }
             action={
               !search ? (
-                <Button size="sm" onClick={() => setShowCreateForm(true)}>
+                <Button size="sm" onClick={() => setModal({ kind: "add" })}>
                   <Plus className="w-3.5 h-3.5" /> Add network
                 </Button>
               ) : undefined
@@ -452,6 +401,15 @@ export function NetworkTab() {
           </div>
         )}
       </Card>
+
+      {modal?.kind === "add" && (
+        <NetworkFormModal
+          initial={emptyForm}
+          onSave={handleAdd}
+          onClose={() => setModal(null)}
+          saving={saving}
+        />
+      )}
 
       {modal?.kind === "edit" && (
         <NetworkFormModal

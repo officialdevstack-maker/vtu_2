@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Search,
-  Filter,
   MoreVertical,
   Eye,
   Pencil,
@@ -13,6 +12,9 @@ import {
   UserPlus,
   X,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
 } from "lucide-react";
 import { fmt } from "../../../user/data/mock";
 import {
@@ -68,7 +70,18 @@ const formatDate = (iso: string) =>
 const initials = (name: string) =>
   name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
-type ModalMode = "view" | "edit" | null;
+type ModalMode = "view" | "edit" | "create" | null;
+
+const emptyForm = {
+  name: "",
+  email: "",
+  phone: "",
+  balance: "",
+  status: "active" as CustomerStatus,
+  kyc: "pending" as KycStatus,
+};
+
+const PAGE_SIZE = 6;
 
 export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
@@ -77,10 +90,11 @@ export default function CustomersPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | CustomerStatus>("all");
   const [kycFilter, setKycFilter] = useState<"all" | KycStatus>("all");
   const [dateFilter, setDateFilter] = useState<"all" | "7" | "30" | "90">("all");
+  const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [modalCustomer, setModalCustomer] = useState<Customer | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "" });
+  const [editForm, setEditForm] = useState(emptyForm);
   const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
 
@@ -101,6 +115,14 @@ export default function CustomersPage() {
     const matchesDate = dateFilter === "all" || daysAgo(c.dateJoined) <= Number(dateFilter);
     return matchesSearch && matchesStatus && matchesKyc && matchesDate;
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, kycFilter, dateFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter((c) => c.status === "active").length;
@@ -125,9 +147,15 @@ export default function CustomersPage() {
 
   const openEdit = (c: Customer) => {
     setModalCustomer(c);
-    setEditForm({ name: c.name, email: c.email, phone: c.phone });
+    setEditForm({ name: c.name, email: c.email, phone: c.phone, balance: String(c.balance), status: c.status, kyc: c.kyc });
     setModalMode("edit");
     setOpenMenuId(null);
+  };
+
+  const openCreate = () => {
+    setModalCustomer(null);
+    setEditForm(emptyForm);
+    setModalMode("create");
   };
 
   const closeModal = () => {
@@ -135,11 +163,33 @@ export default function CustomersPage() {
     setModalMode(null);
   };
 
-  const saveEdit = () => {
-    if (!modalCustomer) return;
-    setCustomers((prev) =>
-      prev.map((c) => (c.id === modalCustomer.id ? { ...c, ...editForm } : c)),
-    );
+  const saveCustomer = () => {
+    if (!editForm.name.trim() || !editForm.email.trim()) return;
+
+    if (modalMode === "edit" && modalCustomer) {
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.id === modalCustomer.id
+            ? { ...c, name: editForm.name, email: editForm.email, phone: editForm.phone, balance: Number(editForm.balance) || 0, status: editForm.status, kyc: editForm.kyc }
+            : c,
+        ),
+      );
+    } else if (modalMode === "create") {
+      const newCustomer: Customer = {
+        id: `CUS${Math.floor(Math.random() * 90000 + 10000)}`,
+        name: editForm.name,
+        email: editForm.email,
+        phone: editForm.phone,
+        balance: Number(editForm.balance) || 0,
+        txns: 0,
+        status: editForm.status,
+        kyc: editForm.kyc,
+        dateJoined: "2026-07-04",
+      };
+      resetFilters();
+      setCustomers((prev) => [...prev, newCustomer]);
+      setPage(Math.ceil((customers.length + 1) / PAGE_SIZE));
+    }
     closeModal();
   };
 
@@ -166,9 +216,17 @@ export default function CustomersPage() {
       <PageHeader
         title="All customers"
         description="View, search, and manage every registered customer on the platform"
+        actions={
+          <Button onClick={openCreate} className="hidden sm:inline-flex">
+            <Plus className="w-4 h-4" /> Create Customer
+          </Button>
+        }
       />
+      <Button onClick={openCreate} fullWidth className="sm:hidden">
+        <Plus className="w-4 h-4" /> Create Customer
+      </Button>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           [...Array(4)].map((_, i) => (
             <Card key={i} className="p-4 space-y-3">
@@ -190,24 +248,21 @@ export default function CustomersPage() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 space-y-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
+        <div className="px-4 py-3 border-b border-gray-100 space-y-2.5">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, email, or phone"
-                className={`${inputCls} pl-9 py-2`}
+                className={`${inputCls} pl-9 py-2 text-sm`}
               />
             </div>
-            <span className="text-xs text-slate-400 flex items-center gap-1 shrink-0">
-              <Filter className="w-3.5 h-3.5" /> Filters
-            </span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-              className={`${inputCls} py-2 w-auto`}
+              className={`${inputCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All statuses</option>
               <option value="active">Active</option>
@@ -217,7 +272,7 @@ export default function CustomersPage() {
             <select
               value={kycFilter}
               onChange={(e) => setKycFilter(e.target.value as typeof kycFilter)}
-              className={`${inputCls} py-2 w-auto`}
+              className={`${inputCls} py-2 text-sm w-full sm:w-44`}
             >
               <option value="all">All verification</option>
               <option value="verified">Verified</option>
@@ -227,19 +282,21 @@ export default function CustomersPage() {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}
-              className={`${inputCls} py-2 w-auto`}
+              className={`${inputCls} py-2 text-sm w-full sm:w-44`}
             >
               <option value="all">Any date joined</option>
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
             </select>
-            {hasActiveFilters && (
+          </div>
+          {hasActiveFilters && (
+            <div className="flex justify-end">
               <button onClick={resetFilters} className="text-xs text-indigo-600 font-medium hover:text-indigo-700 shrink-0">
                 Clear filters
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -267,6 +324,7 @@ export default function CustomersPage() {
             }
           />
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[900px]">
               <thead>
@@ -284,7 +342,7 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((c) => (
+                {paginated.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
@@ -350,23 +408,60 @@ export default function CustomersPage() {
               </tbody>
             </table>
           </div>
+          <div className="flex flex-col gap-3 px-4 py-3 border-t border-gray-100 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-400">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} customers
+            </p>
+            {totalPages > 1 && (
+              <div className="flex items-center flex-wrap gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  aria-label="Previous page"
+                  className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPage(i + 1)}
+                    className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
+                      currentPage === i + 1 ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-gray-100"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  aria-label="Next page"
+                  className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+          </>
         )}
       </Card>
 
-      {/* View / Edit modal */}
-      {modalCustomer && modalMode && (
+      {/* View / Edit / Create modal */}
+      {modalMode && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-xl w-full max-w-sm shadow-lg">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white rounded-xl w-full max-w-sm shadow-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
               <h3 className="font-semibold text-slate-900 text-sm">
-                {modalMode === "view" ? "Customer details" : "Edit customer"}
+                {modalMode === "view" ? "Customer details" : modalMode === "create" ? "Create customer" : "Edit customer"}
               </h3>
               <button onClick={closeModal} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {modalMode === "view" ? (
+            {modalMode === "view" && modalCustomer ? (
               <div className="p-4">
                 <ConfirmSummary
                   title=""
@@ -411,9 +506,45 @@ export default function CustomersPage() {
                     className={inputCls}
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Wallet balance</label>
+                  <input
+                    type="number"
+                    value={editForm.balance}
+                    onChange={(e) => setEditForm((f) => ({ ...f, balance: e.target.value }))}
+                    placeholder="0.00"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as CustomerStatus }))}
+                    className={inputCls}
+                  >
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Verification status</label>
+                  <select
+                    value={editForm.kyc}
+                    onChange={(e) => setEditForm((f) => ({ ...f, kyc: e.target.value as KycStatus }))}
+                    className={inputCls}
+                  >
+                    <option value="verified">Verified</option>
+                    <option value="pending">Pending</option>
+                    <option value="unverified">Unverified</option>
+                  </select>
+                </div>
                 <div className="flex gap-3 pt-1">
                   <Button variant="secondary" fullWidth onClick={closeModal}>Cancel</Button>
-                  <Button fullWidth onClick={saveEdit}>Save changes</Button>
+                  <Button fullWidth disabled={!editForm.name.trim() || !editForm.email.trim()} onClick={saveCustomer}>
+                    {modalMode === "create" ? "Create customer" : "Save changes"}
+                  </Button>
                 </div>
               </div>
             )}

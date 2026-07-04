@@ -68,21 +68,37 @@ export function SearchInput({ placeholder }: { placeholder: string }) {
   );
 }
 
+type SelectOption = string | { value: string; label: string };
+
 export function SelectFilter({
   placeholder,
   options,
+  value,
+  onChange,
 }: {
   placeholder: string;
-  options: string[];
+  options: SelectOption[];
+  value?: string;
+  onChange?: (v: string) => void;
 }) {
+  const controlled = value !== undefined && onChange !== undefined;
   return (
-    <select className={`${inputCls} py-2 w-auto`} defaultValue="">
-      <option value="" disabled>
-        {placeholder}
-      </option>
-      {options.map((o) => (
-        <option key={o}>{o}</option>
-      ))}
+    <select
+      className={`${inputCls} py-2 w-auto`}
+      {...(controlled
+        ? { value, onChange: (e) => onChange(e.target.value) }
+        : { defaultValue: "" })}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((o) => {
+        const val = typeof o === "string" ? o : o.value;
+        const label = typeof o === "string" ? o : o.label;
+        return (
+          <option key={val} value={val}>
+            {label}
+          </option>
+        );
+      })}
     </select>
   );
 }
