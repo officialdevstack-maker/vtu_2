@@ -127,7 +127,7 @@ const statusMap: Record<string, { dot: string; text: string; label: string }> = 
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const s = statusMap[status.toLowerCase()] ?? statusMap.pending;
+  const s = statusMap[status?.toLowerCase()] ?? statusMap.pending;
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${s.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { PageHeader } from "../../../../user/components/shared-ui";
 import { NetworkTab } from "./network-tab";
 import { TypeTab } from "./type-tab";
@@ -19,7 +19,9 @@ const tabs: { id: Tab; label: string }[] = [
 ];
 
 const AirtimeDataPage = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("network");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as Tab | null) ?? "network";
+  const setActiveTab = (tab: Tab) => setSearchParams({ tab }, { replace: true });
 
   return (
     <div className="space-y-5">

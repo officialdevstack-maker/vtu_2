@@ -28,47 +28,170 @@ import {
   ConfirmSummary,
   inputCls,
 } from "../../../user/components/shared-ui";
+import { customerService, type Customer } from "./service";
 
 type CustomerStatus = "active" | "suspended" | "inactive";
 type KycStatus = "verified" | "pending" | "unverified";
 
-type Customer = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  balance: number;
-  txns: number;
-  status: CustomerStatus;
-  kyc: KycStatus;
-  dateJoined: string;
-};
-
 const initialCustomers: Customer[] = [
-  { id: "CUS001", name: "Chukwuemeka Obi", email: "emeka.obi@gmail.com", phone: "+234 803 210 4471", balance: 45820, txns: 47, status: "active", kyc: "verified", dateJoined: "2025-11-02" },
-  { id: "CUS002", name: "Adaeze Nwosu", email: "adaeze.nwosu@outlook.com", phone: "+234 706 552 8890", balance: 12300, txns: 23, status: "active", kyc: "verified", dateJoined: "2025-12-18" },
-  { id: "CUS003", name: "Kunle Adeleke", email: "kunle.adeleke@gmail.com", phone: "+234 812 447 6631", balance: 89700, txns: 112, status: "active", kyc: "pending", dateJoined: "2026-01-09" },
-  { id: "CUS004", name: "Fatima Bello", email: "fatima.bello@yahoo.com", phone: "+234 905 331 2204", balance: 5100, txns: 8, status: "suspended", kyc: "verified", dateJoined: "2025-08-27" },
-  { id: "CUS005", name: "Tunde Bakare", email: "tunde.bakare@gmail.com", phone: "+234 701 998 3312", balance: 0, txns: 2, status: "inactive", kyc: "unverified", dateJoined: "2026-06-30" },
-  { id: "CUS006", name: "Ngozi Eze", email: "ngozi.eze@gmail.com", phone: "+234 814 665 0092", balance: 27650, txns: 34, status: "active", kyc: "verified", dateJoined: "2026-05-14" },
-  { id: "CUS007", name: "Ibrahim Musa", email: "ibrahim.musa@hotmail.com", phone: "+234 809 221 7743", balance: 3200, txns: 5, status: "active", kyc: "pending", dateJoined: "2026-06-25" },
-  { id: "CUS008", name: "Chidinma Okafor", email: "chidinma.okafor@gmail.com", phone: "+234 703 118 9954", balance: 156400, txns: 201, status: "active", kyc: "verified", dateJoined: "2025-04-11" },
-  { id: "CUS009", name: "Segun Owolabi", email: "segun.owolabi@gmail.com", phone: "+234 810 774 3321", balance: 890, txns: 1, status: "suspended", kyc: "unverified", dateJoined: "2026-02-20" },
-  { id: "CUS010", name: "Blessing Udo", email: "blessing.udo@gmail.com", phone: "+234 802 556 1187", balance: 18200, txns: 19, status: "active", kyc: "verified", dateJoined: "2026-06-10" },
-  { id: "CUS011", name: "Yusuf Abdullahi", email: "yusuf.abdullahi@gmail.com", phone: "+234 816 442 9903", balance: 0, txns: 0, status: "inactive", kyc: "unverified", dateJoined: "2026-06-29" },
-  { id: "CUS012", name: "Halima Sani", email: "halima.sani@gmail.com", phone: "+234 708 330 6621", balance: 62100, txns: 58, status: "active", kyc: "verified", dateJoined: "2025-09-30" },
+  {
+    id: "CUS001",
+    name: "Chukwuemeka Obi",
+    email: "emeka.obi@gmail.com",
+    phone: "+234 803 210 4471",
+    balance: 45820,
+    txns: 47,
+    status: "active",
+    kyc: "verified",
+    dateJoined: "2025-11-02",
+  },
+  {
+    id: "CUS002",
+    name: "Adaeze Nwosu",
+    email: "adaeze.nwosu@outlook.com",
+    phone: "+234 706 552 8890",
+    balance: 12300,
+    txns: 23,
+    status: "active",
+    kyc: "verified",
+    dateJoined: "2025-12-18",
+  },
+  {
+    id: "CUS003",
+    name: "Kunle Adeleke",
+    email: "kunle.adeleke@gmail.com",
+    phone: "+234 812 447 6631",
+    balance: 89700,
+    txns: 112,
+    status: "active",
+    kyc: "pending",
+    dateJoined: "2026-01-09",
+  },
+  {
+    id: "CUS004",
+    name: "Fatima Bello",
+    email: "fatima.bello@yahoo.com",
+    phone: "+234 905 331 2204",
+    balance: 5100,
+    txns: 8,
+    status: "suspended",
+    kyc: "verified",
+    dateJoined: "2025-08-27",
+  },
+  {
+    id: "CUS005",
+    name: "Tunde Bakare",
+    email: "tunde.bakare@gmail.com",
+    phone: "+234 701 998 3312",
+    balance: 0,
+    txns: 2,
+    status: "inactive",
+    kyc: "unverified",
+    dateJoined: "2026-06-30",
+  },
+  {
+    id: "CUS006",
+    name: "Ngozi Eze",
+    email: "ngozi.eze@gmail.com",
+    phone: "+234 814 665 0092",
+    balance: 27650,
+    txns: 34,
+    status: "active",
+    kyc: "verified",
+    dateJoined: "2026-05-14",
+  },
+  {
+    id: "CUS007",
+    name: "Ibrahim Musa",
+    email: "ibrahim.musa@hotmail.com",
+    phone: "+234 809 221 7743",
+    balance: 3200,
+    txns: 5,
+    status: "active",
+    kyc: "pending",
+    dateJoined: "2026-06-25",
+  },
+  {
+    id: "CUS008",
+    name: "Chidinma Okafor",
+    email: "chidinma.okafor@gmail.com",
+    phone: "+234 703 118 9954",
+    balance: 156400,
+    txns: 201,
+    status: "active",
+    kyc: "verified",
+    dateJoined: "2025-04-11",
+  },
+  {
+    id: "CUS009",
+    name: "Segun Owolabi",
+    email: "segun.owolabi@gmail.com",
+    phone: "+234 810 774 3321",
+    balance: 890,
+    txns: 1,
+    status: "suspended",
+    kyc: "unverified",
+    dateJoined: "2026-02-20",
+  },
+  {
+    id: "CUS010",
+    name: "Blessing Udo",
+    email: "blessing.udo@gmail.com",
+    phone: "+234 802 556 1187",
+    balance: 18200,
+    txns: 19,
+    status: "active",
+    kyc: "verified",
+    dateJoined: "2026-06-10",
+  },
+  {
+    id: "CUS011",
+    name: "Yusuf Abdullahi",
+    email: "yusuf.abdullahi@gmail.com",
+    phone: "+234 816 442 9903",
+    balance: 0,
+    txns: 0,
+    status: "inactive",
+    kyc: "unverified",
+    dateJoined: "2026-06-29",
+  },
+  {
+    id: "CUS012",
+    name: "Halima Sani",
+    email: "halima.sani@gmail.com",
+    phone: "+234 708 330 6621",
+    balance: 62100,
+    txns: 58,
+    status: "active",
+    kyc: "verified",
+    dateJoined: "2025-09-30",
+  },
 ];
 
-const daysAgo = (iso: string) => {
+const daysAgo = (iso?: string) => {
+  if (!iso) return 9999;
   const diff = Date.parse("2026-07-04") - Date.parse(iso);
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  return Number.isFinite(diff)
+    ? Math.floor(diff / (1000 * 60 * 60 * 24))
+    : 9999;
 };
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
+const formatDate = (iso?: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString("en-NG", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
 
 const initials = (name: string) =>
-  name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
 type ModalMode = "view" | "edit" | "create" | null;
 
@@ -87,9 +210,13 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | CustomerStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | CustomerStatus>(
+    "all",
+  );
   const [kycFilter, setKycFilter] = useState<"all" | KycStatus>("all");
-  const [dateFilter, setDateFilter] = useState<"all" | "7" | "30" | "90">("all");
+  const [dateFilter, setDateFilter] = useState<"all" | "7" | "30" | "90">(
+    "all",
+  );
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [modalCustomer, setModalCustomer] = useState<Customer | null>(null);
@@ -97,10 +224,34 @@ export default function CustomersPage() {
   const [editForm, setEditForm] = useState(emptyForm);
   const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
+    let mounted = true;
+
+    const loadCustomers = async () => {
+      try {
+        const response = await customerService.getAll();
+        if (mounted) {
+          setCustomers(response.length ? response : initialCustomers);
+          setError(null);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(
+            "Could not load customer data from the API. Showing the cached list instead.",
+          );
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadCustomers();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const filtered = customers.filter((c) => {
@@ -112,7 +263,8 @@ export default function CustomersPage() {
       c.phone.replace(/\s/g, "").includes(q.replace(/\s/g, ""));
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     const matchesKyc = kycFilter === "all" || c.kyc === kycFilter;
-    const matchesDate = dateFilter === "all" || daysAgo(c.dateJoined) <= Number(dateFilter);
+    const matchesDate =
+      dateFilter === "all" || daysAgo(c.dateJoined) <= Number(dateFilter);
     return matchesSearch && matchesStatus && matchesKyc && matchesDate;
   });
 
@@ -122,15 +274,25 @@ export default function CustomersPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const paginated = filtered.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter((c) => c.status === "active").length;
-  const suspendedCustomers = customers.filter((c) => c.status === "suspended").length;
-  const newCustomers = customers.filter((c) => daysAgo(c.dateJoined) <= 30).length;
+  const suspendedCustomers = customers.filter(
+    (c) => c.status === "suspended",
+  ).length;
+  const newCustomers = customers.filter(
+    (c) => daysAgo(c.dateJoined) <= 30,
+  ).length;
 
   const hasActiveFilters =
-    search !== "" || statusFilter !== "all" || kycFilter !== "all" || dateFilter !== "all";
+    search !== "" ||
+    statusFilter !== "all" ||
+    kycFilter !== "all" ||
+    dateFilter !== "all";
 
   const resetFilters = () => {
     setSearch("");
@@ -147,7 +309,14 @@ export default function CustomersPage() {
 
   const openEdit = (c: Customer) => {
     setModalCustomer(c);
-    setEditForm({ name: c.name, email: c.email, phone: c.phone, balance: String(c.balance), status: c.status, kyc: c.kyc });
+    setEditForm({
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      balance: String(c.balance),
+      status: c.status,
+      kyc: c.kyc,
+    });
     setModalMode("edit");
     setOpenMenuId(null);
   };
@@ -163,52 +332,72 @@ export default function CustomersPage() {
     setModalMode(null);
   };
 
-  const saveCustomer = () => {
+  const saveCustomer = async () => {
     if (!editForm.name.trim() || !editForm.email.trim()) return;
 
-    if (modalMode === "edit" && modalCustomer) {
-      setCustomers((prev) =>
-        prev.map((c) =>
-          c.id === modalCustomer.id
-            ? { ...c, name: editForm.name, email: editForm.email, phone: editForm.phone, balance: Number(editForm.balance) || 0, status: editForm.status, kyc: editForm.kyc }
-            : c,
-        ),
-      );
-    } else if (modalMode === "create") {
-      const newCustomer: Customer = {
-        id: `CUS${Math.floor(Math.random() * 90000 + 10000)}`,
-        name: editForm.name,
-        email: editForm.email,
-        phone: editForm.phone,
-        balance: Number(editForm.balance) || 0,
-        txns: 0,
-        status: editForm.status,
-        kyc: editForm.kyc,
-        dateJoined: "2026-07-04",
-      };
-      resetFilters();
-      setCustomers((prev) => [...prev, newCustomer]);
-      setPage(Math.ceil((customers.length + 1) / PAGE_SIZE));
+    setSaving(true);
+    setError(null);
+
+    try {
+      if (modalMode === "edit" && modalCustomer) {
+        const updated = await customerService.update(modalCustomer.id, {
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          balance: Number(editForm.balance) || 0,
+          status: editForm.status,
+          kyc: editForm.kyc,
+        });
+        setCustomers((prev) =>
+          prev.map((c) => (c.id === modalCustomer.id ? updated : c)),
+        );
+      } else if (modalMode === "create") {
+        const created = await customerService.create({
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          balance: Number(editForm.balance) || 0,
+          status: editForm.status,
+          kyc: editForm.kyc,
+        });
+        resetFilters();
+        setCustomers((prev) => [created, ...prev]);
+        setPage(1);
+      }
+      closeModal();
+    } catch (err) {
+      setError("The customer could not be saved right now. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    closeModal();
   };
 
-  const confirmSuspend = () => {
+  const confirmSuspend = async () => {
     if (!suspendTarget) return;
-    setCustomers((prev) =>
-      prev.map((c) =>
-        c.id === suspendTarget.id
-          ? { ...c, status: c.status === "suspended" ? "active" : "suspended" }
-          : c,
-      ),
-    );
-    setSuspendTarget(null);
+
+    try {
+      const updated = await customerService.toggleStatus(suspendTarget);
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === suspendTarget.id ? updated : c)),
+      );
+    } catch (err) {
+      setError("The account status could not be changed right now.");
+    } finally {
+      setSuspendTarget(null);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    setCustomers((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-    setDeleteTarget(null);
+
+    try {
+      await customerService.remove(deleteTarget.id);
+      setCustomers((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+    } catch (err) {
+      setError("The customer could not be deleted right now.");
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -226,6 +415,12 @@ export default function CustomersPage() {
         <Plus className="w-4 h-4" /> Create Customer
       </Button>
 
+      {error && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           [...Array(4)].map((_, i) => (
@@ -239,10 +434,34 @@ export default function CustomersPage() {
           ))
         ) : (
           <>
-            <StatCard label="Total customers" value={String(totalCustomers)} icon={Users} tone="neutral" meta="All registered users" />
-            <StatCard label="Active customers" value={String(activeCustomers)} icon={UserCheck} tone="success" meta="Currently active" />
-            <StatCard label="Suspended customers" value={String(suspendedCustomers)} icon={Ban} tone="danger" meta="Access restricted" />
-            <StatCard label="New customers" value={String(newCustomers)} icon={UserPlus} tone="neutral" meta="Joined in last 30 days" />
+            <StatCard
+              label="Total customers"
+              value={String(totalCustomers)}
+              icon={Users}
+              tone="neutral"
+              meta="All registered users"
+            />
+            <StatCard
+              label="Active customers"
+              value={String(activeCustomers)}
+              icon={UserCheck}
+              tone="success"
+              meta="Currently active"
+            />
+            <StatCard
+              label="Suspended customers"
+              value={String(suspendedCustomers)}
+              icon={Ban}
+              tone="danger"
+              meta="Access restricted"
+            />
+            <StatCard
+              label="New customers"
+              value={String(newCustomers)}
+              icon={UserPlus}
+              tone="neutral"
+              meta="Joined in last 30 days"
+            />
           </>
         )}
       </div>
@@ -261,7 +480,9 @@ export default function CustomersPage() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as typeof statusFilter)
+              }
               className={`${inputCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All statuses</option>
@@ -281,7 +502,9 @@ export default function CustomersPage() {
             </select>
             <select
               value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value as typeof dateFilter)}
+              onChange={(e) =>
+                setDateFilter(e.target.value as typeof dateFilter)
+              }
               className={`${inputCls} py-2 text-sm w-full sm:w-44`}
             >
               <option value="all">Any date joined</option>
@@ -292,7 +515,10 @@ export default function CustomersPage() {
           </div>
           {hasActiveFilters && (
             <div className="flex justify-end">
-              <button onClick={resetFilters} className="text-xs text-indigo-600 font-medium hover:text-indigo-700 shrink-0">
+              <button
+                onClick={resetFilters}
+                className="text-xs text-indigo-600 font-medium hover:text-indigo-700 shrink-0"
+              >
                 Clear filters
               </button>
             </div>
@@ -325,125 +551,174 @@ export default function CustomersPage() {
           />
         ) : (
           <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[900px]">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {["Name", "Email", "Phone", "Wallet balance", "Transactions", "Status", "Date joined", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-2 text-xs font-medium text-slate-500 whitespace-nowrap ${
-                        h === "Wallet balance" || h === "Transactions" ? "text-right" : h === "Actions" ? "text-center" : "text-left"
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[900px]">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    {[
+                      "Name",
+                      "Email",
+                      "Phone",
+                      "Wallet balance",
+                      "Transactions",
+                      "Status",
+                      "Date joined",
+                      "Actions",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className={`px-4 py-2 text-xs font-medium text-slate-500 whitespace-nowrap ${
+                          h === "Wallet balance" || h === "Transactions"
+                            ? "text-right"
+                            : h === "Actions"
+                              ? "text-center"
+                              : "text-left"
+                        }`}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {paginated.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                            {initials(c.name)}
+                          </div>
+                          <span className="font-medium text-slate-900 text-xs whitespace-nowrap">
+                            {c.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                        {c.email}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                        {c.phone}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">
+                        {fmt(c.balance)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-slate-500">
+                        {c.txns}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
+                        {formatDate(c.dateJoined)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="relative flex justify-center">
+                          <button
+                            onClick={() =>
+                              setOpenMenuId(openMenuId === c.id ? null : c.id)
+                            }
+                            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
+                            title="Actions"
+                          >
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </button>
+                          {openMenuId === c.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setOpenMenuId(null)}
+                              />
+                              <div className="absolute right-0 top-8 z-20 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                                <button
+                                  onClick={() => openView(c)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
+                                >
+                                  <Eye className="w-3.5 h-3.5" /> View
+                                </button>
+                                <button
+                                  onClick={() => openEdit(c)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" /> Edit
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSuspendTarget(c);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
+                                >
+                                  {c.status === "suspended" ? (
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <Ban className="w-3.5 h-3.5" />
+                                  )}
+                                  {c.status === "suspended"
+                                    ? "Reactivate"
+                                    : "Suspend"}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setDeleteTarget(c);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-col gap-3 px-4 py-3 border-t border-gray-100 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-slate-400">
+                Showing {(currentPage - 1) * PAGE_SIZE + 1}–
+                {Math.min(currentPage * PAGE_SIZE, filtered.length)} of{" "}
+                {filtered.length} customers
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center flex-wrap gap-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page"
+                    className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setPage(i + 1)}
+                      className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
+                        currentPage === i + 1
+                          ? "bg-indigo-600 text-white"
+                          : "text-slate-500 hover:bg-gray-100"
                       }`}
                     >
-                      {h}
-                    </th>
+                      {i + 1}
+                    </button>
                   ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {paginated.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
-                          {initials(c.name)}
-                        </div>
-                        <span className="font-medium text-slate-900 text-xs whitespace-nowrap">{c.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{c.email}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{c.phone}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900 text-xs tabular-nums">{fmt(c.balance)}</td>
-                    <td className="px-4 py-3 text-right text-xs text-slate-500">{c.txns}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">{formatDate(c.dateJoined)}</td>
-                    <td className="px-4 py-3">
-                      <div className="relative flex justify-center">
-                        <button
-                          onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
-                          className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
-                          title="Actions"
-                        >
-                          <MoreVertical className="w-3.5 h-3.5" />
-                        </button>
-                        {openMenuId === c.id && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                            <div className="absolute right-0 top-8 z-20 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-                              <button
-                                onClick={() => openView(c)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                              >
-                                <Eye className="w-3.5 h-3.5" /> View
-                              </button>
-                              <button
-                                onClick={() => openEdit(c)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                              >
-                                <Pencil className="w-3.5 h-3.5" /> Edit
-                              </button>
-                              <button
-                                onClick={() => { setSuspendTarget(c); setOpenMenuId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                              >
-                                {c.status === "suspended" ? <ShieldCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
-                                {c.status === "suspended" ? "Reactivate" : "Suspend"}
-                              </button>
-                              <button
-                                onClick={() => { setDeleteTarget(c); setOpenMenuId(null); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex flex-col gap-3 px-4 py-3 border-t border-gray-100 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-slate-400">
-              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} customers
-            </p>
-            {totalPages > 1 && (
-              <div className="flex items-center flex-wrap gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  aria-label="Previous page"
-                  className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                {[...Array(totalPages)].map((_, i) => (
                   <button
-                    key={i}
-                    onClick={() => setPage(i + 1)}
-                    className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
-                      currentPage === i + 1 ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-gray-100"
-                    }`}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page"
+                    className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
-                    {i + 1}
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
-                ))}
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  aria-label="Next page"
-                  className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
           </>
         )}
       </Card>
@@ -454,9 +729,16 @@ export default function CustomersPage() {
           <div className="bg-white rounded-xl w-full max-w-sm shadow-lg max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
               <h3 className="font-semibold text-slate-900 text-sm">
-                {modalMode === "view" ? "Customer details" : modalMode === "create" ? "Create customer" : "Edit customer"}
+                {modalMode === "view"
+                  ? "Customer details"
+                  : modalMode === "create"
+                    ? "Create customer"
+                    : "Edit customer"}
               </h3>
-              <button onClick={closeModal} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+              <button
+                onClick={closeModal}
+                className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -469,58 +751,92 @@ export default function CustomersPage() {
                     { label: "Name", value: modalCustomer.name },
                     { label: "Email", value: modalCustomer.email },
                     { label: "Phone", value: modalCustomer.phone },
-                    { label: "Wallet balance", value: fmt(modalCustomer.balance) },
-                    { label: "Transactions", value: String(modalCustomer.txns) },
-                    { label: "Date joined", value: formatDate(modalCustomer.dateJoined) },
+                    {
+                      label: "Wallet balance",
+                      value: fmt(modalCustomer.balance),
+                    },
+                    {
+                      label: "Transactions",
+                      value: String(modalCustomer.txns),
+                    },
+                    {
+                      label: "Date joined",
+                      value: formatDate(modalCustomer.dateJoined),
+                    },
                   ]}
                 />
                 <div className="flex items-center justify-between mb-4 -mt-2 px-1">
                   <StatusBadge status={modalCustomer.status} />
                   <StatusBadge status={modalCustomer.kyc} />
                 </div>
-                <Button fullWidth onClick={closeModal}>Close</Button>
+                <Button fullWidth onClick={closeModal}>
+                  Close
+                </Button>
               </div>
             ) : (
               <div className="p-4 space-y-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Full name</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Full name
+                  </label>
                   <input
                     value={editForm.name}
-                    onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, name: e.target.value }))
+                    }
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Email</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Email
+                  </label>
                   <input
                     value={editForm.email}
-                    onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, email: e.target.value }))
+                    }
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Phone</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Phone
+                  </label>
                   <input
                     value={editForm.phone}
-                    onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, phone: e.target.value }))
+                    }
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Wallet balance</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Wallet balance
+                  </label>
                   <input
                     type="number"
                     value={editForm.balance}
-                    onChange={(e) => setEditForm((f) => ({ ...f, balance: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, balance: e.target.value }))
+                    }
                     placeholder="0.00"
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Status
+                  </label>
                   <select
                     value={editForm.status}
-                    onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value as CustomerStatus }))}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        status: e.target.value as CustomerStatus,
+                      }))
+                    }
                     className={inputCls}
                   >
                     <option value="active">Active</option>
@@ -529,10 +845,17 @@ export default function CustomersPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Verification status</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Verification status
+                  </label>
                   <select
                     value={editForm.kyc}
-                    onChange={(e) => setEditForm((f) => ({ ...f, kyc: e.target.value as KycStatus }))}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        kyc: e.target.value as KycStatus,
+                      }))
+                    }
                     className={inputCls}
                   >
                     <option value="verified">Verified</option>
@@ -541,9 +864,21 @@ export default function CustomersPage() {
                   </select>
                 </div>
                 <div className="flex gap-3 pt-1">
-                  <Button variant="secondary" fullWidth onClick={closeModal}>Cancel</Button>
-                  <Button fullWidth disabled={!editForm.name.trim() || !editForm.email.trim()} onClick={saveCustomer}>
-                    {modalMode === "create" ? "Create customer" : "Save changes"}
+                  <Button variant="secondary" fullWidth onClick={closeModal}>
+                    Cancel
+                  </Button>
+                  <Button
+                    fullWidth
+                    disabled={
+                      !editForm.name.trim() || !editForm.email.trim() || saving
+                    }
+                    onClick={saveCustomer}
+                  >
+                    {saving
+                      ? "Saving..."
+                      : modalMode === "create"
+                        ? "Create customer"
+                        : "Save changes"}
                   </Button>
                 </div>
               </div>
@@ -565,9 +900,23 @@ export default function CustomersPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="secondary" fullWidth onClick={() => setSuspendTarget(null)}>Cancel</Button>
-              <Button variant={suspendTarget.status === "suspended" ? "primary" : "danger"} fullWidth onClick={confirmSuspend}>
-                {suspendTarget.status === "suspended" ? "Reactivate" : "Suspend"}
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setSuspendTarget(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={
+                  suspendTarget.status === "suspended" ? "primary" : "danger"
+                }
+                fullWidth
+                onClick={confirmSuspend}
+              >
+                {suspendTarget.status === "suspended"
+                  ? "Reactivate"
+                  : "Suspend"}
               </Button>
             </div>
           </div>
@@ -581,12 +930,21 @@ export default function CustomersPage() {
             <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <p className="text-xs text-red-800">
-                This permanently deletes {deleteTarget.name}'s account and cannot be undone.
+                This permanently deletes {deleteTarget.name}'s account and
+                cannot be undone.
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="secondary" fullWidth onClick={() => setDeleteTarget(null)}>Cancel</Button>
-              <Button variant="danger" fullWidth onClick={confirmDelete}>Delete customer</Button>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </Button>
+              <Button variant="danger" fullWidth onClick={confirmDelete}>
+                Delete customer
+              </Button>
             </div>
           </div>
         </div>

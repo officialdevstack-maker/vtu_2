@@ -189,12 +189,12 @@ export function NetworkTab() {
   }, []);
 
   const filtered = networks.filter((n) => {
-    const q = search.toLowerCase();
+    const q = search?.toLowerCase();
     return (
       !q ||
-      n.name.toLowerCase().includes(q) ||
-      n.code.toLowerCase().includes(q) ||
-      n.provider.toLowerCase().includes(q)
+      n.name?.toLowerCase().includes(q) 
+      // n.code?.toLowerCase().includes(q) ||
+      // n.provider?.toLowerCase().includes(q)
     );
   });
 
@@ -307,14 +307,12 @@ export function NetworkTab() {
                 <tr className="border-b border-gray-100">
                   {[
                     "Network name",
-                    "Code",
-                    "Provider",
                     "Status",
                     "Actions",
                   ].map((h, i) => (
                     <th
                       key={h}
-                      className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 4 ? "text-center" : "text-left"}`}
+                      className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 2 ? "text-center" : "text-left"}`}
                     >
                       {h}
                     </th>
@@ -333,12 +331,6 @@ export function NetworkTab() {
                           {n.name}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-500">
-                      {n.code}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      {n.provider}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={n.status} />

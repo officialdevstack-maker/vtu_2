@@ -21,6 +21,7 @@
 11. [Admin — Service Cost Margins](#11-admin--service-cost-margins)
 12. [Universal Table API](#12-universal-table-api)
 13. [Webhooks](#13-webhooks)
+14. [Vendor Auto-Funding](#14-vendor-auto-funding)
 
 ---
 
@@ -1639,6 +1640,281 @@ Handles incoming webhook events from third-party payment/VTU providers.
 | `identifier` | Provider-specific webhook identifier |
 
 This endpoint accepts any HTTP method (`GET`, `POST`, `PUT`, etc.) and is handled internally by the `WebhookController`. The frontend does not call this endpoint directly.
+
+---
+
+## 14. Vendor Auto-Funding
+
+The auto-funding system monitors VTU vendor balances on a schedule and automatically initiates a bank transfer from the configured payment gateway (e.g. Flutterwave) to the vendor's bank account when the balance drops below a set threshold. Every transfer attempt — success or failure — is recorded in the `vendor_fundings` audit table and an in-app notification is sent to all admin users.
+
+> **No new API routes are introduced.** Configuration and history are managed entirely through the [Universal Table API](#12-universal-table-api) against the `providers` and `vendor_fundings` tables.
+
+---
+
+### 14.1 How It Works
+
+```
+[Scheduler — every 30 min]
+        ↓
+  vendors:check-balances
+        ↓
+  For each vendor where auto_fund_enabled = true:
+    → Fetch live balance (cache bypassed)
+    → If balance < auto_fund_threshold:
+        → Dispatch AutoFundVendor job
+              ↓
+        → Call payment gateway transfer API
+              (Flutterwave POST /transfers)
+              ↓
+        → Record result in vendor_fundings
+        → Notify all admin users (in-app)
+```
+
+---
+
+### 14.2 Configure a Vendor for Auto-Funding
+
+Use the Universal Table API to set the auto-fund fields on a vendor record (`providers` table, `category = 'vendor'`).
+
+**`PUT /table/providers/{id}`**
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `auto_fund_enabled` | boolean | Yes | Set `true` to activate auto-funding for this vendor |
+| `auto_fund_threshold` | numeric | Yes | Balance level (in NGN) that triggers a top-up |
+| `auto_fund_amount` | numeric | Yes | Amount (in NGN) to transfer when triggered |
+| `account_number` | string | Yes | Vendor's bank account number to receive the transfer |
+| `account_name` | string | Yes | Account name (for display/verification only) |
+| `bank_code` | string | Yes | Bank code used by the payment gateway (e.g. `"044"` for Access Bank) |
+| `bank_name` | string | No | Human-readable bank name |
+| `funding_provider_id` | integer | Yes | ID of the payment provider record (`category = 'payment'`) to use for the transfer (e.g. the Flutterwave row) |
+
+Example request:
+
+```json
+{
+  "auto_fund_enabled": true,
+  "auto_fund_threshold": 5000,
+  "auto_fund_amount": 50000,
+  "account_number": "0123456789",
+  "account_name": "Adex VTU Nigeria",
+  "bank_code": "044",
+  "bank_name": "Access Bank",
+  "funding_provider_id": 3
+}
+```
+
+Response — 200 OK:
+
+```json
+{
+  "status": true,
+  "message": "Operation completed successfully",
+  "data": {
+    "id": 1,
+    "name": "adex",
+    "auto_fund_enabled": true,
+    "auto_fund_threshold": "5000.00",
+    "auto_fund_amount": "50000.00",
+    "account_number": "0123456789",
+    "account_name": "Adex VTU Nigeria",
+    "bank_code": "044",
+    "bank_name": "Access Bank",
+    "funding_provider_id": 3
+  }
+}
+```
+
+---
+
+### 14.3 Disable Auto-Funding for a Vendor
+
+**`PUT /table/providers/{id}`**
+
+```json
+{
+  "auto_fund_enabled": false
+}
+```
+
+---
+
+### 14.4 List All Vendor Auto-Fund Configurations
+
+Returns all vendor records. Filter to only auto-fund-enabled ones using a query param.
+
+**`GET /table/providers?auto_fund_enabled=1&category=vendor`**
+
+**Response — 200 OK**
+```json
+{
+  "status": true,
+  "message": "Request successful",
+  "data": [
+    {
+      "id": 1,
+      "name": "adex",
+      "auto_fund_enabled": true,
+      "auto_fund_threshold": "5000.00",
+      "auto_fund_amount": "50000.00",
+      "account_number": "0123456789",
+      "account_name": "Adex VTU Nigeria",
+      "bank_code": "044",
+      "bank_name": "Access Bank",
+      "funding_provider_id": 3,
+      "balance": "12500.00"
+    }
+  ]
+}
+```
+
+---
+
+### 14.5 View Funding History (Audit Log)
+
+Every transfer attempt (whether pending, successful, or failed) is logged in the `vendor_fundings` table.
+
+**`GET /table/vendor_fundings`**
+
+Supports all standard query params: filtering, sorting, and eager loading.
+
+Get all failed transfers for a vendor:
+
+```http
+GET /table/vendor_fundings?vendor_id=1&status=failed&sort=created_at,desc
+```
+
+Load vendor and payment provider details inline:
+
+```http
+GET /table/vendor_fundings?with=vendor,paymentProvider
+```
+
+**Response — 200 OK**
+```json
+{
+  "status": true,
+  "message": "Request successful",
+  "data": [
+    {
+      "id": 12,
+      "vendor_id": 1,
+      "payment_provider_id": 3,
+      "amount": "50000.00",
+      "reference": "TXN-2025-XXXXX",
+      "status": "success",
+      "balance_before": "3200.00",
+      "gateway_response": {
+        "status": "success",
+        "message": "Transfer Queued Successfully",
+        "data": {
+          "id": 396574,
+          "account_number": "0123456789",
+          "bank_code": "044",
+          "currency": "NGN",
+          "amount": 50000,
+          "status": "NEW",
+          "reference": "TXN-2025-XXXXX"
+        }
+      },
+      "created_at": "2025-08-15T14:30:00.000000Z",
+      "vendor": { "id": 1, "name": "adex" },
+      "payment_provider": { "id": 3, "name": "flutterwave" }
+    }
+  ]
+}
+```
+
+**`vendor_fundings` Field Reference**
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | integer | Auto-increment primary key |
+| `vendor_id` | integer | FK → providers (the VTU vendor) |
+| `payment_provider_id` | integer | FK → providers (the payment gateway used) |
+| `amount` | decimal | Amount transferred in NGN |
+| `reference` | string | Unique transaction reference sent to the gateway |
+| `status` | enum | `pending` · `success` · `failed` |
+| `balance_before` | decimal | Vendor balance at the time the job ran |
+| `gateway_response` | JSON | Full raw response from the payment gateway API |
+| `created_at` | datetime | When the transfer was initiated |
+| `updated_at` | datetime | When the status was last updated |
+
+---
+
+### 14.6 Get a Single Funding Record
+
+**`GET /table/vendor_fundings/{id}`**
+
+**Response — 200 OK**
+```json
+{
+  "status": true,
+  "message": "Request successful",
+  "data": {
+    "id": 12,
+    "vendor_id": 1,
+    "payment_provider_id": 3,
+    "amount": "50000.00",
+    "reference": "TXN-2025-XXXXX",
+    "status": "success",
+    "balance_before": "3200.00",
+    "gateway_response": { ... },
+    "created_at": "2025-08-15T14:30:00.000000Z"
+  }
+}
+```
+
+---
+
+### 14.7 Supported Payment Gateways for Transfers
+
+| Gateway | `name` in DB | Transfer Support | Notes |
+|---|---|---|---|
+| Flutterwave | `flutterwave` | Yes | Uses `/v3/transfers` endpoint |
+| Monnify | `monnify` | Not yet | Payout API not wired — throws an error if selected |
+| PaymentPoint | `payment point` | Not yet | Payout API not wired — throws an error if selected |
+
+To find the correct `funding_provider_id` for Flutterwave:
+
+```http
+GET /table/providers?category=payment&name=flutterwave
+```
+
+---
+
+### 14.8 Manual Trigger (Server-side only)
+
+The balance check can be triggered manually from the server without waiting for the scheduler:
+
+```bash
+# Dry-run — logs what would happen, dispatches nothing
+php artisan vendors:check-balances --dry-run
+
+# Live run — dispatches AutoFundVendor jobs for all vendors below threshold
+php artisan vendors:check-balances
+```
+
+> This is a server-side Artisan command, not an HTTP endpoint. It is not callable from the frontend.
+
+---
+
+### 14.9 Admin Notifications
+
+When a transfer is processed (success or failure), all users with `user_type = admin` receive a **database** notification. These appear in the standard Laravel notifications table and can be fetched via:
+
+**`GET /table/notifications?notifiable_type=App\Models\User&notifiable_id={admin_id}`**
+
+Notification data shape:
+
+```json
+{
+  "title": "Vendor Auto-Fund Successful",
+  "message": "N50,000.00 transfer to adex (0123456789) — success."
+}
+```
 
 ---
 

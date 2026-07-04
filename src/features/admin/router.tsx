@@ -36,6 +36,15 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "apis/provider/:id",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/provider-detail"
+          );
+          return { Component };
+        },
+      },
+      {
         path: "apis/gateway",
         lazy: async () => {
           const { default: Component } = await import("./pages/apis/gateway");
@@ -48,6 +57,22 @@ export const adminRouter: RouteObject[] = [
         lazy: async () => {
           const { default: Component } =
             await import("./pages/products/airtime-data/index");
+          return { Component };
+        },
+      },
+      {
+        path: "products/airtime-data/discounts/new",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/products/airtime-data/discount-form");
+          return { Component };
+        },
+      },
+      {
+        path: "products/airtime-data/discounts/:id/edit",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/products/airtime-data/discount-form");
           return { Component };
         },
       },

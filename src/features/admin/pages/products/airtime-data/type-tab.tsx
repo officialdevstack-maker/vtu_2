@@ -28,9 +28,8 @@ import {
 
 const emptyForm = (): NetworkTypePayload => ({
   name: "",
-  service: "airtime",
-  description: "",
-  status: "active",
+  service_type: "airtime",
+  active: true,
 });
 
 function TypeFormModal({
@@ -45,11 +44,11 @@ function TypeFormModal({
   saving: boolean;
 }) {
   const [form, setForm] = useState<NetworkTypePayload>(initial);
-  const set = (k: keyof NetworkTypePayload, v: string) =>
+  const set = (k: keyof NetworkTypePayload, v: string | boolean) =>
     setForm((f) => ({ ...f, [k]: v }));
 
   const isEdit = Boolean(initial.name);
-  const valid = form.name.trim() && form.service;
+  const valid = form.name.trim() && form.service_type;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
@@ -84,8 +83,8 @@ function TypeFormModal({
               Service
             </label>
             <select
-              value={form.service}
-              onChange={(e) => set("service", e.target.value)}
+              value={form.service_type}
+              onChange={(e) => set("service_type", e.target.value)}
               className={inputCls}
             >
               <option value="airtime">Airtime</option>
@@ -95,30 +94,15 @@ function TypeFormModal({
 
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Description
-              <span className="text-slate-400 font-normal ml-1">
-                (optional)
-              </span>
-            </label>
-            <input
-              value={form.description}
-              onChange={(e) => set("description", e.target.value)}
-              placeholder="Short description of this type"
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Status
+              Active
             </label>
             <select
-              value={form.status}
-              onChange={(e) => set("status", e.target.value)}
+              value={form.active ? "true" : "false"}
+              onChange={(e) => set("active", e.target.value === "true")}
               className={inputCls}
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
             </select>
           </div>
 
@@ -200,6 +184,8 @@ export function TypeTab() {
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
+  const toId = (value: string | number) => String(value);
+
   useEffect(() => {
     networkTypeService
       .getAll()
@@ -207,9 +193,9 @@ export function TypeTab() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = types.filter(
-    (t) => !serviceFilter || t.service === serviceFilter,
-  );
+  const filtered = types
+    .filter((t) => t.service_type === "airtime" || t.service_type === "data")
+    .filter((t) => !serviceFilter || t.service_type === serviceFilter);
 
   const handleAdd = async (payload: NetworkTypePayload) => {
     setSaving(true);
@@ -226,7 +212,10 @@ export function TypeTab() {
     if (modal?.kind !== "edit") return;
     setSaving(true);
     try {
-      const updated = await networkTypeService.update(modal.type.id, payload);
+      const updated = await networkTypeService.update(
+        toId(modal.type.id),
+        payload,
+      );
       setTypes((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
       setModal(null);
     } finally {
@@ -238,7 +227,7 @@ export function TypeTab() {
     if (modal?.kind !== "delete") return;
     setSaving(true);
     try {
-      await networkTypeService.remove(modal.type.id);
+      await networkTypeService.remove(toId(modal.type.id));
       setTypes((prev) => prev.filter((t) => t.id !== modal.type.id));
       setModal(null);
     } finally {
@@ -247,7 +236,7 @@ export function TypeTab() {
   };
 
   const handleToggle = async (type: NetworkType) => {
-    setToggling(type.id);
+    setToggling(toId(type.id));
     setOpenMenuId(null);
     try {
       const updated = await networkTypeService.toggleStatus(type);
@@ -318,13 +307,12 @@ export function TypeTab() {
                   {[
                     "Type name",
                     "Service",
-                    "Description",
                     "Status",
                     "Actions",
                   ].map((h, i) => (
                     <th
                       key={h}
-                      className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 4 ? "text-center" : "text-left"}`}
+                      className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 3 ? "text-center" : "text-left"}`}
                     >
                       {h}
                     </th>
@@ -345,26 +333,25 @@ export function TypeTab() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500 capitalize">
-                      {t.service}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-400 max-w-[220px] truncate">
-                      {t.description || "—"}
+                      {t.service_type}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={t.status} />
+                      <StatusBadge status={t.active ? "active" : "inactive"} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="relative flex justify-center">
                         <button
                           onClick={() =>
-                            setOpenMenuId(openMenuId === t.id ? null : t.id)
+                            setOpenMenuId(
+                              openMenuId === toId(t.id) ? null : toId(t.id),
+                            )
                           }
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                         >
                           <MoreVertical className="w-3.5 h-3.5" />
                         </button>
 
-                        {openMenuId === t.id && (
+                        {openMenuId === toId(t.id) && (
                           <>
                             <div
                               className="fixed inset-0 z-10"
@@ -381,14 +368,12 @@ export function TypeTab() {
                                 <Pencil className="w-3.5 h-3.5" /> Edit
                               </button>
                               <button
-                                disabled={toggling === t.id}
+                                disabled={toggling === toId(t.id)}
                                 onClick={() => handleToggle(t)}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
                               >
                                 <Power className="w-3.5 h-3.5" />
-                                {t.status === "active"
-                                  ? "Deactivate"
-                                  : "Activate"}
+                                {t.active ? "Deactivate" : "Activate"}
                               </button>
                               <button
                                 onClick={() => {
@@ -425,9 +410,8 @@ export function TypeTab() {
         <TypeFormModal
           initial={{
             name: modal.type.name,
-            service: modal.type.service,
-            description: modal.type.description,
-            status: modal.type.status,
+            service_type: modal.type.service_type,
+            active: modal.type.active,
           }}
           onSave={handleEdit}
           onClose={() => setModal(null)}
