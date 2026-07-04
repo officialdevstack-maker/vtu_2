@@ -34,6 +34,10 @@ import {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Matches the DB's `providers.sub_category` enum exactly — any other value
+// throws a raw SQL truncation error on save.
+const SUB_CATEGORIES = ["adex", "spurs", "msorg", "simhost", "misc", "payment"] as const;
+
 const fmt = (v: string | number | null | undefined) => {
   if (v === null || v === undefined || v === "") return "—";
   const n = Number(v);
@@ -126,11 +130,18 @@ function EditModal({
             <label className="block text-xs font-medium text-slate-600 mb-1.5">
               Sub category
             </label>
-            <input
+            <select
               value={form.sub_category ?? ""}
               onChange={(e) => set("sub_category", e.target.value)}
               className={inputCls}
-            />
+            >
+              <option value="">Select…</option>
+              {SUB_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">

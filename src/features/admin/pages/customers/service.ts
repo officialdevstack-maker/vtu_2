@@ -194,6 +194,8 @@ export type Transaction = {
   recipient: string;
   created_at: string;
   updated_at: string;
+  // Only present when the request passes ?with=user.
+  user?: { id: number; fullname: string; email: string } | null;
 };
 
 // Universal Table API list responses vary between a flat array and a Laravel
@@ -214,6 +216,15 @@ export const transactionService = {
       params: { user_id: userId, sort: "created_at,desc" },
     });
     return digArray(response.data) as Transaction[];
+  },
+
+  // Most recent transactions across all users, with the owning user attached
+  // (see TransactionResource::toArray()'s whenLoaded('user')).
+  getRecent: async (limit = 8): Promise<Transaction[]> => {
+    const response = await apiClient.get<ApiEnvelope<any>>("/table/transactions", {
+      params: { sort: "created_at,desc", with: "user" },
+    });
+    return (digArray(response.data) as Transaction[]).slice(0, limit);
   },
 };
 
