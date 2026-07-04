@@ -23,6 +23,8 @@ export type Provider = {
   sub_category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  identifier?: string | null;
+  webhook?: string | null;
   // auto-fund fields
   auto_fund_enabled?: boolean | null;
   auto_fund_threshold?: string | number | null;

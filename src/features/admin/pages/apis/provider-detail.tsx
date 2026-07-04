@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  KeyRound,
 } from "lucide-react";
 import {
   PageHeader,
@@ -22,6 +23,7 @@ import {
   StatusBadge,
   inputCls,
   SkeletonLine,
+  CopyButton,
 } from "../../../user/components/shared-ui";
 import {
   providerService,
@@ -314,6 +316,9 @@ const ProviderDetailPage = () => {
   const [history, setHistory] = useState<FundingRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
+  // webhook token
+  const [refreshingToken, setRefreshingToken] = useState(false);
+
   const back = () => navigate("/admin/apis/provider");
 
   const setAF = <K extends keyof AutoFundForm>(k: K, v: AutoFundForm[K]) =>
@@ -443,6 +448,20 @@ const ProviderDetailPage = () => {
     }
   };
 
+  const handleRefreshToken = async () => {
+    if (!id) return;
+    setRefreshingToken(true);
+    try {
+      await providerService.refreshToken(id);
+      // Re-fetch rather than build the URL client-side — the backend owns
+      // the exact webhook URL format (host + sub_category + identifier).
+      const refreshed = await providerService.getById(id);
+      setProvider(refreshed);
+    } finally {
+      setRefreshingToken(false);
+    }
+  };
+
   // ── Loading state ─────────────────────────────────────────────────────────
   if (loadingProvider) {
     return (
@@ -494,7 +513,7 @@ const ProviderDetailPage = () => {
       <span className="text-xs text-slate-400 w-28 shrink-0 pt-0.5">
         {label}
       </span>
-      <span className="text-xs text-slate-800 flex-1">{value ?? "—"}</span>
+      <span className="text-xs text-slate-800 flex-1 min-w-0">{value ?? "—"}</span>
     </div>
   );
 
@@ -548,7 +567,15 @@ const ProviderDetailPage = () => {
                 )}
                 {row("Sub category", provider.sub_category)}
                 {row("Balance", fmt(provider.balance))}
-                {row("Username", provider.username || null)}
+                {row(
+                  "Username",
+                  provider.username ? (
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono">{provider.username}</span>
+                      <CopyButton value={provider.username} label="username" />
+                    </span>
+                  ) : null,
+                )}
                 {row(
                   "Password",
                   provider.password ? (
@@ -567,8 +594,41 @@ const ProviderDetailPage = () => {
                           <Eye className="w-3.5 h-3.5" />
                         )}
                       </button>
+                      <CopyButton value={provider.password} label="password" />
                     </span>
                   ) : null,
+                )}
+                {row(
+                  "Webhook URL",
+                  provider.webhook ? (
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono truncate flex-1 min-w-0" title={provider.webhook}>
+                        {provider.webhook}
+                      </span>
+                      <CopyButton value={provider.webhook} label="webhook URL" />
+                      <button
+                        type="button"
+                        onClick={() => void handleRefreshToken()}
+                        disabled={refreshingToken}
+                        title="Regenerate webhook token"
+                        className="text-slate-400 hover:text-slate-600 disabled:opacity-50 shrink-0"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${refreshingToken ? "animate-spin" : ""}`}
+                        />
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleRefreshToken()}
+                      disabled={refreshingToken}
+                      className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      {refreshingToken ? "Generating…" : "Generate webhook URL"}
+                    </button>
+                  ),
                 )}
               </div>
               {(provider.created_at || provider.updated_at) && (

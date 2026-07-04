@@ -10,11 +10,18 @@ export type Gateway = {
   code?: string | null;
   balance?: string | number | null;
   connection?: boolean | null;
+  // Each gateway integration reads a different combination of these —
+  // Flutterwave: api_key only. Monnify: api_key + secret_key + username.
+  // PaymentPoint: password + api_key. Kept distinct rather than merged.
   username?: string | null;
   password?: string | null;
+  api_key?: string | null;
+  secret_key?: string | null;
   category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  identifier?: string | null;
+  webhook?: string | null;
 };
 
 export type GatewayPayload = {
@@ -22,6 +29,8 @@ export type GatewayPayload = {
   code?: string | null;
   username?: string | null;
   password?: string | null;
+  api_key?: string | null;
+  secret_key?: string | null;
   connection?: boolean;
 };
 
@@ -69,4 +78,13 @@ export const gatewayService = {
         connection: !g.connection,
       })
       .then((r) => r.data.data),
+
+  // Provider and Vendor share the same `providers` table/column, so the
+  // vendor-prefixed refresh-token route works for payment gateways too.
+  refreshToken: (id: string): Promise<string> =>
+    apiClient
+      .get<ApiEnvelope<{ identifier: string }>>(
+        `/admin/vendor/${id}/refresh-token`,
+      )
+      .then((r) => r.data.data.identifier),
 };
