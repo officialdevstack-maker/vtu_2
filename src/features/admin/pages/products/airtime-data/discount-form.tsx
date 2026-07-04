@@ -369,6 +369,11 @@ function RolePricingSection({
                   placeholder="0"
                   suffix="%"
                 />
+                {percentErrors[String(role.id)] && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {percentErrors[String(role.id)]}
+                  </p>
+                )}
               </div>
             </div>
           ))}
@@ -401,6 +406,8 @@ export default function DiscountFormPage() {
   const [pendingRolePricing, setPendingRolePricing] = useState<
     Record<string, string>
   >({});
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     networkService
@@ -434,13 +441,26 @@ export default function DiscountFormPage() {
     }
   }, [id, stateDiscount]);
 
-  const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
+  const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
+    setErrors((e) => (e[k as keyof FormErrors] ? { ...e, [k]: undefined } : e));
+  };
 
   const valid = String(form.name).trim().length > 0;
 
   const handleSubmit = async () => {
-    if (!valid) return;
+    const formErrors = validateForm(form);
+    const rolePricingInvalid = Object.values(pendingRolePricing).some(
+      (v) => validatePercent(v) !== undefined,
+    );
+    setErrors(formErrors);
+    setSubmitError(
+      rolePricingInvalid
+        ? "Fix the invalid role pricing percentages before saving."
+        : null,
+    );
+    if (Object.keys(formErrors).length > 0 || rolePricingInvalid) return;
+
     setSaving(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -472,6 +492,8 @@ export default function DiscountFormPage() {
           state: { discount: created },
         });
       }
+    } catch (err) {
+      setSubmitError(extractErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -537,6 +559,8 @@ export default function DiscountFormPage() {
         }
       />
 
+      {submitError && <ErrorBanner message={submitError} />}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* ── Left column ── */}
         <div className="space-y-5">
@@ -544,7 +568,7 @@ export default function DiscountFormPage() {
           <Card className="p-5">
             <SectionTitle>General</SectionTitle>
             <div className="space-y-4">
-              <Field label="Network">
+              <Field label="Network" error={errors.name}>
                 {networks.length > 0 ? (
                   <select
                     value={String(form.name)}
@@ -598,7 +622,7 @@ export default function DiscountFormPage() {
           <Card className="p-5">
             <SectionTitle>Pricing</SectionTitle>
             <div className="space-y-4">
-              <Field label="Minimum amount" hint="optional">
+              <Field label="Minimum amount" hint="optional" error={errors.min}>
                 <NumberInput
                   value={form.min}
                   onChange={(v) => set("min", v)}
@@ -607,7 +631,7 @@ export default function DiscountFormPage() {
                 />
               </Field>
 
-              <Field label="Maximum amount" hint="optional">
+              <Field label="Maximum amount" hint="optional" error={errors.max}>
                 <NumberInput
                   value={form.max}
                   onChange={(v) => set("max", v)}
