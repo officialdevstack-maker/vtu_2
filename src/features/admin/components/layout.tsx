@@ -74,7 +74,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         path: "/admin/customers",
         icon: Users,
         children: [
-          { label: "All Users", path: "/admin/customers/users" },
+          { label: "All Customers", path: "/admin/customers/users" },
           { label: "Roles & Permissions", path: "/admin/customers/roles" },
         ],
       },

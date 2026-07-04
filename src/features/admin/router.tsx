@@ -14,6 +14,20 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "customers/users",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/customers/users");
+          return { Component };
+        },
+      },
+      {
+        path: "customers/roles",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/customers/roles");
+          return { Component };
+        },
+      },
+      {
         path: "*",
         lazy: async () => {
           const { default: Component } = await import("./pages/admin");
