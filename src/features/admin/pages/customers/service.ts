@@ -276,8 +276,8 @@ const toRoleBody = (payload: RolePayload, existingSlug?: string) => ({
 
 export const roleService = {
   getAll: async (): Promise<Role[]> => {
-    const response = await apiClient.get<{data:RoleEnvelope<any[]>}>("/admin/roles");
-    return (response.data.data.data ?? []).map(mapRole);
+    const response = await apiClient.get<RoleEnvelope<any[]>>("/admin/roles");
+    return (response.data.data ?? []).map(mapRole);
   },
 
   create: async (payload: RolePayload): Promise<Role> => {

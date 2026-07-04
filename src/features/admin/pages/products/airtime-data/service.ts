@@ -1,16 +1,16 @@
 import { apiClient } from "@shared/api/apiClient";
 
-// Every JSON response is wrapped TWICE before it reaches the browser:
-// 1. The global HandleRequest middleware wraps the whole response body as
-//    { success, meta, data: <controller's own response body> }.
-// 2. The controller's success()/fail() helper (HttpResponse trait) wraps its
-//    payload as { message, success, data: <actual payload>, type }.
-// So the real payload — whether a single record or a list — always sits
-// three `.data` deep: r.data.data.data. Never use a shallower unwrap here.
+// Every JSON response is wrapped once before it reaches the browser, by the
+// global HandleRequest middleware, which merges its own `meta` into the
+// controller's own response body: { message, success, data: <payload>, type,
+// meta }. So the real payload — single record or list alike — always sits
+// exactly one `.data` deep: r.data.data.
 type ApiEnvelope<T> = {
+  message: string;
   success: boolean;
+  data: T;
+  type: string;
   meta: unknown;
-  data: { message: string; success: boolean; data: T; type: string };
 };
 
 // ─── Network ──────────────────────────────────────────────────────────────────
@@ -30,17 +30,15 @@ const NET = "/table/networks";
 
 export const networkService = {
   getAll: (): Promise<Network[]> =>
-    apiClient.get<ApiEnvelope<Network[]>>(NET).then((r) => r.data.data.data),
+    apiClient.get<ApiEnvelope<Network[]>>(NET).then((r) => r.data.data),
 
   create: (payload: NetworkPayload): Promise<Network> =>
-    apiClient
-      .post<ApiEnvelope<Network>>(NET, payload)
-      .then((r) => r.data.data.data),
+    apiClient.post<ApiEnvelope<Network>>(NET, payload).then((r) => r.data.data),
 
   update: (id: string, payload: Partial<NetworkPayload>): Promise<Network> =>
     apiClient
       .put<ApiEnvelope<Network>>(`${NET}/${id}`, payload)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   remove: (id: string): Promise<void> =>
     apiClient.delete(`${NET}/${id}`).then(() => undefined),
@@ -51,7 +49,7 @@ export const networkService = {
       .put<ApiEnvelope<Network>>(`${NET}/${network.id}`, {
         status: network.status === "active" ? "inactive" : "active",
       })
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 };
 
 // ─── Network type ─────────────────────────────────────────────────────────────
@@ -107,19 +105,17 @@ const TYPE = "/table/network_types";
 
 export const networkTypeService = {
   getAll: (): Promise<NetworkType[]> =>
-    apiClient
-      .get<ApiEnvelope<NetworkType[]>>(TYPE)
-      .then((r) => r.data.data.data),
+    apiClient.get<ApiEnvelope<NetworkType[]>>(TYPE).then((r) => r.data.data),
 
   create: (payload: NetworkTypePayload): Promise<NetworkType> =>
     apiClient
       .post<ApiEnvelope<NetworkType>>(TYPE, payload)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   update: (id: string, payload: Partial<NetworkTypePayload>): Promise<NetworkType> =>
     apiClient
       .put<ApiEnvelope<NetworkType>>(`${TYPE}/${id}`, payload)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   remove: (id: string): Promise<void> =>
     apiClient.delete(`${TYPE}/${id}`).then(() => undefined),
@@ -129,7 +125,7 @@ export const networkTypeService = {
       .put<ApiEnvelope<NetworkType>>(`${TYPE}/${type.id}`, {
         active: !type.active,
       })
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 };
 
 // ─── Discount ────────────────────────────────────────────────────────────────
@@ -161,24 +157,22 @@ const DISCOUNT = "/table/discounts";
 
 export const discountService = {
   getAll: (): Promise<Discount[]> =>
-    apiClient
-      .get<ApiEnvelope<Discount[]>>(DISCOUNT)
-      .then((r) => r.data.data.data),
+    apiClient.get<ApiEnvelope<Discount[]>>(DISCOUNT).then((r) => r.data.data),
 
   getById: (id: string): Promise<Discount> =>
     apiClient
       .get<ApiEnvelope<Discount>>(`${DISCOUNT}/${id}`)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   create: (payload: DiscountPayload): Promise<Discount> =>
     apiClient
       .post<ApiEnvelope<Discount>>(DISCOUNT, payload)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   update: (id: string, payload: Partial<DiscountPayload>): Promise<Discount> =>
     apiClient
       .put<ApiEnvelope<Discount>>(`${DISCOUNT}/${id}`, payload)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   remove: (id: string): Promise<void> =>
     apiClient.delete(`${DISCOUNT}/${id}`).then(() => undefined),
@@ -188,7 +182,7 @@ export const discountService = {
       .put<ApiEnvelope<Discount>>(`${DISCOUNT}/${discount.id}`, {
         active: !(discount.active ?? false),
       })
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 };
 
 // ─── Discount role pricing ─────────────────────────────────────────────────────
@@ -212,15 +206,14 @@ export type DiscountRolePrice = {
 const DISCOUNT_ROLE = "/table/discount_role";
 
 export const roleService = {
-  // /admin/roles isn't behind the Universal Table API, so its controller
-  // body shape is { success, data } rather than { message, success, data,
-  // type } — still sits inside the same outer HandleRequest wrap though.
+  // /admin/roles isn't behind the Universal Table API — its controller body
+  // is { success, data } rather than { message, success, data, type } — but
+  // it still passes through the same HandleRequest merge, so the real array
+  // still sits exactly one `.data` deep.
   getAll: (): Promise<Role[]> =>
     apiClient
-      .get<{ success: boolean; meta: unknown; data: { success: boolean; data: Role[] } }>(
-        "/admin/roles",
-      )
-      .then((r) => r.data.data.data),
+      .get<{ success: boolean; data: Role[]; meta: unknown }>("/admin/roles")
+      .then((r) => r.data.data),
 };
 
 export const discountRoleService = {
@@ -229,7 +222,7 @@ export const discountRoleService = {
       .get<ApiEnvelope<DiscountRolePrice[]>>(
         `${DISCOUNT_ROLE}?discount_id=${discountId}`,
       )
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   create: (payload: {
     discount_id: string | number;
@@ -238,7 +231,7 @@ export const discountRoleService = {
   }): Promise<DiscountRolePrice> =>
     apiClient
       .post<ApiEnvelope<DiscountRolePrice>>(DISCOUNT_ROLE, payload)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   update: (
     id: string | number,
@@ -246,5 +239,5 @@ export const discountRoleService = {
   ): Promise<DiscountRolePrice> =>
     apiClient
       .put<ApiEnvelope<DiscountRolePrice>>(`${DISCOUNT_ROLE}/${id}`, payload)
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 };

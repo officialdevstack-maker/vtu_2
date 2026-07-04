@@ -1,6 +1,8 @@
 import { apiClient } from "@shared/api/apiClient";
 
-type ApiEnvelope<T> = { status: boolean; message: string; data: T };
+// The real payload sits exactly one `.data` deep: r.data.data (see
+// backend/app/Http/Middleware/HandleRequest.php).
+type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
 export type Gateway = {
   id: string | number;
@@ -38,10 +40,10 @@ export const gatewaySupportsTransfer = (name: string) =>
 export const gatewayService = {
   getAll: (): Promise<Gateway[]> =>
     apiClient
-      .get<ApiEnvelope<{ data: Gateway[] }>>(BASE, {
+      .get<ApiEnvelope<Gateway[]>>(BASE, {
         params: { category: "payment" },
       })
-      .then((r) => r.data.data.data),
+      .then((r) => r.data.data),
 
   getById: (id: string): Promise<Gateway> =>
     apiClient

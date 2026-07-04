@@ -38,6 +38,8 @@ export type TemplateFilters = {
   enabled?: boolean;
 };
 
+// The real payload sits exactly one `.data` deep: r.data.data (see
+// backend/app/Http/Middleware/HandleRequest.php).
 type TemplateEnvelope<T> = { success: boolean; message?: string; data: T };
 
 const BASE = "/admin/templates";
@@ -45,17 +47,17 @@ const BASE = "/admin/templates";
 export const templateService = {
   getAll: (filters?: TemplateFilters): Promise<Template[]> =>
     apiClient
-      .get<{ data: TemplateEnvelope<Template[]>}>(BASE, { params: filters })
-      .then((r) => r.data.data.data ?? []),
+      .get<TemplateEnvelope<Template[]>>(BASE, { params: filters })
+      .then((r) => r.data.data ?? []),
 
   getById: (id: string | number): Promise<Template> =>
-    apiClient.get<{ data: TemplateEnvelope<Template> }>(`${BASE}/${id}`).then((r) => r.data.data.data),
+    apiClient.get<TemplateEnvelope<Template>>(`${BASE}/${id}`).then((r) => r.data.data),
 
   create: (payload: TemplatePayload): Promise<Template> =>
-    apiClient.post<{ data: TemplateEnvelope<Template> }>(BASE, payload).then((r) => r.data.data.data),
+    apiClient.post<TemplateEnvelope<Template>>(BASE, payload).then((r) => r.data.data),
 
   update: (id: string | number, payload: Partial<TemplatePayload>): Promise<Template> =>
-    apiClient.put<{ data: TemplateEnvelope<Template> }>(`${BASE}/${id}`, payload).then((r) => r.data.data.data),
+    apiClient.put<TemplateEnvelope<Template>>(`${BASE}/${id}`, payload).then((r) => r.data.data),
 
   remove: (id: string | number): Promise<void> =>
     apiClient.delete(`${BASE}/${id}`).then(() => undefined),
