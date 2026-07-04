@@ -101,7 +101,8 @@ export const adminRouter: RouteObject[] = [
       {
         path: "transactions",
         lazy: async () => {
-          const { default: Component } = await import("./pages/transactions");
+          const { default: Component } =
+            await import("./pages/transactions/index");
           return { Component };
         },
       },
