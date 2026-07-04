@@ -48,7 +48,7 @@ export const adminRouter: RouteObject[] = [
         path: "products/airtime-data",
         lazy: async () => {
           const { default: Component } =
-            await import("./pages/products/airtime-data");
+            await import("./pages/products/airtime-data/index");
           return { Component };
         },
       },
