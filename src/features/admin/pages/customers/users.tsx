@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   MoreVertical,
@@ -25,7 +26,6 @@ import {
   StatusBadge,
   EmptyState,
   SkeletonLine,
-  ConfirmSummary,
   inputCls,
 } from "../../../user/components/shared-ui";
 import { customerService, type Customer } from "./service";
@@ -193,7 +193,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-type ModalMode = "view" | "edit" | "create" | null;
+type ModalMode = "edit" | "create" | null;
 
 const emptyForm = {
   name: "",
@@ -207,6 +207,7 @@ const emptyForm = {
 const PAGE_SIZE = 6;
 
 export default function CustomersPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [search, setSearch] = useState("");
@@ -234,6 +235,7 @@ export default function CustomersPage() {
       try {
         const response = await customerService.getAll();
         if (mounted) {
+          console.log(response)
           setCustomers(response.length ? response : initialCustomers);
           setError(null);
         }
@@ -258,6 +260,7 @@ export default function CustomersPage() {
     const q = search.toLowerCase();
     const matchesSearch =
       !q ||
+      (c.username ?? "").toLowerCase().includes(q) ||
       c.name.toLowerCase().includes(q) ||
       c.email.toLowerCase().includes(q) ||
       c.phone.replace(/\s/g, "").includes(q.replace(/\s/g, ""));
@@ -302,9 +305,8 @@ export default function CustomersPage() {
   };
 
   const openView = (c: Customer) => {
-    setModalCustomer(c);
-    setModalMode("view");
     setOpenMenuId(null);
+    navigate(`/admin/customers/users/${c.id}`, { state: { customer: c } });
   };
 
   const openEdit = (c: Customer) => {
@@ -556,7 +558,7 @@ export default function CustomersPage() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     {[
-                      "Name",
+                      "Username",
                       "Email",
                       "Phone",
                       "Wallet balance",
@@ -589,10 +591,10 @@ export default function CustomersPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
-                            {initials(c.name)}
+                            {initials(c.username || c.name)}
                           </div>
                           <span className="font-medium text-slate-900 text-xs whitespace-nowrap">
-                            {c.name}
+                            {c.username || c.name}
                           </span>
                         </div>
                       </td>
@@ -723,17 +725,13 @@ export default function CustomersPage() {
         )}
       </Card>
 
-      {/* View / Edit / Create modal */}
+      {/* Edit / Create modal */}
       {modalMode && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
           <div className="bg-white rounded-xl w-full max-w-sm shadow-lg max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
               <h3 className="font-semibold text-slate-900 text-sm">
-                {modalMode === "view"
-                  ? "Customer details"
-                  : modalMode === "create"
-                    ? "Create customer"
-                    : "Edit customer"}
+                {modalMode === "create" ? "Create customer" : "Edit customer"}
               </h3>
               <button
                 onClick={closeModal}
@@ -743,38 +741,7 @@ export default function CustomersPage() {
               </button>
             </div>
 
-            {modalMode === "view" && modalCustomer ? (
-              <div className="p-4">
-                <ConfirmSummary
-                  title=""
-                  rows={[
-                    { label: "Name", value: modalCustomer.name },
-                    { label: "Email", value: modalCustomer.email },
-                    { label: "Phone", value: modalCustomer.phone },
-                    {
-                      label: "Wallet balance",
-                      value: fmt(modalCustomer.balance),
-                    },
-                    {
-                      label: "Transactions",
-                      value: String(modalCustomer.txns),
-                    },
-                    {
-                      label: "Date joined",
-                      value: formatDate(modalCustomer.dateJoined),
-                    },
-                  ]}
-                />
-                <div className="flex items-center justify-between mb-4 -mt-2 px-1">
-                  <StatusBadge status={modalCustomer.status} />
-                  <StatusBadge status={modalCustomer.kyc} />
-                </div>
-                <Button fullWidth onClick={closeModal}>
-                  Close
-                </Button>
-              </div>
-            ) : (
-              <div className="p-4 space-y-3.5">
+            <div className="p-4 space-y-3.5">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1.5">
                     Full name
@@ -848,20 +815,14 @@ export default function CustomersPage() {
                   <label className="block text-xs font-medium text-slate-600 mb-1.5">
                     Verification status
                   </label>
-                  <select
-                    value={editForm.kyc}
-                    onChange={(e) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        kyc: e.target.value as KycStatus,
-                      }))
-                    }
-                    className={inputCls}
-                  >
+                  <select value={editForm.kyc} disabled className={`${inputCls} bg-gray-50 text-slate-400`}>
                     <option value="verified">Verified</option>
                     <option value="pending">Pending</option>
                     <option value="unverified">Unverified</option>
                   </select>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Read-only — determined by the customer's email verification, not editable here.
+                  </p>
                 </div>
                 <div className="flex gap-3 pt-1">
                   <Button variant="secondary" fullWidth onClick={closeModal}>
@@ -882,7 +843,6 @@ export default function CustomersPage() {
                   </Button>
                 </div>
               </div>
-            )}
           </div>
         </div>
       )}
@@ -895,8 +855,8 @@ export default function CustomersPage() {
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800">
                 {suspendTarget.status === "suspended"
-                  ? `${suspendTarget.name} will regain full access to their account.`
-                  : `${suspendTarget.name} will lose access to their account until reactivated.`}
+                  ? `${suspendTarget.username || suspendTarget.name} will regain full access to their account.`
+                  : `${suspendTarget.username || suspendTarget.name} will lose access to their account until reactivated.`}
               </p>
             </div>
             <div className="flex gap-3">
@@ -930,7 +890,7 @@ export default function CustomersPage() {
             <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <p className="text-xs text-red-800">
-                This permanently deletes {deleteTarget.name}'s account and
+                This permanently deletes {deleteTarget.username || deleteTarget.name}'s account and
                 cannot be undone.
               </p>
             </div>

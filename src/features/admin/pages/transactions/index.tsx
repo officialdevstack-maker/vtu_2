@@ -73,6 +73,36 @@ type Transaction = {
   timeline: Array<{ time: string; title: string; note: string }>;
 };
 
+// Shape actually returned by the API for a transaction — see
+// app/Http/Resources/TransactionResource.php and API_DOCUMENTATION.md
+// (section 12, Universal Table API, against the `transactions` table).
+// This is narrower than the UI-facing `Transaction` type below, which
+// carries extra display-only fields not present on the backend model.
+export interface ApiTransaction {
+  id: number;
+  user_id: string;
+  amount: number;
+  status: "pending" | "success" | "fail";
+  transaction_type:
+    | "airtime_recharge"
+    | "data_subscription"
+    | "cable_subscription"
+    | "electric_bill"
+    | "exam"
+    | "betting_funding"
+    | "airtime_pin"
+    | "data_pin"
+    | "wallet_funding"
+    | "manual_funding"
+    | "bulksms";
+  reference: string;
+  promotion_id: number | null;
+  provider: string | null;
+  recipient: string;
+  created_at: string;
+  updated_at: string;
+}
+
 type ConfirmAction = "retry" | "reverse" | "mark-success";
 type ConfirmTarget = { action: ConfirmAction; transaction: Transaction };
 type Toast = { id: number; tone: "success" | "error"; message: string };

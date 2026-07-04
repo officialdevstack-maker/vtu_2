@@ -861,7 +861,41 @@ Regenerates the unique identifier/token for a vendor/provider.
 
 ---
 
-### 7.5 Get Airtime Discount
+### 7.5 Get Banks for a Payment Provider
+
+**`GET /admin/vendor/{id}/banks`** `🔒 Auth Required`
+
+Fetches the list of banks supported by a payment gateway (used to look up a `bank_code` before configuring a vendor for [auto-funding](#142-configure-a-vendor-for-auto-funding)). Results are cached for 24 hours per provider.
+
+**URL Parameters**
+
+| Param | Type | Description |
+|---|---|---|
+| `id` | integer | The payment provider's ID (`providers` table, `category = 'payment'`) |
+
+**Response — 200 OK**
+```json
+{
+  "status": true,
+  "message": "Request successful",
+  "data": {
+    "banks": [
+      { "code": "044", "name": "Access Bank" },
+      { "code": "058", "name": "GTBank" }
+    ]
+  }
+}
+```
+
+**Error Responses**
+
+| Code | Description |
+|---|---|
+| 500 | Provider not found, or the gateway does not support fetching banks (e.g. PaymentPoint) |
+
+---
+
+### 7.6 Get Airtime Discount
 
 **`GET /admin/airtime_discount`** `🔒 Auth Required`
 
@@ -1138,7 +1172,10 @@ Toggles the `isActive` status of a specific service control.
       "description": "Full system access",
       "is_active": true,
       "service_cost_margins": [ ... ],
-      "users": [ ... ]
+      "users": [ ... ],
+      "permissions": [
+        { "id": 1, "name": "Customers", "slug": "customers", "description": "Manage customer accounts" }
+      ]
     }
   ]
 }
@@ -1160,7 +1197,10 @@ Toggles the `isActive` status of a specific service control.
     "slug": "agent",
     "is_active": true,
     "service_cost_margins": [ ... ],
-    "users": [ ... ]
+    "users": [ ... ],
+    "permissions": [
+      { "id": 1, "name": "Customers", "slug": "customers", "description": "Manage customer accounts" }
+    ]
   }
 }
 ```
@@ -1179,6 +1219,7 @@ Toggles the `isActive` status of a specific service control.
 | `slug` | string | Yes | Unique slug |
 | `description` | string | No | Description |
 | `is_active` | boolean | No | Default: `true` |
+| `permission_ids` | integer[] | No | IDs of permissions to assign (see [10.7](#107-list-available-permissions)) |
 
 **Response — 201 Created**
 ```json
@@ -1187,7 +1228,10 @@ Toggles the `isActive` status of a specific service control.
   "data": {
     "id": 4,
     "name": "Reseller",
-    "slug": "reseller"
+    "slug": "reseller",
+    "permissions": [
+      { "id": 2, "name": "Wallets", "slug": "wallets", "description": "Manage wallet balances and funding" }
+    ]
   },
   "message": "Role created successfully"
 }
@@ -1199,7 +1243,7 @@ Toggles the `isActive` status of a specific service control.
 
 **`PUT /admin/roles/{id}`** `🔒 Auth Required`
 
-Send only the fields to update.
+Send only the fields to update. Accepts the same body as [10.3 Create a Role](#103-create-a-role), including `permission_ids`. When `permission_ids` is present, it fully replaces the role's assigned permissions (sync, not merge).
 
 **Response — 200 OK**
 ```json
@@ -1243,6 +1287,28 @@ Returns all users assigned to the given role.
       "email": "alice@example.com",
       "user_type": "agent"
     }
+  ]
+}
+```
+
+---
+
+### 10.7 List Available Permissions
+
+**`GET /admin/permissions`** `🔒 Auth Required`
+
+Returns every permission that can be assigned to a role (e.g. to populate a "select permissions" UI). Permissions are a fixed reference list seeded by the app, not created via this API.
+
+**Response — 200 OK**
+```json
+{
+  "success": true,
+  "data": [
+    { "id": 1, "name": "Customers", "slug": "customers", "description": "Manage customer accounts" },
+    { "id": 2, "name": "Wallets", "slug": "wallets", "description": "Manage wallet balances and funding" },
+    { "id": 3, "name": "Transactions", "slug": "transactions", "description": "View and manage transactions" },
+    { "id": 4, "name": "Support", "slug": "support", "description": "Handle support tickets and messages" },
+    { "id": 5, "name": "Settings", "slug": "settings", "description": "Manage platform settings" }
   ]
 }
 ```
@@ -1871,17 +1937,19 @@ GET /table/vendor_fundings?with=vendor,paymentProvider
 
 ### 14.7 Supported Payment Gateways for Transfers
 
-| Gateway | `name` in DB | Transfer Support | Notes |
-|---|---|---|---|
-| Flutterwave | `flutterwave` | Yes | Uses `/v3/transfers` endpoint |
-| Monnify | `monnify` | Not yet | Payout API not wired — throws an error if selected |
-| PaymentPoint | `payment point` | Not yet | Payout API not wired — throws an error if selected |
+| Gateway | `name` in DB | Transfer Support | Bank List Support | Notes |
+|---|---|---|---|---|
+| Flutterwave | `flutterwave` | Yes | Yes | Transfers via `/v3/transfers`; banks via `/v3/banks/NG` |
+| Monnify | `monnify` | Not yet | Yes | Payout API not wired — transfer throws an error if selected; banks via `/api/v1/banks` |
+| PaymentPoint | `payment point` | Not yet | Not yet | Payout and bank-list APIs not wired — both throw an error if selected |
 
 To find the correct `funding_provider_id` for Flutterwave:
 
 ```http
 GET /table/providers?category=payment&name=flutterwave
 ```
+
+Use [`GET /admin/vendor/{id}/banks`](#75-get-banks-for-a-payment-provider) with that same provider `id` to look up the `bank_code` for a vendor's bank before saving it in [14.2](#142-configure-a-vendor-for-auto-funding).
 
 ---
 
@@ -1942,6 +2010,7 @@ Notification data shape:
 | POST | `/admin/broadcast` | Yes | Broadcast notifications |
 | POST | `/admin/users/{id}/fund` | Yes | Fund/debit user wallet |
 | GET | `/admin/vendor/{id}/refresh-token` | Yes | Refresh vendor token |
+| GET | `/admin/vendor/{id}/banks` | Yes | Get banks supported by a payment provider |
 | GET | `/admin/airtime_discount` | Yes | Get airtime discount |
 | GET | `/admin/users` | Yes | List all users |
 | GET | `/admin/users/{id}` | Yes | Get single user |
@@ -1955,6 +2024,7 @@ Notification data shape:
 | PUT | `/admin/roles/{id}` | Yes | Update role |
 | DELETE | `/admin/roles/{id}` | Yes | Delete role |
 | GET | `/admin/roles/{id}/users` | Yes | Get users by role |
+| GET | `/admin/permissions` | Yes | List available permissions |
 | GET | `/admin/service-cost-margins` | Yes | List cost margins |
 | POST | `/admin/service-cost-margins` | Yes | Create cost margin |
 | PUT | `/admin/service-cost-margins/{id}` | Yes | Update cost margin |
