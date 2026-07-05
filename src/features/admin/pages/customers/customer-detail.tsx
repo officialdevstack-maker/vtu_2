@@ -17,9 +17,12 @@ import {
   Button,
   StatusBadge,
   EmptyState,
+  Pagination,
   inputCls,
+  selectCls,
   SkeletonLine,
 } from "../../../user/components/shared-ui";
+import { usePagination } from "../../../../shared/pagination";
 import { fmt } from "../../../user/data/mock";
 import {
   customerService,
@@ -91,7 +94,7 @@ function EditModal({
             <select
               value={form.status}
               onChange={(e) => set("status", e.target.value as CustomerStatus)}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="active">Active</option>
               <option value="suspended">Suspended</option>
@@ -143,7 +146,7 @@ function FundWalletCard({
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1.5">Action</label>
-          <select value={type} onChange={(e) => setType(e.target.value as "credit" | "debit")} className={inputCls}>
+          <select value={type} onChange={(e) => setType(e.target.value as "credit" | "debit")} className={selectCls}>
             <option value="credit">Credit wallet</option>
             <option value="debit">Debit wallet</option>
           </select>
@@ -192,6 +195,14 @@ function TransactionsCard({ userId }: { userId: string }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const {
+    currentPage,
+    pageItems: paginatedTransactions,
+    pageSize,
+    setPage,
+    totalItems,
+    totalPages,
+  } = usePagination(transactions);
 
   useEffect(() => {
     let mounted = true;
@@ -243,6 +254,7 @@ function TransactionsCard({ userId }: { userId: string }) {
           description="Purchases made by this customer will appear here."
         />
       ) : (
+        <>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -255,7 +267,7 @@ function TransactionsCard({ userId }: { userId: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {transactions.map((t) => (
+              {paginatedTransactions.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{formatDateTime(t.created_at)}</td>
                   <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{formatTxnType(t.transaction_type)}</td>
@@ -273,6 +285,15 @@ function TransactionsCard({ userId }: { userId: string }) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          label="records"
+        />
+        </>
       )}
     </Card>
   );
@@ -304,13 +325,12 @@ export default function CustomerDetailPage() {
 
   useEffect(() => {
     if (!id || customer) return;
-    setLoading(true);
     customerService
       .getById(id)
       .then(setCustomer)
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [customer, id]);
 
   const handleSave = async (payload: CustomerPayload) => {
     if (!id) return;

@@ -9,6 +9,7 @@ import {
   Button,
   Toggle,
   inputCls,
+  selectCls,
   SkeletonLine,
 } from "../../../../user/components/shared-ui";
 import {
@@ -527,7 +528,7 @@ export default function DataPlanFormPage() {
                   <select
                     value={form.network}
                     onChange={(e) => set("network", e.target.value)}
-                    className={inputCls}
+                    className={selectCls}
                   >
                     <option value="">Select a network</option>
                     {networks.map((n) => (
@@ -551,7 +552,7 @@ export default function DataPlanFormPage() {
                   <select
                     value={form.plan_type}
                     onChange={(e) => set("plan_type", e.target.value)}
-                    className={inputCls}
+                    className={selectCls}
                   >
                     <option value="">Select a type</option>
                     {types.map((t) => (
@@ -584,7 +585,7 @@ export default function DataPlanFormPage() {
                   <select
                     value={form.plan_size}
                     onChange={(e) => set("plan_size", e.target.value)}
-                    className={inputCls}
+                    className={selectCls}
                   >
                     {SIZE_UNITS.map((u) => (
                       <option key={u} value={u}>
@@ -661,7 +662,7 @@ export default function DataPlanFormPage() {
                     <select
                       value={form.provider_id}
                       onChange={(e) => set("provider_id", e.target.value)}
-                      className={inputCls}
+                      className={selectCls}
                     >
                       <option value="">Select a provider</option>
                       {providers.map((p) => (

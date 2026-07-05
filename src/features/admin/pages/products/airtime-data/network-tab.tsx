@@ -17,6 +17,7 @@ import {
   EmptyState,
   SkeletonLine,
   inputCls,
+  selectCls,
 } from "../../../../user/components/shared-ui";
 import { Toolbar } from "./shared";
 import { networkService, type Network, type NetworkPayload } from "./service";
@@ -96,7 +97,7 @@ function NetworkFormModal({
             <select
               value={form.status}
               onChange={(e) => set("status", e.target.value)}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>

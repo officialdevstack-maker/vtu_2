@@ -16,6 +16,7 @@ import {
   EmptyState,
   SkeletonLine,
   inputCls,
+  selectCls,
 } from "../../../../user/components/shared-ui";
 import { Toolbar, SelectFilter } from "./shared";
 import {
@@ -85,7 +86,7 @@ function TypeFormModal({
             <select
               value={form.service_type}
               onChange={(e) => set("service_type", e.target.value)}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="airtime">Airtime</option>
               <option value="data">Data</option>
@@ -99,7 +100,7 @@ function TypeFormModal({
             <select
               value={form.active ? "true" : "false"}
               onChange={(e) => set("active", e.target.value === "true")}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="true">Yes</option>
               <option value="false">No</option>

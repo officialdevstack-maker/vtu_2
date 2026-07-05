@@ -3,8 +3,6 @@ import axios from "axios";
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Clock3,
   Download,
   Eye,
@@ -24,10 +22,14 @@ import {
   Card,
   EmptyState,
   PageHeader,
-  SkeletonLine,
+  Pagination,
+  SkeletonRows,
+  SkeletonStatGrid,
   StatCard,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
+<<<<<<< HEAD
 import {
   transactionService,
   transactionTypeLabels,
@@ -37,11 +39,15 @@ import {
   type TransactionType,
   type TransactionStatus,
 } from "./service";
+=======
+import { usePagination } from "../../../../shared/pagination";
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
 
 type FilterValue<T extends string> = "All" | T;
 type DateFilter = "All time" | "Today" | "Last 7 days" | "Last 30 days";
 type Toast = { id: number; tone: "success" | "error"; message: string };
 
+<<<<<<< HEAD
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as
@@ -69,6 +75,9 @@ const isRefundable = (tx: Transaction) =>
   REFUNDABLE_TYPES.includes(tx.transaction_type);
 
 const PAGE_SIZE = 10;
+=======
+const baseDate = new Date("2026-07-04T15:30:00+01:00");
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
 
 const fmt = (value: string | number) => {
   const n = typeof value === "string" ? parseFloat(value) : value;
@@ -130,7 +139,7 @@ const SelectFilter = <T extends string>({
     aria-label={label}
     value={value}
     onChange={(event) => onChange(event.target.value)}
-    className={`${inputCls} h-10 py-2 text-xs sm:w-40`}
+    className={`${selectCls} h-10 py-2 text-xs lg:w-40`}
   >
     {options.map((option) => (
       <option key={option} value={option}>
@@ -191,6 +200,7 @@ export default function TransactionsPage() {
     useState<FilterValue<TransactionType>>("All");
   const [statusFilter, setStatusFilter] =
     useState<FilterValue<TransactionStatus>>("All");
+<<<<<<< HEAD
   const [dateFilter, setDateFilter] = useState<DateFilter>("All time");
   const [providerFilter, setProviderFilter] = useState("All");
   const [page, setPage] = useState(1);
@@ -205,6 +215,19 @@ export default function TransactionsPage() {
   const [refundModal, setRefundModal] = useState<Transaction | null>(null);
   const [refundReason, setRefundReason] = useState("");
   const [savingRefund, setSavingRefund] = useState(false);
+=======
+  const [dateFilter, setDateFilter] = useState("Last 30 Days");
+  const [providerFilter, setProviderFilter] =
+    useState<FilterValue<Provider>>("All");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [detailTransaction, setDetailTransaction] =
+    useState<Transaction | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<ConfirmTarget | null>(
+    null,
+  );
+  const [processing, setProcessing] = useState(false);
+  const [reverseReason, setReverseReason] = useState("");
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = (message: string, tone: Toast["tone"] = "success") => {
@@ -300,6 +323,7 @@ export default function TransactionsPage() {
     [transactions],
   );
 
+<<<<<<< HEAD
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginatedTransactions = filteredTransactions.slice(
@@ -310,6 +334,16 @@ export default function TransactionsPage() {
     filteredTransactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const showingEnd = Math.min(currentPage * PAGE_SIZE, filteredTransactions.length);
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+=======
+  const {
+    currentPage,
+    pageItems: paginatedTransactions,
+    pageSize,
+    setPage,
+    totalItems,
+    totalPages,
+  } = usePagination(filteredTransactions);
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
 
   const pageIds = paginatedTransactions.map((t) => t.id);
   const allPageSelected =
@@ -360,6 +394,7 @@ export default function TransactionsPage() {
     setOpenMenuId(null);
   };
 
+<<<<<<< HEAD
   const submitStatusChange = async () => {
     if (!statusModal) return;
     setSavingStatus(true);
@@ -368,6 +403,29 @@ export default function TransactionsPage() {
         statusModal.id,
         statusValue,
         statusNote.trim() || undefined,
+=======
+  const confirmAction = async () => {
+    if (!confirmTarget) return;
+
+    const { action, transaction } = confirmTarget;
+
+    if (action === "reverse" && !reverseReason.trim()) {
+      showToast("Enter a reason before reversing this transaction.", "error");
+      return;
+    }
+
+    setProcessing(true);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    if (action === "retry") {
+      const nextStatus = transaction.status === "Failed" ? "Pending" : "Successful";
+      updateTransactionStatus(
+        transaction.id,
+        nextStatus,
+        nextStatus === "Successful"
+          ? "Retry completed successfully in local mock state."
+          : "Retry submitted. Transaction is pending provider callback.",
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
       );
       applyUpdate(updated);
       showToast(`${updated.reference} marked as ${transactionStatusLabels[updated.status]}.`);
@@ -377,6 +435,7 @@ export default function TransactionsPage() {
     } finally {
       setSavingStatus(false);
     }
+<<<<<<< HEAD
   };
 
   const openRefundModal = (tx: Transaction) => {
@@ -406,6 +465,97 @@ export default function TransactionsPage() {
       setSavingRefund(false);
     }
   };
+=======
+
+    if (action === "reverse") {
+      updateTransactionStatus(
+        transaction.id,
+        "Reversed",
+        `Refund approved locally. Reason: ${reverseReason.trim()}`,
+      );
+      showToast(`Refund processed for ${transaction.id}.`);
+    }
+
+    if (action === "mark-success") {
+      updateTransactionStatus(
+        transaction.id,
+        "Successful",
+        "Operator marked this transaction as successful in local mock state.",
+      );
+      showToast(`${transaction.id} marked as successful.`);
+    }
+
+    setProcessing(false);
+    setConfirmTarget(null);
+    setReverseReason("");
+  };
+
+  const renderActionMenu = (transaction: Transaction) => (
+    <div className="relative flex justify-center">
+      <button
+        type="button"
+        onClick={() =>
+          setOpenMenuId(openMenuId === transaction.id ? null : transaction.id)
+        }
+        className="rounded-xl p-1.5 text-slate-400 transition-colors hover:bg-gray-100 hover:text-slate-600"
+        title="Actions"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      {openMenuId === transaction.id ? (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setOpenMenuId(null)}
+          />
+          <div className="absolute right-0 top-8 z-20 w-52 rounded-xl border border-slate-200/70 bg-white py-1 shadow-md">
+            <button
+              type="button"
+              onClick={() => {
+                setDetailTransaction(transaction);
+                setOpenMenuId(null);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <Eye className="h-3.5 w-3.5" /> View Details
+            </button>
+            <button
+              type="button"
+              onClick={() => openConfirm("retry", transaction)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Retry Transaction
+            </button>
+            <button
+              type="button"
+              onClick={() => openConfirm("reverse", transaction)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <Undo2 className="h-3.5 w-3.5" /> Reverse / Refund
+            </button>
+            <button
+              type="button"
+              onClick={() => openConfirm("mark-success", transaction)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" /> Mark as Successful
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpenMenuId(null);
+                showToast(`Receipt for ${transaction.id} is ready.`);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <ReceiptText className="h-3.5 w-3.5" /> Download Receipt
+            </button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
 
   return (
     <div className="space-y-5">
@@ -438,6 +588,7 @@ export default function TransactionsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {loading ? (
+<<<<<<< HEAD
           Array.from({ length: 5 }, (_, index) => (
             <Card key={index} className="p-4">
               <div className="mb-3 flex items-center justify-between">
@@ -448,6 +599,9 @@ export default function TransactionsPage() {
               <SkeletonLine className="mt-2 h-3 w-32" />
             </Card>
           ))
+=======
+          <SkeletonStatGrid count={4} className="contents" />
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
         ) : (
           <>
             <StatCard
@@ -529,7 +683,7 @@ export default function TransactionsPage() {
                 setDateFilter(event.target.value as DateFilter);
                 setPage(1);
               }}
-              className={`${inputCls} h-10 py-2 text-xs sm:w-40`}
+              className={`${selectCls} h-10 py-2 text-xs lg:w-40`}
             >
               {(["All time", "Today", "Last 7 days", "Last 30 days"] as const).map(
                 (option) => (
@@ -578,17 +732,7 @@ export default function TransactionsPage() {
         ) : null}
 
         {loading ? (
-          <div className="p-4">
-            {Array.from({ length: 8 }, (_, index) => (
-              <div key={index} className="flex items-center gap-4 py-3">
-                <SkeletonLine className="h-8 w-8 rounded-full" />
-                <SkeletonLine className="h-3 flex-1" />
-                <SkeletonLine className="h-3 w-24" />
-                <SkeletonLine className="h-3 w-20" />
-                <SkeletonLine className="h-7 w-7 rounded-md" />
-              </div>
-            ))}
-          </div>
+          <SkeletonRows count={8} />
         ) : filteredTransactions.length === 0 ? (
           <EmptyState
             icon={Inbox}
@@ -604,8 +748,59 @@ export default function TransactionsPage() {
           />
         ) : (
           <>
+<<<<<<< HEAD
             <div className="overflow-x-auto">
               <table className="w-full table-fixed min-w-[560px] lg:min-w-0 text-sm">
+=======
+            <div className="divide-y divide-slate-100 sm:hidden">
+              {paginatedTransactions.map((transaction) => (
+                <div key={transaction.id} className="px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-medium text-indigo-700">
+                      {initials(transaction.customerName)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDetailTransaction(transaction)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-900">
+                            {transaction.customerName}
+                          </p>
+                          <p className="truncate text-xs text-slate-400">
+                            {transaction.email}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-right text-sm font-semibold tabular-nums text-slate-900">
+                          {fmt(transaction.amount)}
+                        </p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <TransactionStatusBadge status={transaction.status} />
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                          {transaction.type}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                          {transaction.provider}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                        <span className="font-mono">{transaction.id}</span>
+                        <span>{transaction.paymentMethod}</span>
+                        <span>{dateLabel(transaction.dateTime)}</span>
+                      </div>
+                    </button>
+                    <div className="shrink-0">{renderActionMenu(transaction)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto sm:block">
+              <table className="w-full table-fixed min-w-[520px] lg:min-w-0 text-sm">
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="w-10 px-4 py-2 text-left">
@@ -688,6 +883,7 @@ export default function TransactionsPage() {
                         {dateLabel(tx.created_at)}
                       </td>
                       <td className="px-2 py-3">
+<<<<<<< HEAD
                         <div className="relative flex justify-center">
                           <button
                             type="button"
@@ -737,6 +933,9 @@ export default function TransactionsPage() {
                             </>
                           ) : null}
                         </div>
+=======
+                        {renderActionMenu(transaction)}
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                       </td>
                     </tr>
                   ))}
@@ -744,6 +943,7 @@ export default function TransactionsPage() {
               </table>
             </div>
 
+<<<<<<< HEAD
             <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-400">
                 Showing {showingStart}-{showingEnd} of{" "}
@@ -784,6 +984,16 @@ export default function TransactionsPage() {
                 </button>
               </div>
             </div>
+=======
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              label="transactions"
+            />
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
           </>
         )}
       </Card>
@@ -800,11 +1010,16 @@ export default function TransactionsPage() {
                 <p className="text-sm font-semibold text-slate-900">
                   Transaction details
                 </p>
+<<<<<<< HEAD
                 <p
                   className="truncate font-mono text-xs text-slate-400"
                   title={detailTransaction.reference}
                 >
                   {detailTransaction.reference}
+=======
+                <p className="break-all font-mono text-xs text-slate-400">
+                  {detailTransaction.id}
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                 </p>
               </div>
               <button
@@ -862,13 +1077,18 @@ export default function TransactionsPage() {
                     <p className="text-xs font-medium text-slate-400">
                       {label}
                     </p>
+<<<<<<< HEAD
                     <p className="mt-1 text-sm text-slate-800 break-words">
                       {value}
                     </p>
+=======
+                    <p className="mt-1 break-words text-sm text-slate-800">{value}</p>
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                   </div>
                 ))}
               </div>
 
+<<<<<<< HEAD
               {detailTransaction.refunded_at ? (
                 <div className="mt-4 rounded-lg border border-sky-100 bg-sky-50 px-3.5 py-3">
                   <p className="text-xs font-medium text-sky-700">
@@ -877,6 +1097,43 @@ export default function TransactionsPage() {
                   <p className="mt-1 text-sm text-sky-900">
                     {detailTransaction.refund_reason}
                   </p>
+=======
+              <div className="mt-4 rounded-lg border border-gray-200 bg-white px-3.5 py-3">
+                <p className="text-xs font-medium text-slate-400">
+                  API response / message
+                </p>
+                <p className="mt-1 break-words text-sm text-slate-700">
+                  {detailTransaction.apiMessage}
+                </p>
+              </div>
+
+              <div className="mt-5">
+                <p className="mb-3 text-sm font-semibold text-slate-900">
+                  Timeline
+                </p>
+                <div className="space-y-3">
+                  {detailTransaction.timeline.map((item, index) => (
+                    <div key={`${item.time}-${item.title}`} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <span className="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                        {index !== detailTransaction.timeline.length - 1 ? (
+                          <span className="mt-1 h-full min-h-10 w-px bg-gray-200" />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0 flex-1 pb-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-slate-900">
+                            {item.title}
+                          </p>
+                          <p className="text-xs text-slate-400">{item.time}</p>
+                        </div>
+                        <p className="mt-1 break-words text-xs text-slate-500">
+                          {item.note}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                 </div>
               ) : null}
 
@@ -921,6 +1178,7 @@ export default function TransactionsPage() {
               <p className="text-sm font-semibold text-slate-900">
                 Change transaction status
               </p>
+<<<<<<< HEAD
               <p className="mt-1 font-mono text-xs text-slate-400">
                 {statusModal.reference}
               </p>
@@ -995,6 +1253,10 @@ export default function TransactionsPage() {
               </p>
               <p className="mt-1 font-mono text-xs text-slate-400">
                 {refundModal.reference}
+=======
+              <p className="mt-1 break-all font-mono text-xs text-slate-400">
+                {confirmTarget.transaction.id}
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
               </p>
             </div>
             <div className="p-4">
@@ -1008,19 +1270,25 @@ export default function TransactionsPage() {
                 </p>
               </div>
               <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
-                <div className="flex justify-between gap-3">
+                <div className="flex flex-wrap justify-between gap-3">
                   <span className="text-slate-500">Customer</span>
+<<<<<<< HEAD
                   <span className="font-medium text-slate-900">
                     {refundModal.user?.fullname ?? "—"}
+=======
+                  <span className="break-words text-right font-medium text-slate-900">
+                    {confirmTarget.transaction.customerName}
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                   </span>
                 </div>
-                <div className="mt-2 flex justify-between gap-3">
+                <div className="mt-2 flex flex-wrap justify-between gap-3">
                   <span className="text-slate-500">Amount</span>
                   <span className="font-medium text-slate-900">
                     {fmt(refundModal.amount)}
                   </span>
                 </div>
               </div>
+<<<<<<< HEAD
               <div className="mb-4">
                 <label className="mb-1.5 block text-xs font-medium text-slate-600">
                   Reason for refund
@@ -1037,17 +1305,46 @@ export default function TransactionsPage() {
                   variant="secondary"
                   fullWidth
                   onClick={() => setRefundModal(null)}
+=======
+              {confirmTarget.action === "reverse" ? (
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                    Reason for reversal
+                  </label>
+                  <textarea
+                    value={reverseReason}
+                    onChange={(event) => setReverseReason(event.target.value)}
+                    className={`${inputCls} min-h-24 resize-none`}
+                    placeholder="Example: Customer debited but value was not delivered"
+                  />
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  disabled={processing}
+                  onClick={() => setConfirmTarget(null)}
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                 >
                   Cancel
                 </Button>
                 <Button
                   variant="danger"
                   fullWidth
+<<<<<<< HEAD
                   loading={savingRefund}
                   disabled={savingRefund || !refundReason.trim()}
                   onClick={() => void submitRefund()}
                 >
                   Confirm refund
+=======
+                  loading={processing}
+                  disabled={processing}
+                  onClick={confirmAction}
+                >
+                  {processing ? "" : "Confirm"}
+>>>>>>> d14c8971c4fc0d17754e7a9a2ea3b7aeec337571
                 </Button>
               </div>
             </div>
@@ -1055,11 +1352,11 @@ export default function TransactionsPage() {
         </div>
       ) : null}
 
-      <div className="fixed right-4 top-16 z-[70] space-y-2">
+      <div className="fixed left-4 right-4 top-16 z-[70] space-y-2 sm:left-auto">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`flex min-w-72 items-center gap-2 rounded-lg border px-3.5 py-3 text-sm shadow-lg ${
+            className={`flex w-full items-center gap-2 rounded-lg border px-3.5 py-3 text-sm shadow-lg sm:min-w-72 ${
               toast.tone === "success"
                 ? "border-emerald-100 bg-white text-emerald-700"
                 : "border-red-100 bg-white text-red-700"

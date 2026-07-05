@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { HelpCircle, Receipt, Shield, X, ChevronDown } from "lucide-react";
-import { PageHeader, Card, Button, inputCls } from "../components/shared-ui";
+import { PageHeader, Card, Button, inputCls, selectCls } from "../components/shared-ui";
 
 export default function SupportPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -87,7 +87,7 @@ export default function SupportPage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">Issue category</label>
-                <select className={inputCls}>
+                <select className={selectCls}>
                   {["Transaction issue", "Wallet funding", "Account access", "KYC verification", "Other"].map((opt) => (
                     <option key={opt}>{opt}</option>
                   ))}

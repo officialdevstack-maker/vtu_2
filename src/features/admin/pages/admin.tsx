@@ -1,4 +1,4 @@
-import {
+﻿import {
   Users,
   TrendingUp,
   Wallet,
@@ -108,7 +108,8 @@ export default function AdminPage() {
   }, [rangeDays]);
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
   }, [load]);
 
   const rangeLabel = `Last ${rangeDays} days`;

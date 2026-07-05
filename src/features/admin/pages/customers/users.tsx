@@ -13,8 +13,6 @@ import {
   UserPlus,
   X,
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   Plus,
 } from "lucide-react";
 import { fmt } from "../../../user/data/mock";
@@ -25,9 +23,13 @@ import {
   Button,
   StatusBadge,
   EmptyState,
-  SkeletonLine,
+  Pagination,
+  SkeletonRows,
+  SkeletonStatGrid,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
+import { usePagination } from "../../../../shared/pagination";
 import { customerService, type Customer } from "./service";
 
 type CustomerStatus = "active" | "suspended" | "inactive";
@@ -204,8 +206,6 @@ const emptyForm = {
   kyc: "pending" as KycStatus,
 };
 
-const PAGE_SIZE = 6;
-
 export default function CustomersPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -218,7 +218,6 @@ export default function CustomersPage() {
   const [dateFilter, setDateFilter] = useState<"all" | "7" | "30" | "90">(
     "all",
   );
-  const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [modalCustomer, setModalCustomer] = useState<Customer | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
@@ -227,6 +226,7 @@ export default function CustomersPage() {
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -239,7 +239,7 @@ export default function CustomersPage() {
           setCustomers(response.length ? response : initialCustomers);
           setError(null);
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           setError(
             "Could not load customer data from the API. Showing the cached list instead.",
@@ -271,16 +271,14 @@ export default function CustomersPage() {
     return matchesSearch && matchesStatus && matchesKyc && matchesDate;
   });
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, statusFilter, kycFilter, dateFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const paginated = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  const {
+    currentPage,
+    pageItems: paginated,
+    pageSize,
+    setPage: setCustomerPage,
+    totalItems,
+    totalPages,
+  } = usePagination(filtered);
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter((c) => c.status === "active").length;
@@ -302,6 +300,7 @@ export default function CustomersPage() {
     setStatusFilter("all");
     setKycFilter("all");
     setDateFilter("all");
+    setCustomerPage(1);
   };
 
   const openView = (c: Customer) => {
@@ -364,10 +363,10 @@ export default function CustomersPage() {
         });
         resetFilters();
         setCustomers((prev) => [created, ...prev]);
-        setPage(1);
+        setCustomerPage(1);
       }
       closeModal();
-    } catch (err) {
+    } catch {
       setError("The customer could not be saved right now. Please try again.");
     } finally {
       setSaving(false);
@@ -382,7 +381,7 @@ export default function CustomersPage() {
       setCustomers((prev) =>
         prev.map((c) => (c.id === suspendTarget.id ? updated : c)),
       );
-    } catch (err) {
+    } catch {
       setError("The account status could not be changed right now.");
     } finally {
       setSuspendTarget(null);
@@ -392,12 +391,14 @@ export default function CustomersPage() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
+    setDeleting(true);
     try {
       await customerService.remove(deleteTarget.id);
       setCustomers((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-    } catch (err) {
+    } catch {
       setError("The customer could not be deleted right now.");
     } finally {
+      setDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -425,15 +426,7 @@ export default function CustomersPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
-          [...Array(4)].map((_, i) => (
-            <Card key={i} className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <SkeletonLine className="h-3 w-24" />
-                <SkeletonLine className="h-8 w-8 rounded-lg" />
-              </div>
-              <SkeletonLine className="h-6 w-16" />
-            </Card>
-          ))
+          <SkeletonStatGrid count={4} className="contents" />
         ) : (
           <>
             <StatCard
@@ -475,17 +468,21 @@ export default function CustomersPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCustomerPage(1);
+                }}
                 placeholder="Search by name, email, or phone"
                 className={`${inputCls} pl-9 py-2 text-sm`}
               />
             </div>
             <select
               value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as typeof statusFilter)
-              }
-              className={`${inputCls} py-2 text-sm w-full sm:w-40`}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as typeof statusFilter);
+                setCustomerPage(1);
+              }}
+              className={`${selectCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All statuses</option>
               <option value="active">Active</option>
@@ -494,8 +491,11 @@ export default function CustomersPage() {
             </select>
             <select
               value={kycFilter}
-              onChange={(e) => setKycFilter(e.target.value as typeof kycFilter)}
-              className={`${inputCls} py-2 text-sm w-full sm:w-44`}
+              onChange={(e) => {
+                setKycFilter(e.target.value as typeof kycFilter);
+                setCustomerPage(1);
+              }}
+              className={`${selectCls} py-2 text-sm w-full sm:w-44`}
             >
               <option value="all">All verification</option>
               <option value="verified">Verified</option>
@@ -504,10 +504,11 @@ export default function CustomersPage() {
             </select>
             <select
               value={dateFilter}
-              onChange={(e) =>
-                setDateFilter(e.target.value as typeof dateFilter)
-              }
-              className={`${inputCls} py-2 text-sm w-full sm:w-44`}
+              onChange={(e) => {
+                setDateFilter(e.target.value as typeof dateFilter);
+                setCustomerPage(1);
+              }}
+              className={`${selectCls} py-2 text-sm w-full sm:w-44`}
             >
               <option value="all">Any date joined</option>
               <option value="7">Last 7 days</option>
@@ -528,16 +529,7 @@ export default function CustomersPage() {
         </div>
 
         {loading ? (
-          <div className="p-4 space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <SkeletonLine className="h-8 w-8 rounded-full" />
-                <SkeletonLine className="h-3 flex-1" />
-                <SkeletonLine className="h-3 w-24" />
-                <SkeletonLine className="h-3 w-16" />
-              </div>
-            ))}
-          </div>
+          <SkeletonRows count={5} />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Users}
@@ -681,46 +673,14 @@ export default function CustomersPage() {
                 </tbody>
               </table>
             </div>
-            <div className="flex flex-col gap-3 px-4 py-3 border-t border-gray-100 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">
-                Showing {(currentPage - 1) * PAGE_SIZE + 1}–
-                {Math.min(currentPage * PAGE_SIZE, filtered.length)} of{" "}
-                {filtered.length} customers
-              </p>
-              {totalPages > 1 && (
-                <div className="flex items-center flex-wrap gap-1">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    aria-label="Previous page"
-                    className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setPage(i + 1)}
-                      className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
-                        currentPage === i + 1
-                          ? "bg-indigo-600 text-white"
-                          : "text-slate-500 hover:bg-gray-100"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    aria-label="Next page"
-                    className="p-1.5 rounded-md border border-gray-200 text-slate-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setCustomerPage}
+              label="records"
+            />
           </>
         )}
       </Card>
@@ -804,7 +764,7 @@ export default function CustomersPage() {
                         status: e.target.value as CustomerStatus,
                       }))
                     }
-                    className={inputCls}
+                    className={selectCls}
                   >
                     <option value="active">Active</option>
                     <option value="suspended">Suspended</option>
@@ -815,7 +775,7 @@ export default function CustomersPage() {
                   <label className="block text-xs font-medium text-slate-600 mb-1.5">
                     Verification status
                   </label>
-                  <select value={editForm.kyc} disabled className={`${inputCls} bg-gray-50 text-slate-400`}>
+                  <select value={editForm.kyc} disabled className={`${selectCls} bg-gray-50 text-slate-400`}>
                     <option value="verified">Verified</option>
                     <option value="pending">Pending</option>
                     <option value="unverified">Unverified</option>
@@ -830,6 +790,7 @@ export default function CustomersPage() {
                   </Button>
                   <Button
                     fullWidth
+                    loading={saving}
                     disabled={
                       !editForm.name.trim() || !editForm.email.trim() || saving
                     }
@@ -898,12 +859,13 @@ export default function CustomersPage() {
               <Button
                 variant="secondary"
                 fullWidth
+                disabled={deleting}
                 onClick={() => setDeleteTarget(null)}
               >
                 Cancel
               </Button>
-              <Button variant="danger" fullWidth onClick={confirmDelete}>
-                Delete customer
+              <Button variant="danger" fullWidth loading={deleting} disabled={deleting} onClick={confirmDelete}>
+                {deleting ? "" : "Delete customer"}
               </Button>
             </div>
           </div>

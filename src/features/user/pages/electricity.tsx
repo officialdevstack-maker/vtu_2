@@ -4,7 +4,7 @@ import { fmt, mockUser } from "../data/mock";
 import {
   PurchaseShell, ServiceHeader, WalletBalanceBanner, FieldLabel,
   VerifyField, QuickAmountGrid, ContinueButton, ConfirmSummary, ConfirmActions,
-  Card, Button, inputCls,
+  Card, Button, inputCls, selectCls,
 } from "../components/shared-ui";
 
 const discos = [
@@ -108,7 +108,7 @@ export default function ElectricityPage() {
 
           <div>
             <FieldLabel>Distribution company</FieldLabel>
-            <select value={disco} onChange={(e) => setDisco(e.target.value)} className={inputCls}>
+            <select value={disco} onChange={(e) => setDisco(e.target.value)} className={selectCls}>
               {discos.map((d) => <option key={d.id} value={d.id}>{d.name} — {d.area}</option>)}
             </select>
           </div>

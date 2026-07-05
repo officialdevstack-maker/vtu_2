@@ -9,6 +9,7 @@ import {
   Button,
   Toggle,
   inputCls,
+  selectCls,
   SkeletonLine,
 } from "../../../../user/components/shared-ui";
 import {
@@ -592,7 +593,7 @@ export default function DiscountFormPage() {
                   <select
                     value={String(form.name)}
                     onChange={(e) => set("name", e.target.value)}
-                    className={inputCls}
+                    className={selectCls}
                   >
                     <option value="">Select a network</option>
                     {networks.map((n) => (
@@ -616,7 +617,7 @@ export default function DiscountFormPage() {
                   <select
                     value={String(form.category ?? "")}
                     onChange={(e) => set("category", e.target.value)}
-                    className={inputCls}
+                    className={selectCls}
                   >
                     <option value="">Select a type</option>
                     {types.map((t) => (

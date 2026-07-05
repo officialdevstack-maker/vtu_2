@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Eye,
@@ -23,6 +22,7 @@ import {
   SkeletonLine,
   Toggle,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
 import {
   templateService,
@@ -120,7 +120,8 @@ export default function TemplatesPage() {
   };
 
   useEffect(() => {
-    loadTemplates();
+    const timer = window.setTimeout(loadTemplates, 0);
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeFilter, eventFilter, enabledFilter]);
 
@@ -203,14 +204,9 @@ export default function TemplatesPage() {
   };
 
   const valid = form.name.trim().length > 0 && form.content.trim().length > 0;
-=======
-import { FileText } from "lucide-react";
-import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui";
->>>>>>> 88e37ed236caa72838c204af5b8c71cb2402129b
 
   return (
     <div className="space-y-5">
-<<<<<<< HEAD
       <PageHeader
         title="Templates"
         description="Reusable, variable-driven messages used for lifecycle events and broadcasts"
@@ -258,7 +254,7 @@ import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-              className={`${inputCls} py-2 text-sm w-full sm:w-40`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All types</option>
               <option value="event">Event</option>
@@ -267,7 +263,7 @@ import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui
             <select
               value={eventFilter}
               onChange={(e) => setEventFilter(e.target.value as typeof eventFilter)}
-              className={`${inputCls} py-2 text-sm w-full sm:w-48`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-48`}
             >
               <option value="all">All events</option>
               {eventOptions.map((ev) => (
@@ -277,7 +273,7 @@ import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui
             <select
               value={enabledFilter}
               onChange={(e) => setEnabledFilter(e.target.value as typeof enabledFilter)}
-              className={`${inputCls} py-2 text-sm w-full sm:w-40`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All statuses</option>
               <option value="enabled">Enabled</option>
@@ -330,7 +326,7 @@ import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500 capitalize whitespace-nowrap">{t.type}</td>
                     <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
-                      {t.event ? eventLabels[t.event] : "—"}
+                      {t.event ? eventLabels[t.event] : "â€”"}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1 max-w-[180px]">
@@ -475,7 +471,7 @@ import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui
                     <select
                       value={form.type}
                       onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as TemplateType, event: "" }))}
-                      className={inputCls}
+                      className={selectCls}
                     >
                       <option value="broadcast">Broadcast</option>
                       <option value="event">Event</option>
@@ -487,9 +483,9 @@ import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui
                       value={form.event}
                       onChange={(e) => setForm((f) => ({ ...f, event: e.target.value as TemplateEvent }))}
                       disabled={form.type !== "event"}
-                      className={`${inputCls} disabled:bg-gray-50 disabled:text-slate-400`}
+                      className={`${selectCls} disabled:bg-gray-50 disabled:text-slate-400`}
                     >
-                      <option value="">Select event…</option>
+                      <option value="">Select eventâ€¦</option>
                       {eventOptions.map((ev) => (
                         <option key={ev} value={ev}>{eventLabels[ev]}</option>
                       ))}
@@ -572,16 +568,6 @@ import { PageHeader, Card, EmptyState } from "../../../user/components/shared-ui
           </div>
         </div>
       )}
-=======
-      <PageHeader title="Templates" description="Manage notification templates" />
-      <Card>
-        <EmptyState
-          icon={FileText}
-          title="Template management coming soon"
-          description="Creating and editing notification templates will appear here."
-        />
-      </Card>
->>>>>>> 88e37ed236caa72838c204af5b8c71cb2402129b
     </div>
   );
 }

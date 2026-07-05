@@ -20,10 +20,13 @@ import {
   Button,
   StatusBadge,
   EmptyState,
-  SkeletonLine,
+  Pagination,
+  SkeletonRows,
+  SkeletonStatGrid,
   Toggle,
   inputCls,
 } from "../../../user/components/shared-ui";
+import { usePagination } from "../../../../shared/pagination";
 import { roleService, type Role } from "./service";
 
 type PermissionGroup = "Customers" | "Wallets" | "Transactions" | "Support" | "Settings";
@@ -48,6 +51,15 @@ export default function RolesPage() {
   const [deleteTarget, setDeleteTarget] = useState<RoleRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const {
+    currentPage,
+    pageItems: paginatedRoles,
+    pageSize,
+    setPage,
+    totalItems,
+    totalPages,
+  } = usePagination(roles);
 
   useEffect(() => {
     let mounted = true;
@@ -64,7 +76,7 @@ export default function RolesPage() {
           );
           setError(null);
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           setError("Could not load roles from the API. Please try refreshing the page.");
         }
@@ -129,7 +141,7 @@ export default function RolesPage() {
         next.splice(idx + 1, 0, { ...created, permissions: r.permissions });
         return next;
       });
-    } catch (err) {
+    } catch {
       setError("The role could not be duplicated right now.");
     }
   };
@@ -164,9 +176,10 @@ export default function RolesPage() {
           status: form.status ? "active" : "inactive",
         });
         setRoles((prev) => [...prev, { ...created, permissions: form.permissions }]);
+        setPage(Math.ceil((roles.length + 1) / pageSize));
       }
       closeModal();
-    } catch (err) {
+    } catch {
       setError("The role could not be saved right now. Please try again.");
     } finally {
       setSaving(false);
@@ -175,12 +188,14 @@ export default function RolesPage() {
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+    setDeleting(true);
     try {
       await roleService.remove(deleteTarget.id);
       setRoles((prev) => prev.filter((r) => r.id !== deleteTarget.id));
-    } catch (err) {
+    } catch {
       setError("The role could not be deleted right now.");
     } finally {
+      setDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -208,15 +223,7 @@ export default function RolesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
-          [...Array(4)].map((_, i) => (
-            <Card key={i} className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <SkeletonLine className="h-3 w-24" />
-                <SkeletonLine className="h-8 w-8 rounded-lg" />
-              </div>
-              <SkeletonLine className="h-6 w-16" />
-            </Card>
-          ))
+          <SkeletonStatGrid count={4} className="contents" />
         ) : (
           <>
             <StatCard label="Total roles" value={String(totalRoles)} icon={ShieldCheck} tone="neutral" meta="Across the platform" />
@@ -233,16 +240,7 @@ export default function RolesPage() {
         </div>
 
         {loading ? (
-          <div className="p-4 space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <SkeletonLine className="h-3 w-28" />
-                <SkeletonLine className="h-3 flex-1" />
-                <SkeletonLine className="h-3 w-20" />
-                <SkeletonLine className="h-3 w-16" />
-              </div>
-            ))}
-          </div>
+          <SkeletonRows count={4} withAvatar={false} />
         ) : roles.length === 0 ? (
           <EmptyState
             icon={ShieldCheck}
@@ -251,6 +249,7 @@ export default function RolesPage() {
             action={<Button size="sm" onClick={openCreate}><Plus className="w-3.5 h-3.5" /> Create role</Button>}
           />
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm table-fixed min-w-[480px] lg:min-w-0">
               <thead>
@@ -264,7 +263,7 @@ export default function RolesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {roles.map((r) => (
+                {paginatedRoles.map((r) => (
                   <tr key={r.id} className="hover:bg-gray-50 transition-colors align-top">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -337,6 +336,15 @@ export default function RolesPage() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            label="records"
+          />
+          </>
         )}
       </Card>
 
@@ -443,8 +451,10 @@ export default function RolesPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="secondary" fullWidth onClick={() => setDeleteTarget(null)}>Cancel</Button>
-              <Button variant="danger" fullWidth onClick={confirmDelete}>Delete role</Button>
+              <Button variant="secondary" fullWidth disabled={deleting} onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              <Button variant="danger" fullWidth loading={deleting} disabled={deleting} onClick={confirmDelete}>
+                {deleting ? "" : "Delete role"}
+              </Button>
             </div>
           </div>
         </div>
