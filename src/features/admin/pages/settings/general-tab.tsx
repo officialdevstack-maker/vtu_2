@@ -1,100 +1,13 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { AlertCircle, CheckCircle2, Image as ImageIcon } from "lucide-react";
+import { CheckCircle2, Image as ImageIcon } from "lucide-react";
 import { z } from "zod";
-import {
-  PageHeader,
-  Card,
-  Button,
-  CopyButton,
-  SkeletonLine,
-  inputCls,
-} from "../../user/components/shared-ui";
+import { Card, Button, SkeletonLine, inputCls } from "../../../user/components/shared-ui";
 import {
   generalService,
   type GeneralSettings,
   type GeneralSettingsPayload,
-} from "./generalService";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
-      {children}
-    </h3>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="flex items-baseline justify-between mb-1.5">
-        <label className="block text-xs font-medium text-slate-600">
-          {label}
-        </label>
-        {hint && !error && <span className="text-xs text-slate-400">{hint}</span>}
-      </div>
-      {children}
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-}
-
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
-      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-      <span>{message}</span>
-    </div>
-  );
-}
-
-// Every backend failure here is either a validation-shaped 4xx or the
-// generic `fail()` 500 wrapper — both put a human-readable string at
-// response.data.message once unwrapped through the (single) envelope.
-function extractErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err)) {
-    const data = err.response?.data as
-      | { message?: string; errors?: Record<string, string[]> }
-      | undefined;
-    const validationErrors = data?.errors;
-    if (
-      validationErrors &&
-      !Array.isArray(validationErrors) &&
-      Object.keys(validationErrors).length > 0
-    ) {
-      return Object.values(validationErrors).flat().join(" ");
-    }
-    if (typeof data?.message === "string") {
-      return data.message;
-    }
-    if (err.message) return err.message;
-  }
-  return "Something went wrong. Please try again.";
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-slate-400">{label}</p>
-        <CopyButton value={value} label={label} />
-      </div>
-      <p className="mt-0.5 text-sm text-slate-700 break-all">{value}</p>
-    </div>
-  );
-}
+} from "../generalService";
+import { SectionTitle, Field, ErrorBanner, extractErrorMessage, ReadOnlyField } from "./shared";
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -194,9 +107,9 @@ function validateForm(form: FormState): FormErrors {
   return errors;
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Tab ──────────────────────────────────────────────────────────────────────
 
-export default function SettingsPage() {
+export function GeneralTab() {
   const [general, setGeneral] = useState<GeneralSettings | null>(null);
   const [form, setForm] = useState<FormState>(blankForm());
   const [loading, setLoading] = useState(true);
@@ -244,54 +157,38 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-5">
-        <PageHeader
-          title="Settings"
-          description="Configure platform-wide information and payout details"
-        />
-        <Card className="p-5 space-y-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="space-y-1.5">
-              <SkeletonLine className="h-3 w-24" />
-              <SkeletonLine className="h-10 w-full" />
-            </div>
-          ))}
-        </Card>
-      </div>
+      <Card className="p-5 space-y-4">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="space-y-1.5">
+            <SkeletonLine className="h-3 w-24" />
+            <SkeletonLine className="h-10 w-full" />
+          </div>
+        ))}
+      </Card>
     );
   }
 
   if (loadError || !general) {
     return (
-      <div className="space-y-5">
-        <PageHeader
-          title="Settings"
-          description="Configure platform-wide information and payout details"
-        />
-        <Card className="p-5">
-          <ErrorBanner message={loadError ?? "Settings could not be loaded."} />
-        </Card>
-      </div>
+      <Card className="p-5">
+        <ErrorBanner message={loadError ?? "Settings could not be loaded."} />
+      </Card>
     );
   }
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Settings"
-        description="Configure platform-wide information and payout details"
-        actions={
-          <Button onClick={() => void handleSave()} loading={saving} disabled={saving}>
-            {saved ? (
-              <>
-                <CheckCircle2 className="w-4 h-4" /> Saved
-              </>
-            ) : (
-              "Save changes"
-            )}
-          </Button>
-        }
-      />
+      <div className="flex justify-end">
+        <Button onClick={() => void handleSave()} loading={saving} disabled={saving}>
+          {saved ? (
+            <>
+              <CheckCircle2 className="w-4 h-4" /> Saved
+            </>
+          ) : (
+            "Save changes"
+          )}
+        </Button>
+      </div>
 
       {saveError && <ErrorBanner message={saveError} />}
 
@@ -357,7 +254,7 @@ export default function SettingsPage() {
                 />
               </div>
               <p className="text-xs text-slate-500">
-                Logo preview — shown to customers across the platform.
+                Logo preview — shown across the platform (login page, emails, invoices).
               </p>
             </div>
           ) : (

@@ -207,7 +207,7 @@ export const adminRouter: RouteObject[] = [
       {
         path: "settings",
         lazy: async () => {
-          const { default: Component } = await import("./pages/settings");
+          const { default: Component } = await import("./pages/settings/index");
           return { Component };
         },
       },
