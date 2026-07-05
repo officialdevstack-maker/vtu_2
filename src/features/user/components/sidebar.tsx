@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Bell,
   Settings,
-  User,
   LogOut,
   Receipt,
   Wallet,
@@ -22,7 +21,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../shared/providers/auth";
+import { customerService } from "../services/customerService";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -107,7 +108,6 @@ const sections: { label: string; items: NavItem[] }[] = [
 const adminNavItem: NavItem = { id: "admin", label: "Admin", icon: BarChart3, path: "/admin" };
 
 const bottomItems: NavItem[] = [
-  { id: "profile", label: "Profile", icon: User, path: "/profile" },
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
 ];
 
@@ -125,6 +125,10 @@ export default function Sidebar({
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user, hasPermission } = useAuth();
+  const queryClient = useQueryClient();
+
+  const prefetchDashboard = () =>
+    queryClient.prefetchQuery({ queryKey: ["networks"], queryFn: () => customerService.getNetworks() });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -160,6 +164,11 @@ export default function Sidebar({
     setAccountMenuOpen(false);
     onClose();
     navigate("/admin");
+  };
+
+  const goToSettings = () => {
+    setAccountMenuOpen(false);
+    go("/settings");
   };
 
   return (
@@ -220,6 +229,7 @@ export default function Sidebar({
                     <button
                       key={item.id}
                       onClick={() => go(item.path)}
+                      onMouseEnter={item.id === "dashboard" ? prefetchDashboard : undefined}
                       title={collapsed ? item.label : undefined}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors relative ${collapsed ? "lg:justify-center" : ""} ${
                         active
@@ -302,6 +312,13 @@ export default function Sidebar({
                   onClick={() => setAccountMenuOpen(false)}
                 />
                 <div className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-xl border border-white/10 bg-gray-900 py-1 shadow-2xl">
+                  <button
+                    type="button"
+                    onClick={goToSettings}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    <Settings className="h-3.5 w-3.5" /> Settings
+                  </button>
                   {canSwitchAccount && (
                     <button
                       type="button"

@@ -79,6 +79,14 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "products/airtime-data/airtime/new",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/products/airtime-data/network-form");
+          return { Component };
+        },
+      },
+      {
         path: "products/airtime-data/discounts/new",
         lazy: async () => {
           const { default: Component } =
@@ -157,10 +165,30 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
-        path: "growth/campaigns",
+        path: "growth/discounts",
         lazy: async () => {
-          const { default: Component } =
-            await import("./pages/growth/campaigns");
+          const { default: Component } = await import("./pages/growth/discounts");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/discounts/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/discount-form");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/discounts/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/discount-form");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/cashback",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/cashback");
           return { Component };
         },
       },
@@ -168,6 +196,20 @@ export const adminRouter: RouteObject[] = [
         path: "growth/promos",
         lazy: async () => {
           const { default: Component } = await import("./pages/growth/promos");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/promos/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/promo-form");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/promos/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/promo-form");
           return { Component };
         },
       },
@@ -208,6 +250,15 @@ export const adminRouter: RouteObject[] = [
         path: "settings",
         lazy: async () => {
           const { default: Component } = await import("./pages/settings/index");
+          return { Component };
+        },
+      },
+      {
+        path: "account",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "../account/pages/AccountSettings"
+          );
           return { Component };
         },
       },

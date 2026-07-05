@@ -10,12 +10,11 @@ import {
   Toggle,
   inputCls,
   selectCls,
-} from "../../../../user/components/shared-ui";
-import { networkService, networkTypeService } from "./service";
-import type { Network } from "./service";
-import { discountService, type Discount } from "../../growth/service";
+} from "../../../user/components/shared-ui";
+import { networkService, networkTypeService, type Network } from "../products/airtime-data/service";
+import { discountService, type Discount } from "./service";
 
-const BACK = "/admin/products/airtime-data?tab=airtime";
+const BACK = "/admin/growth/discounts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +25,8 @@ type FormState = {
   min: string;
   max: string;
   active: boolean;
+  starts_at: string;
+  ends_at: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -137,6 +138,8 @@ const blankForm = (): FormState => ({
   min: "",
   max: "",
   active: true,
+  starts_at: "",
+  ends_at: "",
 });
 
 const toForm = (d: Discount): FormState => ({
@@ -146,6 +149,8 @@ const toForm = (d: Discount): FormState => ({
   min: d.min != null ? String(d.min) : "",
   max: d.max != null ? String(d.max) : "",
   active: d.active ?? true,
+  starts_at: d.starts_at ?? "",
+  ends_at: d.ends_at ?? "",
 });
 
 const toPayload = (form: FormState): Record<string, unknown> => ({
@@ -155,6 +160,8 @@ const toPayload = (form: FormState): Record<string, unknown> => ({
   min: form.min || null,
   max: form.max || null,
   active: form.active,
+  starts_at: form.starts_at || null,
+  ends_at: form.ends_at || null,
 });
 
 const amountSchema = z
@@ -171,6 +178,8 @@ const discountFormSchema = z
     min: amountSchema,
     max: amountSchema,
     active: z.boolean(),
+    starts_at: z.string(),
+    ends_at: z.string(),
   })
   .refine(
     (data) =>
@@ -179,9 +188,16 @@ const discountFormSchema = z
       message: "Maximum must be greater than or equal to minimum.",
       path: ["max"],
     },
+  )
+  .refine(
+    (data) => data.starts_at === "" || data.ends_at === "" || data.ends_at >= data.starts_at,
+    {
+      message: "End date must be on or after the start date.",
+      path: ["ends_at"],
+    },
   );
 
-type FormErrors = Partial<Record<"name" | "min" | "max", string>>;
+type FormErrors = Partial<Record<"name" | "min" | "max" | "ends_at", string>>;
 
 function validateForm(form: FormState): FormErrors {
   const result = discountFormSchema.safeParse(form);
@@ -316,8 +332,8 @@ export default function DiscountFormPage() {
         }
         description={
           initial
-            ? `Editing discount for ${initial.name}`
-            : "Configure a new airtime discount for a network."
+            ? `Editing price-slash discount for ${initial.name}`
+            : "Slash pricing for a network, optionally scheduled to a date window."
         }
         actions={
           <>
@@ -422,6 +438,35 @@ export default function DiscountFormPage() {
               </Field>
             </div>
           </Card>
+
+          {/* Schedule */}
+          <Card className="p-5">
+            <SectionTitle>Schedule</SectionTitle>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Starts" hint="optional — blank = always on">
+                  <input
+                    type="date"
+                    value={form.starts_at}
+                    onChange={(e) => set("starts_at", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Ends" hint="optional" error={errors.ends_at}>
+                  <input
+                    type="date"
+                    value={form.ends_at}
+                    onChange={(e) => set("ends_at", e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+              <p className="text-xs text-slate-400">
+                Leave both blank for an always-on discount. Set a window to
+                run this only for a limited period, e.g. a Black Friday sale.
+              </p>
+            </div>
+          </Card>
         </div>
 
         {/* ── Right column ── */}
@@ -433,7 +478,7 @@ export default function DiscountFormPage() {
               <div>
                 <p className="text-xs font-medium text-slate-700">Active</p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Enable this discount for live transactions.
+                  Turn this discount off without deleting it.
                 </p>
               </div>
               <Toggle

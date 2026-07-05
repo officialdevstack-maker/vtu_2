@@ -85,16 +85,11 @@ export const userRouter: RouteObject[] = [
     },
   },
   {
-    path: "profile",
-    lazy: async () => {
-      const { default: Component } = await import("./pages/profile");
-      return { Component };
-    },
-  },
-  {
     path: "settings",
     lazy: async () => {
-      const { default: Component } = await import("./pages/settings");
+      const { default: Component } = await import(
+        "../account/pages/AccountSettings"
+      );
       return { Component };
     },
   },
@@ -120,6 +115,10 @@ export const userRouter: RouteObject[] = [
     },
   },
   // Legacy redirects
+  {
+    path: "profile",
+    element: createElement(Navigate, { to: "/settings", replace: true }),
+  },
   {
     path: "data",
     element: createElement(Navigate, { to: "/buy-data", replace: true }),

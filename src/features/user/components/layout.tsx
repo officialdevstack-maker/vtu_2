@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
 import { WelcomeMessageGate } from "./welcome-message-gate";
-import { LayoutDashboard, Zap, Receipt, Wallet, User } from "lucide-react";
+import { LayoutDashboard, Zap, Receipt, Wallet, Settings } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 const mobileNavItems = [
@@ -11,7 +11,7 @@ const mobileNavItems = [
   { path: "/buy-airtime", icon: Zap, label: "Services" },
   { path: "/transactions", icon: Receipt, label: "History" },
   { path: "/wallet", icon: Wallet, label: "Wallet" },
-  { path: "/profile", icon: User, label: "Profile" },
+  { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = "kora-sidebar-collapsed";

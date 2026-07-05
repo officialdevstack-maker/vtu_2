@@ -1,21 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import {
-  PhoneCall,
+  CalendarClock,
   SlidersHorizontal,
   MoreVertical,
   Pencil,
   Trash2,
 } from "lucide-react";
 import {
+  PageHeader,
   Card,
   Button,
   EmptyState,
   SkeletonLine,
   StatusBadge,
-} from "../../../../user/components/shared-ui";
-import { Toolbar, SelectFilter } from "./shared";
-import { discountService, type Discount } from "../../growth/service";
+} from "../../../user/components/shared-ui";
+import { Toolbar, SelectFilter } from "../products/airtime-data/shared";
+import { discountService, type Discount } from "./service";
 
 const formatCurrency = (value: string | number | null | undefined) => {
   if (value === null || value === undefined || value === "") return "—";
@@ -23,7 +24,26 @@ const formatCurrency = (value: string | number | null | undefined) => {
   return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(value);
 };
 
-export function AirtimeTab() {
+const formatWindow = (discount: Discount) => {
+  if (!discount.starts_at && !discount.ends_at) return "Always on";
+  const fmt = (d: string) => new Date(d).toLocaleDateString("en-NG", { day: "numeric", month: "short" });
+  if (discount.starts_at && discount.ends_at) return `${fmt(discount.starts_at)} – ${fmt(discount.ends_at)}`;
+  if (discount.starts_at) return `From ${fmt(discount.starts_at)}`;
+  return `Until ${fmt(discount.ends_at as string)}`;
+};
+
+// "active"/"inactive" are the only two badge colors backed by shared-ui's
+// statusMap that make sense here without touching that shared component —
+// scheduled (upcoming) borrows "pending" (amber) instead of a new color.
+const discountStatus = (discount: Discount): string => {
+  if (!discount.active) return "inactive";
+  const today = new Date().toISOString().slice(0, 10);
+  if (discount.starts_at && today < discount.starts_at) return "pending";
+  if (discount.ends_at && today > discount.ends_at) return "inactive";
+  return "active";
+};
+
+function DiscountsPage() {
   const navigate = useNavigate();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,9 +58,7 @@ export function AirtimeTab() {
     setOpenMenuId(null);
     try {
       await discountService.remove(toId(discount.id));
-      setDiscounts((prev) =>
-        prev.filter((d) => toId(d.id) !== toId(discount.id)),
-      );
+      setDiscounts((prev) => prev.filter((d) => toId(d.id) !== toId(discount.id)));
     } finally {
       setDeletingId(null);
     }
@@ -56,7 +74,7 @@ export function AirtimeTab() {
   const networkOptions = useMemo(
     () =>
       Array.from(new Set(discounts.map((d) => d.network).filter(Boolean))).map(
-        (network) => ({ value: network.toLowerCase(), label: network }),
+        (network) => ({ value: network!.toLowerCase(), label: network! }),
       ),
     [discounts],
   );
@@ -67,7 +85,19 @@ export function AirtimeTab() {
   });
 
   return (
-    <Card className="overflow-visible">
+    <div className="space-y-4">
+      <PageHeader
+        title="Discount"
+        description="Price-slash rules per network, optionally scheduled to a date window — distinct from opt-in Promo Codes."
+        actions={
+          <Button size="sm" onClick={() => navigate("/admin/growth/discounts/new")}>
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            New discount
+          </Button>
+        }
+      />
+
+      <Card className="overflow-visible">
       <Toolbar>
         <SelectFilter
           placeholder="All networks"
@@ -75,14 +105,6 @@ export function AirtimeTab() {
           value={networkFilter}
           onChange={setNetworkFilter}
         />
-        <div className="flex-1" />
-        <Button
-          size="sm"
-          onClick={() => navigate("/admin/products/airtime-data/discounts/new")}
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          Set discount
-        </Button>
       </Toolbar>
 
       {loading ? (
@@ -99,16 +121,12 @@ export function AirtimeTab() {
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          icon={PhoneCall}
-          title={
-            networkFilter
-              ? "No discounts for this network"
-              : "No airtime discounts configured"
-          }
+          icon={CalendarClock}
+          title={networkFilter ? "No discounts for this network" : "No price-slash discounts yet"}
           description={
             networkFilter
               ? "Try a different network or add a discount for it."
-              : "Set a discount rate per network to control airtime pricing."
+              : "Slash pricing for a network, optionally scheduled to a date window."
           }
         />
       ) : (
@@ -116,48 +134,40 @@ export function AirtimeTab() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                {["Network|Type", "Min|Max (₦)", "Status", "Actions"].map(
-                  (h, i) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${i === 5 ? "text-left" : i === 0 ? "text-left" : "text-right"}`}
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
+                {["Network|Type", "Min|Max (₦)", "Window", "Status", "Actions"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap text-left"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.map((discount) => {
-                const isEnabled = Boolean(discount.active ?? false);
                 const currentId = toId(discount.id);
 
                 return (
-                  <tr
-                    key={discount.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
+                  <tr key={discount.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 text-xs font-medium text-slate-900">
                       {discount.network}|{discount.category}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-600 text-right">
-                      {formatCurrency(discount.min)}|
-                      {formatCurrency(discount.max)}
+                    <td className="px-4 py-3 text-xs text-slate-600">
+                      {formatCurrency(discount.min)}|{formatCurrency(discount.max)}
                     </td>
-
-                    <td className="px-4 py-3 text-xs text-slate-600 text-right">
-                      <StatusBadge status={isEnabled ? "active" : "inactive"} />
+                    <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
+                      {formatWindow(discount)}
                     </td>
-
+                    <td className="px-4 py-3">
+                      <StatusBadge status={discountStatus(discount)} />
+                    </td>
                     <td className="px-4 py-3 text-center">
                       <div className="relative inline-flex justify-center">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenMenuId(
-                              openMenuId === currentId ? null : currentId,
-                            );
+                            setOpenMenuId(openMenuId === currentId ? null : currentId);
                           }}
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                         >
@@ -174,10 +184,9 @@ export function AirtimeTab() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(
-                                    `/admin/products/airtime-data/discounts/${toId(discount.id)}/edit`,
-                                    { state: { discount } },
-                                  );
+                                  navigate(`/admin/growth/discounts/${toId(discount.id)}/edit`, {
+                                    state: { discount },
+                                  });
                                   setOpenMenuId(null);
                                 }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
@@ -206,6 +215,9 @@ export function AirtimeTab() {
           </table>
         </div>
       )}
-    </Card>
+      </Card>
+    </div>
   );
 }
+
+export default DiscountsPage;

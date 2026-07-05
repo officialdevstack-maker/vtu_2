@@ -1,5 +1,7 @@
-import { Bell, Menu, Search, Settings } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeftRight, Bell, LogOut, Menu, Search, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../shared/providers/auth";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -7,7 +9,6 @@ const pageTitles: Record<string, string> = {
   "/transactions": "Transactions",
   "/wallet": "Fund Wallet",
   "/notifications": "Notifications",
-  "/profile": "My Profile",
   "/settings": "Settings",
   "/support": "Support",
   "/referral": "Referral Program",
@@ -20,6 +21,15 @@ const pageTitles: Record<string, string> = {
   "/admin": "Admin Dashboard",
 };
 
+const initialsOf = (name?: string) =>
+  (name ?? "")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "?";
+
 export default function Topbar({
   onToggleSidebar,
 }: {
@@ -27,7 +37,18 @@ export default function Topbar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout, hasPermission } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
   const title = pageTitles[location.pathname] ?? "KORA";
+
+  const displayName = user?.fullname ?? user?.username ?? "there";
+  const canSwitchAccount = hasPermission("switch_account");
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-20 h-14 border-b border-gray-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -72,20 +93,60 @@ export default function Topbar({
 
           <div className="mx-1 hidden h-5 w-px bg-gray-200 sm:block" />
 
-          <button
-            onClick={() => navigate("/profile")}
-            className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-gray-100"
-          >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
-              CO
-            </div>
-            <div className="hidden text-left sm:block">
-              <p className="text-xs font-medium leading-tight text-slate-900">
-                Rara Avis
-              </p>
-              <p className="text-[11px] leading-tight text-slate-400">User</p>
-            </div>
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-gray-100"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
+                {initialsOf(displayName)}
+              </div>
+              <div className="hidden text-left sm:block">
+                <p className="text-xs font-medium leading-tight text-slate-900">
+                  {displayName}
+                </p>
+                <p className="text-[11px] leading-tight text-slate-400">User</p>
+              </div>
+            </button>
+
+            {menuOpen ? (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/settings");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                  >
+                    <Settings className="h-3.5 w-3.5" /> Settings
+                  </button>
+                  {canSwitchAccount && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        navigate("/admin");
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                    >
+                      <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to admin view
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <LogOut className="h-3.5 w-3.5" /> Log out
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
     </header>

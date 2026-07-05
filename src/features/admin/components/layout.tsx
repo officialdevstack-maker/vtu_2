@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useNavigation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
   Bell,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../shared/providers/auth";
 import { TopLoadingBar } from "../../user/components/shared-ui";
+import { prefetchAdminDashboard } from "../pages/dashboardService";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -97,8 +99,9 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         path: "/admin/growth",
         icon: Megaphone,
         children: [
-          { label: "Campaign / Event", path: "/admin/growth/campaigns" },
-          { label: "Promo / Discount", path: "/admin/growth/promos" },
+          { label: "Discount", path: "/admin/growth/discounts" },
+          { label: "Cashback", path: "/admin/growth/cashback" },
+          { label: "Promo Codes", path: "/admin/growth/promos" },
         ],
       },
       { label: "Transactions", path: "/admin/transactions", icon: Wallet2 },
@@ -127,6 +130,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
   const { logout, user, hasPermission } = useAuth();
+  const queryClient = useQueryClient();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -142,6 +146,12 @@ const Layout = () => {
     setSidebarMenuOpen(false);
     setHeaderMenuOpen(false);
     navigate("/dashboard");
+  };
+
+  const handleGoToAccountSettings = () => {
+    setSidebarMenuOpen(false);
+    setHeaderMenuOpen(false);
+    navigate("/admin/account");
   };
 
   const isActive = (path: string) => {
@@ -206,6 +216,11 @@ const Layout = () => {
                       <NavLink
                         to={item.path}
                         onClick={() => setMobileSidebarOpen(false)}
+                        onMouseEnter={
+                          item.path === "/admin"
+                            ? () => prefetchAdminDashboard(queryClient)
+                            : undefined
+                        }
                         className={({ isActive: linkActive }) =>
                           `flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                             linkActive || active
@@ -286,6 +301,13 @@ const Layout = () => {
               onClick={() => setSidebarMenuOpen(false)}
             />
             <div className="absolute bottom-full left-3 right-3 z-20 mb-2 rounded-xl border border-slate-200/70 bg-white py-1 shadow-lg">
+              <button
+                type="button"
+                onClick={handleGoToAccountSettings}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+              >
+                <Settings className="h-3.5 w-3.5" /> Settings
+              </button>
               {canSwitchAccount && (
                 <button
                   type="button"
@@ -359,7 +381,10 @@ const Layout = () => {
                   <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
                 </button>
 
-                <button className="hidden rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 sm:flex">
+                <button
+                  onClick={() => navigate("/admin/account")}
+                  className="hidden rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 sm:flex"
+                >
                   <Settings className="h-4.5 w-4.5" />
                 </button>
 
@@ -391,6 +416,13 @@ const Layout = () => {
                         onClick={() => setHeaderMenuOpen(false)}
                       />
                       <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl border border-slate-200/70 bg-white py-1 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={handleGoToAccountSettings}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                        >
+                          <Settings className="h-3.5 w-3.5" /> Settings
+                        </button>
                         {canSwitchAccount && (
                           <button
                             type="button"

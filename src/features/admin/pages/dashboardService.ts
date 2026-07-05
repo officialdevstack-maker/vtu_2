@@ -1,4 +1,7 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { apiClient } from "@shared/api/apiClient";
+import { providerService } from "./apis/providerService";
+import { transactionService } from "./customers/service";
 
 // The real payload sits exactly one `.data` deep: r.data.data (see
 // backend/app/Http/Middleware/HandleRequest.php).
@@ -84,4 +87,32 @@ export const analyticsService = {
     apiClient
       .get<ApiEnvelope<Analytics>>("/admin/analytics", { params })
       .then((r) => r.data.data),
+};
+
+// ─── Prefetch ────────────────────────────────────────────────────────────
+// Kicked off on hover over the admin sidebar's Dashboard link so the page's
+// four panels are already cached (or in flight) by the time the click lands.
+// Query keys/params here must stay in sync with features/admin/pages/admin.tsx.
+
+const DEFAULT_RANGE_DAYS = 30;
+
+const defaultRangeParams = (): AnalyticsParams => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - (DEFAULT_RANGE_DAYS - 1));
+  const toDateParam = (d: Date) => d.toISOString().slice(0, 10);
+  return { start_date: toDateParam(start), end_date: toDateParam(end) };
+};
+
+export const prefetchAdminDashboard = (queryClient: QueryClient) => {
+  queryClient.prefetchQuery({ queryKey: ["admin", "stats"], queryFn: () => statsService.get() });
+  queryClient.prefetchQuery({
+    queryKey: ["admin", "analytics", DEFAULT_RANGE_DAYS],
+    queryFn: () => analyticsService.get(defaultRangeParams()),
+  });
+  queryClient.prefetchQuery({ queryKey: ["admin", "providers"], queryFn: () => providerService.getAll() });
+  queryClient.prefetchQuery({
+    queryKey: ["admin", "recent-transactions"],
+    queryFn: () => transactionService.getRecent(8),
+  });
 };

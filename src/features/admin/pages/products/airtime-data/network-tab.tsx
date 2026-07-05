@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import {
   Network as NetworkIcon,
   Plus,
@@ -22,14 +23,8 @@ import {
 import { Toolbar } from "./shared";
 import { networkService, type Network, type NetworkPayload } from "./service";
 
-// ─── Form modal ───────────────────────────────────────────────────────────────
-
-const emptyForm: NetworkPayload = {
-  name: "",
-  code: "",
-  provider: "VTpass",
-  status: "active",
-};
+// ─── Form modal (edit only — creating a network now uses its own page,
+// see network-form.tsx at /admin/products/airtime-data/airtime/new) ─────────
 
 function NetworkFormModal({
   initial,
@@ -168,12 +163,12 @@ function DeleteConfirm({
 // ─── Network tab ──────────────────────────────────────────────────────────────
 
 type ModalState =
-  | { kind: "add" }
   | { kind: "edit"; network: Network }
   | { kind: "delete"; network: Network }
   | null;
 
 export function NetworkTab() {
+  const navigate = useNavigate();
   const [networks, setNetworks] = useState<Network[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -193,22 +188,11 @@ export function NetworkTab() {
     const q = search?.toLowerCase();
     return (
       !q ||
-      n.name?.toLowerCase().includes(q) 
+      n.name?.toLowerCase().includes(q)
       // n.code?.toLowerCase().includes(q) ||
       // n.provider?.toLowerCase().includes(q)
     );
   });
-
-  const handleAdd = async (payload: NetworkPayload) => {
-    setSaving(true);
-    try {
-      const created = await networkService.create(payload);
-      setNetworks((prev) => [...prev, created]);
-      setModal(null);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleEdit = async (payload: NetworkPayload) => {
     if (modal?.kind !== "edit") return;
@@ -262,7 +246,7 @@ export function NetworkTab() {
               className={`${inputCls} pl-9 py-2`}
             />
           </div>
-          <Button size="sm" onClick={() => setModal({ kind: "add" })}>
+          <Button size="sm" onClick={() => navigate("/admin/products/airtime-data/airtime/new")}>
             <Plus className="w-3.5 h-3.5" />
             Add network
           </Button>
@@ -295,7 +279,7 @@ export function NetworkTab() {
             }
             action={
               !search ? (
-                <Button size="sm" onClick={() => setModal({ kind: "add" })}>
+                <Button size="sm" onClick={() => navigate("/admin/products/airtime-data/airtime/new")}>
                   <Plus className="w-3.5 h-3.5" /> Add network
                 </Button>
               ) : undefined
@@ -394,15 +378,6 @@ export function NetworkTab() {
           </div>
         )}
       </Card>
-
-      {modal?.kind === "add" && (
-        <NetworkFormModal
-          initial={emptyForm}
-          onSave={handleAdd}
-          onClose={() => setModal(null)}
-          saving={saving}
-        />
-      )}
 
       {modal?.kind === "edit" && (
         <NetworkFormModal
