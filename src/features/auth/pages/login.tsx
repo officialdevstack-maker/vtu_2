@@ -4,13 +4,25 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
-import { AuthLayout } from "../components/AuthLayout";
+import { useAuth } from "@/shared/providers/auth";
+import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { saveMockLogin } from "../mockSession";
 import { loginSchema, type LoginFormData } from "../validators";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  // TEMPORARY DEMO ACCESS — remove this along with the button below and
+  // AuthProvider.loginAsDemo once real auth is wired up end-to-end.
+  const { loginAsDemo } = useAuth();
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleDemoAccess = async () => {
+    setDemoLoading(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 350));
+    loginAsDemo();
+    navigate("/dashboard", { replace: true });
+  };
 
   const {
     register,
@@ -33,9 +45,8 @@ const LoginForm = () => {
 
   return (
     <AuthLayout>
-      <Card className="rounded-lg border-white/70 bg-white/70 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-8">
-        <div className="mb-6">
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-indigo-600">Secure sign in</p>
+      <Card className={authCardCls}>
+        <div className="mb-7">
           <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Welcome back</h1>
           <p className="text-slate-500 text-sm mt-1">Sign in to continue to your KORA wallet.</p>
         </div>
@@ -57,7 +68,7 @@ const LoginForm = () => {
                 type="text"
                 placeholder="you@email.com or 08012345678"
                 {...register("login")}
-                className={`${inputCls} pl-9 bg-white/80 ${errors.login ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 ${errors.login ? "border-red-300" : ""}`}
               />
             </div>
             {errors.login && <p className="text-red-500 text-xs mt-1">{errors.login.message}</p>}
@@ -76,7 +87,7 @@ const LoginForm = () => {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 {...register("password")}
-                className={`${inputCls} pl-9 pr-10 bg-white/80 ${errors.password ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 pr-10 ${errors.password ? "border-red-300" : ""}`}
               />
               <button
                 type="button"
@@ -107,11 +118,30 @@ const LoginForm = () => {
             disabled={isSubmitting}
             loading={isSubmitting}
             fullWidth
-            className="rounded-lg py-3 shadow-sm shadow-indigo-600/10"
+            className="rounded-2xl py-4 shadow-lg shadow-indigo-600/25"
           >
             {isSubmitting ? "" : "Sign in"}
           </Button>
         </form>
+
+        {/* TEMPORARY DEMO ACCESS — remove this block, handleDemoAccess, and
+            AuthProvider.loginAsDemo once real auth is wired up end-to-end. */}
+        <div className="flex items-center gap-3 my-5">
+          <div className="h-px flex-1 bg-slate-100" />
+          <span className="text-xs font-medium text-slate-400">or</span>
+          <div className="h-px flex-1 bg-slate-100" />
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          fullWidth
+          disabled={demoLoading}
+          loading={demoLoading}
+          onClick={() => void handleDemoAccess()}
+          className="rounded-2xl py-4"
+        >
+          {demoLoading ? "" : "Continue with demo access"}
+        </Button>
       </Card>
 
       <p className="text-center text-sm text-slate-500 mt-5">

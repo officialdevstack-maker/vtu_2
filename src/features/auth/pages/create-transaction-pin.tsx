@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
-import { AuthLayout } from "../components/AuthLayout";
+import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { saveMockPin } from "../mockSession";
 import { transactionPinSchema, type TransactionPinFormData } from "../validators";
 
@@ -38,10 +38,10 @@ export default function CreateTransactionPinPage() {
 
   return (
     <AuthLayout>
-      <Card className="rounded-lg border-white/70 bg-white/70 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-8">
+      <Card className={authCardCls}>
         {success ? (
           <div className="py-4 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50">
               <CheckCircle2 className="h-6 w-6 text-emerald-600" />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-950">PIN created</h1>
@@ -49,9 +49,8 @@ export default function CreateTransactionPinPage() {
           </div>
         ) : (
           <>
-            <div className="mb-6">
-              <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-indigo-600">Transaction security</p>
-              <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Create Transaction PIN</h1>
+            <div className="mb-7">
+              <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Create transaction PIN</h1>
               <p className="text-slate-500 text-sm mt-1">
                 Use exactly 4 digits. You will need this for wallet actions.
               </p>
@@ -70,7 +69,7 @@ export default function CreateTransactionPinPage() {
                     {...register("pin", {
                       onChange: (event) => setValue("pin", event.target.value.replace(/\D/g, "").slice(0, 4), { shouldValidate: true }),
                     })}
-                    className={`${inputCls} pl-9 pr-10 bg-white/80 tracking-[0.35em] ${errors.pin ? "border-red-300" : ""}`}
+                    className={`${inputCls} ${authInputCls} pl-9 pr-10 tracking-[0.35em] ${errors.pin ? "border-red-300" : ""}`}
                   />
                   <button
                     type="button"
@@ -96,7 +95,7 @@ export default function CreateTransactionPinPage() {
                     {...register("confirmPin", {
                       onChange: (event) => setValue("confirmPin", event.target.value.replace(/\D/g, "").slice(0, 4), { shouldValidate: true }),
                     })}
-                    className={`${inputCls} pl-9 bg-white/80 tracking-[0.35em] ${errors.confirmPin ? "border-red-300" : ""}`}
+                    className={`${inputCls} ${authInputCls} pl-9 tracking-[0.35em] ${errors.confirmPin ? "border-red-300" : ""}`}
                   />
                 </div>
                 {errors.confirmPin && <p className="text-red-500 text-xs mt-1">{errors.confirmPin.message}</p>}
@@ -107,7 +106,7 @@ export default function CreateTransactionPinPage() {
                 disabled={isSubmitting}
                 loading={isSubmitting}
                 fullWidth
-                className="rounded-lg py-3 shadow-sm shadow-indigo-600/10"
+                className="rounded-2xl py-4 shadow-lg shadow-indigo-600/25"
               >
                 {isSubmitting ? "" : "Create PIN"}
               </Button>

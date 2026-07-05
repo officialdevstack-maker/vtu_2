@@ -87,7 +87,35 @@ interface AuthContextType {
   login: (login: string, password: string) => Promise<User | null>;
   logout: () => Promise<void>;
   hasPermission: (slug: string) => boolean;
+  // TEMPORARY DEMO ACCESS — remove loginAsDemo (and its callers) once real
+  // auth is wired up everywhere. Seeds a fake user into the query cache so
+  // ProtectedLayout and the dashboard render without a live backend.
+  loginAsDemo: () => void;
 }
+
+const DEMO_USER: User = {
+  id: "demo-user",
+  email: "demo@kora.app",
+  fullname: "Demo User",
+  username: "demo",
+  phone: "08012345678",
+  user_type: "customer",
+  wallet_balance: 25000,
+  referral_balance: 500,
+  referral_code: "DEMO2026",
+  transactions: [],
+  stats: {
+    daily_purchased_data: "0",
+    transaction_count: 0,
+    monthly_successful: 0,
+    monthly_failed: 0,
+    monthly_pending: 0,
+    transaction_status: { successful: 0, failed: 0, pending: 0 },
+    tx_chart: { labels: [], datasets: [] },
+    tx_amount_30d: [],
+  },
+  joined_at: new Date().toISOString(),
+};
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -157,6 +185,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [user],
   );
 
+  // TEMPORARY DEMO ACCESS — see AuthContextType.loginAsDemo above.
+  const loginAsDemo = useCallback(() => {
+    queryClient.setQueryData(AUTH_QUERY_KEY, DEMO_USER);
+  }, [queryClient]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -168,6 +201,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         hasPermission,
+        loginAsDemo,
       }}
     >
       {children}
