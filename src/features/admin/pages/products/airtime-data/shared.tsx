@@ -84,7 +84,7 @@ export function SelectFilter({
   const controlled = value !== undefined && onChange !== undefined;
   return (
     <select
-      className={`${inputCls} py-2 w-auto`}
+      className={`${inputCls} py-2 w-full sm:w-44`}
       {...(controlled
         ? { value, onChange: (e) => onChange(e.target.value) }
         : { defaultValue: "" })}
