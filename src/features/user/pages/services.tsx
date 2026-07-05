@@ -47,7 +47,7 @@ export default function ServicesPage() {
                 <button
                   key={s.id}
                   onClick={() => openService(s.id)}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors text-left"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-[#111827]/30 hover:bg-[#111827]/5 transition-colors text-left"
                 >
                   <div className={`w-9 h-9 rounded-lg ${s.color} flex items-center justify-center shrink-0`}>
                     <s.icon className="w-4.5 h-4.5" />
@@ -93,7 +93,7 @@ export default function ServicesPage() {
                           onClick={() => setSelectedNetwork(n)}
                           className={`py-2 text-xs font-medium rounded-lg border transition-colors ${
                             selectedNetwork === n
-                              ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                              ? "border-[#111827] bg-[#111827]/10 text-[#111827]"
                               : "border-gray-200 text-slate-600 hover:border-gray-300"
                           }`}
                         >
@@ -135,7 +135,7 @@ export default function ServicesPage() {
                           onClick={() => setAmount(String(a))}
                           className={`py-2 text-xs font-medium rounded-lg border transition-colors ${
                             amount === String(a)
-                              ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                              ? "border-[#111827] bg-[#111827]/10 text-[#111827]"
                               : "border-gray-200 text-slate-600 hover:border-gray-300"
                           }`}
                         >

@@ -59,7 +59,7 @@ function DefaultProvidersCard() {
     <Card className="overflow-hidden">
       <div className="p-4 border-b border-gray-100">
         <h3 className="font-semibold text-slate-900 text-sm flex items-center gap-2">
-          <Server className="w-4 h-4 text-indigo-600" />
+          <Server className="w-4 h-4 text-[#111827]" />
           Global default providers
         </h3>
         <p className="text-xs text-slate-500 mt-1">

@@ -97,8 +97,8 @@ export type Service = {
 
 export const services: Service[] = [
   { id: "airtime", label: "Buy Airtime", icon: Phone, color: "bg-blue-50 text-blue-600", description: "Top up any network" },
-  { id: "data", label: "Buy Data", icon: Wifi, color: "bg-indigo-50 text-indigo-600", description: "All networks available" },
-  { id: "cable", label: "Cable TV", icon: Tv, color: "bg-purple-50 text-purple-600", description: "DSTV, GOtv, Startimes" },
+  { id: "data", label: "Buy Data", icon: Wifi, color: "bg-[#111827]/10 text-[#111827]", description: "All networks available" },
+  { id: "cable", label: "Cable TV", icon: Tv, color: "bg-[#111827]/10 text-[#111827]", description: "DSTV, GOtv, Startimes" },
   { id: "electricity", label: "Electricity", icon: Zap, color: "bg-yellow-50 text-yellow-600", description: "All DISCOs supported" },
   { id: "education", label: "Education", icon: GraduationCap, color: "bg-green-50 text-green-600", description: "WAEC, JAMB, NECO" },
   { id: "giftcard", label: "Gift Cards", icon: Gift, color: "bg-rose-50 text-rose-600", description: "Buy & redeem gift cards" },
@@ -124,6 +124,6 @@ export const beneficiaries: Beneficiary[] = [
   { id: 2, name: "Emeka Chibuike", phone: "08123456789", network: "Airtel", type: "data", initials: "EC", color: "bg-red-100 text-red-700" },
   { id: 3, name: "Fatima Bello", phone: "09056789012", network: "Glo", type: "airtime", initials: "FB", color: "bg-green-100 text-green-700" },
   { id: 4, name: "Kunle Adeleke", bank: "GTBank", account: "0123456789", type: "bank", initials: "KA", color: "bg-blue-100 text-blue-700" },
-  { id: 5, name: "Ngozi Okafor", bank: "Access Bank", account: "9876543210", type: "bank", initials: "NO", color: "bg-purple-100 text-purple-700" },
-  { id: 6, name: "Tunde Bakare", phone: "08078901234", network: "9mobile", type: "airtime", initials: "TB", color: "bg-indigo-100 text-indigo-700" },
+  { id: 5, name: "Ngozi Okafor", bank: "Access Bank", account: "9876543210", type: "bank", initials: "NO", color: "bg-[#111827]/15 text-[#111827]" },
+  { id: 6, name: "Tunde Bakare", phone: "08078901234", network: "9mobile", type: "airtime", initials: "TB", color: "bg-[#111827]/15 text-[#111827]" },
 ];

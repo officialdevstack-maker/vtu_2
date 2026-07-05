@@ -106,7 +106,7 @@ export default function CreateTransactionPinPage() {
                 disabled={isSubmitting}
                 loading={isSubmitting}
                 fullWidth
-                className="rounded-2xl py-4 shadow-lg shadow-indigo-600/25"
+                className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
               >
                 {isSubmitting ? "" : "Create PIN"}
               </Button>

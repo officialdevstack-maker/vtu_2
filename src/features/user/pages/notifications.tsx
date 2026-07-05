@@ -30,14 +30,14 @@ export default function NotificationsPage() {
       <PageHeader
         title="Notifications"
         description={`${notifs.filter((n) => !n.read).length} unread`}
-        actions={<button className="text-indigo-600 text-sm font-medium hover:text-indigo-700">Mark all as read</button>}
+        actions={<button className="text-[#111827] text-sm font-medium hover:text-[#111827]">Mark all as read</button>}
       />
       <Card className="overflow-hidden">
         <div className="divide-y divide-gray-100">
           {notifs.map((n) => (
             <div
               key={n.id}
-              className={`flex gap-3.5 p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!n.read ? "bg-indigo-50/40" : ""}`}
+              className={`flex gap-3.5 p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!n.read ? "bg-[#111827]/5" : ""}`}
             >
               <div className={`w-8 h-8 rounded-full ${typeStyles[n.type]} flex items-center justify-center shrink-0 mt-0.5`}>
                 {typeIcons[n.type]}
@@ -45,7 +45,7 @@ export default function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-slate-900 text-sm font-medium">{n.title}</p>
-                  {!n.read && <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full shrink-0" />}
+                  {!n.read && <span className="w-1.5 h-1.5 bg-[#111827] rounded-full shrink-0" />}
                 </div>
                 <p className="text-slate-500 text-xs leading-relaxed">{n.body}</p>
                 <p className="text-slate-400 text-xs mt-1.5">{n.time}</p>

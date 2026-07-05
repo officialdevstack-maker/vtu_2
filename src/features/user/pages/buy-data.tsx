@@ -73,7 +73,7 @@ export default function BuyDataPage() {
 
   return (
     <PurchaseShell>
-      <ServiceHeader icon={Wifi} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Buy data" subtitle="Data bundles for every network" />
+      <ServiceHeader icon={Wifi} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Buy data" subtitle="Data bundles for every network" />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -91,12 +91,12 @@ export default function BuyDataPage() {
                 <button
                   key={p.id}
                   onClick={() => setSelectedPlan(p.id)}
-                  className={`relative p-3 rounded-lg border transition-colors text-left ${selectedPlan === p.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}
+                  className={`relative p-3 rounded-lg border transition-colors text-left ${selectedPlan === p.id ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
                 >
-                  {p.tag && <span className="absolute -top-2 right-2 bg-indigo-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">{p.tag}</span>}
+                  {p.tag && <span className="absolute -top-2 right-2 bg-[#111827] text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">{p.tag}</span>}
                   <p className="font-medium text-slate-900 text-sm">{p.size}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{p.duration}</p>
-                  <p className="text-sm font-medium text-indigo-600 mt-1">{fmt(p.price)}</p>
+                  <p className="text-sm font-medium text-[#111827] mt-1">{fmt(p.price)}</p>
                 </button>
               ))}
             </div>

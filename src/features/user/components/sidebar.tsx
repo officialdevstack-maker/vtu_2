@@ -202,7 +202,7 @@ export default function Sidebar({
           className={`h-14 flex items-center border-b border-white/10 shrink-0 ${collapsed ? "lg:justify-center lg:px-0 px-4" : "px-4"}`}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 bg-[#111827] rounded-md flex items-center justify-center shrink-0">
               <Zap className="w-4 h-4 text-white" />
             </div>
             <p

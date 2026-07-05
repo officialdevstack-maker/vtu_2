@@ -92,7 +92,7 @@ export default function PricingPage() {
         <div className="flex border-b border-gray-100 overflow-x-auto">
           {serviceTabs.map((t) => (
             <button key={t.id} onClick={() => setServiceTab(t.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${serviceTab === t.id ? "text-indigo-700 border-b-2 border-indigo-600 bg-indigo-50/60" : "text-slate-500 hover:text-slate-700 hover:bg-gray-50"}`}>
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${serviceTab === t.id ? "text-[#111827] border-b-2 border-[#111827] bg-[#111827]/10" : "text-slate-500 hover:text-slate-700 hover:bg-gray-50"}`}>
               <t.icon className="w-4 h-4" />
               {t.label}
             </button>
@@ -115,13 +115,13 @@ export default function PricingPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {dataPlans[networkTab].map((p, i) => (
-                  <div key={i} className="relative flex items-center justify-between p-3.5 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors">
-                    {p.tag && <span className="absolute -top-2 left-3 bg-indigo-600 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">{p.tag}</span>}
+                  <div key={i} className="relative flex items-center justify-between p-3.5 rounded-lg border border-gray-200 hover:border-[#111827]/30 transition-colors">
+                    {p.tag && <span className="absolute -top-2 left-3 bg-[#111827] text-white text-xs px-1.5 py-0.5 rounded-full font-medium">{p.tag}</span>}
                     <div>
                       <p className="font-medium text-slate-900 text-sm">{p.size}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{p.duration}</p>
                     </div>
-                    <p className="font-semibold text-indigo-600">{p.price}</p>
+                    <p className="font-semibold text-[#111827]">{p.price}</p>
                   </div>
                 ))}
               </div>
@@ -170,7 +170,7 @@ export default function PricingPage() {
                           <p className="font-medium text-slate-900 text-sm">{pkg.name}</p>
                           <p className="text-xs text-slate-400">Monthly</p>
                         </div>
-                        <p className="font-medium text-indigo-600 text-sm">{pkg.price}</p>
+                        <p className="font-medium text-[#111827] text-sm">{pkg.price}</p>
                       </div>
                     ))}
                   </div>

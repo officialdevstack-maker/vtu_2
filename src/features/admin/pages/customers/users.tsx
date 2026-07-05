@@ -520,7 +520,7 @@ export default function CustomersPage() {
             <div className="flex justify-end">
               <button
                 onClick={resetFilters}
-                className="text-xs text-indigo-600 font-medium hover:text-indigo-700 shrink-0"
+                className="text-xs text-[#111827] font-medium hover:text-[#111827] shrink-0"
               >
                 Clear filters
               </button>
@@ -582,7 +582,7 @@ export default function CustomersPage() {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                          <div className="w-7 h-7 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-medium shrink-0">
                             {initials(c.username || c.name)}
                           </div>
                           <span className="font-medium text-slate-900 text-xs whitespace-nowrap">

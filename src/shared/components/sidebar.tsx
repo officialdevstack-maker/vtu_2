@@ -82,7 +82,7 @@ function WalletWidget() {
         mx: 1.5,
         mb: 2,
         borderRadius: 2.5,
-        background: "linear-gradient(135deg, #1A3FE8 0%, #0A20A0 100%)",
+        background: "#111827",
         p: 2,
         color: "white",
         position: "relative",
@@ -162,7 +162,7 @@ function UserProfile() {
             height: 18,
             fontSize: 9,
             fontWeight: 800,
-            bgcolor: "primary.main",
+            bgcolor: "#111827",
             color: "white",
             letterSpacing: 0.5,
             flexShrink: 0,
@@ -185,7 +185,7 @@ function NavContent({ currentHref, onNavigate }: NavContentProps) {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Logo */}
       <Box sx={{ px: 2.5, pt: 3, pb: 2.5 }}>
-        <Typography variant="h6" color="primary.main" sx={{ fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>
+        <Typography variant="h6" sx={{ color: "#111827", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>
           SwiftVTU
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -229,10 +229,10 @@ function NavContent({ currentHref, onNavigate }: NavContentProps) {
                       mb: 0.25,
                       py: 0.9,
                       "&.Mui-selected": {
-                        bgcolor: "primary.main",
+                        bgcolor: "#111827",
                         color: "white",
                         "& .MuiListItemIcon-root": { color: "white" },
-                        "&:hover": { bgcolor: "primary.dark" },
+                        "&:hover": { bgcolor: "#111827" },
                       },
                     }}
                   >
@@ -247,7 +247,7 @@ function NavContent({ currentHref, onNavigate }: NavContentProps) {
                       <Chip
                         label={badge}
                         size="small"
-                        sx={{ height: 18, fontSize: 10, fontWeight: 700, bgcolor: "#EEF1FD", color: "primary.main" }}
+                        sx={{ height: 18, fontSize: 10, fontWeight: 700, bgcolor: "rgb(17 24 39 / 0.1)", color: "#111827" }}
                       />
                     )}
                   </ListItemButton>
@@ -312,7 +312,7 @@ export default function Sidebar({ currentHref = "/dashboard", onNavigate }: Side
             px: 2,
           }}
         >
-          <Typography variant="h6" color="primary.main" fontWeight={800} letterSpacing="-0.5px">
+          <Typography variant="h6" sx={{ color: "#111827" }} fontWeight={800} letterSpacing="-0.5px">
             SwiftVTU
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">

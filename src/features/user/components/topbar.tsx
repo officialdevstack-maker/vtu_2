@@ -65,7 +65,7 @@ export default function Topbar({
             {title}
           </h1>
 
-          <div className="ml-auto hidden items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors focus-within:border-indigo-400 focus-within:bg-white md:flex md:w-56 lg:w-64">
+          <div className="ml-auto hidden items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors focus-within:border-[#111827]/40 focus-within:bg-white md:flex md:w-56 lg:w-64">
             <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
             <input
               type="text"
@@ -99,7 +99,7 @@ export default function Topbar({
               onClick={() => setMenuOpen((o) => !o)}
               className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-gray-100"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-xs font-medium text-white">
                 {initialsOf(displayName)}
               </div>
               <div className="hidden text-left sm:block">

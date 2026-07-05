@@ -43,8 +43,8 @@ export default function WalletPage() {
             { icon: CreditCard, label: "Card payment", desc: "Debit or credit card" },
             { icon: Smartphone, label: "USSD code", desc: "Dial *738# to fund" },
           ].map((opt) => (
-            <button key={opt.label} className="flex items-center gap-3 p-3.5 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors text-left">
-              <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <button key={opt.label} className="flex items-center gap-3 p-3.5 rounded-lg border border-gray-200 hover:border-[#111827]/30 hover:bg-[#111827]/5 transition-colors text-left">
+              <div className="w-9 h-9 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center shrink-0">
                 <opt.icon className="w-4.5 h-4.5" />
               </div>
               <div>

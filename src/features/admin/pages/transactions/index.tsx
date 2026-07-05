@@ -609,15 +609,15 @@ export default function TransactionsPage() {
         </div>
 
         {selected.size > 0 ? (
-          <div className="flex items-center justify-between gap-3 border-b border-indigo-100 bg-indigo-50 px-4 py-2">
-            <p className="text-xs font-medium text-indigo-700">
+          <div className="flex items-center justify-between gap-3 border-b border-[#111827]/15 bg-[#111827]/10 px-4 py-2">
+            <p className="text-xs font-medium text-[#111827]">
               {selected.size} transaction{selected.size === 1 ? "" : "s"}{" "}
               selected
             </p>
             <button
               type="button"
               onClick={() => setSelected(new Set())}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+              className="text-xs font-medium text-[#111827] hover:text-[#111827]"
             >
               Clear selection
             </button>
@@ -649,7 +649,7 @@ export default function TransactionsPage() {
                       type="checkbox"
                       checked={selected.has(tx.id)}
                       onChange={() => toggleRow(tx.id)}
-                      className="mt-1 h-3.5 w-3.5 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="mt-1 h-3.5 w-3.5 shrink-0 rounded border-gray-300 text-[#111827] focus:ring-[#111827]"
                       aria-label={`Select ${tx.reference}`}
                     />
                     <button
@@ -703,7 +703,7 @@ export default function TransactionsPage() {
                         type="checkbox"
                         checked={allPageSelected}
                         onChange={togglePage}
-                        className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-[#111827] focus:ring-[#111827]"
                         aria-label="Select all on page"
                       />
                     </th>
@@ -722,14 +722,14 @@ export default function TransactionsPage() {
                   {paginatedTransactions.map((tx) => (
                     <tr
                       key={tx.id}
-                      className={`transition-colors hover:bg-gray-50 ${selected.has(tx.id) ? "bg-indigo-50/40" : ""}`}
+                      className={`transition-colors hover:bg-gray-50 ${selected.has(tx.id) ? "bg-[#111827]/5" : ""}`}
                     >
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selected.has(tx.id)}
                           onChange={() => toggleRow(tx.id)}
-                          className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          className="h-3.5 w-3.5 rounded border-gray-300 text-[#111827] focus:ring-[#111827]"
                           aria-label={`Select ${tx.reference}`}
                         />
                       </td>

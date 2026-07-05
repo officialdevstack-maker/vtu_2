@@ -624,7 +624,7 @@ const ProviderDetailPage = () => {
                       type="button"
                       onClick={() => void handleRefreshToken()}
                       disabled={refreshingToken}
-                      className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 text-[#111827] hover:text-[#111827] font-medium disabled:opacity-50"
                     >
                       <KeyRound className="w-3.5 h-3.5" />
                       {refreshingToken ? "Generating…" : "Generate webhook URL"}
@@ -752,7 +752,7 @@ const ProviderDetailPage = () => {
                   aria-checked={enabled}
                   onClick={() => setAF("auto_fund_enabled", !enabled)}
                   className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
-                    enabled ? "bg-indigo-600" : "bg-gray-200"
+                    enabled ? "bg-[#111827]" : "bg-gray-200"
                   }`}
                 >
                   <span
@@ -768,7 +768,7 @@ const ProviderDetailPage = () => {
                 <div
                   className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${
                     enabled
-                      ? "bg-indigo-50 text-indigo-700"
+                      ? "bg-[#111827]/10 text-[#111827]"
                       : "bg-gray-50 text-slate-400"
                   }`}
                 >

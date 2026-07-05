@@ -25,7 +25,7 @@ export default function OrderSummary({ network, airtimeType, amount }: Props) {
   return (
     <Box
       sx={{
-        background: "linear-gradient(135deg, #1A3FE8 0%, #0A20A0 100%)",
+        background: "#111827",
         borderRadius: 3,
         p: 3,
         color: "white",
@@ -80,7 +80,7 @@ export default function OrderSummary({ network, airtimeType, amount }: Props) {
         disabled={amount <= 0}
         sx={{
           bgcolor: "white",
-          color: "primary.main",
+          color: "#111827",
           fontWeight: 700,
           py: 1.4,
           fontSize: 15,

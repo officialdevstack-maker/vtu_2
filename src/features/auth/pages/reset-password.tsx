@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
             {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} loading={isSubmitting} fullWidth className="rounded-2xl py-4 shadow-lg shadow-indigo-600/25">
+          <Button type="submit" disabled={isSubmitting} loading={isSubmitting} fullWidth className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95">
             {isSubmitting ? "" : "Update password"}
           </Button>
         </form>
@@ -80,7 +80,7 @@ export default function ResetPasswordPage() {
 
       <p className="text-center text-sm text-slate-500 mt-5">
         Ready to continue?{" "}
-        <RouterLink to="/login" className="text-indigo-600 font-medium hover:text-indigo-700">
+        <RouterLink to="/login" className="text-[#111827] font-medium hover:opacity-80">
           Sign in
         </RouterLink>
       </p>

@@ -155,7 +155,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => void handleConvertReferral()}
                   disabled={converting}
-                  className="text-xs font-medium text-indigo-300 hover:text-indigo-200 disabled:opacity-50 transition-colors"
+                  className="text-xs font-medium text-slate-300 hover:text-slate-200 disabled:opacity-50 transition-colors"
                 >
                   {converting ? "Converting…" : "Convert to wallet"}
                 </button>
@@ -191,9 +191,9 @@ export default function DashboardPage() {
             <button
               key={a.label}
               onClick={() => navigate(a.path)}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-colors"
+              className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-[#111827]/30 hover:bg-[#111827]/5 transition-colors"
             >
-              <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-lg flex items-center justify-center">
                 <a.icon className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-700 text-center">{a.label}</span>
@@ -220,15 +220,15 @@ export default function DashboardPage() {
               <AreaChart data={spendingChart} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#111827" stopOpacity={0.1} />
+                    <stop offset="95%" stopColor="#111827" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₦${v / 1000}k`} />
                 <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "8px", fontSize: "12px" }} formatter={(v) => [fmt(Number(v)), "Spent"]} />
-                <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={1.75} fill="url(#spendGrad)" />
+                <Area type="monotone" dataKey="amount" stroke="#111827" strokeWidth={1.75} fill="url(#spendGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -271,7 +271,7 @@ export default function DashboardPage() {
           <h3 className="text-sm font-semibold text-slate-900">Recent transactions</h3>
           <button
             onClick={() => navigate("/transactions")}
-            className="text-xs text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1"
+            className="text-xs text-[#111827] font-medium hover:text-[#111827] flex items-center gap-1"
           >
             View all <ChevronRight className="w-3.5 h-3.5" />
           </button>

@@ -470,7 +470,7 @@ export default function CustomerDetailPage() {
           <div className="lg:col-span-2 space-y-5">
             <Card>
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2 flex-wrap">
-                <div className="w-8 h-8 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-medium shrink-0">
                   {initials(customer.username || customer.name)}
                 </div>
                 <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">

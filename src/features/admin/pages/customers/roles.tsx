@@ -278,7 +278,7 @@ export default function RolesPage() {
                     <td className="hidden lg:table-cell px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {r.permissions.map((p) => (
-                          <span key={p} className="text-[10px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5 whitespace-nowrap">
+                          <span key={p} className="text-[10px] font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5 whitespace-nowrap">
                             {p}
                           </span>
                         ))}
@@ -376,7 +376,7 @@ export default function RolesPage() {
                   <div className="flex flex-wrap gap-1.5">
                     {activeRole.permissions.length === 0 && <p className="text-xs text-slate-400">No permissions assigned</p>}
                     {activeRole.permissions.map((p) => (
-                      <span key={p} className="text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+                      <span key={p} className="text-xs font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
                         {p}
                       </span>
                     ))}

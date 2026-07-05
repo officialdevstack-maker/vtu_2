@@ -49,7 +49,7 @@ const fmt = (v: string | number | null | undefined) => {
 
 function TransferBadge({ supported }: { supported: boolean }) {
   return supported ? (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#111827] bg-[#111827]/10 px-2 py-0.5 rounded-md">
       <Zap className="w-3 h-3" /> Transfers
     </span>
   ) : (
@@ -96,7 +96,7 @@ function Pagination({
               <span key={`e-${i}`} className="px-1 text-xs text-slate-400">…</span>
             ) : (
               <button key={p} onClick={() => onPage(p)}
-                className={`min-w-[28px] h-7 rounded-md text-xs font-medium transition-colors ${p === page ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-gray-100"}`}>
+                className={`min-w-[28px] h-7 rounded-md text-xs font-medium transition-colors ${p === page ? "bg-[#111827] text-white" : "text-slate-600 hover:bg-gray-100"}`}>
                 {p}
               </button>
             )
@@ -493,7 +493,7 @@ const GatewayPage = () => {
                       <tr key={g.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
+                            <div className="w-7 h-7 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
                               {g.name[0]?.toUpperCase()}
                             </div>
                             <div>
@@ -526,7 +526,7 @@ const GatewayPage = () => {
               <div className="md:hidden divide-y divide-gray-100">
                 {slice.map((g) => (
                   <div key={g.id} className="p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors">
-                    <div className="w-9 h-9 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-sm font-semibold shrink-0">
+                    <div className="w-9 h-9 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-sm font-semibold shrink-0">
                       {g.name[0]?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

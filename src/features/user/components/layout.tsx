@@ -75,7 +75,7 @@ const UserLayout = () => {
               onClick={() => navigate(item.path)}
               className={`flex flex-1 min-w-0 flex-col items-center gap-0.5 px-1 py-2.5 text-[11px] transition-colors ${
                 active
-                  ? "font-medium text-indigo-600"
+                  ? "font-medium text-[#111827]"
                   : "text-slate-400 hover:text-slate-600"
               }`}
             >

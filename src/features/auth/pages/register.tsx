@@ -4,13 +4,25 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
-import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
+import { useAuth } from "@/shared/providers/auth";
+import { AuthLayout, SocialLoginRow, authCardCls, authInputCls } from "../components/AuthLayout";
 import { createMockAccount } from "../mockSession";
 import { registerSchema, type RegisterFormData } from "../validators";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  // TEMPORARY DEMO ACCESS — remove this along with the row below and
+  // AuthProvider.loginAsDemo once real auth is wired up end-to-end.
+  const { loginAsDemo } = useAuth();
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleDemoAccess = async () => {
+    setDemoLoading(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 350));
+    loginAsDemo();
+    navigate("/dashboard", { replace: true });
+  };
 
   const {
     register,
@@ -48,6 +60,13 @@ export default function RegisterPage() {
             {errors.root.message}
           </div>
         )}
+
+        <SocialLoginRow label="Sign up" loading={demoLoading} onClick={() => void handleDemoAccess()} />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-px flex-1 bg-slate-100" />
+          <span className="text-xs font-medium text-slate-400">or</span>
+          <div className="h-px flex-1 bg-slate-100" />
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <div>
@@ -149,15 +168,15 @@ export default function RegisterPage() {
               type="checkbox"
               id="acceptTerms"
               {...register("acceptTerms")}
-              className="w-3.5 h-3.5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer"
+              className="w-3.5 h-3.5 mt-0.5 rounded border-gray-300 accent-[#111827] focus:ring-[#111827]/30 cursor-pointer"
             />
             <label htmlFor="acceptTerms" className="text-sm text-slate-600 cursor-pointer select-none">
               I agree to the{" "}
-              <a href="#" className="text-indigo-600 font-medium hover:text-indigo-700">
+              <a href="#" className="text-[#111827] font-medium hover:opacity-80">
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="text-indigo-600 font-medium hover:text-indigo-700">
+              <a href="#" className="text-[#111827] font-medium hover:opacity-80">
                 Privacy Policy
               </a>
             </label>
@@ -171,7 +190,7 @@ export default function RegisterPage() {
             disabled={isSubmitting}
             loading={isSubmitting}
             fullWidth
-            className="rounded-2xl py-4 shadow-lg shadow-indigo-600/25"
+            className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
           >
             {isSubmitting ? "" : "Continue to PIN setup"}
           </Button>
@@ -180,7 +199,7 @@ export default function RegisterPage() {
 
       <p className="text-center text-sm text-slate-500 mt-5">
         Already have an account?{" "}
-        <RouterLink to="/login" className="text-indigo-600 font-medium hover:text-indigo-700">
+        <RouterLink to="/login" className="text-[#111827] font-medium hover:opacity-80">
           Sign in
         </RouterLink>
       </p>

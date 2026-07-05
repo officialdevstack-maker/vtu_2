@@ -99,7 +99,16 @@ const DEMO_USER: User = {
   fullname: "Demo User",
   username: "demo",
   phone: "08012345678",
-  user_type: "customer",
+  // user_type: "admin" so the demo account also passes AdminProtectedLayout
+  // and can reach /admin/* routes, not just the customer /dashboard.
+  user_type: "admin",
+  role_id: 1,
+  role: {
+    id: 1,
+    name: "Administrator",
+    slug: "admin",
+    permissions: [{ id: 1, name: "Switch account", slug: "switch_account" }],
+  },
   wallet_balance: 25000,
   referral_balance: 500,
   referral_code: "DEMO2026",

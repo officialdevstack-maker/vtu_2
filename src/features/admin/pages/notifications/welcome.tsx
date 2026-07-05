@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Mail, Eye, Trash2, CheckCircle2 } from "lucide-react";
 import {
   PageHeader,
@@ -47,8 +47,8 @@ export default function WelcomePage() {
       <PageHeader
         title={
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-indigo-100 p-2.5">
-              <Mail className="h-5 w-5 text-indigo-600" />
+            <div className="rounded-lg bg-[#111827]/15 p-2.5">
+              <Mail className="h-5 w-5 text-[#111827]" />
             </div>
             Welcome Messages
           </div>

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { useAuth } from "@/shared/providers/auth";
-import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
+import { AuthLayout, SocialLoginRow, authCardCls, authInputCls } from "../components/AuthLayout";
 import { saveMockLogin } from "../mockSession";
 import { loginSchema, type LoginFormData } from "../validators";
 
@@ -57,6 +57,13 @@ const LoginForm = () => {
           </div>
         )}
 
+        <SocialLoginRow label="Log in" loading={demoLoading} onClick={() => void handleDemoAccess()} />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-px flex-1 bg-slate-100" />
+          <span className="text-xs font-medium text-slate-400">or</span>
+          <div className="h-px flex-1 bg-slate-100" />
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">
@@ -77,7 +84,7 @@ const LoginForm = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-medium text-slate-600">Password</label>
-              <RouterLink to="/forgot-password" className="text-xs text-indigo-600 font-medium hover:text-indigo-700">
+              <RouterLink to="/forgot-password" className="text-xs text-[#111827] font-medium hover:opacity-80">
                 Forgot password?
               </RouterLink>
             </div>
@@ -106,7 +113,7 @@ const LoginForm = () => {
               type="checkbox"
               id="remember"
               {...register("rememberMe")}
-              className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer"
+              className="w-3.5 h-3.5 rounded border-gray-300 accent-[#111827] focus:ring-[#111827]/30 cursor-pointer"
             />
             <label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer select-none">
               Remember me for 30 days
@@ -118,35 +125,16 @@ const LoginForm = () => {
             disabled={isSubmitting}
             loading={isSubmitting}
             fullWidth
-            className="rounded-2xl py-4 shadow-lg shadow-indigo-600/25"
+            className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
           >
             {isSubmitting ? "" : "Sign in"}
           </Button>
         </form>
-
-        {/* TEMPORARY DEMO ACCESS — remove this block, handleDemoAccess, and
-            AuthProvider.loginAsDemo once real auth is wired up end-to-end. */}
-        <div className="flex items-center gap-3 my-5">
-          <div className="h-px flex-1 bg-slate-100" />
-          <span className="text-xs font-medium text-slate-400">or</span>
-          <div className="h-px flex-1 bg-slate-100" />
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          fullWidth
-          disabled={demoLoading}
-          loading={demoLoading}
-          onClick={() => void handleDemoAccess()}
-          className="rounded-2xl py-4"
-        >
-          {demoLoading ? "" : "Continue with demo access"}
-        </Button>
       </Card>
 
       <p className="text-center text-sm text-slate-500 mt-5">
         Don't have an account?{" "}
-        <RouterLink to="/register" className="text-indigo-600 font-medium hover:text-indigo-700">
+        <RouterLink to="/register" className="text-[#111827] font-medium hover:opacity-80">
           Create one
         </RouterLink>
       </p>

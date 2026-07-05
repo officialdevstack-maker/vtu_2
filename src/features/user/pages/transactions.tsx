@@ -236,7 +236,7 @@ export default function TransactionsPage() {
                   resetToFirstPage();
                 }}
                 className={`shrink-0 rounded-xl px-3 py-2 text-xs font-medium capitalize transition-colors whitespace-nowrap ${
-                  status === f ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/10" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  status === f ? "bg-[#111827] text-white shadow-sm shadow-[#111827]/10" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
                 {f === "fail" ? "failed" : f}
@@ -413,10 +413,10 @@ export default function TransactionsPage() {
                 </div>
 
                 {selectedTx.token && (
-                  <div className="mb-2.5 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2.5">
-                    <p className="text-xs font-medium text-indigo-700 mb-0.5">Your PIN / token</p>
+                  <div className="mb-2.5 rounded-xl border border-[#111827]/15 bg-[#111827]/10 px-3 py-2.5">
+                    <p className="text-xs font-medium text-[#111827] mb-0.5">Your PIN / token</p>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-sm font-semibold tracking-wide text-indigo-900 break-all">
+                      <span className="font-mono text-sm font-semibold tracking-wide text-[#111827] break-all">
                         {selectedTx.token}
                       </span>
                       <CopyButton value={selectedTx.token} label="PIN" />

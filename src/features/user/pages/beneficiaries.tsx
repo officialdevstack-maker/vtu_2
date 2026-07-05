@@ -36,7 +36,7 @@ export default function BeneficiariesPage() {
           </p>
         </div>
         {filtered.length === 0 ? (
-          <EmptyState icon={Users} title="No beneficiaries found" action={<button className="text-indigo-600 text-sm font-medium">Add your first beneficiary</button>} />
+          <EmptyState icon={Users} title="No beneficiaries found" action={<button className="text-[#111827] text-sm font-medium">Add your first beneficiary</button>} />
         ) : (
           <div className="divide-y divide-gray-100">
             {filtered.map((b) => (
@@ -51,7 +51,7 @@ export default function BeneficiariesPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${b.type === "bank" ? "bg-teal-50 text-teal-700" : "bg-indigo-50 text-indigo-700"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${b.type === "bank" ? "bg-teal-50 text-teal-700" : "bg-[#111827]/10 text-[#111827]"}`}>
                     {b.type === "bank" ? "Bank" : b.type === "airtime" ? "Airtime" : "Data"}
                   </span>
                   <button className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors">

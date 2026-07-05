@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Eye,
@@ -331,7 +331,7 @@ export default function TemplatesPage() {
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1 max-w-[180px]">
                         {(t.channels ?? []).map((c) => (
-                          <span key={c} className="text-[10px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5 whitespace-nowrap">
+                          <span key={c} className="text-[10px] font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5 whitespace-nowrap">
                             {channelLabels[c]}
                           </span>
                         ))}
@@ -432,7 +432,7 @@ export default function TemplatesPage() {
                   <div className="flex flex-wrap gap-1.5">
                     {activeTemplate.variables.length === 0 && <p className="text-xs text-slate-400">None detected</p>}
                     {activeTemplate.variables.map((v) => (
-                      <span key={v} className="text-xs font-mono font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+                      <span key={v} className="text-xs font-mono font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
                         {`{{${v}}}`}
                       </span>
                     ))}
@@ -517,7 +517,7 @@ export default function TemplatesPage() {
                       <p className="text-xs text-slate-400">No variables detected yet</p>
                     ) : (
                       formVariables.map((v) => (
-                        <span key={v} className="text-[10px] font-mono font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+                        <span key={v} className="text-[10px] font-mono font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
                           {`{{${v}}}`}
                         </span>
                       ))

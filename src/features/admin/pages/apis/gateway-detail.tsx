@@ -416,7 +416,7 @@ const GatewayDetailPage = () => {
                       type="button"
                       onClick={() => void handleRefreshToken()}
                       disabled={refreshingToken}
-                      className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 text-[#111827] hover:text-[#111827] font-medium disabled:opacity-50"
                     >
                       <KeyRound className="w-3.5 h-3.5" />
                       {refreshingToken ? "Generating…" : "Generate webhook URL"}
@@ -510,18 +510,18 @@ const GatewayDetailPage = () => {
               </div>
               <div className="p-5">
                 <div className={`rounded-xl p-4 flex flex-col items-center text-center gap-3 ${
-                  supportsTransfer ? "bg-indigo-50" : "bg-slate-50"
+                  supportsTransfer ? "bg-[#111827]/10" : "bg-slate-50"
                 }`}>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    supportsTransfer ? "bg-indigo-100" : "bg-slate-100"
+                    supportsTransfer ? "bg-[#111827]/15" : "bg-slate-100"
                   }`}>
                     {supportsTransfer
-                      ? <Zap className="w-5 h-5 text-indigo-600" />
+                      ? <Zap className="w-5 h-5 text-[#111827]" />
                       : <ZapOff className="w-5 h-5 text-slate-400" />}
                   </div>
                   <div>
                     <p className={`text-sm font-semibold ${
-                      supportsTransfer ? "text-indigo-700" : "text-slate-500"
+                      supportsTransfer ? "text-[#111827]" : "text-slate-500"
                     }`}>
                       {supportsTransfer ? "Transfers supported" : "Transfers unavailable"}
                     </p>

@@ -83,7 +83,7 @@ export default function CableTVPage() {
 
   return (
     <PurchaseShell>
-      <ServiceHeader icon={Tv} iconBg="bg-purple-50" iconColor="text-purple-600" title="Cable TV" subtitle="DStv, GOtv & Startimes subscriptions" />
+      <ServiceHeader icon={Tv} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Cable TV" subtitle="DStv, GOtv & Startimes subscriptions" />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -96,7 +96,7 @@ export default function CableTVPage() {
                 <button
                   key={p.id}
                   onClick={() => { setProvider(p.id); setSelectedPkg(null); }}
-                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-colors ${provider === p.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-colors ${provider === p.id ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
                 >
                   <div className={`w-10 h-10 ${p.bg} rounded-lg flex items-center justify-center text-white font-semibold`}>{p.logo}</div>
                   <span className="text-xs font-medium text-slate-700">{p.name}</span>
@@ -124,11 +124,11 @@ export default function CableTVPage() {
                 <button
                   key={p.id}
                   onClick={() => setSelectedPkg(p.id)}
-                  className={`p-3 rounded-lg border transition-colors text-left ${selectedPkg === p.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}
+                  className={`p-3 rounded-lg border transition-colors text-left ${selectedPkg === p.id ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
                 >
                   <p className="font-medium text-slate-900 text-sm">{p.name}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{p.channels}</p>
-                  <p className="text-sm font-medium text-indigo-600 mt-1">{fmt(p.price)}/mo</p>
+                  <p className="text-sm font-medium text-[#111827] mt-1">{fmt(p.price)}/mo</p>
                 </button>
               ))}
             </div>

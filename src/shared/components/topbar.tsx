@@ -37,7 +37,7 @@ export default function Topbar({ onToggleSidebar }: { onToggleSidebar: () => voi
       <h1 className="text-slate-900 font-semibold text-sm truncate">{title}</h1>
 
       {/* Search bar - hidden on mobile */}
-      <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 w-60 ml-4 focus-within:border-indigo-400 focus-within:bg-white transition-colors">
+      <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 w-60 ml-4 focus-within:border-[#111827]/40 focus-within:bg-white transition-colors">
         <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
         <input
           type="text"
@@ -72,7 +72,7 @@ export default function Topbar({ onToggleSidebar }: { onToggleSidebar: () => voi
           onClick={() => navigate("/profile")}
           className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-gray-100 transition-colors"
         >
-          <div className="w-7 h-7 bg-indigo-600 rounded-full flex items-center justify-center text-xs font-medium text-white">
+          <div className="w-7 h-7 bg-[#111827] rounded-full flex items-center justify-center text-xs font-medium text-white">
             CO
           </div>
           <div className="hidden sm:block text-left">

@@ -118,7 +118,7 @@ export default function ElectricityPage() {
             <div className="grid grid-cols-2 gap-2">
               {(["prepaid", "postpaid"] as const).map((t) => (
                 <button key={t} onClick={() => setMeterType(t)}
-                  className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${meterType === t ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}>
+                  className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${meterType === t ? "border-[#111827] bg-[#111827]/10 text-[#111827]" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}>
                   {t}
                 </button>
               ))}
