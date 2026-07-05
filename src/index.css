@@ -54,3 +54,14 @@
     animation: bounce-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 }
+
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-12px, 10px); }
+}
+
+@layer utilities {
+  .animate-float-slow {
+    animation: float-slow 8s ease-in-out infinite;
+  }
+}
