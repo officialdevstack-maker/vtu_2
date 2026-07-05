@@ -28,5 +28,26 @@ export const authRouter: RouteObject[] = [
             const { default: Component } = await import("./pages/register")
             return { Component }
         }
+    },
+    {
+        path: 'create-transaction-pin',
+        lazy: async () => {
+            const { default: Component } = await import("./pages/create-transaction-pin")
+            return { Component }
+        }
+    },
+    {
+        path: 'forgot-password',
+        lazy: async () => {
+            const { default: Component } = await import("./pages/forgot-password")
+            return { Component }
+        }
+    },
+    {
+        path: 'reset-password',
+        lazy: async () => {
+            const { default: Component } = await import("./pages/reset-password")
+            return { Component }
+        }
     }
 ];
