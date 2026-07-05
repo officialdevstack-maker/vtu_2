@@ -4,6 +4,7 @@ import { authRouter, ProtectedLayout } from "@/features/auth";
 import App from "@/App";
 import { UserLayout, userRouter } from "@/features/user";
 import { adminRouter } from "@/features/admin";
+import AdminProtectedLayout from "@/features/admin/components/AdminProtectedLayout";
 
 export const router = createBrowserRouter([
   {
@@ -27,8 +28,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
-      // admin routes
+      // admin routes — auth + admin-role guard
       {
+        element: <AdminProtectedLayout />,
         children: [...adminRouter],
       },
     ],

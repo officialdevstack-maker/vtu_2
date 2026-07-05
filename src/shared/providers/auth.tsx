@@ -4,8 +4,8 @@ import {
   useState,
   type ReactNode,
   useCallback,
-  useEffect,
 } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/apiClient";
 import { config } from "../config";
 
@@ -47,6 +47,19 @@ export type UserStats = {
   tx_amount_30d: { date: string; total_amount: string | number }[];
 };
 
+export type Permission = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type Role = {
+  id: number;
+  name: string;
+  slug: string;
+  permissions?: Permission[];
+};
+
 interface User {
   id: string;
   email?: string;
@@ -54,6 +67,8 @@ interface User {
   username?: string;
   phone?: string;
   user_type?: string;
+  role_id?: number;
+  role?: Role | null;
   wallet_balance?: string | number;
   referral_balance?: string | number;
   referral_code?: string | null;
@@ -69,38 +84,45 @@ interface AuthContextType {
   isLoading: boolean;
   isInitializing: boolean;
   refreshUser: () => Promise<void>;
-  login: (login: string, password: string) => Promise<void>;
+  login: (login: string, password: string) => Promise<User | null>;
   logout: () => Promise<void>;
+  hasPermission: (slug: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// One shared cache key for the current user everywhere in the app — the
+// dashboard, transaction pages, and the account-switcher dropdown all read
+// from this same cached entry instead of each holding their own copy.
+export const AUTH_QUERY_KEY = ["auth", "user"] as const;
+
+const fetchCurrentUser = async (): Promise<User | null> => {
+  try {
+    const response = await apiClient.get("/user");
+    return response.data.data?.user ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
 
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await apiClient.get("/user");
-      setUser(response.data.data?.user ?? null);
-    } catch {
-      setUser(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkAuth().finally(() => setIsInitializing(false));
-  }, [checkAuth]);
+  const { data: user = null, isLoading: isInitializing } = useQuery({
+    queryKey: AUTH_QUERY_KEY,
+    queryFn: fetchCurrentUser,
+  });
 
   const login = useCallback(
-    async (login: string, password: string) => {
+    async (loginValue: string, password: string) => {
       setIsLoading(true);
       try {
         await apiClient.get("/sanctum/csrf-cookie");
-
-        await apiClient.post("/login", { login, password });
-        await checkAuth();
+        await apiClient.post("/login", { login: loginValue, password });
+        const freshUser = await fetchCurrentUser();
+        queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
+        return freshUser;
       } catch (error: any) {
         console.error("Login failed:", error?.response?.data ?? error.message);
         throw error;
@@ -108,21 +130,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       }
     },
-    [checkAuth],
+    [queryClient],
   );
 
   const logout = useCallback(async () => {
     setIsLoading(true);
-
     try {
       await apiClient.post(config.auth.routes.logout);
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
-      setUser(null);
+      // Clear everything, not just the user entry — a customer's cached
+      // dashboard/transactions data must not leak into the next session on
+      // this device (e.g. a shared computer, or switching accounts).
+      queryClient.clear();
       setIsLoading(false);
     }
-  }, []);
+  }, [queryClient]);
+
+  const refreshUser = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+  }, [queryClient]);
+
+  const hasPermission = useCallback(
+    (slug: string) => user?.role?.permissions?.some((p) => p.slug === slug) ?? false,
+    [user],
+  );
 
   return (
     <AuthContext.Provider
@@ -131,9 +164,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated: !!user,
         isLoading,
         isInitializing,
-        refreshUser: checkAuth,
+        refreshUser,
         login,
         logout,
+        hasPermission,
       }}
     >
       {children}
