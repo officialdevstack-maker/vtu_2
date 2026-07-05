@@ -22,6 +22,7 @@ import {
   SkeletonLine,
   Toggle,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
 import {
   templateService,
@@ -253,7 +254,7 @@ export default function TemplatesPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-              className={`${inputCls} py-2 text-sm w-full sm:w-40`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All types</option>
               <option value="event">Event</option>
@@ -262,7 +263,7 @@ export default function TemplatesPage() {
             <select
               value={eventFilter}
               onChange={(e) => setEventFilter(e.target.value as typeof eventFilter)}
-              className={`${inputCls} py-2 text-sm w-full sm:w-48`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-48`}
             >
               <option value="all">All events</option>
               {eventOptions.map((ev) => (
@@ -272,7 +273,7 @@ export default function TemplatesPage() {
             <select
               value={enabledFilter}
               onChange={(e) => setEnabledFilter(e.target.value as typeof enabledFilter)}
-              className={`${inputCls} py-2 text-sm w-full sm:w-40`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All statuses</option>
               <option value="enabled">Enabled</option>
@@ -470,7 +471,7 @@ export default function TemplatesPage() {
                     <select
                       value={form.type}
                       onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as TemplateType, event: "" }))}
-                      className={inputCls}
+                      className={selectCls}
                     >
                       <option value="broadcast">Broadcast</option>
                       <option value="event">Event</option>
@@ -482,7 +483,7 @@ export default function TemplatesPage() {
                       value={form.event}
                       onChange={(e) => setForm((f) => ({ ...f, event: e.target.value as TemplateEvent }))}
                       disabled={form.type !== "event"}
-                      className={`${inputCls} disabled:bg-gray-50 disabled:text-slate-400`}
+                      className={`${selectCls} disabled:bg-gray-50 disabled:text-slate-400`}
                     >
                       <option value="">Select eventâ€¦</option>
                       {eventOptions.map((ev) => (

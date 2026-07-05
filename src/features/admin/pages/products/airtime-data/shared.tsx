@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Search } from "lucide-react";
-import { EmptyState, inputCls } from "../../../../user/components/shared-ui";
+import { EmptyState, inputCls, selectCls } from "../../../../user/components/shared-ui";
 import type { LucideIcon } from "lucide-react";
 
 export function TableShell({
@@ -84,7 +84,7 @@ export function SelectFilter({
   const controlled = value !== undefined && onChange !== undefined;
   return (
     <select
-      className={`${inputCls} py-2 w-full sm:w-44`}
+      className={`${selectCls} py-2 w-full sm:w-44`}
       {...(controlled
         ? { value, onChange: (e) => onChange(e.target.value) }
         : { defaultValue: "" })}

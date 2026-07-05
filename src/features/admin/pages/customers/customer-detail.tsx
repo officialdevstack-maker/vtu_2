@@ -19,6 +19,7 @@ import {
   EmptyState,
   Pagination,
   inputCls,
+  selectCls,
   SkeletonLine,
 } from "../../../user/components/shared-ui";
 import { usePagination } from "../../../../shared/pagination";
@@ -93,7 +94,7 @@ function EditModal({
             <select
               value={form.status}
               onChange={(e) => set("status", e.target.value as CustomerStatus)}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="active">Active</option>
               <option value="suspended">Suspended</option>
@@ -145,7 +146,7 @@ function FundWalletCard({
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-600 mb-1.5">Action</label>
-          <select value={type} onChange={(e) => setType(e.target.value as "credit" | "debit")} className={inputCls}>
+          <select value={type} onChange={(e) => setType(e.target.value as "credit" | "debit")} className={selectCls}>
             <option value="credit">Credit wallet</option>
             <option value="debit">Debit wallet</option>
           </select>

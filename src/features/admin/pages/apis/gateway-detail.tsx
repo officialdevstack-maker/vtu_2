@@ -21,6 +21,7 @@ import {
   StatusBadge,
   SkeletonLine,
   inputCls,
+  selectCls,
   CopyButton,
 } from "../../../user/components/shared-ui";
 import {
@@ -173,7 +174,7 @@ function EditModal({
             <select
               value={form.connection ? "true" : "false"}
               onChange={(e) => set("connection", e.target.value === "true")}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="true">Connected</option>
               <option value="false">Disconnected</option>

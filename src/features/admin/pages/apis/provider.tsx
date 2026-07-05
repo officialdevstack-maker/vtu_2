@@ -27,6 +27,7 @@ import {
   SkeletonCard,
   SkeletonRows,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
 import {
   providerService,
@@ -328,7 +329,7 @@ function ProviderFormModal({
             <select
               value={form.connection ? "true" : "false"}
               onChange={(e) => set("connection", e.target.value === "true")}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="true">Connected</option>
               <option value="false">Disconnected</option>

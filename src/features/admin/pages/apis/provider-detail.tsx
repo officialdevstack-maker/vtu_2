@@ -22,6 +22,7 @@ import {
   Button,
   StatusBadge,
   inputCls,
+  selectCls,
   SkeletonLine,
   CopyButton,
 } from "../../../user/components/shared-ui";
@@ -135,7 +136,7 @@ function EditModal({
             <select
               value={form.sub_category ?? ""}
               onChange={(e) => set("sub_category", e.target.value)}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="">Select…</option>
               {SUB_CATEGORIES.map((c) => (
@@ -188,7 +189,7 @@ function EditModal({
             <select
               value={form.connection ? "true" : "false"}
               onChange={(e) => set("connection", e.target.value === "true")}
-              className={inputCls}
+              className={selectCls}
             >
               <option value="true">Connected</option>
               <option value="false">Disconnected</option>
@@ -829,7 +830,7 @@ const ProviderDetailPage = () => {
                       onChange={(e) =>
                         setAF("funding_provider_id", e.target.value)
                       }
-                      className={inputCls}
+                      className={selectCls}
                     >
                       <option value="">Select gateway…</option>
                       {paymentProviders?.map((p) => (
@@ -888,7 +889,7 @@ const ProviderDetailPage = () => {
                             setAF("bank_code", e.target.value);
                             setAF("bank_name", selectedBank?.name ?? "");
                           }}
-                          className={inputCls}
+                          className={selectCls}
                           disabled={
                             loadingBanks || !autoFundForm.funding_provider_id
                           }

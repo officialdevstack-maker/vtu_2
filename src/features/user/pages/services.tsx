@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronRight, X, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { services, mockUser, fmt } from "../data/mock";
-import { PageHeader, Card, Button, ConfirmSummary, inputCls } from "../components/shared-ui";
+import { PageHeader, Card, Button, ConfirmSummary, inputCls, selectCls } from "../components/shared-ui";
 
 export default function ServicesPage() {
   const [activeService, setActiveService] = useState<string | null>(null);
@@ -106,7 +106,7 @@ export default function ServicesPage() {
                 {activeService === "electricity" && (
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">Distribution company</label>
-                    <select className={inputCls}>
+                    <select className={selectCls}>
                       {["EKEDC — Eko", "IKEDC — Ikeja", "AEDC — Abuja", "PHEDC — Port Harcourt"].map(
                         (d) => <option key={d}>{d}</option>
                       )}

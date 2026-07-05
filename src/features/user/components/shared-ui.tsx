@@ -15,6 +15,11 @@ import { cn } from "@/shared/utils";
 export const inputCls =
   "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition";
 
+// Same base look as inputCls, plus a custom chevron so every <select> across
+// the app gets one consistently centered, non-overlapping arrow instead of
+// each browser's inconsistent native one. Use this on every <select>.
+export const selectCls = `${inputCls} select-arrow`;
+
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md";
 

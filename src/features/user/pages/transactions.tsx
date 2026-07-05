@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Search, Download, X, RefreshCw, Receipt } from "lucide-react";
 import { transactions, fmt, serviceLabels, type ServiceType, type Period } from "../data/mock";
-import { StatusBadge, PageHeader, Card, Button, EmptyState, Pagination, inputCls } from "../components/shared-ui";
+import { StatusBadge, PageHeader, Card, Button, EmptyState, Pagination, inputCls, selectCls } from "../components/shared-ui";
 import type { Transaction } from "../data/mock";
 import { usePagination } from "../../../shared/pagination";
 
@@ -65,7 +65,7 @@ export default function TransactionsPage() {
               setService(e.target.value as ServiceType | "all");
               resetToFirstPage();
             }}
-            className={inputCls}
+            className={selectCls}
           >
             <option value="all">All services</option>
             {Object.entries(serviceLabels).map(([id, label]) => (
@@ -78,7 +78,7 @@ export default function TransactionsPage() {
               setPeriod(e.target.value as Period | "all");
               resetToFirstPage();
             }}
-            className={inputCls}
+            className={selectCls}
           >
             <option value="all">All time</option>
             {Object.entries(periodLabels).map(([id, label]) => (

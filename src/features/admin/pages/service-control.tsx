@@ -7,7 +7,7 @@ import {
   StatusBadge,
   SkeletonLine,
   Toggle,
-  inputCls,
+  selectCls,
 } from "../../user/components/shared-ui";
 import {
   serviceControlService,
@@ -113,7 +113,7 @@ function DefaultProvidersCard() {
                       value={t.provider_id ?? ""}
                       disabled={savingId === String(t.id)}
                       onChange={(e) => handleChange(t, e.target.value)}
-                      className={`${inputCls} disabled:opacity-50`}
+                      className={`${selectCls} disabled:opacity-50`}
                     >
                       <option value="">No default (none)</option>
                       {vendors.map((v) => (

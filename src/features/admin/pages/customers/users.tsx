@@ -27,6 +27,7 @@ import {
   SkeletonRows,
   SkeletonStatGrid,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
 import { usePagination } from "../../../../shared/pagination";
 import { customerService, type Customer } from "./service";
@@ -481,7 +482,7 @@ export default function CustomersPage() {
                 setStatusFilter(e.target.value as typeof statusFilter);
                 setCustomerPage(1);
               }}
-              className={`${inputCls} py-2 text-sm w-full sm:w-40`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-40`}
             >
               <option value="all">All statuses</option>
               <option value="active">Active</option>
@@ -494,7 +495,7 @@ export default function CustomersPage() {
                 setKycFilter(e.target.value as typeof kycFilter);
                 setCustomerPage(1);
               }}
-              className={`${inputCls} py-2 text-sm w-full sm:w-44`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-44`}
             >
               <option value="all">All verification</option>
               <option value="verified">Verified</option>
@@ -507,7 +508,7 @@ export default function CustomersPage() {
                 setDateFilter(e.target.value as typeof dateFilter);
                 setCustomerPage(1);
               }}
-              className={`${inputCls} py-2 text-sm w-full sm:w-44`}
+              className={`${selectCls} py-2 text-sm w-full sm:w-44`}
             >
               <option value="all">Any date joined</option>
               <option value="7">Last 7 days</option>
@@ -763,7 +764,7 @@ export default function CustomersPage() {
                         status: e.target.value as CustomerStatus,
                       }))
                     }
-                    className={inputCls}
+                    className={selectCls}
                   >
                     <option value="active">Active</option>
                     <option value="suspended">Suspended</option>
@@ -774,7 +775,7 @@ export default function CustomersPage() {
                   <label className="block text-xs font-medium text-slate-600 mb-1.5">
                     Verification status
                   </label>
-                  <select value={editForm.kyc} disabled className={`${inputCls} bg-gray-50 text-slate-400`}>
+                  <select value={editForm.kyc} disabled className={`${selectCls} bg-gray-50 text-slate-400`}>
                     <option value="verified">Verified</option>
                     <option value="pending">Pending</option>
                     <option value="unverified">Unverified</option>

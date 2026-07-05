@@ -29,6 +29,7 @@ import {
   SkeletonStatGrid,
   StatCard,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
 import { usePagination } from "../../../../shared/pagination";
 
@@ -314,7 +315,7 @@ const SelectFilter = <T extends string>({
     aria-label={label}
     value={value}
     onChange={(event) => onChange(event.target.value)}
-    className={`${inputCls} h-10 py-2 text-xs lg:w-40`}
+    className={`${selectCls} h-10 py-2 text-xs lg:w-40`}
   >
     {options.map((option) => (
       <option key={option} value={option}>
@@ -709,7 +710,7 @@ export default function TransactionsPage() {
                 setDateFilter(event.target.value);
                 setPage(1);
               }}
-              className={`${inputCls} h-10 py-2 text-xs lg:w-40`}
+              className={`${selectCls} h-10 py-2 text-xs lg:w-40`}
             >
               {["Today", "Last 7 Days", "Last 30 Days", "Custom"].map(
                 (option) => (
