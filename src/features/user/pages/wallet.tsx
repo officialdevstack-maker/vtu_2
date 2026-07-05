@@ -13,7 +13,7 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="space-y-4">
       <PageHeader title="Wallet" description="Fund your wallet and manage your account details" />
 
       <Card className="p-5 bg-slate-900 border-slate-900">

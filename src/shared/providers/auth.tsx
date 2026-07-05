@@ -9,9 +9,57 @@ import {
 import { apiClient } from "../api/apiClient";
 import { config } from "../config";
 
+// Shape returned by GET /user (AuthenticatedSessionController::index), which
+// loads the Eloquent User model — its $appends (transactions, banks, stats,
+// referrals, joined_at) ride along on every fetch, so the dashboard needs no
+// separate endpoints for wallet balance, recent transactions, or charts.
+export type UserTransaction = {
+  id: number;
+  user_id: string;
+  transaction_type: string;
+  provider: string | null;
+  amount: string | number;
+  status: "pending" | "success" | "fail";
+  transaction_reference: string;
+  receiver: string | null;
+  account_or_phone: string | null;
+  plan_type: string | null;
+  quantity?: string | number;
+  service_fee?: string | number | null;
+  discount_amount?: string | number | null;
+  funding_method?: string | null;
+  token?: string | null;
+  response_message?: string | null;
+  completed_at?: string | null;
+  refunded_at?: string | null;
+  refund_reason?: string | null;
+  created_at: string;
+};
+
+export type UserStats = {
+  daily_purchased_data: string;
+  transaction_count: number;
+  monthly_successful: number;
+  monthly_failed: number;
+  monthly_pending: number;
+  transaction_status: { successful: number; failed: number; pending: number };
+  tx_chart: { labels: string[]; datasets: { label: string; data: number[] }[] };
+  tx_amount_30d: { date: string; total_amount: string | number }[];
+};
+
 interface User {
   id: string;
   email?: string;
+  fullname?: string;
+  username?: string;
+  phone?: string;
+  user_type?: string;
+  wallet_balance?: string | number;
+  referral_balance?: string | number;
+  referral_code?: string | null;
+  transactions?: UserTransaction[];
+  stats?: UserStats;
+  joined_at?: string;
   [key: string]: any;
 }
 
@@ -19,6 +67,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitializing: boolean;
+  refreshUser: () => Promise<void>;
   login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -28,6 +78,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -39,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    checkAuth();
+    checkAuth().finally(() => setIsInitializing(false));
   }, [checkAuth]);
 
   const login = useCallback(
@@ -79,6 +130,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         isAuthenticated: !!user,
         isLoading,
+        isInitializing,
+        refreshUser: checkAuth,
         login,
         logout,
       }}
