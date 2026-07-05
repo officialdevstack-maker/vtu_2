@@ -545,7 +545,120 @@ export default function CustomersPage() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="divide-y divide-gray-100 md:hidden">
+              {paginated.map((c) => (
+                <div key={c.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => openView(c)}
+                      className="min-w-0 flex flex-1 items-center gap-3 text-left"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#111827]/10 text-xs font-medium text-[#111827]">
+                        {initials(c.username || c.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {c.username || c.name}
+                        </p>
+                        <p className="truncate text-xs text-slate-500">{c.email}</p>
+                      </div>
+                    </button>
+
+                    <div className="relative shrink-0">
+                      <button
+                        onClick={() =>
+                          setOpenMenuId(openMenuId === c.id ? null : c.id)
+                        }
+                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-gray-100"
+                        title="Actions"
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </button>
+                      {openMenuId === c.id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setOpenMenuId(null)}
+                          />
+                          <div className="absolute right-0 top-8 z-20 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                            <button
+                              onClick={() => openView(c)}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                            >
+                              <Eye className="h-3.5 w-3.5" /> View
+                            </button>
+                            <button
+                              onClick={() => openEdit(c)}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                            >
+                              <Pencil className="h-3.5 w-3.5" /> Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSuspendTarget(c);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                            >
+                              {c.status === "suspended" ? (
+                                <ShieldCheck className="h-3.5 w-3.5" />
+                              ) : (
+                                <Ban className="h-3.5 w-3.5" />
+                              )}
+                              {c.status === "suspended" ? "Reactivate" : "Suspend"}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDeleteTarget(c);
+                                setOpenMenuId(null);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="text-slate-400">Phone</p>
+                      <p className="mt-0.5 truncate font-medium text-slate-700">
+                        {c.phone}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Wallet</p>
+                      <p className="mt-0.5 font-semibold tabular-nums text-slate-900">
+                        {fmt(c.balance)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Transactions</p>
+                      <p className="mt-0.5 font-medium tabular-nums text-slate-700">
+                        {c.txns}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Joined</p>
+                      <p className="mt-0.5 font-medium text-slate-700">
+                        {formatDate(c.dateJoined)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <StatusBadge status={c.status} />
+                    <StatusBadge status={c.kyc} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm min-w-[900px]">
                 <thead>
                   <tr className="border-b border-gray-100">

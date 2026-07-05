@@ -75,6 +75,24 @@
   .brand-primary-text {
     color: var(--brand-primary-text);
   }
+
+  .admin-theme .overflow-x-auto {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-theme .overflow-x-auto > table:not([class*="min-w-"]) {
+    min-width: 44rem;
+  }
+
+  .admin-theme .overflow-x-auto > table th,
+  .admin-theme .overflow-x-auto > table td {
+    white-space: nowrap;
+  }
+
+  .admin-theme .overflow-x-auto > table td {
+    vertical-align: middle;
+  }
 }
 
 @keyframes loading-bar {
