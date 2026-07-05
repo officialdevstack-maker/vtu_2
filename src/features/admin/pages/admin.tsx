@@ -12,7 +12,8 @@
   Server,
   Activity,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { fmt, fmtCompact } from "../../user/data/mock";
 import {
@@ -81,36 +82,54 @@ export default function AdminPage() {
   const navigate = useNavigate();
 
   const [rangeDays, setRangeDays] = useState<7 | 30 | 90>(30);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [recentTxns, setRecentTxns] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [statsRes, analyticsRes, providersRes, txnsRes] = await Promise.all([
-        statsService.get().catch(() => null),
-        analyticsService.get(rangeParams(rangeDays)).catch(() => null),
-        providerService.getAll().catch(() => []),
-        transactionService.getRecent(8).catch(() => []),
-      ]);
-      setStats(statsRes);
-      setAnalytics(analyticsRes);
-      setProviders(providersRes);
-      setRecentTxns(txnsRes);
-      setLastSynced(new Date());
-    } finally {
-      setLoading(false);
-    }
-  }, [rangeDays]);
+  // Each panel caches independently — flipping between 7d/30d/90d and back
+  // is instant after the first load, and "Sync now" refetches all four
+  // without anyone needing to re-derive a combined loading flag by hand.
+  const statsQuery = useQuery({
+    queryKey: ["admin", "stats"],
+    queryFn: () => statsService.get(),
+  });
+  const analyticsQuery = useQuery({
+    queryKey: ["admin", "analytics", rangeDays],
+    queryFn: () => analyticsService.get(rangeParams(rangeDays)),
+  });
+  const providersQuery = useQuery({
+    queryKey: ["admin", "providers"],
+    queryFn: () => providerService.getAll(),
+  });
+  const recentTxnsQuery = useQuery({
+    queryKey: ["admin", "recent-transactions"],
+    queryFn: () => transactionService.getRecent(8),
+  });
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => void load(), 0);
-    return () => window.clearTimeout(timer);
-  }, [load]);
+  const stats: Stats | null = statsQuery.data ?? null;
+  const analytics: Analytics | null = analyticsQuery.data ?? null;
+  const providers: Provider[] = providersQuery.data ?? [];
+  const recentTxns: Transaction[] = recentTxnsQuery.data ?? [];
+
+  const loading = statsQuery.isPending || analyticsQuery.isPending;
+  const isSyncing =
+    statsQuery.isFetching ||
+    analyticsQuery.isFetching ||
+    providersQuery.isFetching ||
+    recentTxnsQuery.isFetching;
+  const lastSyncedAt = Math.max(
+    statsQuery.dataUpdatedAt,
+    analyticsQuery.dataUpdatedAt,
+    providersQuery.dataUpdatedAt,
+    recentTxnsQuery.dataUpdatedAt,
+  );
+  const lastSynced = lastSyncedAt > 0 ? new Date(lastSyncedAt) : null;
+
+  const handleSync = () => {
+    void Promise.all([
+      statsQuery.refetch(),
+      analyticsQuery.refetch(),
+      providersQuery.refetch(),
+      recentTxnsQuery.refetch(),
+    ]);
+  };
 
   const rangeLabel = `Last ${rangeDays} days`;
 
@@ -253,11 +272,11 @@ export default function AdminPage() {
           </span>
         </div>
         <button
-          onClick={() => void load()}
-          disabled={loading}
+          onClick={handleSync}
+          disabled={isSyncing}
           className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 disabled:opacity-50"
         >
-          <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Sync now
+          <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} /> Sync now
         </button>
       </div>
 
@@ -291,7 +310,7 @@ export default function AdminPage() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading && !stats && !analytics
+        {loading
           ? [...Array(6)].map((_, i) => (
               <div key={i} className="p-4 rounded-xl border border-gray-200 space-y-2">
                 <SkeletonLine className="h-3 w-20" />
@@ -355,7 +374,7 @@ export default function AdminPage() {
             Manage providers
           </Button>
         </div>
-        {loading && providers.length === 0 ? (
+        {providersQuery.isPending ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[...Array(4)].map((_, i) => (
               <SkeletonLine key={i} className="h-20 rounded-lg" />
@@ -415,7 +434,7 @@ export default function AdminPage() {
               <p className="text-xs text-slate-400 mt-0.5">{rangeLabel}</p>
             </div>
           </div>
-          {loading && !analytics ? (
+          {analyticsQuery.isPending ? (
             <SkeletonLine className="h-[170px] w-full" />
           ) : revenueChartData.length === 0 ? (
             <EmptyState
@@ -475,7 +494,7 @@ export default function AdminPage() {
           <h3 className="text-sm font-semibold text-slate-900 mb-3.5">
             Service breakdown
           </h3>
-          {loading && !analytics ? (
+          {analyticsQuery.isPending ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
                 <SkeletonLine key={i} className="h-4 w-full" />
@@ -515,7 +534,7 @@ export default function AdminPage() {
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">{rangeLabel}</p>
           </div>
-          {loading && !analytics ? (
+          {analyticsQuery.isPending ? (
             <SkeletonLine className="h-[200px] w-full" />
           ) : txVolumeData.length === 0 ? (
             <EmptyState
@@ -598,7 +617,7 @@ export default function AdminPage() {
             <h3 className="text-sm font-semibold text-slate-900 mb-3">
               Funding vs spend
             </h3>
-            {loading && !analytics ? (
+            {analyticsQuery.isPending ? (
               <div className="space-y-2">
                 <SkeletonLine className="h-4 w-full" />
                 <SkeletonLine className="h-4 w-full" />
@@ -652,7 +671,7 @@ export default function AdminPage() {
               Top customers
             </h3>
             <p className="text-[10px] text-slate-400 -mt-2 mb-3">{rangeLabel}</p>
-            {loading && !analytics ? (
+            {analyticsQuery.isPending ? (
               <div className="space-y-2.5">
                 {[...Array(4)].map((_, i) => (
                   <SkeletonLine key={i} className="h-4 w-full" />
@@ -706,7 +725,7 @@ export default function AdminPage() {
             View all
           </button>
         </div>
-        {loading && recentTxns.length === 0 ? (
+        {recentTxnsQuery.isPending ? (
           <div className="p-4 space-y-3">
             {[...Array(4)].map((_, i) => (
               <SkeletonLine key={i} className="h-4 w-full" />

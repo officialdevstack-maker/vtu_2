@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useNavigation } from "react-router-dom";
 import {
+  ArrowLeftRight,
   Bell,
   BellRing,
   BookOpenCheck,
   Cable,
   ChevronRight,
   LayoutGrid,
+  LogOut,
   Menu,
   Megaphone,
   PlugZap,
@@ -22,6 +24,15 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../shared/providers/auth";
 import { TopLoadingBar } from "../../user/components/shared-ui";
+
+const initialsOf = (name?: string) =>
+  (name ?? "")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "?";
 
 type NavChild = {
   label: string;
@@ -115,11 +126,23 @@ const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { logout } = useAuth();
+  const { logout, user, hasPermission } = useAuth();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+
+  const displayName = user?.fullname ?? user?.username ?? "Admin";
+  const displayRole = user?.role?.name ?? "Admin";
+  const canSwitchAccount = hasPermission("switch_account");
+
+  const handleSwitchToUserView = () => {
+    setSidebarMenuOpen(false);
+    setHeaderMenuOpen(false);
+    navigate("/dashboard");
+  };
 
   const isActive = (path: string) => {
     if (path === "/admin") {
@@ -239,22 +262,52 @@ const Layout = () => {
         ))}
       </nav>
 
-      <div className="border-t border-slate-100 px-3 py-3">
+      <div className="relative border-t border-slate-100 px-3 py-3">
         <button
           type="button"
-          onClick={() => setShowLogoutModal(true)}
+          onClick={() => setSidebarMenuOpen((o) => !o)}
           className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:bg-slate-100"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-            CO
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+            {initialsOf(displayName)}
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-slate-900">
-              Chukwuemeka Obi
+              {displayName}
             </p>
-            <p className="truncate text-xs text-slate-400">Super admin</p>
+            <p className="truncate text-xs text-slate-400">{displayRole}</p>
           </div>
         </button>
+
+        {sidebarMenuOpen ? (
+          <>
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setSidebarMenuOpen(false)}
+            />
+            <div className="absolute bottom-full left-3 right-3 z-20 mb-2 rounded-xl border border-slate-200/70 bg-white py-1 shadow-lg">
+              {canSwitchAccount && (
+                <button
+                  type="button"
+                  onClick={handleSwitchToUserView}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                >
+                  <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to user view
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setSidebarMenuOpen(false);
+                  setShowLogoutModal(true);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
+              >
+                <LogOut className="h-3.5 w-3.5" /> Log out
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     </>
   );
@@ -312,19 +365,55 @@ const Layout = () => {
 
                 <div className="mx-1 hidden h-5 w-px bg-slate-200 sm:block" />
 
-                <button className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
-                    CO
-                  </div>
-                  <div className="hidden text-left sm:block">
-                    <p className="text-xs font-medium leading-tight text-slate-900">
-                      Chukwuemeka Obi
-                    </p>
-                    <p className="text-[11px] leading-tight text-slate-400">
-                      Super admin
-                    </p>
-                  </div>
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setHeaderMenuOpen((o) => !o)}
+                    className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
+                  >
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
+                      {initialsOf(displayName)}
+                    </div>
+                    <div className="hidden text-left sm:block">
+                      <p className="text-xs font-medium leading-tight text-slate-900">
+                        {displayName}
+                      </p>
+                      <p className="text-[11px] leading-tight text-slate-400">
+                        {displayRole}
+                      </p>
+                    </div>
+                  </button>
+
+                  {headerMenuOpen ? (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setHeaderMenuOpen(false)}
+                      />
+                      <div className="absolute right-0 top-full z-20 mt-2 w-52 rounded-xl border border-slate-200/70 bg-white py-1 shadow-lg">
+                        {canSwitchAccount && (
+                          <button
+                            type="button"
+                            onClick={handleSwitchToUserView}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                          >
+                            <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to user view
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHeaderMenuOpen(false);
+                            setShowLogoutModal(true);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
+                        >
+                          <LogOut className="h-3.5 w-3.5" /> Log out
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
               </div>
             </div>
           </header>

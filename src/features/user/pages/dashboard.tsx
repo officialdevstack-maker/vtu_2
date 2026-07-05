@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Wallet, ArrowDownLeft, ShoppingBag, CheckCircle2, AlertTriangle, TrendingUp,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
@@ -10,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { fmt } from "../data/mock";
 import { SkeletonCard, StatusBadge, StatCard, Card, Button, EmptyState } from "../components/shared-ui";
 import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
-import { customerService, type Network } from "../services/customerService";
+import { customerService } from "../services/customerService";
 import { transactionTypeMeta, isCredit, toNumber, badgeStatus } from "../utils/transactionDisplay";
 
 const quickActions = [
@@ -34,17 +35,14 @@ export default function DashboardPage() {
   const { user, isInitializing, refreshUser } = useAuth();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [converting, setConverting] = useState(false);
-  const [networks, setNetworks] = useState<Network[]>([]);
-  const [networksLoading, setNetworksLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    customerService
-      .getNetworks()
-      .then(setNetworks)
-      .catch(() => setNetworks([]))
-      .finally(() => setNetworksLoading(false));
-  }, []);
+  const networksQuery = useQuery({
+    queryKey: ["networks"],
+    queryFn: () => customerService.getNetworks(),
+  });
+  const networks = networksQuery.data ?? [];
+  const networksLoading = networksQuery.isPending;
 
   const transactions = useMemo<UserTransaction[]>(
     () =>

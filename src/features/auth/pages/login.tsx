@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Zap } from "lucide-react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "../validators";
@@ -13,6 +13,7 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     register,
@@ -25,8 +26,16 @@ const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data.login, data.password);
-      navigate("/dashboard", { replace: true });
+      const user = await login(data.login, data.password);
+      // Redirect back to wherever a route guard bounced them from, when it
+      // matches their role — otherwise land on the right home for their
+      // account type. An admin redirected from an admin-only page always
+      // lands there; a non-admin never gets sent into /admin at all.
+      const from = (location.state as { from?: Location } | null)?.from?.pathname;
+      const isAdmin = user?.user_type === "admin";
+      const fallback = isAdmin ? "/admin" : "/dashboard";
+      const target = from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
+      navigate(target, { replace: true });
     } catch {
       setError("root", { message: "Invalid credentials. Please try again." });
     }
