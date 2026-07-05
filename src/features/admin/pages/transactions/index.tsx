@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Clock3,
   Download,
   Eye,
@@ -26,11 +24,13 @@ import {
   Card,
   EmptyState,
   PageHeader,
+  Pagination,
   SkeletonRows,
   SkeletonStatGrid,
   StatCard,
   inputCls,
 } from "../../../user/components/shared-ui";
+import { usePagination } from "../../../../shared/pagination";
 
 type TransactionType =
   | "Airtime"
@@ -108,7 +108,6 @@ type ConfirmAction = "retry" | "reverse" | "mark-success";
 type ConfirmTarget = { action: ConfirmAction; transaction: Transaction };
 type Toast = { id: number; tone: "success" | "error"; message: string };
 
-const PAGE_SIZE = 10;
 const baseDate = new Date("2026-07-04T15:30:00+01:00");
 
 const transactionTypes: TransactionType[] = [
@@ -315,7 +314,7 @@ const SelectFilter = <T extends string>({
     aria-label={label}
     value={value}
     onChange={(event) => onChange(event.target.value)}
-    className={`${inputCls} h-10 py-2 text-xs sm:w-40`}
+    className={`${inputCls} h-10 py-2 text-xs lg:w-40`}
   >
     {options.map((option) => (
       <option key={option} value={option}>
@@ -339,7 +338,6 @@ export default function TransactionsPage() {
   const [dateFilter, setDateFilter] = useState("Last 30 Days");
   const [providerFilter, setProviderFilter] =
     useState<FilterValue<Provider>>("All");
-  const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [detailTransaction, setDetailTransaction] =
     useState<Transaction | null>(null);
@@ -427,15 +425,14 @@ export default function TransactionsPage() {
     [transactions],
   );
 
-  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const paginatedTransactions = filteredTransactions.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
-  const showingStart =
-    filteredTransactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const showingEnd = Math.min(currentPage * PAGE_SIZE, filteredTransactions.length);
+  const {
+    currentPage,
+    pageItems: paginatedTransactions,
+    pageSize,
+    setPage,
+    totalItems,
+    totalPages,
+  } = usePagination(filteredTransactions);
 
   const resetFilters = () => {
     setSearch("");
@@ -539,7 +536,71 @@ export default function TransactionsPage() {
     setReverseReason("");
   };
 
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const renderActionMenu = (transaction: Transaction) => (
+    <div className="relative flex justify-center">
+      <button
+        type="button"
+        onClick={() =>
+          setOpenMenuId(openMenuId === transaction.id ? null : transaction.id)
+        }
+        className="rounded-xl p-1.5 text-slate-400 transition-colors hover:bg-gray-100 hover:text-slate-600"
+        title="Actions"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      {openMenuId === transaction.id ? (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setOpenMenuId(null)}
+          />
+          <div className="absolute right-0 top-8 z-20 w-52 rounded-xl border border-slate-200/70 bg-white py-1 shadow-md">
+            <button
+              type="button"
+              onClick={() => {
+                setDetailTransaction(transaction);
+                setOpenMenuId(null);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <Eye className="h-3.5 w-3.5" /> View Details
+            </button>
+            <button
+              type="button"
+              onClick={() => openConfirm("retry", transaction)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Retry Transaction
+            </button>
+            <button
+              type="button"
+              onClick={() => openConfirm("reverse", transaction)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <Undo2 className="h-3.5 w-3.5" /> Reverse / Refund
+            </button>
+            <button
+              type="button"
+              onClick={() => openConfirm("mark-success", transaction)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" /> Mark as Successful
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpenMenuId(null);
+                showToast(`Receipt for ${transaction.id} is ready.`);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+            >
+              <ReceiptText className="h-3.5 w-3.5" /> Download Receipt
+            </button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
 
   return (
     <div className="space-y-5">
@@ -648,7 +709,7 @@ export default function TransactionsPage() {
                 setDateFilter(event.target.value);
                 setPage(1);
               }}
-              className={`${inputCls} h-10 py-2 text-xs sm:w-40`}
+              className={`${inputCls} h-10 py-2 text-xs lg:w-40`}
             >
               {["Today", "Last 7 Days", "Last 30 Days", "Custom"].map(
                 (option) => (
@@ -697,7 +758,53 @@ export default function TransactionsPage() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="divide-y divide-slate-100 sm:hidden">
+              {paginatedTransactions.map((transaction) => (
+                <div key={transaction.id} className="px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-medium text-indigo-700">
+                      {initials(transaction.customerName)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDetailTransaction(transaction)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-900">
+                            {transaction.customerName}
+                          </p>
+                          <p className="truncate text-xs text-slate-400">
+                            {transaction.email}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-right text-sm font-semibold tabular-nums text-slate-900">
+                          {fmt(transaction.amount)}
+                        </p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <TransactionStatusBadge status={transaction.status} />
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                          {transaction.type}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                          {transaction.provider}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                        <span className="font-mono">{transaction.id}</span>
+                        <span>{transaction.paymentMethod}</span>
+                        <span>{dateLabel(transaction.dateTime)}</span>
+                      </div>
+                    </button>
+                    <div className="shrink-0">{renderActionMenu(transaction)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto sm:block">
               <table className="w-full table-fixed min-w-[520px] lg:min-w-0 text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
@@ -755,81 +862,7 @@ export default function TransactionsPage() {
                         {dateLabel(transaction.dateTime)}
                       </td>
                       <td className="px-2 py-3">
-                        <div className="relative flex justify-center">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenMenuId(
-                                openMenuId === transaction.id
-                                  ? null
-                                  : transaction.id,
-                              )
-                            }
-                            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-gray-100 hover:text-slate-600"
-                            title="Actions"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-                          {openMenuId === transaction.id ? (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setOpenMenuId(null)}
-                              />
-                              <div className="absolute right-0 top-8 z-20 w-52 rounded-xl border border-slate-200/70 bg-white py-1 shadow-md">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setDetailTransaction(transaction);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                                >
-                                  <Eye className="h-3.5 w-3.5" /> View Details
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => openConfirm("retry", transaction)}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                                >
-                                  <RotateCcw className="h-3.5 w-3.5" /> Retry
-                                  Transaction
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => openConfirm("reverse", transaction)}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                                >
-                                  <Undo2 className="h-3.5 w-3.5" /> Reverse /
-                                  Refund
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    openConfirm("mark-success", transaction)
-                                  }
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                                >
-                                  <ShieldCheck className="h-3.5 w-3.5" /> Mark
-                                  as Successful
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setOpenMenuId(null);
-                                    showToast(
-                                      `Receipt for ${transaction.id} is ready.`,
-                                    );
-                                  }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                                >
-                                  <ReceiptText className="h-3.5 w-3.5" />{" "}
-                                  Download Receipt
-                                </button>
-                              </div>
-                            </>
-                          ) : null}
-                        </div>
+                        {renderActionMenu(transaction)}
                       </td>
                     </tr>
                   ))}
@@ -837,48 +870,14 @@ export default function TransactionsPage() {
               </table>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-400">
-                Showing {showingStart}-{showingEnd} of{" "}
-                {filteredTransactions.length} transactions
-              </p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex flex-wrap items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 px-2 text-xs text-slate-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ChevronLeft className="h-3.5 w-3.5" /> Previous
-                  </button>
-                  {pageNumbers.map((pageNumber) => (
-                    <button
-                      key={pageNumber}
-                      type="button"
-                      onClick={() => setPage(pageNumber)}
-                      className={`h-8 min-w-8 rounded-md px-2 text-xs font-medium transition-colors ${
-                        currentPage === pageNumber
-                          ? "bg-indigo-600 text-white"
-                          : "text-slate-500 hover:bg-gray-100"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPage((prev) => Math.min(totalPages, prev + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="inline-flex h-8 items-center gap-1 rounded-md border border-gray-200 px-2 text-xs text-slate-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Next <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              label="transactions"
+            />
           </>
         )}
       </Card>
@@ -895,7 +894,7 @@ export default function TransactionsPage() {
                 <p className="text-sm font-semibold text-slate-900">
                   Transaction details
                 </p>
-                <p className="font-mono text-xs text-slate-400">
+                <p className="break-all font-mono text-xs text-slate-400">
                   {detailTransaction.id}
                 </p>
               </div>
@@ -939,7 +938,7 @@ export default function TransactionsPage() {
                     <p className="text-xs font-medium text-slate-400">
                       {label}
                     </p>
-                    <p className="mt-1 text-sm text-slate-800">{value}</p>
+                    <p className="mt-1 break-words text-sm text-slate-800">{value}</p>
                   </div>
                 ))}
               </div>
@@ -948,7 +947,7 @@ export default function TransactionsPage() {
                 <p className="text-xs font-medium text-slate-400">
                   API response / message
                 </p>
-                <p className="mt-1 text-sm text-slate-700">
+                <p className="mt-1 break-words text-sm text-slate-700">
                   {detailTransaction.apiMessage}
                 </p>
               </div>
@@ -966,14 +965,14 @@ export default function TransactionsPage() {
                           <span className="mt-1 h-full min-h-10 w-px bg-gray-200" />
                         ) : null}
                       </div>
-                      <div className="flex-1 pb-2">
+                      <div className="min-w-0 flex-1 pb-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-medium text-slate-900">
                             {item.title}
                           </p>
                           <p className="text-xs text-slate-400">{item.time}</p>
                         </div>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 break-words text-xs text-slate-500">
                           {item.note}
                         </p>
                       </div>
@@ -997,7 +996,7 @@ export default function TransactionsPage() {
                     ? "Reverse / refund transaction?"
                     : "Mark transaction as successful?"}
               </p>
-              <p className="mt-1 font-mono text-xs text-slate-400">
+              <p className="mt-1 break-all font-mono text-xs text-slate-400">
                 {confirmTarget.transaction.id}
               </p>
             </div>
@@ -1010,13 +1009,13 @@ export default function TransactionsPage() {
                 </p>
               </div>
               <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
-                <div className="flex justify-between gap-3">
+                <div className="flex flex-wrap justify-between gap-3">
                   <span className="text-slate-500">Customer</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="break-words text-right font-medium text-slate-900">
                     {confirmTarget.transaction.customerName}
                   </span>
                 </div>
-                <div className="mt-2 flex justify-between gap-3">
+                <div className="mt-2 flex flex-wrap justify-between gap-3">
                   <span className="text-slate-500">Amount</span>
                   <span className="font-medium text-slate-900">
                     {fmt(confirmTarget.transaction.amount)}
@@ -1036,7 +1035,7 @@ export default function TransactionsPage() {
                   />
                 </div>
               ) : null}
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   variant="secondary"
                   fullWidth
@@ -1062,11 +1061,11 @@ export default function TransactionsPage() {
         </div>
       ) : null}
 
-      <div className="fixed right-4 top-16 z-[70] space-y-2">
+      <div className="fixed left-4 right-4 top-16 z-[70] space-y-2 sm:left-auto">
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`flex min-w-72 items-center gap-2 rounded-lg border px-3.5 py-3 text-sm shadow-lg ${
+            className={`flex w-full items-center gap-2 rounded-lg border px-3.5 py-3 text-sm shadow-lg sm:min-w-72 ${
               toast.tone === "success"
                 ? "border-emerald-100 bg-white text-emerald-700"
                 : "border-red-100 bg-white text-red-700"
