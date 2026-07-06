@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Bell,
@@ -6,7 +6,7 @@ import {
   LogOut,
   Receipt,
   Wallet,
-  HelpCircle,
+  MessageCircle,
   Share2,
   Users,
   Phone,
@@ -15,15 +15,17 @@ import {
   Plug,
   CreditCard,
   Zap,
-  BarChart3,
   ArrowLeftRight,
+  ArrowUpCircle,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
+import { generalService } from "../../admin/pages/generalService";
+import { toWhatsAppLink } from "@/shared/utils";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -98,14 +100,9 @@ const sections: { label: string; items: NavItem[] }[] = [
         path: "/notifications",
         badge: 3,
       },
-      { id: "support", label: "Support", icon: HelpCircle, path: "/support" },
     ],
   },
 ];
-
-// Only shown to users whose role carries switch_account — see the same
-// permission check gating the dropdown item in the footer avatar menu below.
-const adminNavItem: NavItem = { id: "admin", label: "Admin", icon: BarChart3, path: "/admin" };
 
 const bottomItems: NavItem[] = [
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
@@ -139,15 +136,15 @@ export default function Sidebar({
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const canSwitchAccount = hasPermission("switch_account");
-  const displayName = user?.fullname ?? user?.username ?? "there";
+  const displayName = user?.username ?? "there";
   const displayEmail = user?.email ?? "";
 
-  const visibleSections = useMemo(() => {
-    if (!canSwitchAccount) return sections;
-    return sections.map((s) =>
-      s.label === "Account" ? { ...s, items: [...s.items, adminNavItem] } : s,
-    );
-  }, [canSwitchAccount]);
+  const generalQuery = useQuery({
+    queryKey: ["general-settings"],
+    queryFn: () => generalService.get(),
+    staleTime: Infinity,
+  });
+  const whatsappLink = generalQuery.data?.app_phone ? toWhatsAppLink(generalQuery.data.app_phone) : null;
 
   const go = (path: string) => {
     navigate(path);
@@ -174,6 +171,11 @@ export default function Sidebar({
   const goToSettings = () => {
     setAccountMenuOpen(false);
     go("/settings");
+  };
+
+  const goToUpgradeAccount = () => {
+    setAccountMenuOpen(false);
+    go("/upgrade-account");
   };
 
   return (
@@ -220,7 +222,7 @@ export default function Sidebar({
 
         {/* Nav */}
         <nav className="flex-1 px-2.5 py-4 overflow-y-auto overflow-x-hidden space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {visibleSections.map((section) => (
+          {sections.map((section) => (
             <div key={section.label}>
               <p
                 className={`text-[11px] font-medium tracking-wide text-white/35 mb-1.5 px-2.5 ${collapsed ? "lg:hidden" : ""}`}
@@ -258,6 +260,20 @@ export default function Sidebar({
                     </button>
                   );
                 })}
+                {section.label === "Account" && whatsappLink && (
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={collapsed ? "WhatsApp support" : undefined}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors text-white/60 hover:bg-white/5 hover:text-white/90 ${collapsed ? "lg:justify-center" : ""}`}
+                  >
+                    <MessageCircle className="w-4 h-4 shrink-0" />
+                    <span className={`truncate ${collapsed ? "lg:hidden" : ""}`}>
+                      WhatsApp support
+                    </span>
+                  </a>
+                )}
               </div>
             </div>
           ))}
@@ -323,6 +339,13 @@ export default function Sidebar({
                     className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                   >
                     <Settings className="h-3.5 w-3.5" /> Settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToUpgradeAccount}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    <ArrowUpCircle className="h-3.5 w-3.5" /> Upgrade account
                   </button>
                   {canSwitchAccount && (
                     <button

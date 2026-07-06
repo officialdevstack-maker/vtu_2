@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeftRight, Bell, LogOut, Menu, Search, Settings } from "lucide-react";
+import { ArrowLeftRight, ArrowUpCircle, Bell, LogOut, Menu, Search, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../shared/providers/auth";
 
@@ -10,7 +10,7 @@ const pageTitles: Record<string, string> = {
   "/wallet": "Fund Wallet",
   "/notifications": "Notifications",
   "/settings": "Settings",
-  "/support": "Support",
+  "/upgrade-account": "Upgrade Account",
   "/referral": "Referral Program",
   "/beneficiaries": "Beneficiaries",
   "/buy-airtime": "Buy Airtime",
@@ -41,7 +41,7 @@ export default function Topbar({
   const [menuOpen, setMenuOpen] = useState(false);
   const title = pageTitles[location.pathname] ?? "KORA";
 
-  const displayName = user?.fullname ?? user?.username ?? "there";
+  const displayName = user?.username ?? "there";
   const canSwitchAccount = hasPermission("switch_account");
 
   const handleLogout = async () => {
@@ -123,6 +123,16 @@ export default function Topbar({
                     className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
                   >
                     <Settings className="h-3.5 w-3.5" /> Settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/upgrade-account");
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                  >
+                    <ArrowUpCircle className="h-3.5 w-3.5" /> Upgrade account
                   </button>
                   {canSwitchAccount && (
                     <button

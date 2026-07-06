@@ -102,12 +102,35 @@ export type DiscountPreview = {
   discount_amount: number;
 };
 
+// A purchasable account tier — the `network` column of a Discount row
+// scoped to service_type "user_upgrade" (see CustomerController::upgrade).
+export type UpgradeTier = { tier: string; cost: number };
+
+export type UpgradeTiersResponse = {
+  current_tier: string;
+  tiers: UpgradeTier[];
+};
+
+// CustomerController::upgrade() predates the standard {success,data}
+// envelope and returns its own {message, user} / {error} shape directly.
+export type UpgradeResult = { message: string; user: { user_type: string; wallet_balance: string | number } };
+
 export const customerService = {
   // Moves the user's entire referral_balance into wallet_balance.
   // Backend returns the updated user, but callers should prefer
   // refreshUser() from useAuth() afterward to keep every field in sync.
   convertReferralToWallet: (userId: string | number): Promise<void> =>
     apiClient.post(`/customer/${userId}/convert-referral`).then(() => undefined),
+
+  getUpgradeTiers: (): Promise<UpgradeTiersResponse> =>
+    apiClient
+      .get<ApiEnvelope<UpgradeTiersResponse>>("/customer/account/upgrade-tiers")
+      .then((r) => r.data.data),
+
+  upgradeAccount: (payload: { upgrade_to: string; pin: string }): Promise<UpgradeResult> =>
+    apiClient
+      .post<UpgradeResult>("/customer/account/upgrade", payload)
+      .then((r) => r.data),
 
   getNetworks: (): Promise<Network[]> =>
     apiClient

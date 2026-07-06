@@ -16,13 +16,16 @@ export function extractApiErrorMessage(
 ): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as
-      | { message?: string; errors?: Record<string, string[]> }
+      | { message?: string; error?: string; errors?: Record<string, string[]> }
       | undefined;
     const validationErrors = data?.errors;
     if (validationErrors && Object.keys(validationErrors).length > 0) {
       return Object.values(validationErrors).flat().join(" ");
     }
     if (typeof data?.message === "string" && data.message) return data.message;
+    // A few older endpoints (e.g. CustomerController::upgrade) put the
+    // string at `error` instead of `message`.
+    if (typeof data?.error === "string" && data.error) return data.error;
   }
   return fallback;
 }
@@ -42,6 +45,14 @@ export function detectNetwork(phone: string): string | null {
     if (prefixes.includes(prefix)) return net;
   }
   return null;
+}
+
+// Converts a local Nigerian number (leading 0) to a wa.me link; a number
+// already in international format (no leading 0) passes through untouched.
+export function toWhatsAppLink(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const intl = digits.startsWith("0") ? `234${digits.slice(1)}` : digits;
+  return `https://wa.me/${intl}`;
 }
 
 export function redirect(path: any) {

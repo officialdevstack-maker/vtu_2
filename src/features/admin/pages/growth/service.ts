@@ -113,7 +113,7 @@ export const promotionService = {
 // Uses the dedicated, validated /admin/discounts endpoint (not the generic
 // Universal Table API — see DiscountController on the backend).
 
-export type DiscountServiceType = "airtime" | "data" | "cable" | "electricity" | "exam" | "airtimeToCash";
+export type DiscountServiceType = "airtime" | "data" | "cable" | "electricity" | "exam" | "airtimeToCash" | "user_upgrade";
 export type DiscountValueType = "percentage" | "fixed";
 
 export type Discount = {

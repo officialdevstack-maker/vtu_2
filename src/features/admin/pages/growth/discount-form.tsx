@@ -23,6 +23,15 @@ const SERVICE_OPTIONS: { value: DiscountServiceType; label: string }[] = [
   { value: "electricity", label: "Electricity" },
   { value: "exam", label: "Exam" },
   { value: "airtimeToCash", label: "Airtime to Cash" },
+  { value: "user_upgrade", label: "Account Upgrade" },
+];
+
+// Matches CustomerController::upgrade()'s `upgrade_to` enum exactly.
+const UPGRADE_TIER_OPTIONS = [
+  { value: "user", label: "User" },
+  { value: "agent", label: "Agent" },
+  { value: "bonanza", label: "Bonanza" },
+  { value: "api", label: "API Reseller" },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -197,9 +206,13 @@ const discountFormSchema = z
       message: "End date must be on or after the start date.",
       path: ["ends_at"],
     },
-  );
+  )
+  .refine((data) => data.service_type !== "user_upgrade" || data.network !== "", {
+    message: "Select which tier this upgrade cost applies to.",
+    path: ["network"],
+  });
 
-type FormErrors = Partial<Record<"name" | "service_type" | "value" | "ends_at", string>>;
+type FormErrors = Partial<Record<"name" | "service_type" | "value" | "ends_at" | "network", string>>;
 
 function validateForm(form: FormState): FormErrors {
   const result = discountFormSchema.safeParse(form);
@@ -216,10 +229,11 @@ function validateForm(form: FormState): FormErrors {
 // A service that has no clean "network" list to select from yet falls back
 // to a free-text input (blank = all) — see growth/discounts.tsx's
 // SERVICE_LABELS comment for the same service_type set.
-const NETWORK_SOURCE: Partial<Record<DiscountServiceType, "network" | "network_type">> = {
+const NETWORK_SOURCE: Partial<Record<DiscountServiceType, "network" | "network_type" | "tier">> = {
   airtime: "network",
   data: "network",
   cable: "network_type",
+  user_upgrade: "tier",
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -264,7 +278,8 @@ export default function DiscountFormPage() {
 
   // What "network" means depends on the selected service: a telecom
   // carrier for airtime/data, a cable provider for cable (dstv/gotv/...,
-  // modeled as NetworkType rows), or free text for anything else.
+  // modeled as NetworkType rows), the target account tier for Account
+  // Upgrade, or free text for anything else.
   const networkOptions = useMemo(() => {
     const source = NETWORK_SOURCE[form.service_type];
     if (source === "network") {
@@ -275,8 +290,13 @@ export default function DiscountFormPage() {
         .filter((t) => t.service_type === form.service_type)
         .map((t) => ({ value: t.name, label: t.name }));
     }
+    if (source === "tier") {
+      return UPGRADE_TIER_OPTIONS;
+    }
     return [];
   }, [form.service_type, networks, networkTypes]);
+
+  const isUpgradeTier = form.service_type === "user_upgrade";
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -287,7 +307,15 @@ export default function DiscountFormPage() {
     // The network options are a different list per service — a stale
     // selection from the old list wouldn't necessarily mean anything for
     // the new one, so clear it rather than silently keep a mismatched value.
-    setForm((f) => ({ ...f, service_type: value, network: "" }));
+    // Account Upgrade only ever means a flat cost — CustomerController::
+    // upgrade() reads `value` as a plain ₦ amount regardless, so lock the
+    // type instead of letting the admin pick a meaningless "% off".
+    setForm((f) => ({
+      ...f,
+      service_type: value,
+      network: "",
+      discount_type: value === "user_upgrade" ? "fixed" : f.discount_type,
+    }));
   };
 
   const valid = form.name.trim().length > 0 && form.value.trim().length > 0;
@@ -406,14 +434,18 @@ export default function DiscountFormPage() {
                 </select>
               </Field>
 
-              <Field label="Network" hint="optional — blank = all networks">
+              <Field
+                label={isUpgradeTier ? "Upgrade to tier" : "Network"}
+                hint={isUpgradeTier ? undefined : "optional — blank = all networks"}
+                error={errors.network}
+              >
                 {networkOptions.length > 0 ? (
                   <select
                     value={form.network}
                     onChange={(e) => set("network", e.target.value)}
                     className={selectCls}
                   >
-                    <option value="">All networks</option>
+                    <option value="">{isUpgradeTier ? "Select a tier" : "All networks"}</option>
                     {networkOptions.map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
@@ -436,18 +468,20 @@ export default function DiscountFormPage() {
           <Card className="p-5">
             <SectionTitle>Pricing</SectionTitle>
             <div className="space-y-4">
-              <Field label="Discount type">
-                <select
-                  value={form.discount_type}
-                  onChange={(e) => set("discount_type", e.target.value as DiscountValueType)}
-                  className={selectCls}
-                >
-                  <option value="percentage">Percentage off</option>
-                  <option value="fixed">Fixed amount off</option>
-                </select>
-              </Field>
+              {!isUpgradeTier && (
+                <Field label="Discount type">
+                  <select
+                    value={form.discount_type}
+                    onChange={(e) => set("discount_type", e.target.value as DiscountValueType)}
+                    className={selectCls}
+                  >
+                    <option value="percentage">Percentage off</option>
+                    <option value="fixed">Fixed amount off</option>
+                  </select>
+                </Field>
+              )}
 
-              <Field label="Value" error={errors.value}>
+              <Field label={isUpgradeTier ? "Upgrade cost" : "Value"} error={errors.value}>
                 <NumberInput
                   value={form.value}
                   onChange={(v) => set("value", v)}

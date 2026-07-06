@@ -94,9 +94,9 @@ export const userRouter: RouteObject[] = [
     },
   },
   {
-    path: "support",
+    path: "upgrade-account",
     lazy: async () => {
-      const { default: Component } = await import("./pages/support");
+      const { default: Component } = await import("./pages/upgrade-account");
       return { Component };
     },
   },

@@ -139,7 +139,7 @@ const Layout = () => {
   const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
-  const displayName = user?.fullname ?? user?.username ?? "Admin";
+  const displayName = user?.username ?? "Admin";
   const displayRole = user?.role?.name ?? "Admin";
   const canSwitchAccount = hasPermission("switch_account");
 
