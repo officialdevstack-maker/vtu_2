@@ -6,7 +6,7 @@ import {
   useCallback,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "../api/apiClient";
+import { apiClient, setAuthToken } from "../api/apiClient";
 import { config } from "../config";
 import type { RegisterPayload } from "@/features/auth/authService";
 
@@ -119,6 +119,18 @@ interface AuthContextType {
   hasPermission: (slug: string) => boolean;
 }
 
+type ApiEnvelope<T> = {
+  message?: string;
+  success?: boolean;
+  data?: T;
+  type?: string;
+};
+
+type AuthPayload = {
+  user?: User;
+  token?: string;
+};
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // One shared cache key for the current user everywhere in the app — the
@@ -198,6 +210,12 @@ const fetchCurrentUser = async (): Promise<User | null> => {
   }
 };
 
+const persistAuthToken = (payload?: AuthPayload | null) => {
+  if (payload?.token) {
+    setAuthToken(payload.token);
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -212,9 +230,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       try {
         clearDemoUser();
+        setAuthToken(null);
         await apiClient.get("/sanctum/csrf-cookie");
-        await apiClient.post("/login", { login: loginValue, password });
-        const freshUser = await fetchCurrentUser();
+        const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", { login: loginValue, password });
+        persistAuthToken(response.data.data);
+        const freshUser = (await fetchCurrentUser()) ?? response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
         return freshUser;
       } catch (error: any) {
@@ -231,6 +251,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (type: "user" | "admin") => {
       setIsLoading(true);
       try {
+        setAuthToken(null);
         setDemoUser(type);
         const demoUser = demoUsers[type];
         queryClient.setQueryData(AUTH_QUERY_KEY, demoUser);
@@ -247,11 +268,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       try {
         clearDemoUser();
+        setAuthToken(null);
         await apiClient.get("/sanctum/csrf-cookie");
-        await apiClient.post("/register", payload);
-        // Registration logs the user in server-side (session cookie), so a
-        // fresh /user fetch already reflects the new account.
-        const freshUser = await fetchCurrentUser();
+        const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/register", payload);
+        persistAuthToken(response.data.data);
+        const freshUser = (await fetchCurrentUser()) ?? response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
         return freshUser;
       } finally {
@@ -273,6 +294,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // this device (e.g. a shared computer, or switching accounts).
       queryClient.clear();
       clearDemoUser();
+      setAuthToken(null);
       setIsLoading(false);
     }
   }, [queryClient]);

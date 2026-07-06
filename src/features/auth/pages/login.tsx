@@ -14,7 +14,8 @@ const LoginForm = () => {
   const [demoLoading, setDemoLoading] = useState<"user" | "admin" | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, demoLogin } = useAuth();
+  const { app_name } = useBranding();
 
   const {
     register,

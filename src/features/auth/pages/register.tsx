@@ -48,6 +48,7 @@ export default function RegisterPage() {
         email: data.email,
         phone: data.phone,
         password: data.password,
+        password_confirmation: data.confirmPassword,
       });
       navigate("/create-transaction-pin", { replace: true });
     } catch (err) {

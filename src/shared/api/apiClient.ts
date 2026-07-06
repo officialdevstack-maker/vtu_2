@@ -3,6 +3,23 @@ import { env } from '../env';
 import Cookies from 'js-cookie';
 
 const apiBaseUrl = env('VITE_API_BASE_URL', 'http://localhost:8000/api').replace(/\/+$|\/api\/?$/i, '/api').replace(/\/$/, '');
+export const AUTH_TOKEN_KEY = 'kora-auth-token';
+
+export const getAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+};
+
+export const setAuthToken = (token: string | null) => {
+  if (typeof window === 'undefined') return;
+
+  if (token) {
+    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+    return;
+  }
+
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+};
 
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,
@@ -22,6 +39,11 @@ apiClient.interceptors.request.use((config) => {
   const token = Cookies.get('XSRF-TOKEN');
   if (token) {
     config.headers['X-XSRF-TOKEN'] = decodeURIComponent(token);
+  }
+
+  const authToken = getAuthToken();
+  if (authToken) {
+    config.headers.Authorization = `Bearer ${authToken}`;
   }
 
   return config;
