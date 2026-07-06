@@ -1,11 +1,12 @@
 import {
   CheckCircle2, XCircle, Clock, AlertCircle, ChevronLeft, ChevronRight, Loader2, RefreshCw, User,
-  Copy, Check, Eye, EyeOff, LockKeyhole,
+  Copy, Check, Eye, EyeOff, LockKeyhole, Zap,
   type LucideIcon,
 } from "lucide-react";
 import { useState, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
 import { fmt } from "../data/mock";
 import { cn } from "@/shared/utils";
+import { useBranding } from "@/shared/branding";
 
 // ─── Design primitives ──────────────────────────────────────────────────────
 // Single source of truth for buttons, cards, inputs, tables, badges and page
@@ -219,6 +220,33 @@ export function LoadingScreen({ label = "Loading…", fullScreen = true }: { lab
     <div className={cn("flex flex-col items-center justify-center gap-3", fullScreen ? "min-h-[60vh]" : "py-16")}>
       <Spinner size="lg" />
       <p className="text-sm text-slate-400">{label}</p>
+    </div>
+  );
+}
+
+// Branded full-screen preloader — shown while the session/auth check is in
+// flight (see ProtectedLayout / AdminProtectedLayout), so that moment reads
+// as "the app is starting up" rather than a bare spinner + string.
+export function SessionPreloader({ label = "Checking your session…" }: { label?: string }) {
+  const { app_name, logo } = useBranding();
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-app-bg px-4">
+      <div className="relative w-16 h-16 mb-5 flex items-center justify-center">
+        <span className="absolute inset-0 rounded-2xl brand-primary-bg opacity-20 animate-ping" />
+        <div className="relative w-14 h-14 rounded-2xl brand-primary-bg flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden">
+          {logo ? (
+            <img src={logo} alt={app_name} className="w-full h-full object-contain" />
+          ) : (
+            <Zap className="w-7 h-7 text-white" />
+          )}
+        </div>
+      </div>
+      <p className="text-sm font-semibold text-slate-900 mb-1">{app_name}</p>
+      <p className="text-xs text-slate-400 mb-5">{label}</p>
+      <div className="w-36 h-1 rounded-full bg-slate-200 overflow-hidden">
+        <div className="h-full w-1/3 rounded-full brand-primary-bg animate-[loading-bar_1.1s_ease-in-out_infinite]" />
+      </div>
     </div>
   );
 }

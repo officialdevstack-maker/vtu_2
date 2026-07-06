@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/shared/providers/auth";
-import { LoadingScreen } from "@/features/user/components/shared-ui";
+import { SessionPreloader } from "@/features/user/components/shared-ui";
 
 // Guards every customer-facing route (/dashboard, /wallet, /transactions,
 // etc.) — unauthenticated visitors are bounced to /login, remembering where
@@ -10,7 +10,7 @@ const ProtectedLayout = () => {
   const location = useLocation();
 
   if (isInitializing) {
-    return <LoadingScreen label="Checking your session…" />;
+    return <SessionPreloader />;
   }
 
   if (!isAuthenticated) {

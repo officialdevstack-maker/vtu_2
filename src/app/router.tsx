@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "./route-layout";
+import RouteErrorPage from "./route-error";
 import { authRouter, ProtectedLayout } from "@/features/auth";
 import App from "@/App";
 import { UserLayout, userRouter } from "@/features/user";
@@ -10,6 +11,9 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
+    // Catches both unmatched paths (404) and any thrown error anywhere in
+    // this tree — see route-error.tsx.
+    errorElement: <RouteErrorPage />,
     children: [
       // public routes
       {

@@ -1,9 +1,8 @@
 import { AuthProvider, useAuth } from "@/shared/providers/auth";
-import { queryClient } from "@/shared/queryClient";
 import { toWhatsAppLink } from "@/shared/utils";
 import { useDocumentBranding } from "@/shared/branding";
 import { generalService } from "@/features/admin/pages/generalService";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { MessageCircle } from "lucide-react";
 import { Outlet } from "react-router";
@@ -45,14 +44,14 @@ function WhatsAppSupportButton() {
 
 const RootLayout = () => {
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <DocumentBranding />
       <AuthProvider>
         <Outlet />
         <WhatsAppSupportButton />
       </AuthProvider>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-    </QueryClientProvider>
+    </>
   );
 };
 
