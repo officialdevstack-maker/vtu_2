@@ -136,15 +136,32 @@ type ModalState =
   | { kind: "delete"; network: NetworkType }
   | null;
 
+const MENU_WIDTH = 176; // w-44
+
 export function CableNetworksTab() {
   const [networks, setNetworks] = useState<NetworkType[]>([]);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  // The table scrolls horizontally (overflow-x-auto), which forces
+  // overflow-y to auto too per the CSS spec — an `absolute` dropdown would
+  // get clipped by that. Fixed-positioning it from the trigger's own
+  // bounding rect escapes the table's overflow context entirely.
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
   const toId = (value: string | number) => String(value);
+
+  const toggleMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - MENU_WIDTH });
+    setOpenMenuId(id);
+  };
 
   useEffect(() => {
     networkTypeService
@@ -264,16 +281,19 @@ export function CableNetworksTab() {
                     <td className="px-4 py-3">
                       <div className="relative flex justify-center">
                         <button
-                          onClick={() => setOpenMenuId(openMenuId === toId(n.id) ? null : toId(n.id))}
+                          onClick={(e) => toggleMenu(toId(n.id), e)}
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                         >
                           <MoreVertical className="w-3.5 h-3.5" />
                         </button>
 
-                        {openMenuId === toId(n.id) && (
+                        {openMenuId === toId(n.id) && menuPos && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                            <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                            <div
+                              className="fixed z-20 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+                              style={{ top: menuPos.top, left: menuPos.left }}
+                            >
                               <button
                                 onClick={() => {
                                   setModal({ kind: "edit", network: n });

@@ -48,6 +48,28 @@ export type DataPlan = {
   price: number | string | null;
 };
 
+// A cable provider (dstv/gotv/startime) — a NetworkType row scoped to
+// service_type "cable". Managed at Products > Cable > Cable Networks.
+export type CableNetwork = {
+  id: number;
+  name: string;
+  service_type: string;
+  active: boolean;
+};
+
+// A cable subscription plan. `price` is resolved server-side (the
+// provider's own subscription cost plus the authenticated user's role fee
+// — see CablePlan::getPriceAttribute) — never computed client-side, and
+// never trusted back from the client on purchase either
+// (VTUServicesController::handle() re-resolves it from cable_plan).
+export type CablePlan = {
+  id: number;
+  cable_network: string;
+  plan_name: string;
+  active: boolean;
+  price: number | string | null;
+};
+
 // A unique reference the backend requires per purchase (ServiceRequest's
 // `tx_ref` => `required|unique:transactions,transaction_reference`) — not a
 // real payment-gateway reference, just a client-generated idempotency key.
@@ -75,6 +97,21 @@ export type DataPurchasePayload = {
   pin: string;
   code?: string;
 };
+
+export type CablePurchasePayload = {
+  cable_network: string;
+  iuc: string;
+  amount: number;
+  cable_plan: number;
+  bypass: boolean;
+  pin: string;
+  code?: string;
+};
+
+// VTUServicesController::verify()'s response for cable — just the account
+// holder's name, so the customer can confirm the smartcard/IUC number
+// really is theirs before paying.
+export type CableVerification = { name: string };
 
 // Shape of VTUServicesController::handle()'s success response — the real
 // Transaction row plus a discount_applied breakdown (see
@@ -157,6 +194,28 @@ export const customerService = {
   purchaseData: (payload: DataPurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
     apiClient
       .post<ApiEnvelope<PurchaseResult>>("/vtu/data", payload)
+      .then((r) => r.data.data),
+
+  getCableNetworks: (): Promise<CableNetwork[]> =>
+    apiClient
+      .get<ApiEnvelope<CableNetwork[]>>("/table/network_types")
+      .then((r) => r.data.data.filter((n) => n.service_type === "cable")),
+
+  getCablePlans: (): Promise<CablePlan[]> =>
+    apiClient
+      .get<ApiEnvelope<CablePlan[]>>("/table/cable_plans")
+      .then((r) => r.data.data),
+
+  verifyCableIuc: (cableNetwork: string, iuc: string): Promise<CableVerification> =>
+    apiClient
+      .get<ApiEnvelope<CableVerification>>("/vtu/cable/verify", {
+        params: { cable_network: cableNetwork, identifier: iuc },
+      })
+      .then((r) => r.data.data),
+
+  purchaseCable: (payload: CablePurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
+    apiClient
+      .post<ApiEnvelope<PurchaseResult>>("/vtu/cable", payload)
       .then((r) => r.data.data),
 
   // Preview of the automatic Discount (if any) for a given service+network+

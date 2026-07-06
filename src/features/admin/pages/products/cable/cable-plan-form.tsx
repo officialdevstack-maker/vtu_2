@@ -350,7 +350,7 @@ export default function CablePlanFormPage() {
 
     setSaving(true);
     try {
-      const payload = toPayload(form, fee);
+      const payload = toPayload(form, fee) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
       if (initial) {
         await cablePlanService.update(String(initial.id), payload);
       } else {
@@ -401,7 +401,7 @@ export default function CablePlanFormPage() {
         description={
           initial
             ? `Editing "${initial.plan_name}" (${initial.cable_network?.toUpperCase()})`
-            : "Add a cable network plan with its fixed subscription cost and per-role charge fee."
+            : "Add a cable network plan, attach the provider that supplies it, and set a per-role charge fee."
         }
         actions={
           <>

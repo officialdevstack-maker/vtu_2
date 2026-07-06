@@ -34,14 +34,14 @@ const formatCurrency = (value: string | number | null | undefined) => {
 
 const MENU_WIDTH = 144; // w-36
 
-type SortKey = "id" | "cable_network" | "plan_name" | "cost_price" | "status";
+type SortKey = "id" | "cable_network" | "plan_name" | "price" | "status";
 type SortState = { key: SortKey; direction: "asc" | "desc" };
 
 const SORT_COLUMNS: { key: SortKey; label: string; align?: "left" | "right" }[] = [
   { key: "id", label: "ID", align: "left" },
   { key: "cable_network", label: "Network" },
   { key: "plan_name", label: "Plan", align: "left" },
-  { key: "cost_price", label: "Cost (₦)" },
+  { key: "price", label: "Price (₦)" },
   { key: "status", label: "Status" },
 ];
 
@@ -53,8 +53,8 @@ function sortValue(plan: CablePlan, key: SortKey): string | number {
       return (plan.cable_network ?? "").toLowerCase();
     case "plan_name":
       return (plan.plan_name ?? "").toLowerCase();
-    case "cost_price":
-      return Number(plan.cost_price ?? 0);
+    case "price":
+      return Number(plan.price ?? 0);
     case "status":
       return plan.active ? 1 : 0;
   }
@@ -380,7 +380,7 @@ export function CablePlansTab() {
                       {plan.plan_name}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
-                      {formatCurrency(plan.cost_price)}
+                      {formatCurrency(plan.price)}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
                       <StatusBadge status={plan.active ? "active" : "inactive"} />
