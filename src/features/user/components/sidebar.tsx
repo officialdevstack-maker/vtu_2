@@ -111,6 +111,11 @@ const bottomItems: NavItem[] = [
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
 ];
 
+// Dashboard's service-availability widget and every buy-* purchase page all
+// read this same ["networks"] query — prefetch it on hover for any of them
+// so the page that actually needs it opens with a warm cache.
+const NETWORKS_PREFETCH_IDS = new Set(["dashboard", "buy-airtime", "buy-data", "cable-tv"]);
+
 export default function Sidebar({
   open,
   onClose,
@@ -127,7 +132,7 @@ export default function Sidebar({
   const { logout, user, hasPermission } = useAuth();
   const queryClient = useQueryClient();
 
-  const prefetchDashboard = () =>
+  const prefetchNetworks = () =>
     queryClient.prefetchQuery({ queryKey: ["networks"], queryFn: () => customerService.getNetworks() });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -229,7 +234,7 @@ export default function Sidebar({
                     <button
                       key={item.id}
                       onClick={() => go(item.path)}
-                      onMouseEnter={item.id === "dashboard" ? prefetchDashboard : undefined}
+                      onMouseEnter={NETWORKS_PREFETCH_IDS.has(item.id) ? prefetchNetworks : undefined}
                       title={collapsed ? item.label : undefined}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors relative ${collapsed ? "lg:justify-center" : ""} ${
                         active

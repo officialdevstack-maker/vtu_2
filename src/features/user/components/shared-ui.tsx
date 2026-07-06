@@ -1,6 +1,6 @@
 import {
   CheckCircle2, XCircle, Clock, AlertCircle, ChevronLeft, ChevronRight, Loader2, RefreshCw, User,
-  Copy, Check,
+  Copy, Check, Eye, EyeOff, LockKeyhole,
   type LucideIcon,
 } from "lucide-react";
 import { useState, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
@@ -462,6 +462,42 @@ export function VerifyField({
           {verifiedSub && <p className="text-xs text-emerald-600 mt-0.5">{verifiedSub}</p>}
         </div>
       )}
+    </div>
+  );
+}
+
+// Every purchase page needs this same "enter your transaction PIN to
+// confirm" step — the backend requires `pin` on the purchase request
+// itself (see VTUServicesController::handle -> ServiceControlService::verify),
+// there's no separate PIN-confirmation endpoint.
+export function PinField({ value, onChange, error }: {
+  value: string; onChange: (v: string) => void; error?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div>
+      <FieldLabel>Transaction PIN</FieldLabel>
+      <div className="relative">
+        <LockKeyhole className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          type={visible ? "text" : "password"}
+          inputMode="numeric"
+          maxLength={4}
+          value={value}
+          onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          placeholder="4-digit PIN"
+          className={`${inputCls} pl-9 pr-10 tracking-[0.35em] ${error ? "border-red-300" : ""}`}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+          aria-label={visible ? "Hide PIN" : "Show PIN"}
+        >
+          {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   );
 }

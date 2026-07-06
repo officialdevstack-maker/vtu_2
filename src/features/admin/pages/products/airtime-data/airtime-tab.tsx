@@ -23,15 +23,32 @@ const formatCurrency = (value: string | number | null | undefined) => {
   return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(value);
 };
 
+const MENU_WIDTH = 144; // w-36
+
 export function AirtimeTab() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<AirtimePlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [networkFilter, setNetworkFilter] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  // The table scrolls horizontally (overflow-x-auto), which forces
+  // overflow-y to auto too per the CSS spec — an `absolute` dropdown would
+  // get clipped by that. Fixed-positioning it from the trigger's own
+  // bounding rect escapes the table's overflow context entirely.
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const toId = (value: string | number) => String(value);
+
+  const toggleMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - MENU_WIDTH });
+    setOpenMenuId(id);
+  };
 
   const handleDelete = async (plan: AirtimePlan) => {
     setDeletingId(toId(plan.id));
@@ -155,22 +172,23 @@ export function AirtimeTab() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenMenuId(
-                              openMenuId === currentId ? null : currentId,
-                            );
+                            toggleMenu(currentId, e);
                           }}
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                         >
                           <MoreVertical className="w-3.5 h-3.5" />
                         </button>
 
-                        {openMenuId === currentId && (
+                        {openMenuId === currentId && menuPos && (
                           <>
                             <div
                               className="fixed inset-0 z-20"
                               onClick={() => setOpenMenuId(null)}
                             />
-                            <div className="absolute right-0 top-full mt-1 z-30 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                            <div
+                              className="fixed z-30 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+                              style={{ top: menuPos.top, left: menuPos.left }}
+                            >
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

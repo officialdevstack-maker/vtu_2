@@ -17,6 +17,63 @@ export type Network = {
   }[];
 };
 
+// The admin-configured per-network airtime rule (Products > Airtime & Data
+// > Airtime Plan) — the real source of truth for whether a network is
+// purchasable at all, and its own amount range (e.g. one network might cap
+// lower than another). See ServiceRequest::ruleMaker's "airtime" case,
+// which enforces this same row server-side.
+export type AirtimePlan = {
+  id: number;
+  name: string;
+  category: string | null;
+  min: string | number | null;
+  max: string | number | null;
+  active: boolean;
+};
+
+// A unique reference the backend requires per purchase (ServiceRequest's
+// `tx_ref` => `required|unique:transactions,transaction_reference`) — not a
+// real payment-gateway reference, just a client-generated idempotency key.
+export function generateTxRef(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export type AirtimePurchasePayload = {
+  network: string;
+  phone: string;
+  amount: number;
+  network_type: string;
+  bypass: boolean;
+  pin: string;
+  code?: string;
+};
+
+// Shape of VTUServicesController::handle()'s success response — the real
+// Transaction row plus a discount_applied breakdown (see
+// TransactionService::process on the backend).
+export type PurchaseResult = {
+  id: number;
+  transaction_reference: string;
+  transaction_type: string;
+  amount: string | number;
+  status: "success" | "pending" | "fail";
+  receiver: string | null;
+  account_or_phone: string | null;
+  created_at: string;
+  discount_applied?: {
+    discount_amount: number;
+    original_amount: number;
+    final_amount: number;
+    promotion_id: number | null;
+  };
+};
+
+export type DiscountPreview = {
+  original_amount: number;
+  discounted_amount: number;
+  discount_amount: number;
+};
+
 export const customerService = {
   // Moves the user's entire referral_balance into wallet_balance.
   // Backend returns the updated user, but callers should prefer
@@ -27,5 +84,23 @@ export const customerService = {
   getNetworks: (): Promise<Network[]> =>
     apiClient
       .get<ApiEnvelope<Network[]>>("/table/networks")
+      .then((r) => r.data.data),
+
+  getAirtimePlans: (): Promise<AirtimePlan[]> =>
+    apiClient
+      .get<ApiEnvelope<AirtimePlan[]>>("/table/airtime_plans")
+      .then((r) => r.data.data),
+
+  purchaseAirtime: (payload: AirtimePurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
+    apiClient
+      .post<ApiEnvelope<PurchaseResult>>("/vtu/airtime", payload)
+      .then((r) => r.data.data),
+
+  // Preview of the automatic Discount (if any) for a given service+network+
+  // amount, without charging anything — mirrors VTUServicesController::handle()'s
+  // Step 1 exactly (same Discount::getDiscountedAmount call).
+  previewDiscount: (service: string, network: string, amount: number): Promise<DiscountPreview> =>
+    apiClient
+      .get<ApiEnvelope<DiscountPreview>>(`/vtu/${service}/discount`, { params: { amount, network } })
       .then((r) => r.data.data),
 };
