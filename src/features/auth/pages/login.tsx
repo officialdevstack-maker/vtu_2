@@ -4,10 +4,22 @@ import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
-import { useAuth } from "@/shared/providers/auth";
+import { useAuth, type User } from "@/shared/providers/auth";
 import { useBranding } from "@/shared/branding";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { loginSchema, type LoginFormData } from "../validators";
+
+// A transaction PIN guards wallet actions, so any non-admin user without one
+// is sent to set it up before they can reach anywhere else — this always
+// wins over the "return to where you came from" redirect below. Admins are
+// exempt: the PIN concept only applies to the customer wallet flow.
+function resolveDestination(user: User | null, from?: string) {
+  if (!user) return "/login";
+  const isAdmin = user.user_type === "admin";
+  if (!isAdmin && !user.has_pin) return "/create-transaction-pin";
+  const fallback = isAdmin ? "/admin" : "/dashboard";
+  return from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
+}
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,15 +41,8 @@ const LoginForm = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       const user = await login(data.login, data.password);
-      // Redirect back to wherever a route guard bounced them from, when it
-      // matches their role — otherwise land on the right home for their
-      // account type. An admin redirected from an admin-only page always
-      // lands there; a non-admin never gets sent into /admin at all.
       const from = (location.state as { from?: Location } | null)?.from?.pathname;
-      const isAdmin = user?.user_type === "admin";
-      const fallback = isAdmin ? "/admin" : "/dashboard";
-      const target = from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
-      navigate(target, { replace: true });
+      navigate(resolveDestination(user, from), { replace: true });
     } catch {
       setError("root", { message: "Invalid credentials. Please try again." });
     }
@@ -48,10 +53,7 @@ const LoginForm = () => {
     try {
       const user = await demoLogin(type);
       const from = (location.state as { from?: Location } | null)?.from?.pathname;
-      const isAdmin = user?.user_type === "admin";
-      const fallback = isAdmin ? "/admin" : "/dashboard";
-      const target = from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
-      navigate(target, { replace: true });
+      navigate(resolveDestination(user, from), { replace: true });
     } finally {
       setDemoLoading(null);
     }
