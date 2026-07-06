@@ -10,13 +10,6 @@ import {
 } from "../components/shared-ui";
 import { customerService } from "../services/customerService";
 
-const TIER_LABELS: Record<string, string> = {
-  user: "User",
-  agent: "Agent",
-  bonanza: "Bonanza",
-  api: "API Reseller",
-};
-
 export default function UpgradeAccountPage() {
   const { user, refreshUser } = useAuth();
 
@@ -25,21 +18,22 @@ export default function UpgradeAccountPage() {
     queryFn: () => customerService.getUpgradeTiers(),
   });
 
-  const [selectedTier, setSelectedTier] = useState<string | null>(null);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
 
-  const currentTier = tiersQuery.data?.current_tier ?? user?.user_type ?? "user";
-  const tiers = tiersQuery.data?.tiers ?? [];
-  const selected = tiers.find((t) => t.tier === selectedTier);
+  const currentTierSlug = tiersQuery.data?.current_tier ?? user?.user_type ?? "user";
+  const currentTierName = tiersQuery.data?.current_tier_name ?? currentTierSlug;
+  const tiers = (tiersQuery.data?.tiers ?? []).filter((t) => t.slug !== currentTierSlug);
+  const selected = tiers.find((t) => t.slug === selectedSlug);
 
   const isConfirmValid = pin.length === 4;
 
   const handleConfirm = async () => {
-    if (!selectedTier) return;
+    if (!selectedSlug) return;
     if (!isConfirmValid) {
       setError("Enter your 4-digit transaction PIN to continue.");
       return;
@@ -47,7 +41,7 @@ export default function UpgradeAccountPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await customerService.upgradeAccount({ upgrade_to: selectedTier, pin });
+      const result = await customerService.upgradeAccount({ upgrade_to: selectedSlug, pin });
       setResultMessage(result.message);
       setStep("success");
       await refreshUser();
@@ -60,7 +54,7 @@ export default function UpgradeAccountPage() {
 
   const reset = () => {
     setStep("form");
-    setSelectedTier(null);
+    setSelectedSlug(null);
     setPin("");
     setError(null);
     setResultMessage(null);
@@ -72,7 +66,7 @@ export default function UpgradeAccountPage() {
         <SuccessScreen
           title="Account upgraded"
           onReset={reset}
-          message={<p>{resultMessage ?? `Your account is now on the ${TIER_LABELS[selectedTier ?? ""] ?? selectedTier} tier.`}</p>}
+          message={<p>{resultMessage ?? `Your account is now on the ${selected?.name ?? ""} tier.`}</p>}
         />
       </PurchaseShell>
     );
@@ -95,7 +89,7 @@ export default function UpgradeAccountPage() {
           <div>
             <FieldLabel>Current tier</FieldLabel>
             <div className="rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-3 text-sm font-medium text-slate-900">
-              {TIER_LABELS[currentTier] ?? currentTier}
+              {currentTierName}
             </div>
           </div>
 
@@ -107,32 +101,30 @@ export default function UpgradeAccountPage() {
                   <div key={i} className="h-16 rounded-lg bg-gray-100 animate-pulse" />
                 ))}
               </div>
-            ) : tiers.filter((t) => t.tier !== currentTier).length === 0 ? (
+            ) : tiers.length === 0 ? (
               <p className="text-xs text-slate-400 py-4 text-center">
                 No upgrade tiers are available right now.
               </p>
             ) : (
               <div className="space-y-2">
-                {tiers
-                  .filter((t) => t.tier !== currentTier)
-                  .map((t) => (
-                    <button
-                      key={t.tier}
-                      type="button"
-                      onClick={() => setSelectedTier(t.tier)}
-                      className={`w-full flex items-center justify-between p-3.5 rounded-lg border transition-colors text-left ${selectedTier === t.tier ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {selectedTier === t.tier && (
-                          <div className="w-4.5 h-4.5 rounded-full bg-[#111827] flex items-center justify-center shrink-0">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                        <p className="font-medium text-slate-900 text-sm">{TIER_LABELS[t.tier] ?? t.tier}</p>
-                      </div>
-                      <p className="text-sm font-medium text-[#111827]">{fmt(t.cost)}</p>
-                    </button>
-                  ))}
+                {tiers.map((t) => (
+                  <button
+                    key={t.slug}
+                    type="button"
+                    onClick={() => setSelectedSlug(t.slug)}
+                    className={`w-full flex items-center justify-between p-3.5 rounded-lg border transition-colors text-left ${selectedSlug === t.slug ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {selectedSlug === t.slug && (
+                        <div className="w-4.5 h-4.5 rounded-full bg-[#111827] flex items-center justify-center shrink-0">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <p className="font-medium text-slate-900 text-sm">{t.name}</p>
+                    </div>
+                    <p className="text-sm font-medium text-[#111827]">{fmt(t.cost)}</p>
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -153,7 +145,7 @@ export default function UpgradeAccountPage() {
           <div className="rounded-lg border border-gray-200 divide-y divide-gray-100">
             <div className="flex items-center justify-between px-3.5 py-3">
               <span className="text-sm text-slate-500">Upgrading to</span>
-              <span className="text-sm font-medium text-slate-900">{TIER_LABELS[selected.tier] ?? selected.tier}</span>
+              <span className="text-sm font-medium text-slate-900">{selected.name}</span>
             </div>
             <div className="flex items-center justify-between px-3.5 py-3">
               <span className="text-sm text-slate-500">Cost</span>

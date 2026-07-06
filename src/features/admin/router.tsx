@@ -38,6 +38,20 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "customers/roles/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/customers/role-form");
+          return { Component };
+        },
+      },
+      {
+        path: "customers/roles/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/customers/role-form");
+          return { Component };
+        },
+      },
+      {
         path: "apis/provider",
         lazy: async () => {
           const { default: Component } = await import("./pages/apis/provider");
@@ -121,7 +135,21 @@ export const adminRouter: RouteObject[] = [
       {
         path: "products/cable",
         lazy: async () => {
-          const { default: Component } = await import("./pages/products/cable");
+          const { default: Component } = await import("./pages/products/cable/index");
+          return { Component };
+        },
+      },
+      {
+        path: "products/cable/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/products/cable/cable-plan-form");
+          return { Component };
+        },
+      },
+      {
+        path: "products/cable/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/products/cable/cable-plan-form");
           return { Component };
         },
       },
@@ -145,22 +173,6 @@ export const adminRouter: RouteObject[] = [
         lazy: async () => {
           const { default: Component } =
             await import("./pages/service-control");
-          return { Component };
-        },
-      },
-      {
-        path: "customers/users",
-        lazy: async () => {
-          const { default: Component } =
-            await import("./pages/customers/users");
-          return { Component };
-        },
-      },
-      {
-        path: "customers/roles",
-        lazy: async () => {
-          const { default: Component } =
-            await import("./pages/customers/roles");
           return { Component };
         },
       },

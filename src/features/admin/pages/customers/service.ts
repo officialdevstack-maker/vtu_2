@@ -239,6 +239,15 @@ export type RoleStatus = "active" | "inactive";
 // — these are built-in roles the backend relies on and shouldn't be deletable from the UI.
 const SYSTEM_ROLE_SLUGS = new Set(["admin", "user", "agent", "bonanza", "api"]);
 
+// Real, backend-defined permissions (App\Models\Permission) — distinct from
+// the old locally-faked PermissionGroup list that was never sent to the API.
+export type Permission = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+};
+
 export type Role = {
   id: string;
   name: string;
@@ -247,6 +256,11 @@ export type Role = {
   usersAssigned: number;
   status: RoleStatus;
   isSystem: boolean;
+  permissions: Permission[];
+  // Whether a customer can self-upgrade into this role from
+  // /upgrade-account, and what it costs — see CustomerController::upgrade.
+  upgradable: boolean;
+  upgradeCost: number | null;
 };
 
 export type RolePayload = {
@@ -254,6 +268,9 @@ export type RolePayload = {
   slug?: string;
   description: string;
   status: RoleStatus;
+  permissionIds: string[];
+  upgradable: boolean;
+  upgradeCost: number | null;
 };
 
 const slugify = (value: string) =>
@@ -262,6 +279,13 @@ const slugify = (value: string) =>
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "") || "role";
+
+const mapPermission = (item: any): Permission => ({
+  id: String(item?.id ?? ""),
+  name: item?.name ?? "",
+  slug: item?.slug ?? "",
+  description: item?.description ?? "",
+});
 
 const mapRole = (item: any): Role => {
   const slug = String(item?.slug ?? "");
@@ -275,6 +299,9 @@ const mapRole = (item: any): Role => {
       : Number(item?.users_count ?? 0),
     status: item?.is_active === false ? "inactive" : "active",
     isSystem: SYSTEM_ROLE_SLUGS.has(slug.toLowerCase()),
+    permissions: Array.isArray(item?.permissions) ? item.permissions.map(mapPermission) : [],
+    upgradable: Boolean(item?.upgradable),
+    upgradeCost: item?.upgrade_cost != null ? Number(item.upgrade_cost) : null,
   };
 };
 
@@ -283,12 +310,27 @@ const toRoleBody = (payload: RolePayload, existingSlug?: string) => ({
   slug: payload.slug || existingSlug || slugify(payload.name),
   description: payload.description,
   is_active: payload.status === "active",
+  permission_ids: payload.permissionIds,
+  upgradable: payload.upgradable,
+  upgrade_cost: payload.upgradable ? payload.upgradeCost : null,
 });
+
+export const permissionService = {
+  getAll: async (): Promise<Permission[]> => {
+    const response = await apiClient.get<RoleEnvelope<any[]>>("/admin/permissions");
+    return (response.data.data ?? []).map(mapPermission);
+  },
+};
 
 export const roleService = {
   getAll: async (): Promise<Role[]> => {
     const response = await apiClient.get<RoleEnvelope<any[]>>("/admin/roles");
     return (response.data.data ?? []).map(mapRole);
+  },
+
+  getById: async (id: string): Promise<Role> => {
+    const response = await apiClient.get<RoleEnvelope<any>>(`/admin/roles/${id}`);
+    return mapRole(response.data.data);
   },
 
   create: async (payload: RolePayload): Promise<Role> => {

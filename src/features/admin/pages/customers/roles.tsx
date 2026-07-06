@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Eye,
@@ -23,34 +24,18 @@ import {
   Pagination,
   SkeletonRows,
   SkeletonStatGrid,
-  Toggle,
-  inputCls,
 } from "../../../user/components/shared-ui";
 import { usePagination } from "../../../../shared/pagination";
 import { roleService, type Role } from "./service";
 
-type PermissionGroup = "Customers" | "Wallets" | "Transactions" | "Support" | "Settings";
-
-// The backend role model has no permissions field, so permission-group
-// assignments are kept in local state only and are never sent to the API.
-type RoleRecord = Role & { permissions: PermissionGroup[] };
-
-const permissionGroups: PermissionGroup[] = ["Customers", "Wallets", "Transactions", "Support", "Settings"];
-
-const emptyForm = { name: "", description: "", permissions: [] as PermissionGroup[], status: true };
-
-type ModalMode = "create" | "edit" | "view" | null;
-
 export default function RolesPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [roles, setRoles] = useState<RoleRecord[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [modalMode, setModalMode] = useState<ModalMode>(null);
-  const [activeRole, setActiveRole] = useState<RoleRecord | null>(null);
-  const [form, setForm] = useState(emptyForm);
-  const [deleteTarget, setDeleteTarget] = useState<RoleRecord | null>(null);
+  const [activeRole, setActiveRole] = useState<Role | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const {
     currentPage,
@@ -61,34 +46,20 @@ export default function RolesPage() {
     totalPages,
   } = usePagination(roles);
 
+  const loadRoles = async () => {
+    try {
+      const data = await roleService.getAll();
+      setRoles(data);
+      setError(null);
+    } catch {
+      setError("Could not load roles from the API. Please try refreshing the page.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let mounted = true;
-
-    const loadRoles = async () => {
-      try {
-        const data = await roleService.getAll();
-        if (mounted) {
-          setRoles((prev) =>
-            data.map((r) => ({
-              ...r,
-              permissions: prev.find((p) => p.id === r.id)?.permissions ?? [],
-            })),
-          );
-          setError(null);
-        }
-      } catch {
-        if (mounted) {
-          setError("Could not load roles from the API. Please try refreshing the page.");
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
     loadRoles();
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const totalRoles = roles.length;
@@ -100,33 +71,19 @@ export default function RolesPage() {
     .reduce((sum, r) => sum + r.usersAssigned, 0);
   const customRoles = roles.filter((r) => !r.isSystem).length;
 
-  const togglePermission = (p: PermissionGroup) => {
-    setForm((f) => ({
-      ...f,
-      permissions: f.permissions.includes(p) ? f.permissions.filter((x) => x !== p) : [...f.permissions, p],
-    }));
-  };
+  const openCreate = () => navigate("/admin/customers/roles/new");
 
-  const openCreate = () => {
-    setForm(emptyForm);
-    setActiveRole(null);
-    setModalMode("create");
-  };
-
-  const openView = (r: RoleRecord) => {
+  const openView = (r: Role) => {
     setActiveRole(r);
-    setModalMode("view");
     setOpenMenuId(null);
   };
 
-  const openEdit = (r: RoleRecord) => {
-    setActiveRole(r);
-    setForm({ name: r.name, description: r.description, permissions: r.permissions, status: r.status === "active" });
-    setModalMode("edit");
+  const openEdit = (r: Role) => {
     setOpenMenuId(null);
+    navigate(`/admin/customers/roles/${r.id}/edit`, { state: { role: r } });
   };
 
-  const duplicateRole = async (r: RoleRecord) => {
+  const duplicateRole = async (r: Role) => {
     setOpenMenuId(null);
     setError(null);
     try {
@@ -134,55 +91,18 @@ export default function RolesPage() {
         name: `${r.name} (copy)`,
         description: r.description,
         status: r.status,
+        permissionIds: r.permissions.map((p) => p.id),
+        upgradable: r.upgradable,
+        upgradeCost: r.upgradeCost,
       });
       setRoles((prev) => {
         const idx = prev.findIndex((x) => x.id === r.id);
         const next = [...prev];
-        next.splice(idx + 1, 0, { ...created, permissions: r.permissions });
+        next.splice(idx + 1, 0, created);
         return next;
       });
     } catch {
       setError("The role could not be duplicated right now.");
-    }
-  };
-
-  const closeModal = () => {
-    setModalMode(null);
-    setActiveRole(null);
-  };
-
-  const saveRole = async () => {
-    if (!form.name.trim()) return;
-    setSaving(true);
-    setError(null);
-    try {
-      if (modalMode === "edit" && activeRole) {
-        const updated = await roleService.update(
-          activeRole.id,
-          {
-            name: form.name,
-            description: form.description,
-            status: form.status ? "active" : "inactive",
-          },
-          activeRole.slug,
-        );
-        setRoles((prev) =>
-          prev.map((r) => (r.id === activeRole.id ? { ...updated, permissions: form.permissions } : r)),
-        );
-      } else {
-        const created = await roleService.create({
-          name: form.name,
-          description: form.description,
-          status: form.status ? "active" : "inactive",
-        });
-        setRoles((prev) => [...prev, { ...created, permissions: form.permissions }]);
-        setPage(Math.ceil((roles.length + 1) / pageSize));
-      }
-      closeModal();
-    } catch {
-      setError("The role could not be saved right now. Please try again.");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -328,8 +248,8 @@ export default function RolesPage() {
                 {r.permissions.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {r.permissions.map((p) => (
-                      <span key={p} className="rounded-full border border-[#111827]/15 bg-[#111827]/10 px-2 py-0.5 text-[10px] font-medium text-[#111827]">
-                        {p}
+                      <span key={p.id} className="rounded-full border border-[#111827]/15 bg-[#111827]/10 px-2 py-0.5 text-[10px] font-medium text-[#111827]">
+                        {p.name}
                       </span>
                     ))}
                   </div>
@@ -366,8 +286,8 @@ export default function RolesPage() {
                     <td className="hidden lg:table-cell px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {r.permissions.map((p) => (
-                          <span key={p} className="text-[10px] font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5 whitespace-nowrap">
-                            {p}
+                          <span key={p.id} className="text-[10px] font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5 whitespace-nowrap">
+                            {p.name}
                           </span>
                         ))}
                       </div>
@@ -436,94 +356,52 @@ export default function RolesPage() {
         )}
       </Card>
 
-      {/* Create / Edit / View modal */}
-      {modalMode && (
+      {/* View modal */}
+      {activeRole && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
-              <h3 className="font-semibold text-slate-900 text-sm">
-                {modalMode === "create" ? "Create role" : modalMode === "edit" ? "Edit role" : "Role details"}
-              </h3>
-              <button onClick={closeModal} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+              <h3 className="font-semibold text-slate-900 text-sm">Role details</h3>
+              <button onClick={() => setActiveRole(null)} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            {modalMode === "view" && activeRole ? (
-              <div className="p-4 space-y-4">
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Role name</p>
-                  <p className="text-sm font-medium text-slate-900">{activeRole.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-1">Description</p>
-                  <p className="text-sm text-slate-700">{activeRole.description}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 mb-1.5">Permissions</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {activeRole.permissions.length === 0 && <p className="text-xs text-slate-400">No permissions assigned</p>}
-                    {activeRole.permissions.map((p) => (
-                      <span key={p} className="text-xs font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
-                        {p}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-400">Status</p>
-                  <StatusBadge status={activeRole.status} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-400">Users assigned</p>
-                  <p className="text-sm font-medium text-slate-900">{activeRole.usersAssigned}</p>
-                </div>
-                <Button fullWidth onClick={closeModal}>Close</Button>
+            <div className="p-4 space-y-4">
+              <div>
+                <p className="text-xs text-slate-400 mb-1">Role name</p>
+                <p className="text-sm font-medium text-slate-900">{activeRole.name}</p>
               </div>
-            ) : (
-              <div className="p-4 space-y-3.5">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Role name</label>
-                  <input
-                    value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="e.g. Fraud Analyst"
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Description</label>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                    placeholder="What this role is responsible for"
-                    rows={2}
-                    className={`${inputCls} resize-none`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-2">Permission groups</label>
-                  <div className="space-y-1 border border-slate-200/70 rounded-xl divide-y divide-gray-100">
-                    {permissionGroups.map((p) => (
-                      <div key={p} className="flex items-center justify-between px-3 py-2.5">
-                        <span className="text-sm text-slate-700">{p}</span>
-                        <Toggle value={form.permissions.includes(p)} onChange={() => togglePermission(p)} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between border border-slate-200/70 rounded-xl px-3 py-2.5">
-                  <span className="text-sm text-slate-700">Active</span>
-                  <Toggle value={form.status} onChange={(v) => setForm((f) => ({ ...f, status: v }))} />
-                </div>
-                <div className="flex gap-3 pt-1">
-                  <Button variant="secondary" fullWidth onClick={closeModal}>Cancel</Button>
-                  <Button fullWidth disabled={!form.name.trim() || saving} loading={saving} onClick={saveRole}>
-                    {saving ? "Saving..." : modalMode === "edit" ? "Save changes" : "Create role"}
-                  </Button>
+              <div>
+                <p className="text-xs text-slate-400 mb-1">Description</p>
+                <p className="text-sm text-slate-700">{activeRole.description}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 mb-1.5">Permissions</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeRole.permissions.length === 0 && <p className="text-xs text-slate-400">No permissions assigned</p>}
+                  {activeRole.permissions.map((p) => (
+                    <span key={p.id} className="text-xs font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
+                      {p.name}
+                    </span>
+                  ))}
                 </div>
               </div>
-            )}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-400">Status</p>
+                <StatusBadge status={activeRole.status} />
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-400">Users assigned</p>
+                <p className="text-sm font-medium text-slate-900">{activeRole.usersAssigned}</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-400">Account upgrade</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {activeRole.upgradable ? `Upgradable — ₦${(activeRole.upgradeCost ?? 0).toLocaleString()}` : "Not upgradable"}
+                </p>
+              </div>
+              <Button fullWidth onClick={() => setActiveRole(null)}>Close</Button>
+            </div>
           </div>
         </div>
       )}

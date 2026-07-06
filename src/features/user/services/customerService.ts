@@ -102,12 +102,14 @@ export type DiscountPreview = {
   discount_amount: number;
 };
 
-// A purchasable account tier — the `network` column of a Discount row
-// scoped to service_type "user_upgrade" (see CustomerController::upgrade).
-export type UpgradeTier = { tier: string; cost: number };
+// A purchasable account tier — a Role the admin has marked `upgradable`
+// (Customers > Roles & Permissions), with its `upgrade_cost` — see
+// CustomerController::upgrade()/upgradeTiers().
+export type UpgradeTier = { id: number; name: string; slug: string; cost: number };
 
 export type UpgradeTiersResponse = {
   current_tier: string;
+  current_tier_name: string;
   tiers: UpgradeTier[];
 };
 

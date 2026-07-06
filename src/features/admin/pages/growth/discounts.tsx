@@ -25,7 +25,6 @@ const SERVICE_LABELS: Record<string, string> = {
   electricity: "Electricity",
   exam: "Exam",
   airtimeToCash: "Airtime to Cash",
-  user_upgrade: "Account Upgrade",
 };
 
 const formatValue = (discount: Discount) => {
