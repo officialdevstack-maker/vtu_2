@@ -181,6 +181,13 @@ export const adminRouter: RouteObject[] = [
           return { Component };
         },
       },
+      {
+        path: "airtime-to-cash",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/airtime-to-cash/index");
+          return { Component };
+        },
+      },
       // Operations
       {
         path: "service-control",

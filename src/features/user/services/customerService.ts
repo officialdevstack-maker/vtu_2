@@ -83,6 +83,46 @@ export type BillPlan = {
   active: boolean;
 };
 
+// An admin-configured network available for airtime-to-cash conversion
+// (Products > Airtime to Cash > Networks) — the destination number to
+// transfer airtime to, and the amount range accepted. The actual
+// conversion rate is a Discount (service_type "airtimeToCash"), fetched
+// via previewDiscount() below just like every other service.
+export type AirtimeToCashNetwork = {
+  id: number;
+  network: string;
+  destination_number: string;
+  min: string | number;
+  max: string | number;
+  active: boolean;
+};
+
+export type AirtimeToCashStatus = "pending" | "approved" | "rejected";
+
+// A customer's own submission — manually reviewed by an admin, never an
+// instant purchase. See AirtimeToCashController.
+export type AirtimeToCashRequestItem = {
+  id: number;
+  network: string;
+  amount: string | number;
+  sender_phone: string;
+  destination_number: string;
+  payout_amount: string | number;
+  status: AirtimeToCashStatus;
+  rejection_reason: string | null;
+  proof_image: string | null;
+  transaction_reference: string;
+  payout_transaction_reference: string | null;
+  created_at: string;
+};
+
+export type AirtimeToCashSubmitPayload = {
+  network: string;
+  amount: number;
+  sender_phone: string;
+  proof_image?: File | null;
+};
+
 // A unique reference the backend requires per purchase (ServiceRequest's
 // `tx_ref` => `required|unique:transactions,transaction_reference`) — not a
 // real payment-gateway reference, just a client-generated idempotency key.
@@ -266,6 +306,29 @@ export const customerService = {
     apiClient
       .post<ApiEnvelope<PurchaseResult>>("/vtu/electricity", payload)
       .then((r) => r.data.data),
+
+  getAirtimeToCashNetworks: (): Promise<AirtimeToCashNetwork[]> =>
+    apiClient
+      .get<ApiEnvelope<AirtimeToCashNetwork[]>>("/table/airtime_to_cash_networks")
+      .then((r) => r.data.data),
+
+  getMyAirtimeToCashRequests: (): Promise<AirtimeToCashRequestItem[]> =>
+    apiClient
+      .get<ApiEnvelope<AirtimeToCashRequestItem[]>>("/customer/airtime-to-cash")
+      .then((r) => r.data.data),
+
+  submitAirtimeToCash: (payload: AirtimeToCashSubmitPayload): Promise<AirtimeToCashRequestItem> => {
+    const form = new FormData();
+    form.append("network", payload.network);
+    form.append("amount", String(payload.amount));
+    form.append("sender_phone", payload.sender_phone);
+    if (payload.proof_image) form.append("proof_image", payload.proof_image);
+    return apiClient
+      .post<ApiEnvelope<AirtimeToCashRequestItem>>("/customer/airtime-to-cash", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data.data);
+  },
 
   // Preview of the automatic Discount (if any) for a given service+network+
   // amount, without charging anything — mirrors VTUServicesController::handle()'s

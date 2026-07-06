@@ -125,6 +125,8 @@ const statusMap: Record<string, { dot: string; text: string; label: string }> = 
   pending: { dot: "bg-amber-500", text: "text-amber-700 bg-amber-50", label: "Pending" },
   processing: { dot: "bg-blue-500", text: "text-blue-700 bg-blue-50", label: "Processing" },
   failed: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Failed" },
+  approved: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Approved" },
+  rejected: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Rejected" },
   verified: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Verified" },
   active: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Active" },
   suspended: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Suspended" },

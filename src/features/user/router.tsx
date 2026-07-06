@@ -64,6 +64,13 @@ export const userRouter: RouteObject[] = [
     },
   },
   {
+    path: "airtime-to-cash",
+    lazy: async () => {
+      const { default: Component } = await import("./pages/airtime-to-cash");
+      return { Component };
+    },
+  },
+  {
     path: "pricing",
     lazy: async () => {
       const { default: Component } = await import("./pages/pricing");

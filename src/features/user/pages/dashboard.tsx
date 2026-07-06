@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Wallet, ArrowDownLeft, ShoppingBag, CheckCircle2, AlertTriangle, TrendingUp,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
+  Banknote,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -20,6 +21,7 @@ const quickActions = [
   { label: "Buy data", icon: Wifi, path: "/buy-data" },
   { label: "Electricity", icon: Plug, path: "/electricity" },
   { label: "Cable TV", icon: Tv, path: "/cable-tv" },
+  { label: "Airtime to cash", icon: Banknote, path: "/airtime-to-cash" },
 ];
 
 const isSameDay = (a: Date, b: Date) =>

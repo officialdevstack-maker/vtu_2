@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate, useNavigation } from "react-
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftRight,
+  Banknote,
   Bell,
   BellRing,
   BookOpenCheck,
@@ -75,13 +76,14 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
       { label: "Cable", path: "/admin/products/cable", icon: Cable },
       { label: "Bill", path: "/admin/products/bill", icon: ReceiptText },
       { label: "Exam", path: "/admin/products/exam", icon: BookOpenCheck },
+      { label: "Airtime to Cash", path: "/admin/airtime-to-cash", icon: Banknote },
     ],
   },
   {
     title: "Operations",
     items: [
       {
-        label: "Service Control",
+        label: "Payment Gateways",
         path: "/admin/service-control",
         icon: Sparkles,
       },
