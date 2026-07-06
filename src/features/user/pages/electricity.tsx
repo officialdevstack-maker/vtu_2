@@ -1,63 +1,139 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plug, CheckCircle2, Copy } from "lucide-react";
-import { fmt, mockUser } from "../data/mock";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { fmt } from "../data/mock";
+import { extractApiErrorMessage } from "@/shared/utils";
+import { useAuth } from "../../../shared/providers/auth";
 import {
   PurchaseShell, ServiceHeader, WalletBalanceBanner, FieldLabel,
-  VerifyField, QuickAmountGrid, ContinueButton, ConfirmSummary, ConfirmActions,
-  Card, Button, inputCls, selectCls,
+  VerifyField, QuickAmountGrid, ContinueButton, ConfirmSummary,
+  ConfirmActions, PinField, Card, Button, inputCls, selectCls,
 } from "../components/shared-ui";
-
-const discos = [
-  { id: "ekedc", name: "EKEDC", area: "Eko" },
-  { id: "ikedc", name: "IKEDC", area: "Ikeja" },
-  { id: "aedc", name: "AEDC", area: "Abuja" },
-  { id: "phedc", name: "PHEDC", area: "Port Harcourt" },
-  { id: "eedc", name: "EEDC", area: "Enugu" },
-  { id: "ibedc", name: "IBEDC", area: "Ibadan" },
-  { id: "kedco", name: "KEDCO", area: "Kano" },
-  { id: "yedc", name: "YEDC", area: "Yola" },
-];
+import { customerService, generateTxRef, type PurchaseResult } from "../services/customerService";
 
 const quickAmounts = [1000, 2000, 3000, 5000, 10000, 20000];
 
 export default function ElectricityPage() {
-  const [disco, setDisco] = useState("ekedc");
+  const navigate = useNavigate();
+  const { user, refreshUser } = useAuth();
+
+  const billPlansQuery = useQuery({
+    queryKey: ["bill-plans"],
+    queryFn: () => customerService.getBillPlans(),
+  });
+
+  const discos = useMemo(
+    () => (billPlansQuery.data ?? []).filter((p) => p.active),
+    [billPlansQuery.data],
+  );
+
+  const [disco, setDisco] = useState("");
   const [meterType, setMeterType] = useState<"prepaid" | "postpaid">("prepaid");
   const [meterNumber, setMeterNumber] = useState("");
   const [amount, setAmount] = useState("");
+  const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
   const [verifiedName, setVerifiedName] = useState("");
-  const [verifyAddress, setVerifyAddress] = useState("");
-  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [showPromo, setShowPromo] = useState(false);
+  const [code, setCode] = useState("");
+  const [pin, setPin] = useState("");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
   const [loading, setLoading] = useState(false);
-  const [token, setToken] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<PurchaseResult | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const isValid = meterNumber.length >= 11 && verified && Number(amount) >= 500;
-  const selectedDisco = discos.find((d) => d.id === disco)!;
+  // Default to the first available disco once loaded, and again whenever
+  // the current selection stops being one of them.
+  useEffect(() => {
+    if (discos.length === 0) return;
+    if (!discos.some((d) => d.disco === disco)) {
+      setDisco(discos[0].disco);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discos]);
 
-  const handleVerify = () => {
-    if (meterNumber.length < 11) return;
+  const selectedDisco = discos.find((d) => d.disco === disco);
+  const minAmount = Number(selectedDisco?.min ?? 500);
+  const maxAmount = Number(selectedDisco?.max ?? 100000);
+  const amountNumber = Number(amount);
+
+  const discountQuery = useQuery({
+    queryKey: ["discount-preview", "electricity", disco, amountNumber],
+    queryFn: () => customerService.previewDiscount("electricity", "", amountNumber, { disco }),
+    enabled: step === "confirm" && Boolean(disco) && amountNumber > 0,
+  });
+  const discountAmount = discountQuery.data?.discount_amount ?? 0;
+  const serviceFee = discountQuery.data?.service_fee ?? 0;
+  const payableAmount = discountQuery.data?.final_amount ?? amountNumber;
+
+  const handleVerify = async () => {
+    if (meterNumber.length < 10 || !selectedDisco) return;
     setVerifying(true);
-    setTimeout(() => {
-      setVerifying(false);
+    setVerifyError(null);
+    try {
+      const res = await customerService.verifyMeter(disco, meterNumber, meterType);
       setVerified(true);
-      setVerifiedName("Chukwuemeka Obi");
-      setVerifyAddress("12 Adeola Odeku, Victoria Island, Lagos");
-    }, 1200);
+      setVerifiedName(res.name);
+    } catch (err) {
+      setVerified(false);
+      setVerifiedName("");
+      setVerifyError(extractApiErrorMessage(err, "Could not verify this meter number."));
+    } finally {
+      setVerifying(false);
+    }
   };
 
-  const handleConfirm = () => {
+  const isFormValid =
+    Boolean(selectedDisco) && verified && amountNumber >= minAmount && amountNumber <= maxAmount;
+  const isConfirmValid = pin.length === 4;
+
+  const handleConfirm = async () => {
+    if (!selectedDisco) return;
+    if (!isConfirmValid) {
+      setError("Enter your 4-digit transaction PIN to continue.");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setToken(`${Math.floor(Math.random() * 9000000000) + 1000000000}-${Math.floor(Math.random() * 90000) + 10000}`);
+    setError(null);
+    try {
+      const purchase = await customerService.purchaseElectricity({
+        disco,
+        meter_number: meterNumber,
+        meter_type: meterType,
+        amount: amountNumber,
+        bypass: false,
+        pin,
+        code: code.trim() || undefined,
+        tx_ref: generateTxRef("EL"),
+      });
+      setResult(purchase);
       setStep("success");
-    }, 1500);
+      await refreshUser();
+    } catch (err) {
+      setError(extractApiErrorMessage(err, "Could not complete this purchase. Please try again."));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (step === "success") {
+  const reset = () => {
+    setStep("form");
+    setMeterNumber("");
+    setAmount("");
+    setVerified(false);
+    setVerifiedName("");
+    setVerifyError(null);
+    setCode("");
+    setPin("");
+    setResult(null);
+    setError(null);
+  };
+
+  if (step === "success" && result) {
+    const charged = result.discount_applied?.final_amount ?? Number(result.amount);
     return (
       <div className="max-w-md mx-auto">
         <Card className="p-6 text-center">
@@ -65,33 +141,48 @@ export default function ElectricityPage() {
             <CheckCircle2 className="w-6 h-6 text-emerald-600" />
           </div>
           <h2 className="text-base font-semibold text-slate-900 mb-1">Token generated</h2>
-          <p className="text-slate-500 text-sm mb-5">{selectedDisco.name} {meterType} purchase · {fmt(Number(amount))}</p>
+          <p className="text-slate-500 text-sm mb-5">
+            {selectedDisco?.disco} {meterType} purchase · {fmt(charged)}
+          </p>
 
-          <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4 mb-2">
-            <p className="text-xs text-slate-500 mb-2">Your electricity token</p>
-            <div className="flex items-center justify-between gap-3">
-              <span className="font-mono font-semibold text-slate-900 text-lg tracking-wide">{token}</span>
-              <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                className="text-slate-400 hover:text-slate-600 transition-colors shrink-0">
-                {copied ? <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" /> : <Copy className="w-4.5 h-4.5" />}
-              </button>
+          {result.token && (
+            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4 mb-2">
+              <p className="text-xs text-slate-500 mb-2">Your electricity token</p>
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-mono font-semibold text-slate-900 text-lg tracking-wide">{result.token}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(result.token ?? "");
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                >
+                  {copied ? <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" /> : <Copy className="w-4.5 h-4.5" />}
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">Enter this token on your meter to load units</p>
             </div>
+          )}
+
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-slate-400 font-mono mb-5">
+            Ref: {result.transaction_reference}
           </div>
-          <p className="text-xs text-slate-400 mb-5">Enter this token on your electricity meter to load units</p>
 
           <ConfirmSummary
             title=""
             rows={[
               { label: "Meter number", value: meterNumber },
               { label: "Customer", value: verifiedName },
-              { label: "Units", value: `~${Math.round(Number(amount) * 0.85)} kWh` },
             ]}
           />
-          <div className="flex gap-3">
-            <Button variant="secondary" fullWidth onClick={() => { setStep("form"); setMeterNumber(""); setAmount(""); setVerified(false); setToken(""); }}>
+          <div className="flex gap-3 mt-4">
+            <Button variant="secondary" fullWidth onClick={reset}>
               Buy again
             </Button>
-            <Button fullWidth>Download receipt</Button>
+            <Button fullWidth onClick={() => navigate("/transactions")}>
+              View transactions
+            </Button>
           </div>
         </Card>
       </div>
@@ -104,21 +195,49 @@ export default function ElectricityPage() {
 
       {step === "form" && (
         <div className="p-5 space-y-4">
-          <WalletBalanceBanner balance={mockUser.balance} />
+          <WalletBalanceBanner balance={Number(user?.wallet_balance ?? 0)} />
 
           <div>
             <FieldLabel>Distribution company</FieldLabel>
-            <select value={disco} onChange={(e) => setDisco(e.target.value)} className={selectCls}>
-              {discos.map((d) => <option key={d.id} value={d.id}>{d.name} — {d.area}</option>)}
-            </select>
+            {billPlansQuery.isPending ? (
+              <div className="h-10 rounded-lg bg-gray-100 animate-pulse" />
+            ) : discos.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">No discos are available right now.</p>
+            ) : (
+              <select
+                value={disco}
+                onChange={(e) => {
+                  setDisco(e.target.value);
+                  setVerified(false);
+                  setVerifiedName("");
+                  setVerifyError(null);
+                }}
+                className={selectCls}
+              >
+                {discos.map((d) => (
+                  <option key={d.id} value={d.disco}>
+                    {d.disco}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div>
             <FieldLabel>Meter type</FieldLabel>
             <div className="grid grid-cols-2 gap-2">
               {(["prepaid", "postpaid"] as const).map((t) => (
-                <button key={t} onClick={() => setMeterType(t)}
-                  className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${meterType === t ? "border-[#111827] bg-[#111827]/10 text-[#111827]" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}>
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => {
+                    setMeterType(t);
+                    setVerified(false);
+                    setVerifiedName("");
+                    setVerifyError(null);
+                  }}
+                  className={`py-2.5 rounded-lg border text-sm font-medium capitalize transition-colors ${meterType === t ? "border-[#111827] bg-[#111827]/10 text-[#111827]" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}
+                >
                   {t}
                 </button>
               ))}
@@ -128,42 +247,98 @@ export default function ElectricityPage() {
           <VerifyField
             label="Meter number"
             value={meterNumber}
-            onChange={(v) => { setMeterNumber(v); setVerified(false); setVerifiedName(""); setVerifyAddress(""); }}
-            onVerify={handleVerify}
+            onChange={(v) => {
+              setMeterNumber(v);
+              setVerified(false);
+              setVerifiedName("");
+              setVerifyError(null);
+            }}
+            onVerify={() => void handleVerify()}
             verifying={verifying}
             verified={verified}
             verifiedLabel={verifiedName}
-            verifiedSub={verifyAddress}
             maxLength={13}
             placeholder="e.g. 01234567890"
           />
+          {verifyError && <p className="text-xs text-red-500 -mt-2">{verifyError}</p>}
 
           <div>
             <FieldLabel>Amount</FieldLabel>
-            <QuickAmountGrid amounts={quickAmounts} value={amount} onChange={setAmount} />
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter custom amount (min ₦500)"
-              className={inputCls} />
+            <QuickAmountGrid
+              amounts={quickAmounts.filter((a) => a >= minAmount && a <= maxAmount)}
+              value={amount}
+              onChange={setAmount}
+            />
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={`Enter custom amount (${fmt(minAmount)} - ${fmt(maxAmount)})`}
+              className={inputCls}
+            />
+            {amount && (amountNumber < minAmount || amountNumber > maxAmount) && (
+              <p className="text-xs text-red-500 mt-1">
+                Amount must be between {fmt(minAmount)} and {fmt(maxAmount)}
+              </p>
+            )}
           </div>
 
-          <ContinueButton onClick={() => setStep("confirm")} disabled={!isValid} />
+          <ContinueButton onClick={() => setStep("confirm")} disabled={!isFormValid} />
         </div>
       )}
 
-      {step === "confirm" && (
-        <div className="p-5">
+      {step === "confirm" && selectedDisco && (
+        <div className="p-5 space-y-4">
           <ConfirmSummary
             rows={[
-              { label: "Disco", value: selectedDisco.name },
+              { label: "Disco", value: selectedDisco.disco },
               { label: "Meter type", value: meterType.charAt(0).toUpperCase() + meterType.slice(1) },
               { label: "Meter number", value: meterNumber },
               { label: "Customer", value: verifiedName },
-              { label: "Amount", value: fmt(Number(amount)) },
-              { label: "Transaction fee", value: "Free", emphasize: "success" },
+              { label: "Amount", value: fmt(amountNumber) },
+              ...(discountAmount > 0
+                ? [{ label: "Discount", value: `- ${fmt(discountAmount)}`, emphasize: "success" as const }]
+                : []),
+              ...(serviceFee > 0
+                ? [{ label: "Service fee", value: `+ ${fmt(serviceFee)}` }]
+                : []),
+              ...(discountAmount > 0 || serviceFee > 0
+                ? [{ label: "You pay", value: fmt(payableAmount), emphasize: "success" as const }]
+                : []),
             ]}
-            totalRow={{ label: "Balance after", value: fmt(mockUser.balance - Number(amount)) }}
           />
-          <ConfirmActions onBack={() => setStep("form")} onConfirm={handleConfirm} loading={loading} confirmLabel="Confirm & buy" />
+
+          {error && (
+            <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setShowPromo((v) => !v)}
+            className="text-xs font-medium text-[#111827] hover:opacity-80 transition-opacity"
+          >
+            {showPromo ? "Remove promo code" : "Have a promo code?"}
+          </button>
+          {showPromo && (
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder="Enter promo code"
+              className={`${inputCls} font-mono uppercase`}
+            />
+          )}
+
+          <PinField value={pin} onChange={setPin} />
+
+          <ConfirmActions
+            onBack={() => setStep("form")}
+            onConfirm={() => void handleConfirm()}
+            loading={loading}
+            confirmLabel="Confirm & buy"
+          />
         </div>
       )}
     </PurchaseShell>

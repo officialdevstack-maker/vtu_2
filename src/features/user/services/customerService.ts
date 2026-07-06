@@ -70,6 +70,19 @@ export type CablePlan = {
   price: number | string | null;
 };
 
+// A disco's bill plan (Products > Bill) — the Airtime Plan equivalent for
+// electricity: no fixed catalog price (it's pay-any-amount), just whether
+// the disco is purchasable at all and its own amount range. See
+// ServiceRequest::ruleMaker's "electricity" case, which enforces this same
+// row server-side.
+export type BillPlan = {
+  id: number;
+  disco: string;
+  min: string | number;
+  max: string | number;
+  active: boolean;
+};
+
 // A unique reference the backend requires per purchase (ServiceRequest's
 // `tx_ref` => `required|unique:transactions,transaction_reference`) — not a
 // real payment-gateway reference, just a client-generated idempotency key.
@@ -113,6 +126,19 @@ export type CablePurchasePayload = {
 // really is theirs before paying.
 export type CableVerification = { name: string };
 
+export type ElectricityPurchasePayload = {
+  disco: string;
+  meter_number: string;
+  meter_type: "prepaid" | "postpaid";
+  amount: number;
+  bypass: boolean;
+  pin: string;
+  code?: string;
+};
+
+// Same shape as CableVerification — just the account holder's name.
+export type ElectricityVerification = { name: string };
+
 // Shape of VTUServicesController::handle()'s success response — the real
 // Transaction row plus a discount_applied breakdown (see
 // TransactionService::process on the backend).
@@ -125,6 +151,8 @@ export type PurchaseResult = {
   receiver: string | null;
   account_or_phone: string | null;
   created_at: string;
+  // Electricity only — the real prepaid token to load onto the meter.
+  token?: string | null;
   discount_applied?: {
     discount_amount: number;
     original_amount: number;
@@ -137,6 +165,10 @@ export type DiscountPreview = {
   original_amount: number;
   discounted_amount: number;
   discount_amount: number;
+  // Electricity only — Bill Plan's per-role fee, additive on top (see
+  // BillPlan::resolveServiceFee). Zero/absent for every other service.
+  service_fee?: number;
+  final_amount?: number;
 };
 
 // A purchasable account tier — a Role the admin has marked `upgradable`
@@ -218,11 +250,35 @@ export const customerService = {
       .post<ApiEnvelope<PurchaseResult>>("/vtu/cable", payload)
       .then((r) => r.data.data),
 
+  getBillPlans: (): Promise<BillPlan[]> =>
+    apiClient
+      .get<ApiEnvelope<BillPlan[]>>("/table/bill_plans")
+      .then((r) => r.data.data),
+
+  verifyMeter: (disco: string, meterNumber: string, meterType: "prepaid" | "postpaid"): Promise<ElectricityVerification> =>
+    apiClient
+      .get<ApiEnvelope<ElectricityVerification>>("/vtu/electricity/verify", {
+        params: { disco, identifier: meterNumber, meter_type: meterType },
+      })
+      .then((r) => r.data.data),
+
+  purchaseElectricity: (payload: ElectricityPurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
+    apiClient
+      .post<ApiEnvelope<PurchaseResult>>("/vtu/electricity", payload)
+      .then((r) => r.data.data),
+
   // Preview of the automatic Discount (if any) for a given service+network+
   // amount, without charging anything — mirrors VTUServicesController::handle()'s
-  // Step 1 exactly (same Discount::getDiscountedAmount call).
-  previewDiscount: (service: string, network: string, amount: number): Promise<DiscountPreview> =>
+  // Step 1 exactly (same Discount::getDiscountedAmount call). `extra` lets
+  // callers pass service-specific params the backend also reads, e.g.
+  // `disco` for electricity's Bill Plan service-fee preview.
+  previewDiscount: (
+    service: string,
+    network: string,
+    amount: number,
+    extra?: Record<string, string>,
+  ): Promise<DiscountPreview> =>
     apiClient
-      .get<ApiEnvelope<DiscountPreview>>(`/vtu/${service}/discount`, { params: { amount, network } })
+      .get<ApiEnvelope<DiscountPreview>>(`/vtu/${service}/discount`, { params: { amount, network, ...extra } })
       .then((r) => r.data.data),
 };

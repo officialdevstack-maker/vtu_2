@@ -161,6 +161,20 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "products/bill/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/products/bill-plan-form");
+          return { Component };
+        },
+      },
+      {
+        path: "products/bill/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/products/bill-plan-form");
+          return { Component };
+        },
+      },
+      {
         path: "products/exam",
         lazy: async () => {
           const { default: Component } = await import("./pages/products/exam");
