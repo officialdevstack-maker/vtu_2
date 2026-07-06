@@ -6,7 +6,6 @@ import {
   LogOut,
   Receipt,
   Wallet,
-  MessageCircle,
   Share2,
   Phone,
   Wifi,
@@ -21,11 +20,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
-import { generalService } from "../../admin/pages/generalService";
-import { toWhatsAppLink } from "@/shared/utils";
 import { useBranding } from "@/shared/branding";
 
 const initialsOf = (name?: string) =>
@@ -105,14 +102,15 @@ const sections: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-const bottomItems: NavItem[] = [
-  { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
-];
-
 // Dashboard's service-availability widget and every buy-* purchase page all
 // read this same ["networks"] query — prefetch it on hover for any of them
 // so the page that actually needs it opens with a warm cache.
-const NETWORKS_PREFETCH_IDS = new Set(["dashboard", "buy-airtime", "buy-data", "cable-tv"]);
+const NETWORKS_PREFETCH_IDS = new Set([
+  "dashboard",
+  "buy-airtime",
+  "buy-data",
+  "cable-tv",
+]);
 
 export default function Sidebar({
   open,
@@ -132,7 +130,10 @@ export default function Sidebar({
   const branding = useBranding();
 
   const prefetchNetworks = () =>
-    queryClient.prefetchQuery({ queryKey: ["networks"], queryFn: () => customerService.getNetworks() });
+    queryClient.prefetchQuery({
+      queryKey: ["networks"],
+      queryFn: () => customerService.getNetworks(),
+    });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -140,13 +141,6 @@ export default function Sidebar({
   const canSwitchAccount = hasPermission("switch_account");
   const displayName = user?.username ?? "there";
   const displayEmail = user?.email ?? "";
-
-  const generalQuery = useQuery({
-    queryKey: ["general-settings"],
-    queryFn: () => generalService.get(),
-    staleTime: Infinity,
-  });
-  const whatsappLink = generalQuery.data?.app_phone ? toWhatsAppLink(generalQuery.data.app_phone) : null;
 
   const go = (path: string) => {
     navigate(path);
@@ -213,7 +207,11 @@ export default function Sidebar({
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 bg-[#111827] rounded-md flex items-center justify-center shrink-0 overflow-hidden">
               {branding.logo ? (
-                <img src={branding.logo} alt={branding.app_name} className="w-full h-full object-contain" />
+                <img
+                  src={branding.logo}
+                  alt={branding.app_name}
+                  className="w-full h-full object-contain"
+                />
               ) : (
                 <Zap className="w-4 h-4 text-white" />
               )}
@@ -242,7 +240,11 @@ export default function Sidebar({
                     <button
                       key={item.id}
                       onClick={() => go(item.path)}
-                      onMouseEnter={NETWORKS_PREFETCH_IDS.has(item.id) ? prefetchNetworks : undefined}
+                      onMouseEnter={
+                        NETWORKS_PREFETCH_IDS.has(item.id)
+                          ? prefetchNetworks
+                          : undefined
+                      }
                       title={collapsed ? item.label : undefined}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors relative ${collapsed ? "lg:justify-center" : ""} ${
                         active
@@ -266,49 +268,12 @@ export default function Sidebar({
                     </button>
                   );
                 })}
-                {section.label === "Account" && whatsappLink && (
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={collapsed ? "WhatsApp support" : undefined}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors text-white/60 hover:bg-white/5 hover:text-white/90 ${collapsed ? "lg:justify-center" : ""}`}
-                  >
-                    <MessageCircle className="w-4 h-4 shrink-0" />
-                    <span className={`truncate ${collapsed ? "lg:hidden" : ""}`}>
-                      WhatsApp support
-                    </span>
-                  </a>
-                )}
               </div>
             </div>
           ))}
         </nav>
 
-        {/* Bottom items */}
         <div className="px-2.5 pb-2 border-t border-white/10 pt-2 shrink-0">
-          <div className="space-y-0.5 mb-2">
-            {bottomItems.map((item) => {
-              const active = isActive(item.path);
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => go(item.path)}
-                  title={collapsed ? item.label : undefined}
-                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors ${collapsed ? "lg:justify-center" : ""} ${
-                    active
-                      ? "bg-white/10 text-white font-medium"
-                      : "text-white/60 hover:bg-white/5 hover:text-white/90"
-                  }`}
-                >
-                  <item.icon className="w-4 h-4 shrink-0" />
-                  <span className={collapsed ? "lg:hidden" : ""}>
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
           {/* User footer */}
           <div className="relative">
             <button
@@ -319,7 +284,9 @@ export default function Sidebar({
               <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center text-xs font-medium text-white shrink-0">
                 {initialsOf(displayName)}
               </div>
-              <div className={`flex-1 min-w-0 text-left ${collapsed ? "lg:hidden" : ""}`}>
+              <div
+                className={`flex-1 min-w-0 text-left ${collapsed ? "lg:hidden" : ""}`}
+              >
                 <p className="text-xs font-medium text-white truncate leading-tight">
                   {displayName}
                 </p>
@@ -359,7 +326,8 @@ export default function Sidebar({
                       onClick={handleSwitchToAdminView}
                       className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                     >
-                      <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to admin view
+                      <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to admin
+                      view
                     </button>
                   )}
                   <button

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
-import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Gift, Lock, Mail, Phone, User } from "lucide-react";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
@@ -29,6 +29,8 @@ function extractErrorMessage(err: unknown): string {
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref")?.trim().toUpperCase() || undefined;
   const { register: registerAccount } = useAuth();
 
   const {
@@ -49,6 +51,7 @@ export default function RegisterPage() {
         phone: data.phone,
         password: data.password,
         password_confirmation: data.confirmPassword,
+        referral_code: referralCode,
       });
       navigate("/create-transaction-pin", { replace: true });
     } catch (err) {
@@ -69,6 +72,13 @@ export default function RegisterPage() {
         {errors.root && (
           <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
             {errors.root.message}
+          </div>
+        )}
+
+        {referralCode && (
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
+            <Gift className="w-4 h-4 shrink-0" />
+            Referred by <span className="font-mono font-semibold">{referralCode}</span>
           </div>
         )}
 

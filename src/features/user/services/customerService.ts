@@ -219,6 +219,19 @@ export type UpgradeTiersResponse = {
 // envelope and returns its own {message, user} / {error} shape directly.
 export type UpgradeResult = { message: string; user: { user_type: string; wallet_balance: string | number } };
 
+// See CustomerController::referralStats(). pending_referrals are people
+// who signed up with this code but haven't completed a successful
+// transaction yet, so no commission has been earned from them.
+export type ReferralStats = {
+  referral_code: string | null;
+  total_referrals: number;
+  pending_referrals: number;
+  active_referrals: number;
+  referral_balance: number;
+  total_earnings: number;
+  commission_rate: number;
+};
+
 // A recipient resolved by username/email/phone before sending — shown so
 // the sender can confirm they're paying the right person, mirroring how a
 // bank app shows the beneficiary name before you commit. See
@@ -282,6 +295,11 @@ export const customerService = {
   // refreshUser() from useAuth() afterward to keep every field in sync.
   convertReferralToWallet: (userId: string | number): Promise<void> =>
     apiClient.post(`/customer/${userId}/convert-referral`).then(() => undefined),
+
+  getReferralStats: (): Promise<ReferralStats> =>
+    apiClient
+      .get<ApiEnvelope<ReferralStats>>("/customer/referral-stats")
+      .then((r) => r.data.data),
 
   getUpgradeTiers: (): Promise<UpgradeTiersResponse> =>
     apiClient
