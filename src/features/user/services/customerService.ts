@@ -31,6 +31,23 @@ export type AirtimePlan = {
   active: boolean;
 };
 
+// A fixed-price catalog bundle (Products > Airtime & Data > Data Plans).
+// `price` is resolved server-side per the authenticated user's role (see
+// DataPlan::getPriceAttribute) — never computed client-side, and never
+// trusted back from the client on purchase either (VTUServicesController::
+// handle() re-resolves it from data_plan for the actual charge).
+export type DataPlan = {
+  id: number;
+  network: string;
+  plan_name: string;
+  plan_size: string;
+  plan_type: string;
+  plan: string;
+  validity: string;
+  active: boolean;
+  price: number | string | null;
+};
+
 // A unique reference the backend requires per purchase (ServiceRequest's
 // `tx_ref` => `required|unique:transactions,transaction_reference`) — not a
 // real payment-gateway reference, just a client-generated idempotency key.
@@ -43,6 +60,17 @@ export type AirtimePurchasePayload = {
   phone: string;
   amount: number;
   network_type: string;
+  bypass: boolean;
+  pin: string;
+  code?: string;
+};
+
+export type DataPurchasePayload = {
+  network: string;
+  phone: string;
+  amount: number;
+  plan_type: string;
+  data_plan: number;
   bypass: boolean;
   pin: string;
   code?: string;
@@ -94,6 +122,16 @@ export const customerService = {
   purchaseAirtime: (payload: AirtimePurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
     apiClient
       .post<ApiEnvelope<PurchaseResult>>("/vtu/airtime", payload)
+      .then((r) => r.data.data),
+
+  getDataPlans: (): Promise<DataPlan[]> =>
+    apiClient
+      .get<ApiEnvelope<DataPlan[]>>("/table/data_plans")
+      .then((r) => r.data.data),
+
+  purchaseData: (payload: DataPurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
+    apiClient
+      .post<ApiEnvelope<PurchaseResult>>("/vtu/data", payload)
       .then((r) => r.data.data),
 
   // Preview of the automatic Discount (if any) for a given service+network+

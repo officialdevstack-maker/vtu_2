@@ -27,6 +27,23 @@ export function extractApiErrorMessage(
   return fallback;
 }
 
+// Mirrors backend ValidPhoneForNetwork's prefix map exactly, so the network
+// we auto-select on the frontend always matches what the server would accept.
+const NETWORK_PREFIXES: Record<string, string[]> = {
+  mtn: ["0803", "0806", "0810", "0813", "0814", "0816", "0703", "0706", "0903", "0906", "0913", "0916"],
+  airtel: ["0802", "0808", "0812", "0708", "0701", "0902", "0907", "0901", "0912"],
+  glo: ["0805", "0807", "0811", "0815", "0705", "0905", "0915"],
+  "9mobile": ["0809", "0817", "0818", "0909", "0908"],
+};
+
+export function detectNetwork(phone: string): string | null {
+  const prefix = phone.slice(0, 4);
+  for (const [net, prefixes] of Object.entries(NETWORK_PREFIXES)) {
+    if (prefixes.includes(prefix)) return net;
+  }
+  return null;
+}
+
 export function redirect(path: any) {
   const _path = path as string
   const isExternal = _path.startsWith('http://') || _path.startsWith('https://') || _path.startsWith('//');

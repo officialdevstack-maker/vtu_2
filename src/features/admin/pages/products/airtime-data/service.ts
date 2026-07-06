@@ -301,4 +301,18 @@ export const dataPlanService = {
         active: !plan.active,
       })
       .then((r) => r.data.data),
+
+  // AdminController::universalBulkDelete expects { ids: [...] }.
+  bulkRemove: (ids: (string | number)[]): Promise<{ deleted: number }> =>
+    apiClient
+      .delete<ApiEnvelope<{ deleted: number }>>(DATA_PLAN, { data: { ids } })
+      .then((r) => r.data.data),
+
+  // AdminController::universalBulkCreateOrUpdate expects { items: [{id, ...changes}] }.
+  bulkSetActive: (ids: (string | number)[], active: boolean): Promise<DataPlan[]> =>
+    apiClient
+      .put<ApiEnvelope<DataPlan[]>>(`${DATA_PLAN}/bulk`, {
+        items: ids.map((id) => ({ id, active })),
+      })
+      .then((r) => r.data.data),
 };

@@ -3,12 +3,12 @@ import { Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fmt } from "../data/mock";
-import { extractApiErrorMessage } from "@/shared/utils";
+import { extractApiErrorMessage, detectNetwork } from "@/shared/utils";
 import { useAuth } from "../../../shared/providers/auth";
 import {
   PurchaseShell, ServiceHeader, WalletBalanceBanner, FieldLabel,
   NetworkPicker, QuickAmountGrid, ContinueButton, ConfirmSummary,
-  ConfirmActions, SuccessScreen, PinField, inputCls,
+  ConfirmActions, SuccessScreen, PinField, inputCls, selectCls,
 } from "../components/shared-ui";
 import { customerService, generateTxRef, type AirtimePlan, type PurchaseResult } from "../services/customerService";
 
@@ -21,22 +21,10 @@ const NETWORK_COLORS: Record<string, string> = {
 
 const quickAmounts = [50, 100, 200, 500, 1000, 2000, 5000];
 
-// Mirrors backend ValidPhoneForNetwork's prefix map exactly, so the network
-// we auto-select here always matches what the server would accept.
-const NETWORK_PREFIXES: Record<string, string[]> = {
-  mtn: ["0803", "0806", "0810", "0813", "0814", "0816", "0703", "0706", "0903", "0906", "0913", "0916"],
-  airtel: ["0802", "0808", "0812", "0708", "0701", "0902", "0907", "0901", "0912"],
-  glo: ["0805", "0807", "0811", "0815", "0705", "0905", "0915"],
-  "9mobile": ["0809", "0817", "0818", "0909", "0908"],
-};
-
-function detectNetwork(phone: string): string | null {
-  const prefix = phone.slice(0, 4);
-  for (const [net, prefixes] of Object.entries(NETWORK_PREFIXES)) {
-    if (prefixes.includes(prefix)) return net;
-  }
-  return null;
-}
+// A plan with no category set (nullable in the DB) still needs a valid
+// enum value to submit as network_type — normalize it to "vtu", matching
+// ServiceRequest's own fallback server-side.
+const planCategory = (plan: AirtimePlan): string => (plan.category || "vtu").toLowerCase();
 
 export default function BuyAirtimePage() {
   const navigate = useNavigate();
@@ -51,21 +39,25 @@ export default function BuyAirtimePage() {
     queryFn: () => customerService.getAirtimePlans(),
   });
 
-  const planByNetwork = useMemo(() => {
-    const map = new Map<string, AirtimePlan>();
+  // Airtime Plan (Products > Airtime & Data) is the sole source of truth
+  // for both whether a network is purchasable at all AND which plan
+  // types/categories it offers — a network can have several active rows
+  // (e.g. a VTU row and a separate SNS row), each with its own min/max.
+  // Service Control's network_types pivot is an unrelated toggle and plays
+  // no part in this at all.
+  const plansByNetwork = useMemo(() => {
+    const map = new Map<string, AirtimePlan[]>();
     for (const plan of airtimePlansQuery.data ?? []) {
-      map.set(plan.name.toLowerCase(), plan);
+      if (!plan.active) continue;
+      const key = plan.name.toLowerCase();
+      map.set(key, [...(map.get(key) ?? []), plan]);
     }
     return map;
   }, [airtimePlansQuery.data]);
 
-  // Airtime Plan (Products > Airtime & Data) is the actual source of truth
-  // for whether a network is purchasable — it's the only thing
-  // ServiceRequest checks server-side. Service Control's network_types
-  // pivot is an unrelated toggle and plays no part in this at all.
   const networks = useMemo(
-    () => (networksQuery.data ?? []).filter((n) => planByNetwork.get(n.name.toLowerCase())?.active),
-    [networksQuery.data, planByNetwork],
+    () => (networksQuery.data ?? []).filter((n) => (plansByNetwork.get(n.name.toLowerCase())?.length ?? 0) > 0),
+    [networksQuery.data, plansByNetwork],
   );
 
   const [network, setNetwork] = useState("");
@@ -102,17 +94,20 @@ export default function BuyAirtimePage() {
   }, [networks]);
 
   const selectedNetwork = networks.find((n) => n.name.toLowerCase() === network);
-  const selectedPlan = planByNetwork.get(network);
+  const availablePlans = plansByNetwork.get(network) ?? [];
+  const selectedPlan = availablePlans.find((p) => planCategory(p) === networkType) ?? availablePlans[0];
   const minAmount = Number(selectedPlan?.min ?? 50);
   const maxAmount = Number(selectedPlan?.max ?? 5000);
 
-  // The Airtime Plan's "category" (set by the admin, one per network — see
-  // AirtimePlanFormPage) is the actual network_type this purchase submits.
-  // It's not a user choice: Service Control's network_types list is a
-  // separate, unrelated toggle that doesn't gate or offer plan types here.
+  // Default to the network's only (or first) plan category, and reset
+  // whenever the network changes and the old category no longer applies.
   useEffect(() => {
-    setNetworkType(selectedPlan?.category?.toLowerCase() || "vtu");
-  }, [selectedPlan]);
+    if (availablePlans.length === 0) return;
+    if (!availablePlans.some((p) => planCategory(p) === networkType)) {
+      setNetworkType(planCategory(availablePlans[0]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availablePlans]);
 
   const isFormValid =
     Boolean(selectedNetwork) &&
@@ -212,6 +207,19 @@ export default function BuyAirtimePage() {
               />
             )}
           </div>
+
+          {availablePlans.length > 1 && (
+            <div>
+              <FieldLabel>Plan type</FieldLabel>
+              <select value={networkType} onChange={(e) => setNetworkType(e.target.value)} className={selectCls}>
+                {availablePlans.map((p) => (
+                  <option key={p.id} value={planCategory(p)}>
+                    {planCategory(p).toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <FieldLabel>Phone number</FieldLabel>
