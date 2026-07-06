@@ -1,11 +1,19 @@
 import { AuthProvider, useAuth } from "@/shared/providers/auth";
 import { queryClient } from "@/shared/queryClient";
 import { toWhatsAppLink } from "@/shared/utils";
+import { useDocumentBranding } from "@/shared/branding";
 import { generalService } from "@/features/admin/pages/generalService";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { MessageCircle } from "lucide-react";
 import { Outlet } from "react-router";
+
+// Keeps document.title / meta description tallied with Settings > General,
+// site-wide, on every route (including logged-out pages).
+function DocumentBranding() {
+  useDocumentBranding();
+  return null;
+}
 
 // Site-wide WhatsApp support bubble — only shown once logged in (the
 // number itself is admin-configured, General::app_phone, and the endpoint
@@ -38,6 +46,7 @@ function WhatsAppSupportButton() {
 const RootLayout = () => {
   return (
     <QueryClientProvider client={queryClient}>
+      <DocumentBranding />
       <AuthProvider>
         <Outlet />
         <WhatsAppSupportButton />

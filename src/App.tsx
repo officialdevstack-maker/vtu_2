@@ -3,6 +3,23 @@ import {
   Phone, Wifi, Tv, Zap, ShieldCheck, ArrowRight, Clock, Users,
   UserPlus, Wallet, Send, PercentCircle, Timer, Receipt,
 } from 'lucide-react';
+import { useBranding } from '@/shared/branding';
+
+function BrandMark({ size = "w-7 h-7", iconSize = "w-4 h-4", textSize = "font-semibold text-slate-900" }: { size?: string; iconSize?: string; textSize?: string }) {
+  const { app_name, logo } = useBranding();
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`${size} bg-indigo-600 rounded-md flex items-center justify-center overflow-hidden shrink-0`}>
+        {logo ? (
+          <img src={logo} alt={app_name} className="w-full h-full object-contain" />
+        ) : (
+          <Zap className={`${iconSize} text-white`} />
+        )}
+      </div>
+      <span className={textSize}>{app_name}</span>
+    </div>
+  );
+}
 
 const services = [
   { icon: Phone, label: 'Airtime top-up', description: 'MTN, Airtel, Glo and 9mobile, delivered instantly.' },
@@ -33,17 +50,14 @@ const networks = ['MTN', 'Airtel', 'Glo', '9mobile'];
 const billers = ['DStv', 'GOtv', 'Startimes', 'EKEDC', 'IKEDC', 'AEDC', 'PHEDC', '+7 more discos'];
 
 export default function LandingPage() {
+  const { app_name } = useBranding();
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
       {/* Nav */}
       <header className="border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-slate-900">KORA</span>
-          </div>
+          <BrandMark />
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
               Sign in
@@ -65,7 +79,7 @@ export default function LandingPage() {
             Airtime, data and bill payments, <span className="text-indigo-600">without the wait.</span>
           </h1>
           <p className="mt-5 text-slate-500 text-base leading-relaxed max-w-xl">
-            KORA is a single platform for buying data, topping up airtime, and paying electricity or cable
+            {app_name} is a single platform for buying data, topping up airtime, and paying electricity or cable
             bills — automated, secure, and built for everyday use.
           </p>
           <div className="mt-8 flex items-center gap-3">
@@ -81,7 +95,7 @@ export default function LandingPage() {
 
       {/* Services */}
       <section className="max-w-6xl mx-auto px-4 py-14 border-t border-gray-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-1">What you can do on KORA</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-1">What you can do on {app_name}</h2>
         <p className="text-sm text-slate-500 mb-8">Every service settles automatically through our provider network.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -197,11 +211,8 @@ export default function LandingPage() {
       <footer className="border-t border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-2 sm:grid-cols-4 gap-8">
           <div className="col-span-2 sm:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center">
-                <Zap className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="font-semibold text-slate-900 text-sm">KORA</span>
+            <div className="mb-3">
+              <BrandMark size="w-6 h-6" iconSize="w-3.5 h-3.5" textSize="font-semibold text-slate-900 text-sm" />
             </div>
             <p className="text-slate-400 text-xs leading-relaxed">Airtime, data and bill payments for everyday Nigeria.</p>
           </div>
@@ -230,7 +241,7 @@ export default function LandingPage() {
         </div>
         <div className="border-t border-gray-200">
           <div className="max-w-6xl mx-auto px-4 py-4">
-            <p className="text-slate-400 text-xs">&copy; {new Date().getFullYear()} KORA. All rights reserved.</p>
+            <p className="text-slate-400 text-xs">&copy; {new Date().getFullYear()} {app_name}. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -3,8 +3,10 @@ import { ChevronRight, X, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { services, mockUser, fmt } from "../data/mock";
 import { PageHeader, Card, Button, ConfirmSummary, inputCls, selectCls } from "../components/shared-ui";
+import { useBranding } from "@/shared/branding";
 
 export default function ServicesPage() {
+  const { app_name } = useBranding();
   const [activeService, setActiveService] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState("MTN");
   const [phone, setPhone] = useState("");
@@ -35,7 +37,7 @@ export default function ServicesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
-      <PageHeader title="All services" description="Everything you can pay for on KORA" />
+      <PageHeader title="All services" description={`Everything you can pay for on ${app_name}`} />
 
       {cats.map((cat) => (
         <Card key={cat.label} className="p-4">

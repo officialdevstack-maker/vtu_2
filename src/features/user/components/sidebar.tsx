@@ -26,6 +26,7 @@ import { useAuth } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
 import { generalService } from "../../admin/pages/generalService";
 import { toWhatsAppLink } from "@/shared/utils";
+import { useBranding } from "@/shared/branding";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -128,6 +129,7 @@ export default function Sidebar({
   const navigate = useNavigate();
   const { logout, user, hasPermission } = useAuth();
   const queryClient = useQueryClient();
+  const branding = useBranding();
 
   const prefetchNetworks = () =>
     queryClient.prefetchQuery({ queryKey: ["networks"], queryFn: () => customerService.getNetworks() });
@@ -209,13 +211,17 @@ export default function Sidebar({
           className={`h-14 flex items-center border-b border-white/10 shrink-0 ${collapsed ? "lg:justify-center lg:px-0 px-4" : "px-4"}`}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-[#111827] rounded-md flex items-center justify-center shrink-0">
-              <Zap className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 bg-[#111827] rounded-md flex items-center justify-center shrink-0 overflow-hidden">
+              {branding.logo ? (
+                <img src={branding.logo} alt={branding.app_name} className="w-full h-full object-contain" />
+              ) : (
+                <Zap className="w-4 h-4 text-white" />
+              )}
             </div>
             <p
               className={`text-white font-semibold text-sm leading-tight ${collapsed ? "lg:hidden" : ""}`}
             >
-              KORA
+              {branding.app_name}
             </p>
           </div>
         </div>
