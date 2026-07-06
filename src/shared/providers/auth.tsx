@@ -86,7 +86,7 @@ export type UserBank = {
   logo?: string;
 };
 
-interface User {
+export interface User {
   id: string;
   email?: string;
   fullname?: string;
@@ -98,6 +98,7 @@ interface User {
   wallet_balance?: string | number;
   referral_balance?: string | number;
   referral_code?: string | null;
+  has_pin?: boolean;
   transactions?: UserTransaction[];
   stats?: UserStats;
   badges?: UserBadge[];
@@ -129,6 +130,7 @@ type ApiEnvelope<T> = {
 type AuthPayload = {
   user?: User;
   token?: string;
+  access_token?: string;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -150,6 +152,7 @@ const demoUsers: Record<"user" | "admin", User> = {
     wallet_balance: 85250,
     referral_balance: 4200,
     referral_code: "KORADEMO",
+    has_pin: true,
     joined_at: "2026-01-15",
   },
   admin: {
@@ -171,6 +174,7 @@ const demoUsers: Record<"user" | "admin", User> = {
       ],
     },
     wallet_balance: 0,
+    has_pin: true,
     joined_at: "2026-01-01",
   },
 };
@@ -211,8 +215,9 @@ const fetchCurrentUser = async (): Promise<User | null> => {
 };
 
 const persistAuthToken = (payload?: AuthPayload | null) => {
-  if (payload?.token) {
-    setAuthToken(payload.token);
+  const token = payload?.token ?? payload?.access_token;
+  if (token) {
+    setAuthToken(token);
   }
 };
 

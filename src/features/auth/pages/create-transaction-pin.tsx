@@ -6,6 +6,8 @@ import { Card } from "@/features/user/components/shared-ui";
 import { AuthLayout, authCardCls } from "../components/AuthLayout";
 import { accountService } from "@/features/account/services/accountService";
 import { PinDots, PinKeypad } from "../components/PinKeypad";
+import { getAuthToken, setAuthToken } from "@/shared/api/apiClient";
+import { useAuth } from "@/shared/providers/auth";
 
 const PIN_LENGTH = 4;
 
@@ -34,16 +36,29 @@ export default function CreateTransactionPinPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const { user, isAuthenticated, isInitializing } = useAuth();
 
   const value = stage === "create" ? pin : confirmPin;
   const setValue = stage === "create" ? setPin : setConfirmPin;
 
   const submit = async (finalPin: string, finalConfirm: string) => {
+    if (!getAuthToken()) {
+      setError("Please sign in again before creating your transaction PIN.");
+      window.setTimeout(() => navigate("/login", { replace: true }), 1200);
+      return;
+    }
+
     setSubmitting(true);
     try {
       await accountService.updatePin({ pin: finalPin, pin_confirmation: finalConfirm });
       setSuccess(true);
     } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        setAuthToken(null);
+        setError("Your session has expired. Please sign in again.");
+        window.setTimeout(() => navigate("/login", { replace: true }), 1200);
+        return;
+      }
       setError(extractErrorMessage(err));
       setStage("create");
       setPin("");
@@ -108,6 +123,22 @@ export default function CreateTransactionPinPage() {
     const timeout = window.setTimeout(() => navigate("/dashboard", { replace: true }), 900);
     return () => window.clearTimeout(timeout);
   }, [navigate, success]);
+
+  useEffect(() => {
+    if (isInitializing || isAuthenticated || getAuthToken()) return;
+    const timeout = window.setTimeout(() => navigate("/login", { replace: true }), 1200);
+    setError("Please sign in again before creating your transaction PIN.");
+    return () => window.clearTimeout(timeout);
+  }, [isAuthenticated, isInitializing, navigate]);
+
+  // Already has a PIN (e.g. revisited this URL directly) — nothing to do
+  // here, send them on to where they were actually headed.
+  useEffect(() => {
+    if (isInitializing || !isAuthenticated || success) return;
+    if (user?.user_type !== "admin" && user?.has_pin) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isInitializing, navigate, success, user]);
 
   return (
     <AuthLayout>

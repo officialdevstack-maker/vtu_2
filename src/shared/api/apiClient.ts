@@ -31,6 +31,17 @@ export const apiClient = axios.create({
   },
 });
 
+const setRequestHeader = (headers: unknown, name: string, value: string) => {
+  if (!headers) return;
+
+  if (typeof (headers as { set?: unknown }).set === 'function') {
+    (headers as { set: (headerName: string, headerValue: string) => void }).set(name, value);
+    return;
+  }
+
+  (headers as Record<string, string>)[name] = value;
+};
+
 apiClient.interceptors.request.use((config) => {
   if (config.url?.includes('/sanctum/csrf-cookie')) {
     config.baseURL = apiBaseUrl.replace(/\/api(?:\/v1)?$/i, '');
@@ -38,12 +49,12 @@ apiClient.interceptors.request.use((config) => {
 
   const token = Cookies.get('XSRF-TOKEN');
   if (token) {
-    config.headers['X-XSRF-TOKEN'] = decodeURIComponent(token);
+    setRequestHeader(config.headers, 'X-XSRF-TOKEN', decodeURIComponent(token));
   }
 
   const authToken = getAuthToken();
   if (authToken) {
-    config.headers.Authorization = `Bearer ${authToken}`;
+    setRequestHeader(config.headers, 'Authorization', `Bearer ${authToken}`);
   }
 
   return config;
