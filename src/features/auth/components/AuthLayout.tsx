@@ -1,6 +1,7 @@
 import { Apple, CheckCircle2, Lock, Phone, Shield, Smartphone, Wifi, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link as RouterLink } from "react-router-dom";
+import { useBranding } from "@/shared/branding";
 
 const features = [
   { icon: Shield, title: "Bank-grade security", text: "Every transaction is protected end-to-end." },
@@ -144,17 +145,23 @@ function ShowcasePanel() {
 }
 
 export function AuthLayout({ children }: { children: ReactNode }) {
+  const { app_name, logo } = useBranding();
+
   return (
     <div className="flex min-h-screen w-full bg-white">
       <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:px-10 md:w-[62%] md:px-12 lg:w-[46%] lg:px-20">
         <div className="w-full max-w-md animate-auth-fade-in">
           <RouterLink to="/" className="mb-10 flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#111827]">
-              <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white">
-                <path d="M13 2 3 14h7l-1 8 11-14h-8l1-6z" />
-              </svg>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#111827] overflow-hidden shrink-0">
+              {logo ? (
+                <img src={logo} alt={app_name} className="h-full w-full object-contain" />
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white">
+                  <path d="M13 2 3 14h7l-1 8 11-14h-8l1-6z" />
+                </svg>
+              )}
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">KORA</span>
+            <span className="text-xl font-bold tracking-tight text-slate-900">{app_name}</span>
           </RouterLink>
 
           {children}

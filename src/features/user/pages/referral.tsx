@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Copy, CheckCircle2, Gift, Users, DollarSign, Clock } from "lucide-react";
 import { mockUser, fmt } from "../data/mock";
 import { PageHeader, Card, Button } from "../components/shared-ui";
+import { useBranding } from "@/shared/branding";
 
 export default function ReferralPage() {
+  const { app_name } = useBranding();
   const [copied, setCopied] = useState(false);
 
   return (
@@ -54,7 +56,7 @@ export default function ReferralPage() {
         <div className="space-y-4">
           {[
             { step: "1", title: "Share your code", desc: "Share your unique referral code or link with friends and family" },
-            { step: "2", title: "Friend signs up", desc: "Your friend creates a KORA account using your referral code" },
+            { step: "2", title: "Friend signs up", desc: `Your friend creates a ${app_name} account using your referral code` },
             { step: "3", title: "Earn your reward", desc: "Get ₦500 credited to your wallet once they complete a transaction" },
           ].map((item) => (
             <div key={item.step} className="flex gap-3">

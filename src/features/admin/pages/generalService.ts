@@ -17,6 +17,11 @@ export type GeneralSettings = {
   accountName: string | null;
   accountNumber: string | null;
   logo: string | null;
+  // Browser tab title / SEO description — read by the public /branding
+  // endpoint (BrandingController), separate from app_name so the tab title
+  // can read as a fuller tagline than the bare brand name shown in headers.
+  meta_title: string | null;
+  meta_description: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   // Server-computed from .env — read-only here, not real columns.
@@ -35,6 +40,8 @@ export type GeneralSettingsPayload = {
   accountName: string | null;
   accountNumber: string | null;
   logo: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
 };
 
 // Uses the Universal Table API against Eloquent's default table name for
@@ -51,4 +58,18 @@ export const generalService = {
     apiClient
       .put<ApiEnvelope<GeneralSettings>>(`${BASE}/1`, payload)
       .then((r) => r.data.data),
+
+  // Not reachable via the Universal Table API above (JSON body only) — a
+  // dedicated multipart endpoint (GeneralController::uploadLogo). Persists
+  // immediately server-side; unlike the rest of this form there's no
+  // separate "Save changes" step for the logo itself.
+  uploadLogo: (file: File): Promise<{ logo: string }> => {
+    const formData = new FormData();
+    formData.append("logo", file);
+    return apiClient
+      .post<ApiEnvelope<{ logo: string }>>("/general/logo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data.data);
+  },
 };

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { CheckCircle2, Image as ImageIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Upload } from "lucide-react";
 import { z } from "zod";
 import { Card, Button, SkeletonLine, inputCls } from "../../../user/components/shared-ui";
 import {
@@ -8,6 +8,9 @@ import {
   type GeneralSettingsPayload,
 } from "../generalService";
 import { SectionTitle, Field, ErrorBanner, extractErrorMessage, ReadOnlyField } from "./shared";
+
+const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2MB — matches GeneralController::uploadLogo's rule
+const LOGO_ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -21,6 +24,8 @@ type FormState = {
   accountName: string;
   accountNumber: string;
   bvn: string;
+  meta_title: string;
+  meta_description: string;
 };
 
 const blankForm = (): FormState => ({
@@ -33,6 +38,8 @@ const blankForm = (): FormState => ({
   accountName: "",
   accountNumber: "",
   bvn: "",
+  meta_title: "",
+  meta_description: "",
 });
 
 const toForm = (g: GeneralSettings): FormState => ({
@@ -45,6 +52,8 @@ const toForm = (g: GeneralSettings): FormState => ({
   accountName: g.accountName ?? "",
   accountNumber: g.accountNumber ?? "",
   bvn: g.bvn ?? "",
+  meta_title: g.meta_title ?? "",
+  meta_description: g.meta_description ?? "",
 });
 
 const toPayload = (form: FormState): GeneralSettingsPayload => ({
@@ -57,6 +66,8 @@ const toPayload = (form: FormState): GeneralSettingsPayload => ({
   accountName: form.accountName.trim() || null,
   accountNumber: form.accountNumber.trim() || null,
   bvn: form.bvn.trim() || null,
+  meta_title: form.meta_title.trim() || null,
+  meta_description: form.meta_description.trim() || null,
 });
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -91,6 +102,8 @@ const settingsFormSchema = z.object({
     .refine((v) => digitsOnly(v) && (v === "" || v.length === 11), {
       message: "BVN must be exactly 11 digits.",
     }),
+  meta_title: z.string(),
+  meta_description: z.string(),
 });
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -118,6 +131,9 @@ export function GeneralTab() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     generalService
@@ -133,6 +149,32 @@ export function GeneralTab() {
   const set = (key: keyof FormState, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
     setSaved(false);
+  };
+
+  const handleLogoFileSelected = async (file: File | undefined) => {
+    if (!file) return;
+    setLogoError(null);
+
+    if (!LOGO_ACCEPTED_TYPES.includes(file.type)) {
+      setLogoError("Use a JPG, PNG, WebP, or SVG image.");
+      return;
+    }
+    if (file.size > LOGO_MAX_BYTES) {
+      setLogoError("Image must be 2MB or smaller.");
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const { logo } = await generalService.uploadLogo(file);
+      setForm((f) => ({ ...f, logo }));
+      setGeneral((g) => (g ? { ...g, logo } : g));
+    } catch (err) {
+      setLogoError(extractErrorMessage(err));
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleSave = async () => {
@@ -221,14 +263,6 @@ export function GeneralTab() {
                 className={inputCls}
               />
             </Field>
-            <Field label="Logo URL" error={errors.logo}>
-              <input
-                value={form.logo}
-                onChange={(e) => set("logo", e.target.value)}
-                placeholder="https://yourplatform.com/logo.png"
-                className={inputCls}
-              />
-            </Field>
             <div className="sm:col-span-2">
               <Field label="Business address" error={errors.app_address}>
                 <input
@@ -241,27 +275,74 @@ export function GeneralTab() {
             </div>
           </div>
 
-          {form.logo ? (
-            <div className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="mt-4">
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Logo</label>
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white">
                 <img
-                  src={form.logo}
+                  src={form.logo || general.app_logo}
                   alt="Logo preview"
                   className="h-full w-full object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
                 />
               </div>
-              <p className="text-xs text-slate-500">
-                Logo preview — shown across the platform (login page, emails, invoices).
-              </p>
+              <div className="flex-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={LOGO_ACCEPTED_TYPES.join(",")}
+                  className="hidden"
+                  onChange={(e) => void handleLogoFileSelected(e.target.files?.[0])}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  loading={uploadingLogo}
+                  disabled={uploadingLogo}
+                >
+                  {uploadingLogo ? "Uploading..." : (
+                    <>
+                      <Upload className="w-3.5 h-3.5" /> Upload new logo
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  JPG, PNG, WebP or SVG — up to 2MB. Saved immediately, shown across the platform.
+                </p>
+                {logoError && <p className="text-xs text-red-600 mt-1">{logoError}</p>}
+              </div>
             </div>
-          ) : (
-            <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-              <ImageIcon className="h-4 w-4" /> No logo set yet.
-            </div>
-          )}
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <SectionTitle>Browser tab &amp; SEO</SectionTitle>
+        <p className="mb-4 -mt-2 text-xs text-slate-500">
+          Shown in the browser tab and search/social previews across every
+          page. Falls back to the platform name above if left blank.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Page title" error={errors.meta_title} hint="optional">
+            <input
+              value={form.meta_title}
+              onChange={(e) => set("meta_title", e.target.value)}
+              placeholder={form.app_name || "e.g. Spur Connect — Airtime, Data & Bills"}
+              className={inputCls}
+            />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Meta description" error={errors.meta_description} hint="optional, ~160 characters">
+              <textarea
+                rows={2}
+                value={form.meta_description}
+                onChange={(e) => set("meta_description", e.target.value)}
+                placeholder="A short description shown in search results and social link previews."
+                className={`${inputCls} resize-none`}
+              />
+            </Field>
+          </div>
         </div>
       </Card>
 

@@ -5,6 +5,7 @@ import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-d
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
+import { useBranding } from "@/shared/branding";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { authService } from "../authService";
 import { resetPasswordSchema, type ResetPasswordFormData } from "../validators";
@@ -30,6 +31,7 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const token = searchParams.get("token") ?? "";
   const email = searchParams.get("email") ?? "";
+  const { app_name } = useBranding();
 
   const {
     register,
@@ -66,7 +68,7 @@ export default function ResetPasswordPage() {
       <Card className={authCardCls}>
         <div className="mb-7">
           <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Choose a new password</h1>
-          <p className="text-slate-500 text-sm mt-1">Create a fresh password for your KORA account.</p>
+          <p className="text-slate-500 text-sm mt-1">Create a fresh password for your {app_name} account.</p>
         </div>
 
         {errors.root && (

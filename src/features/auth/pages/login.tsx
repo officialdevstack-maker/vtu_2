@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { useAuth } from "@/shared/providers/auth";
+import { useBranding } from "@/shared/branding";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { loginSchema, type LoginFormData } from "../validators";
 
@@ -13,6 +14,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { app_name } = useBranding();
 
   const {
     register,
@@ -45,7 +47,7 @@ const LoginForm = () => {
       <Card className={authCardCls}>
         <div className="mb-7">
           <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Welcome back</h1>
-          <p className="text-slate-500 text-sm mt-1">Sign in to continue to your KORA wallet.</p>
+          <p className="text-slate-500 text-sm mt-1">Sign in to continue to your {app_name} wallet.</p>
         </div>
 
         {errors.root && (

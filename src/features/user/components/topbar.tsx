@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeftRight, ArrowUpCircle, Bell, LogOut, Menu, Search, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../shared/providers/auth";
+import { useBranding } from "@/shared/branding";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -38,8 +39,9 @@ export default function Topbar({
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, hasPermission } = useAuth();
+  const { app_name } = useBranding();
   const [menuOpen, setMenuOpen] = useState(false);
-  const title = pageTitles[location.pathname] ?? "KORA";
+  const title = pageTitles[location.pathname] ?? app_name;
 
   const displayName = user?.username ?? "there";
   const canSwitchAccount = hasPermission("switch_account");
