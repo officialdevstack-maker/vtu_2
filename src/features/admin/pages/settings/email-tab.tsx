@@ -138,55 +138,74 @@ export function EmailTab() {
             >
               <option value="">Use server default</option>
               <option value="smtp">SMTP</option>
+              <option value="ses">Amazon SES</option>
               <option value="log">Log only (dev)</option>
             </select>
           </Field>
-          <Field label="Encryption">
-            <select
-              value={form.mail_encryption}
-              onChange={(e) => set("mail_encryption", e.target.value)}
-              className={selectCls}
-            >
-              <option value="">Use server default</option>
-              <option value="tls">TLS</option>
-              <option value="ssl">SSL</option>
-              <option value="none">None</option>
-            </select>
-          </Field>
-          <Field label="SMTP host">
-            <input
-              value={form.mail_host}
-              onChange={(e) => set("mail_host", e.target.value)}
-              placeholder="smtp.mailgun.org"
-              className={inputCls}
-            />
-          </Field>
-          <Field label="SMTP port">
-            <input
-              value={form.mail_port}
-              onChange={(e) => set("mail_port", e.target.value)}
-              placeholder="587"
-              inputMode="numeric"
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Username">
-            <input
-              value={form.mail_username}
-              onChange={(e) => set("mail_username", e.target.value)}
-              placeholder="postmaster@yourdomain.com"
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Password" hint="write-only">
-            <input
-              type="password"
-              value={form.mail_password}
-              onChange={(e) => set("mail_password", e.target.value)}
-              placeholder="Leave blank to keep unchanged"
-              className={inputCls}
-            />
-          </Field>
+          {form.mail_mailer !== "ses" && (
+            <Field label="Encryption">
+              <select
+                value={form.mail_encryption}
+                onChange={(e) => set("mail_encryption", e.target.value)}
+                className={selectCls}
+              >
+                <option value="">Use server default</option>
+                <option value="tls">TLS</option>
+                <option value="ssl">SSL</option>
+                <option value="none">None</option>
+              </select>
+            </Field>
+          )}
+          {form.mail_mailer === "ses" ? (
+            <div className="sm:col-span-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                SES ships mail using the server's own AWS credentials — set{" "}
+                <code className="font-mono">AWS_ACCESS_KEY_ID</code>,{" "}
+                <code className="font-mono">AWS_SECRET_ACCESS_KEY</code>, and{" "}
+                <code className="font-mono">AWS_DEFAULT_REGION</code> in the server's <code className="font-mono">.env</code>{" "}
+                (not here — these are infrastructure secrets, kept out of the database on purpose). The From address below must
+                be a verified identity in that SES account/region.
+              </span>
+            </div>
+          ) : (
+            <>
+              <Field label="SMTP host">
+                <input
+                  value={form.mail_host}
+                  onChange={(e) => set("mail_host", e.target.value)}
+                  placeholder="smtp.mailgun.org"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="SMTP port">
+                <input
+                  value={form.mail_port}
+                  onChange={(e) => set("mail_port", e.target.value)}
+                  placeholder="587"
+                  inputMode="numeric"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Username">
+                <input
+                  value={form.mail_username}
+                  onChange={(e) => set("mail_username", e.target.value)}
+                  placeholder="postmaster@yourdomain.com"
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Password" hint="write-only">
+                <input
+                  type="password"
+                  value={form.mail_password}
+                  onChange={(e) => set("mail_password", e.target.value)}
+                  placeholder="Leave blank to keep unchanged"
+                  className={inputCls}
+                />
+              </Field>
+            </>
+          )}
         </div>
       </Card>
 
