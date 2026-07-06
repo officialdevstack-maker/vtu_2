@@ -113,6 +113,7 @@ interface AuthContextType {
   isInitializing: boolean;
   refreshUser: () => Promise<void>;
   login: (login: string, password: string) => Promise<User | null>;
+  demoLogin: (type: "user" | "admin") => Promise<User>;
   register: (payload: RegisterPayload) => Promise<User | null>;
   logout: () => Promise<void>;
   hasPermission: (slug: string) => boolean;
@@ -124,8 +125,71 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // dashboard, transaction pages, and the account-switcher dropdown all read
 // from this same cached entry instead of each holding their own copy.
 export const AUTH_QUERY_KEY = ["auth", "user"] as const;
+const DEMO_AUTH_KEY = "kora-demo-user";
+
+const demoUsers: Record<"user" | "admin", User> = {
+  user: {
+    id: "demo-user",
+    email: "demo.user@kora.test",
+    fullname: "Demo Customer",
+    username: "demo_customer",
+    phone: "+234 800 000 1000",
+    user_type: "user",
+    wallet_balance: 85250,
+    referral_balance: 4200,
+    referral_code: "KORADEMO",
+    joined_at: "2026-01-15",
+  },
+  admin: {
+    id: "demo-admin",
+    email: "demo.admin@kora.test",
+    fullname: "Demo Admin",
+    username: "demo_admin",
+    phone: "+234 800 000 9000",
+    user_type: "admin",
+    role_id: 1,
+    role: {
+      id: 1,
+      name: "Super Admin",
+      slug: "super-admin",
+      permissions: [
+        { id: 1, name: "Switch Account", slug: "switch_account" },
+        { id: 2, name: "Manage Customers", slug: "manage_customers" },
+        { id: 3, name: "Manage Products", slug: "manage_products" },
+      ],
+    },
+    wallet_balance: 0,
+    joined_at: "2026-01-01",
+  },
+};
+
+const getDemoUser = (): User | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const storedType = window.localStorage.getItem(DEMO_AUTH_KEY);
+    return storedType === "user" || storedType === "admin"
+      ? demoUsers[storedType]
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const setDemoUser = (type: "user" | "admin") => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(DEMO_AUTH_KEY, type);
+};
+
+const clearDemoUser = () => {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(DEMO_AUTH_KEY);
+};
 
 const fetchCurrentUser = async (): Promise<User | null> => {
+  const demoUser = getDemoUser();
+  if (demoUser) return demoUser;
+
   try {
     const response = await apiClient.get("/user");
     return response.data.data?.user ?? null;
@@ -147,6 +211,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (loginValue: string, password: string) => {
       setIsLoading(true);
       try {
+        clearDemoUser();
         await apiClient.get("/sanctum/csrf-cookie");
         await apiClient.post("/login", { login: loginValue, password });
         const freshUser = await fetchCurrentUser();
@@ -162,10 +227,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [queryClient],
   );
 
+  const demoLogin = useCallback(
+    async (type: "user" | "admin") => {
+      setIsLoading(true);
+      try {
+        setDemoUser(type);
+        const demoUser = demoUsers[type];
+        queryClient.setQueryData(AUTH_QUERY_KEY, demoUser);
+        return demoUser;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [queryClient],
+  );
+
   const register = useCallback(
     async (payload: RegisterPayload) => {
       setIsLoading(true);
       try {
+        clearDemoUser();
         await apiClient.get("/sanctum/csrf-cookie");
         await apiClient.post("/register", payload);
         // Registration logs the user in server-side (session cookie), so a
@@ -191,6 +272,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // dashboard/transactions data must not leak into the next session on
       // this device (e.g. a shared computer, or switching accounts).
       queryClient.clear();
+      clearDemoUser();
       setIsLoading(false);
     }
   }, [queryClient]);
@@ -213,6 +295,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isInitializing,
         refreshUser,
         login,
+        demoLogin,
         register,
         logout,
         hasPermission,

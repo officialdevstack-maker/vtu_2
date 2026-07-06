@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,10 +11,10 @@ import { loginSchema, type LoginFormData } from "../validators";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<"user" | "admin" | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const { app_name } = useBranding();
 
   const {
     register,
@@ -39,6 +39,20 @@ const LoginForm = () => {
       navigate(target, { replace: true });
     } catch {
       setError("root", { message: "Invalid credentials. Please try again." });
+    }
+  };
+
+  const handleDemoAccess = async (type: "user" | "admin") => {
+    setDemoLoading(type);
+    try {
+      const user = await demoLogin(type);
+      const from = (location.state as { from?: Location } | null)?.from?.pathname;
+      const isAdmin = user?.user_type === "admin";
+      const fallback = isAdmin ? "/admin" : "/dashboard";
+      const target = from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
+      navigate(target, { replace: true });
+    } finally {
+      setDemoLoading(null);
     }
   };
 
@@ -122,6 +136,37 @@ const LoginForm = () => {
             {isSubmitting ? "" : "Sign in"}
           </Button>
         </form>
+
+        <div className="mt-5">
+          <div className="relative flex items-center">
+            <div className="h-px flex-1 bg-slate-200" />
+            <span className="px-3 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+              Demo access
+            </span>
+            <div className="h-px flex-1 bg-slate-200" />
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => void handleDemoAccess("user")}
+              disabled={Boolean(demoLoading) || isSubmitting}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <UserRound className="h-4 w-4" />
+              {demoLoading === "user" ? "Opening..." : "Demo User"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDemoAccess("admin")}
+              disabled={Boolean(demoLoading) || isSubmitting}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-[#111827] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#111827] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {demoLoading === "admin" ? "Opening..." : "Demo Admin"}
+            </button>
+          </div>
+        </div>
       </Card>
 
       <p className="text-center text-sm text-slate-500 mt-5">
