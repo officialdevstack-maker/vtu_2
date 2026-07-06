@@ -255,7 +255,52 @@ function TransactionsCard({ userId }: { userId: string }) {
         />
       ) : (
         <>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-gray-50 md:hidden">
+          {paginatedTransactions.map((t) => (
+            <div key={t.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {formatTxnType(t.transaction_type)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {formatDateTime(t.created_at)}
+                  </p>
+                </div>
+                <StatusBadge status={badgeStatus(t.status)} />
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-slate-400">Amount</p>
+                  <p className="mt-0.5 font-semibold tabular-nums text-slate-900">
+                    {fmt(t.amount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400">Provider</p>
+                  <p className="mt-0.5 truncate font-medium text-slate-700">
+                    {t.provider ?? "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400">Recipient</p>
+                  <p className="mt-0.5 truncate font-medium text-slate-700">
+                    {t.recipient || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400">Reference</p>
+                  <p className="mt-0.5 truncate font-mono text-slate-500">
+                    {t.reference || "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-100">
@@ -470,7 +515,7 @@ export default function CustomerDetailPage() {
           <div className="lg:col-span-2 space-y-5">
             <Card>
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2 flex-wrap">
-                <div className="w-8 h-8 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-medium shrink-0">
                   {initials(customer.username || customer.name)}
                 </div>
                 <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">

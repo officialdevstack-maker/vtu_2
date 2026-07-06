@@ -118,7 +118,7 @@ export function EmailTab() {
 
       {saveError && <ErrorBanner message={saveError} />}
 
-      <div className="flex items-start gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3.5 py-2.5 text-xs text-indigo-800">
+      <div className="flex items-start gap-2 rounded-lg border border-[#111827]/15 bg-[#111827]/10 px-3.5 py-2.5 text-xs text-[#111827]">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <span>
           These override the server's .env mail configuration on every request.

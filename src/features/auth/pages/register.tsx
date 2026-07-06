@@ -4,13 +4,25 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
-import { AuthLayout } from "../components/AuthLayout";
+import { useAuth } from "@/shared/providers/auth";
+import { AuthLayout, SocialLoginRow, authCardCls, authInputCls } from "../components/AuthLayout";
 import { createMockAccount } from "../mockSession";
 import { registerSchema, type RegisterFormData } from "../validators";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  // TEMPORARY DEMO ACCESS — remove this along with the row below and
+  // AuthProvider.loginAsDemo once real auth is wired up end-to-end.
+  const { loginAsDemo } = useAuth();
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleDemoAccess = async () => {
+    setDemoLoading(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 350));
+    loginAsDemo();
+    navigate("/dashboard", { replace: true });
+  };
 
   const {
     register,
@@ -35,9 +47,8 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout>
-      <Card className="rounded-lg border-white/70 bg-white/70 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-8">
-        <div className="mb-6">
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-indigo-600">Start with KORA</p>
+      <Card className={authCardCls}>
+        <div className="mb-7">
           <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Create an account</h1>
           <p className="text-slate-500 text-sm mt-1">
             Set up your profile first. Your transaction PIN comes next.
@@ -50,6 +61,13 @@ export default function RegisterPage() {
           </div>
         )}
 
+        <SocialLoginRow label="Sign up" loading={demoLoading} onClick={() => void handleDemoAccess()} />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-px flex-1 bg-slate-100" />
+          <span className="text-xs font-medium text-slate-400">or</span>
+          <div className="h-px flex-1 bg-slate-100" />
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Full name</label>
@@ -59,7 +77,7 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="Emeka Obi"
                 {...register("fullname")}
-                className={`${inputCls} pl-9 bg-white/80 ${errors.fullname ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 ${errors.fullname ? "border-red-300" : ""}`}
               />
             </div>
             {errors.fullname && <p className="text-red-500 text-xs mt-1">{errors.fullname.message}</p>}
@@ -73,7 +91,7 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="emekaobi"
                 {...register("username")}
-                className={`${inputCls} pl-9 bg-white/80 ${errors.username ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 ${errors.username ? "border-red-300" : ""}`}
               />
             </div>
             {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>}
@@ -87,7 +105,7 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="you@email.com"
                 {...register("email")}
-                className={`${inputCls} pl-9 bg-white/80 ${errors.email ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 ${errors.email ? "border-red-300" : ""}`}
               />
             </div>
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
@@ -101,7 +119,7 @@ export default function RegisterPage() {
                 type="tel"
                 placeholder="08012345678"
                 {...register("phone")}
-                className={`${inputCls} pl-9 bg-white/80 ${errors.phone ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 ${errors.phone ? "border-red-300" : ""}`}
               />
             </div>
             {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
@@ -115,7 +133,7 @@ export default function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 {...register("password")}
-                className={`${inputCls} pl-9 pr-10 bg-white/80 ${errors.password ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 pr-10 ${errors.password ? "border-red-300" : ""}`}
               />
               <button
                 type="button"
@@ -137,7 +155,7 @@ export default function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Confirm password"
                 {...register("confirmPassword")}
-                className={`${inputCls} pl-9 bg-white/80 ${errors.confirmPassword ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 ${errors.confirmPassword ? "border-red-300" : ""}`}
               />
             </div>
             {errors.confirmPassword && (
@@ -150,15 +168,15 @@ export default function RegisterPage() {
               type="checkbox"
               id="acceptTerms"
               {...register("acceptTerms")}
-              className="w-3.5 h-3.5 mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer"
+              className="w-3.5 h-3.5 mt-0.5 rounded border-gray-300 accent-[#111827] focus:ring-[#111827]/30 cursor-pointer"
             />
             <label htmlFor="acceptTerms" className="text-sm text-slate-600 cursor-pointer select-none">
               I agree to the{" "}
-              <a href="#" className="text-indigo-600 font-medium hover:text-indigo-700">
+              <a href="#" className="text-[#111827] font-medium hover:opacity-80">
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="text-indigo-600 font-medium hover:text-indigo-700">
+              <a href="#" className="text-[#111827] font-medium hover:opacity-80">
                 Privacy Policy
               </a>
             </label>
@@ -172,7 +190,7 @@ export default function RegisterPage() {
             disabled={isSubmitting}
             loading={isSubmitting}
             fullWidth
-            className="rounded-lg py-3 shadow-sm shadow-indigo-600/10"
+            className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
           >
             {isSubmitting ? "" : "Continue to PIN setup"}
           </Button>
@@ -181,7 +199,7 @@ export default function RegisterPage() {
 
       <p className="text-center text-sm text-slate-500 mt-5">
         Already have an account?{" "}
-        <RouterLink to="/login" className="text-indigo-600 font-medium hover:text-indigo-700">
+        <RouterLink to="/login" className="text-[#111827] font-medium hover:opacity-80">
           Sign in
         </RouterLink>
       </p>

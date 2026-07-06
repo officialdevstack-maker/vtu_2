@@ -250,8 +250,96 @@ export default function RolesPage() {
           />
         ) : (
           <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-fixed min-w-[480px] lg:min-w-0">
+          <div className="divide-y divide-gray-100 md:hidden">
+            {paginatedRoles.map((r) => (
+              <div key={r.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => openView(r)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {r.name}
+                      </p>
+                      {r.isSystem && (
+                        <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                          System
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-500">
+                      {r.description}
+                    </p>
+                  </button>
+
+                  <div className="relative shrink-0">
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id)}
+                      className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-gray-100"
+                      title="Actions"
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </button>
+                    {openMenuId === r.id && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                        <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200/70 bg-white py-1 shadow-md">
+                          <button
+                            onClick={() => openView(r)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> View
+                          </button>
+                          <button
+                            onClick={() => openEdit(r)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Edit
+                          </button>
+                          <button
+                            onClick={() => duplicateRole(r)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                          >
+                            <Copy className="h-3.5 w-3.5" /> Duplicate
+                          </button>
+                          <button
+                            disabled={r.isSystem}
+                            onClick={() => { setDeleteTarget(r); setOpenMenuId(null); }}
+                            title={r.isSystem ? "System roles cannot be deleted" : undefined}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <StatusBadge status={r.status} />
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    {r.usersAssigned} user{r.usersAssigned === 1 ? "" : "s"}
+                  </span>
+                </div>
+
+                {r.permissions.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {r.permissions.map((p) => (
+                      <span key={p} className="rounded-full border border-[#111827]/15 bg-[#111827]/10 px-2 py-0.5 text-[10px] font-medium text-[#111827]">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full text-sm table-fixed min-w-[720px]">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="w-[26%] lg:w-[14%] px-4 py-2 text-left text-xs font-medium text-slate-500 whitespace-nowrap">Role name</th>
@@ -278,7 +366,7 @@ export default function RolesPage() {
                     <td className="hidden lg:table-cell px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {r.permissions.map((p) => (
-                          <span key={p} className="text-[10px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5 whitespace-nowrap">
+                          <span key={p} className="text-[10px] font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5 whitespace-nowrap">
                             {p}
                           </span>
                         ))}
@@ -376,7 +464,7 @@ export default function RolesPage() {
                   <div className="flex flex-wrap gap-1.5">
                     {activeRole.permissions.length === 0 && <p className="text-xs text-slate-400">No permissions assigned</p>}
                     {activeRole.permissions.map((p) => (
-                      <span key={p} className="text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+                      <span key={p} className="text-xs font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
                         {p}
                       </span>
                     ))}

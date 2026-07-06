@@ -186,7 +186,7 @@ const Layout = () => {
     <>
       <div className="border-b border-slate-100 px-5 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-sm shadow-indigo-600/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] shadow-sm shadow-[#111827]/20">
             <LayoutGrid className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -225,7 +225,7 @@ const Layout = () => {
                         className={({ isActive: linkActive }) =>
                           `flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                             linkActive || active
-                              ? "bg-indigo-50 text-indigo-700 font-medium"
+                              ? "bg-[#111827]/10 text-[#111827] font-medium"
                               : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                           }`
                         }
@@ -260,7 +260,7 @@ const Layout = () => {
                             className={({ isActive: childActive }) =>
                               `flex items-center rounded-lg px-2 py-1.5 text-sm transition-colors ${
                                 childActive
-                                  ? "text-indigo-700 font-medium"
+                                  ? "text-[#111827] font-medium"
                                   : "text-slate-400 hover:text-slate-700"
                               }`
                             }
@@ -284,7 +284,7 @@ const Layout = () => {
           onClick={() => setSidebarMenuOpen((o) => !o)}
           className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:bg-slate-100"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827]/15 text-sm font-semibold text-[#111827]">
             {initialsOf(displayName)}
           </div>
           <div className="min-w-0">
@@ -336,7 +336,7 @@ const Layout = () => {
   );
 
   return (
-    <div className="min-h-screen bg-app-bg text-slate-900">
+    <div className="admin-theme min-h-screen bg-app-bg text-slate-900">
       <TopLoadingBar active={navigation.state === "loading"} />
       <div className="flex min-h-screen">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-100 bg-white lg:sticky lg:top-0 lg:h-screen lg:flex">
@@ -358,7 +358,7 @@ const Layout = () => {
 
               <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#111827]">
                     Management
                   </p>
                   <h1 className="truncate text-sm font-semibold text-slate-900">
@@ -366,7 +366,7 @@ const Layout = () => {
                   </h1>
                 </div>
 
-                <div className="ml-auto hidden items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 md:flex md:w-56 lg:w-64">
+                <div className="ml-auto hidden items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors focus-within:border-[#111827]/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-[#111827]/10 md:flex md:w-56 lg:w-64">
                   <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                   <input
                     type="text"
@@ -397,7 +397,7 @@ const Layout = () => {
                     onClick={() => setHeaderMenuOpen((o) => !o)}
                     className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-slate-50"
                   >
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#111827] text-xs font-medium text-white">
                       {initialsOf(displayName)}
                     </div>
                     <div className="hidden text-left sm:block">

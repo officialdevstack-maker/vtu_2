@@ -13,7 +13,7 @@ import { cn } from "@/shared/utils";
 // scale instead of drifting per-file.
 
 export const inputCls =
-  "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition";
+  "brand-primary-focus w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition";
 
 // Same base look as inputCls, plus a custom chevron so every <select> across
 // the app gets one consistently centered, non-overlapping arrow instead of
@@ -24,7 +24,7 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md";
 
 const buttonVariants: Record<ButtonVariant, string> = {
-  primary: "bg-indigo-600 text-white shadow-sm shadow-indigo-600/10 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:shadow-none",
+  primary: "brand-primary-button",
   secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-50",
   ghost: "text-slate-600 hover:bg-slate-100 disabled:opacity-50",
   danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
@@ -81,7 +81,7 @@ export function PageHeader({ title, description, actions }: { title: ReactNode; 
 type Tone = "neutral" | "success" | "warning" | "danger";
 
 const toneStyles: Record<Tone, string> = {
-  neutral: "bg-indigo-50 text-indigo-600",
+  neutral: "brand-primary-soft brand-primary-text",
   success: "bg-emerald-50 text-emerald-600",
   warning: "bg-amber-50 text-amber-600",
   danger: "bg-red-50 text-red-600",
@@ -176,7 +176,7 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`w-10 h-5.5 rounded-full transition-colors relative shrink-0 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 ${value ? "bg-indigo-600" : "bg-slate-200"}`}
+      className={`brand-primary-toggle w-10 h-5.5 rounded-full transition-colors relative shrink-0 focus:outline-none ${value ? "brand-primary-bg" : "bg-slate-200"}`}
     >
       <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full shadow-sm transition-transform ${value ? "translate-x-5" : "translate-x-0.5"}`} />
     </button>
@@ -208,7 +208,7 @@ export function SkeletonCard() {
 const spinnerSizes = { sm: "w-4 h-4", md: "w-6 h-6", lg: "w-8 h-8" } as const;
 
 export function Spinner({ size = "md", className = "" }: { size?: keyof typeof spinnerSizes; className?: string }) {
-  return <Loader2 className={cn(spinnerSizes[size], "animate-spin text-indigo-600", className)} />;
+  return <Loader2 className={cn(spinnerSizes[size], "animate-spin brand-primary-text", className)} />;
 }
 
 export function LoadingScreen({ label = "Loading…", fullScreen = true }: { label?: string; fullScreen?: boolean }) {
@@ -229,7 +229,7 @@ export function TopLoadingBar({ active }: { active: boolean }) {
       )}
       aria-hidden={!active}
     >
-      <div className="h-full w-1/3 animate-[loading-bar_1.1s_ease-in-out_infinite] bg-indigo-600" />
+      <div className="h-full w-1/3 animate-[loading-bar_1.1s_ease-in-out_infinite] brand-primary-bg" />
     </div>
   );
 }
@@ -312,7 +312,7 @@ export function Pagination({
               onClick={() => onPageChange(pageNumber)}
               className={`h-8 min-w-8 rounded-xl px-2 text-xs font-medium transition-colors ${
                 currentPage === pageNumber
-                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/10"
+                  ? "brand-primary-button"
                   : "text-slate-500 hover:bg-slate-100"
               }`}
             >
@@ -393,7 +393,7 @@ export function NetworkPicker({ networks, value, onChange }: {
         <button
           key={n.id}
           onClick={() => onChange(n.id)}
-          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border transition-colors ${value === n.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}
+          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border transition-colors ${value === n.id ? "brand-primary-border brand-primary-soft" : "border-gray-200 hover:border-gray-300"}`}
         >
           <div className={`w-8 h-8 ${n.bg} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>{n.name[0]}</div>
           <span className="text-xs font-medium text-slate-700">{n.name}</span>
@@ -413,7 +413,7 @@ export function QuickAmountGrid({ amounts, value, onChange, columns = 3 }: {
         <button
           key={a}
           onClick={() => onChange(String(a))}
-          className={`py-2 text-xs font-medium rounded-lg border transition-colors ${value === String(a) ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}
+          className={`py-2 text-xs font-medium rounded-lg border transition-colors ${value === String(a) ? "brand-primary-border brand-primary-soft brand-primary-text" : "border-gray-200 text-slate-600 hover:border-gray-300"}`}
         >
           ₦{a >= 1000 ? `${a / 1000}k` : a}
         </button>

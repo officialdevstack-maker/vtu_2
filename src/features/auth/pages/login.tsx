@@ -4,13 +4,25 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
-import { AuthLayout } from "../components/AuthLayout";
+import { useAuth } from "@/shared/providers/auth";
+import { AuthLayout, SocialLoginRow, authCardCls, authInputCls } from "../components/AuthLayout";
 import { saveMockLogin } from "../mockSession";
 import { loginSchema, type LoginFormData } from "../validators";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  // TEMPORARY DEMO ACCESS — remove this along with the button below and
+  // AuthProvider.loginAsDemo once real auth is wired up end-to-end.
+  const { loginAsDemo } = useAuth();
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleDemoAccess = async () => {
+    setDemoLoading(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 350));
+    loginAsDemo();
+    navigate("/dashboard", { replace: true });
+  };
 
   const {
     register,
@@ -33,9 +45,8 @@ const LoginForm = () => {
 
   return (
     <AuthLayout>
-      <Card className="rounded-lg border-white/70 bg-white/70 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-8">
-        <div className="mb-6">
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-indigo-600">Secure sign in</p>
+      <Card className={authCardCls}>
+        <div className="mb-7">
           <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Welcome back</h1>
           <p className="text-slate-500 text-sm mt-1">Sign in to continue to your KORA wallet.</p>
         </div>
@@ -45,6 +56,13 @@ const LoginForm = () => {
             {errors.root.message}
           </div>
         )}
+
+        <SocialLoginRow label="Log in" loading={demoLoading} onClick={() => void handleDemoAccess()} />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-px flex-1 bg-slate-100" />
+          <span className="text-xs font-medium text-slate-400">or</span>
+          <div className="h-px flex-1 bg-slate-100" />
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <div>
@@ -57,7 +75,7 @@ const LoginForm = () => {
                 type="text"
                 placeholder="you@email.com or 08012345678"
                 {...register("login")}
-                className={`${inputCls} pl-9 bg-white/80 ${errors.login ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 ${errors.login ? "border-red-300" : ""}`}
               />
             </div>
             {errors.login && <p className="text-red-500 text-xs mt-1">{errors.login.message}</p>}
@@ -66,7 +84,7 @@ const LoginForm = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-medium text-slate-600">Password</label>
-              <RouterLink to="/forgot-password" className="text-xs text-indigo-600 font-medium hover:text-indigo-700">
+              <RouterLink to="/forgot-password" className="text-xs text-[#111827] font-medium hover:opacity-80">
                 Forgot password?
               </RouterLink>
             </div>
@@ -76,7 +94,7 @@ const LoginForm = () => {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 {...register("password")}
-                className={`${inputCls} pl-9 pr-10 bg-white/80 ${errors.password ? "border-red-300" : ""}`}
+                className={`${inputCls} ${authInputCls} pl-9 pr-10 ${errors.password ? "border-red-300" : ""}`}
               />
               <button
                 type="button"
@@ -95,7 +113,7 @@ const LoginForm = () => {
               type="checkbox"
               id="remember"
               {...register("rememberMe")}
-              className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer"
+              className="w-3.5 h-3.5 rounded border-gray-300 accent-[#111827] focus:ring-[#111827]/30 cursor-pointer"
             />
             <label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer select-none">
               Remember me for 30 days
@@ -107,7 +125,7 @@ const LoginForm = () => {
             disabled={isSubmitting}
             loading={isSubmitting}
             fullWidth
-            className="rounded-lg py-3 shadow-sm shadow-indigo-600/10"
+            className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
           >
             {isSubmitting ? "" : "Sign in"}
           </Button>
@@ -116,7 +134,7 @@ const LoginForm = () => {
 
       <p className="text-center text-sm text-slate-500 mt-5">
         Don't have an account?{" "}
-        <RouterLink to="/register" className="text-indigo-600 font-medium hover:text-indigo-700">
+        <RouterLink to="/register" className="text-[#111827] font-medium hover:opacity-80">
           Create one
         </RouterLink>
       </p>

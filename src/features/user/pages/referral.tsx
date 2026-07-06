@@ -40,7 +40,7 @@ export default function ReferralPage() {
           { label: "Pending", value: 2, icon: Clock },
         ].map((item) => (
           <Card key={item.label} className="p-3.5 text-center">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-2">
+            <div className="w-8 h-8 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center mx-auto mb-2">
               <item.icon className="w-4 h-4" />
             </div>
             <p className="text-slate-900 font-semibold text-base tabular-nums">{item.value}</p>
@@ -58,7 +58,7 @@ export default function ReferralPage() {
             { step: "3", title: "Earn your reward", desc: "Get ₦500 credited to your wallet once they complete a transaction" },
           ].map((item) => (
             <div key={item.step} className="flex gap-3">
-              <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
+              <div className="w-7 h-7 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
                 {item.step}
               </div>
               <div>

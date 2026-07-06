@@ -1,4 +1,4 @@
-﻿import {
+import {
   Users,
   TrendingUp,
   Wallet,
@@ -284,7 +284,7 @@ export default function AdminPage() {
         title={
           <span className="inline-flex items-center gap-2">
             Admin dashboard
-            <span className="text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5">
+            <span className="text-xs font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
               Super admin
             </span>
           </span>
@@ -478,9 +478,9 @@ export default function AdminPage() {
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#4f46e5"
+                  stroke="#111827"
                   strokeWidth={2}
-                  fill="#4f46e5"
+                  fill="#111827"
                   fillOpacity={0.1}
                   dot={false}
                   activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
@@ -514,7 +514,7 @@ export default function AdminPage() {
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-indigo-500"
+                      className="h-full rounded-full bg-[#111827]"
                       style={{ width: `${s.value}%` }}
                     />
                   </div>
@@ -631,7 +631,7 @@ export default function AdminPage() {
               <>
                 <div className="flex items-center justify-between text-xs mb-2">
                   <span className="flex items-center gap-1.5 text-slate-600">
-                    <span className="w-2 h-2 rounded-full bg-violet-500" />
+                    <span className="w-2 h-2 rounded-full bg-[#111827]" />
                     Funding
                   </span>
                   <span className="font-semibold text-slate-900">
@@ -640,7 +640,7 @@ export default function AdminPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs mb-3">
                   <span className="flex items-center gap-1.5 text-slate-600">
-                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                    <span className="w-2 h-2 rounded-full bg-[#111827]" />
                     Spend
                   </span>
                   <span className="font-semibold text-slate-900">
@@ -649,11 +649,11 @@ export default function AdminPage() {
                 </div>
                 <div className="h-2 rounded-full overflow-hidden flex bg-gray-100 gap-0.5">
                   <div
-                    className="h-full bg-violet-500 first:rounded-l-full"
+                    className="h-full bg-[#111827] first:rounded-l-full"
                     style={{ width: `${fundingPct}%` }}
                   />
                   <div
-                    className="h-full bg-indigo-600 last:rounded-r-full"
+                    className="h-full bg-[#111827] last:rounded-r-full"
                     style={{ width: `${100 - fundingPct}%` }}
                   />
                 </div>
@@ -720,7 +720,7 @@ export default function AdminPage() {
           </h3>
           <button
             onClick={() => navigate("/admin/transactions")}
-            className="text-xs text-indigo-600 font-medium hover:text-indigo-700"
+            className="text-xs text-[#111827] font-medium hover:text-[#111827]"
           >
             View all
           </button>

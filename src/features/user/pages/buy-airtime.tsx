@@ -52,7 +52,7 @@ export default function BuyAirtimePage() {
 
   return (
     <PurchaseShell>
-      <ServiceHeader icon={Phone} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Buy airtime" subtitle="Top up any Nigerian network" />
+      <ServiceHeader icon={Phone} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Buy airtime" subtitle="Top up any Nigerian network" />
 
       {step === "form" && (
         <div className="p-5 space-y-4">

@@ -7,9 +7,91 @@
 }
 
 @layer base {
+  :root {
+    --brand-primary: #111827;
+    --brand-primary-hover: #111827;
+    --brand-primary-disabled: #9ca3af;
+    --brand-primary-soft: rgb(17 24 39 / 0.1);
+    --brand-primary-border: #111827;
+    --brand-primary-text: #111827;
+    --brand-primary-ring: rgb(17 24 39 / 0.3);
+    --brand-primary-shadow: rgb(17 24 39 / 0.1);
+  }
+
   body {
     font-family: var(--font-sans);
     @apply bg-app-bg text-slate-900 antialiased;
+  }
+}
+
+.admin-theme {
+  --brand-primary: #111827;
+  --brand-primary-hover: #111827;
+  --brand-primary-disabled: #9ca3af;
+  --brand-primary-soft: rgb(17 24 39 / 0.1);
+  --brand-primary-border: #111827;
+  --brand-primary-text: #111827;
+  --brand-primary-ring: rgb(17 24 39 / 0.3);
+  --brand-primary-shadow: rgb(17 24 39 / 0.1);
+}
+
+@layer components {
+  .brand-primary-button {
+    background-color: var(--brand-primary);
+    box-shadow: 0 1px 2px var(--brand-primary-shadow);
+    color: white;
+  }
+
+  .brand-primary-button:hover:not(:disabled) {
+    background-color: var(--brand-primary-hover);
+  }
+
+  .brand-primary-button:disabled {
+    background-color: var(--brand-primary-disabled);
+    box-shadow: none;
+  }
+
+  .brand-primary-focus:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 4px var(--brand-primary-ring);
+  }
+
+  .brand-primary-toggle:focus {
+    box-shadow: 0 0 0 2px var(--brand-primary-ring);
+  }
+
+  .brand-primary-bg {
+    background-color: var(--brand-primary);
+  }
+
+  .brand-primary-soft {
+    background-color: var(--brand-primary-soft);
+  }
+
+  .brand-primary-border {
+    border-color: var(--brand-primary-border);
+  }
+
+  .brand-primary-text {
+    color: var(--brand-primary-text);
+  }
+
+  .admin-theme .overflow-x-auto {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-theme .overflow-x-auto > table:not([class*="min-w-"]) {
+    min-width: 44rem;
+  }
+
+  .admin-theme .overflow-x-auto > table th,
+  .admin-theme .overflow-x-auto > table td {
+    white-space: nowrap;
+  }
+
+  .admin-theme .overflow-x-auto > table td {
+    vertical-align: middle;
   }
 }
 
@@ -55,13 +137,19 @@
   }
 }
 
-@keyframes float-slow {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-12px, 10px); }
+@keyframes auth-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @layer utilities {
-  .animate-float-slow {
-    animation: float-slow 8s ease-in-out infinite;
+  .animate-auth-fade-in {
+    animation: auth-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }

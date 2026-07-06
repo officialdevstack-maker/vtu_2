@@ -103,7 +103,7 @@ function Pagination({
                 onClick={() => onPage(p)}
                 className={`min-w-[28px] h-7 rounded-md text-xs font-medium transition-colors ${
                   p === page
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-[#111827] text-white"
                     : "text-slate-600 hover:bg-gray-100"
                 }`}
               >
@@ -171,7 +171,7 @@ function TokenDialog({
             </span>
             <button
               onClick={copy}
-              className="shrink-0 text-slate-400 hover:text-indigo-600 transition-colors"
+              className="shrink-0 text-slate-400 hover:text-[#111827] transition-colors"
             >
               {copied ? (
                 <Check className="w-4 h-4 text-emerald-500" />
@@ -729,7 +729,7 @@ const ProviderPage = () => {
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
+                            <div className="w-7 h-7 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
                               {p.name[0]?.toUpperCase()}
                             </div>
                             <div>
@@ -772,7 +772,7 @@ const ProviderPage = () => {
                     className="p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors"
                   >
                     {/* Avatar */}
-                    <div className="w-9 h-9 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-sm font-semibold shrink-0">
+                    <div className="w-9 h-9 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-sm font-semibold shrink-0">
                       {p.name[0]?.toUpperCase()}
                     </div>
 
