@@ -22,6 +22,13 @@ export type Network = {
   code: string;
   provider: string;
   status: "active" | "inactive";
+  // Airtime-to-cash config for this network — the number customers transfer
+  // airtime to, the amount range accepted, and whether it's enabled for
+  // conversion at all. See App\Models\Network / AirtimeToCashController.
+  airtime_to_cash_destination_number?: string | null;
+  airtime_to_cash_min?: string | number | null;
+  airtime_to_cash_max?: string | number | null;
+  airtime_to_cash_active?: boolean;
 };
 
 export type NetworkPayload = Omit<Network, "id">;

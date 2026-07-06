@@ -78,7 +78,7 @@ export default function AirtimeToCashPage() {
     queryFn: () => customerService.getAirtimeToCashNetworks(),
   });
   const networks = useMemo(
-    () => (networksQuery.data ?? []).filter((n) => n.active),
+    () => (networksQuery.data ?? []).filter((n) => n.airtime_to_cash_active),
     [networksQuery.data],
   );
 
@@ -94,15 +94,15 @@ export default function AirtimeToCashPage() {
 
   useEffect(() => {
     if (networks.length === 0) return;
-    if (!networks.some((n) => n.network === network)) {
-      setNetwork(networks[0].network);
+    if (!networks.some((n) => n.name === network)) {
+      setNetwork(networks[0].name);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [networks]);
 
-  const selectedNetwork = networks.find((n) => n.network === network);
-  const minAmount = Number(selectedNetwork?.min ?? 100);
-  const maxAmount = Number(selectedNetwork?.max ?? 50000);
+  const selectedNetwork = networks.find((n) => n.name === network);
+  const minAmount = Number(selectedNetwork?.airtime_to_cash_min ?? 100);
+  const maxAmount = Number(selectedNetwork?.airtime_to_cash_max ?? 50000);
   const amountNumber = Number(amount);
 
   const discountQuery = useQuery({
@@ -192,8 +192,8 @@ export default function AirtimeToCashPage() {
               ) : (
                 <select value={network} onChange={(e) => setNetwork(e.target.value)} className={selectCls}>
                   {networks.map((n) => (
-                    <option key={n.id} value={n.network}>
-                      {n.network.toUpperCase()}
+                    <option key={n.id} value={n.name}>
+                      {n.name.toUpperCase()}
                     </option>
                   ))}
                 </select>
@@ -203,9 +203,9 @@ export default function AirtimeToCashPage() {
             {selectedNetwork && (
               <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3.5 py-3">
                 <p className="text-xs text-emerald-700 font-medium mb-0.5">Send airtime to this number</p>
-                <p className="text-lg font-mono font-semibold text-emerald-900">{selectedNetwork.destination_number}</p>
+                <p className="text-lg font-mono font-semibold text-emerald-900">{selectedNetwork.airtime_to_cash_destination_number}</p>
                 <p className="text-xs text-emerald-600 mt-1">
-                  Use your network's airtime transfer code (e.g. *600*Amount*{selectedNetwork.destination_number}#), then fill in the form below.
+                  Use your network's airtime transfer code (e.g. *600*Amount*{selectedNetwork.airtime_to_cash_destination_number}#), then fill in the form below.
                 </p>
               </div>
             )}
@@ -279,7 +279,7 @@ export default function AirtimeToCashPage() {
             <ConfirmSummary
               rows={[
                 { label: "Network", value: network.toUpperCase() },
-                { label: "Sent to", value: selectedNetwork.destination_number },
+                { label: "Sent to", value: selectedNetwork.airtime_to_cash_destination_number ?? "—" },
                 { label: "Amount sent", value: fmt(amountNumber) },
                 { label: "Sender phone", value: senderPhone },
                 { label: "You'll receive", value: fmt(payoutAmount), emphasize: "success" },

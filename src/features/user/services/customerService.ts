@@ -15,6 +15,13 @@ export type Network = {
     service_type: string;
     pivot: { active: boolean | number };
   }[];
+  // Airtime-to-cash config for this network (Products > Airtime & Data >
+  // Networks) — the number to transfer airtime to, the amount range
+  // accepted, and whether conversion is enabled at all for this network.
+  airtime_to_cash_destination_number?: string | null;
+  airtime_to_cash_min?: string | number | null;
+  airtime_to_cash_max?: string | number | null;
+  airtime_to_cash_active?: boolean;
 };
 
 // The admin-configured per-network airtime rule (Products > Airtime & Data
@@ -78,20 +85,6 @@ export type CablePlan = {
 export type BillPlan = {
   id: number;
   disco: string;
-  min: string | number;
-  max: string | number;
-  active: boolean;
-};
-
-// An admin-configured network available for airtime-to-cash conversion
-// (Products > Airtime to Cash > Networks) — the destination number to
-// transfer airtime to, and the amount range accepted. The actual
-// conversion rate is a Discount (service_type "airtimeToCash"), fetched
-// via previewDiscount() below just like every other service.
-export type AirtimeToCashNetwork = {
-  id: number;
-  network: string;
-  destination_number: string;
   min: string | number;
   max: string | number;
   active: boolean;
@@ -307,9 +300,12 @@ export const customerService = {
       .post<ApiEnvelope<PurchaseResult>>("/vtu/electricity", payload)
       .then((r) => r.data.data),
 
-  getAirtimeToCashNetworks: (): Promise<AirtimeToCashNetwork[]> =>
+  // Reuses the same /table/networks read as everywhere else — a network is
+  // available for conversion when its airtime_to_cash_active flag is set
+  // (Products > Airtime & Data > Networks), not a separate list.
+  getAirtimeToCashNetworks: (): Promise<Network[]> =>
     apiClient
-      .get<ApiEnvelope<AirtimeToCashNetwork[]>>("/table/airtime_to_cash_networks")
+      .get<ApiEnvelope<Network[]>>("/table/networks")
       .then((r) => r.data.data),
 
   getMyAirtimeToCashRequests: (): Promise<AirtimeToCashRequestItem[]> =>

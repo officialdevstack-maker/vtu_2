@@ -42,7 +42,11 @@ function NetworkFormModal({
     setForm((f) => ({ ...f, [k]: v }));
 
   const isEdit = Boolean((initial as Partial<Network>).name);
-  const valid = form.name.trim() && form.code.trim();
+  const valid = form.name?.trim() && form.code?.trim();
+
+  const a2cActive = Boolean(form.airtime_to_cash_active);
+  const a2cMin = form.airtime_to_cash_min ?? 100;
+  const a2cMax = form.airtime_to_cash_max ?? 50000;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
@@ -97,6 +101,56 @@ function NetworkFormModal({
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
+          </div>
+
+          <div className="border-t border-gray-100 pt-3.5">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Airtime to Cash
+              </label>
+              <input
+                type="checkbox"
+                checked={a2cActive}
+                onChange={(e) => setForm((f) => ({ ...f, airtime_to_cash_active: e.target.checked }))}
+                className="w-4 h-4 rounded border-gray-300 accent-[#111827]"
+              />
+            </div>
+
+            {a2cActive && (
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Destination number
+                  </label>
+                  <input
+                    value={form.airtime_to_cash_destination_number ?? ""}
+                    onChange={(e) => setForm((f) => ({ ...f, airtime_to_cash_destination_number: e.target.value }))}
+                    placeholder="Number customers transfer airtime to"
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Min amount</label>
+                    <input
+                      type="number"
+                      value={a2cMin}
+                      onChange={(e) => setForm((f) => ({ ...f, airtime_to_cash_min: e.target.value }))}
+                      className={inputCls}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Max amount</label>
+                    <input
+                      type="number"
+                      value={a2cMax}
+                      onChange={(e) => setForm((f) => ({ ...f, airtime_to_cash_max: e.target.value }))}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-1">
@@ -386,6 +440,10 @@ export function NetworkTab() {
             code: modal.network.code,
             provider: modal.network.provider,
             status: modal.network.status,
+            airtime_to_cash_destination_number: modal.network.airtime_to_cash_destination_number,
+            airtime_to_cash_min: modal.network.airtime_to_cash_min,
+            airtime_to_cash_max: modal.network.airtime_to_cash_max,
+            airtime_to_cash_active: modal.network.airtime_to_cash_active,
           }}
           onSave={handleEdit}
           onClose={() => setModal(null)}

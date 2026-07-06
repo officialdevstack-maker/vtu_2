@@ -2,48 +2,10 @@ import { apiClient } from "@shared/api/apiClient";
 
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
-// An admin-configured network (Products > Airtime to Cash > Networks) — the
-// destination number customers transfer airtime to, and the amount range
-// accepted. Read/written via the generic Universal Table API (no PII, safe
-// for that). See app/Models/AirtimeToCashNetwork.
-export type AirtimeToCashNetwork = {
-  id: number;
-  network: string;
-  destination_number: string;
-  min: string | number;
-  max: string | number;
-  active: boolean;
-  status?: string;
-};
-
-export type AirtimeToCashNetworkPayload = {
-  network: string;
-  destination_number: string;
-  min: number;
-  max: number;
-  active: boolean;
-};
-
-const NETWORK = "/table/airtime_to_cash_networks";
-
-export const airtimeToCashNetworkService = {
-  getAll: (): Promise<AirtimeToCashNetwork[]> =>
-    apiClient.get<ApiEnvelope<AirtimeToCashNetwork[]>>(NETWORK).then((r) => r.data.data),
-
-  create: (payload: AirtimeToCashNetworkPayload): Promise<AirtimeToCashNetwork> =>
-    apiClient.post<ApiEnvelope<AirtimeToCashNetwork>>(NETWORK, payload).then((r) => r.data.data),
-
-  update: (id: string | number, payload: Partial<AirtimeToCashNetworkPayload>): Promise<AirtimeToCashNetwork> =>
-    apiClient.put<ApiEnvelope<AirtimeToCashNetwork>>(`${NETWORK}/${id}`, payload).then((r) => r.data.data),
-
-  remove: (id: string | number): Promise<void> =>
-    apiClient.delete(`${NETWORK}/${id}`).then(() => undefined),
-
-  toggleStatus: (network: AirtimeToCashNetwork): Promise<AirtimeToCashNetwork> =>
-    apiClient
-      .put<ApiEnvelope<AirtimeToCashNetwork>>(`${NETWORK}/${network.id}`, { active: !network.active })
-      .then((r) => r.data.data),
-};
+// Per-network airtime-to-cash config (destination number, amount range,
+// enabled) lives directly on the Network model now — configured under
+// Products > Airtime & Data > Networks, not here. See
+// features/admin/pages/products/airtime-data/network-tab.tsx.
 
 export type AirtimeToCashStatus = "pending" | "approved" | "rejected";
 
