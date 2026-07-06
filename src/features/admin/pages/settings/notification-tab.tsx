@@ -16,6 +16,8 @@ type FormState = {
   notify_admin_on_large_transaction: boolean;
   large_transaction_threshold: string;
   notify_admin_on_failed_transaction: boolean;
+  notify_admin_on_airtime_to_cash: boolean;
+  notify_admin_on_wallet_withdrawal: boolean;
 };
 
 const toForm = (s: SiteSettings): FormState => ({
@@ -24,6 +26,8 @@ const toForm = (s: SiteSettings): FormState => ({
   notify_admin_on_large_transaction: s.notify_admin_on_large_transaction,
   large_transaction_threshold: String(s.large_transaction_threshold ?? "50000"),
   notify_admin_on_failed_transaction: s.notify_admin_on_failed_transaction,
+  notify_admin_on_airtime_to_cash: s.notify_admin_on_airtime_to_cash,
+  notify_admin_on_wallet_withdrawal: s.notify_admin_on_wallet_withdrawal,
 });
 
 function ToggleRow({
@@ -99,6 +103,8 @@ export function NotificationTab() {
         notify_admin_on_large_transaction: form.notify_admin_on_large_transaction,
         large_transaction_threshold: Number(form.large_transaction_threshold) || 0,
         notify_admin_on_failed_transaction: form.notify_admin_on_failed_transaction,
+        notify_admin_on_airtime_to_cash: form.notify_admin_on_airtime_to_cash,
+        notify_admin_on_wallet_withdrawal: form.notify_admin_on_wallet_withdrawal,
       });
       setSettings(updated);
       setForm(toForm(updated));
@@ -183,6 +189,18 @@ export function NotificationTab() {
           hint="Email me whenever a purchase fails."
           value={form.notify_admin_on_failed_transaction}
           onChange={() => toggle("notify_admin_on_failed_transaction")}
+        />
+        <ToggleRow
+          label="Airtime to cash requests"
+          hint="Email me whenever a customer submits a new airtime-to-cash request awaiting review."
+          value={form.notify_admin_on_airtime_to_cash}
+          onChange={() => toggle("notify_admin_on_airtime_to_cash")}
+        />
+        <ToggleRow
+          label="Wallet withdrawal requests"
+          hint="Email me whenever a customer submits a withdrawal awaiting review (only relevant while auto-approve is off)."
+          value={form.notify_admin_on_wallet_withdrawal}
+          onChange={() => toggle("notify_admin_on_wallet_withdrawal")}
         />
         <div className="rounded-lg border border-gray-200 px-3.5 py-3">
           <ToggleRow

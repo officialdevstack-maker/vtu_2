@@ -35,6 +35,8 @@ export type SiteSettings = {
   wallet_withdrawal_auto_approve: boolean;
   wallet_withdrawal_min: string | number;
   wallet_withdrawal_max: string | number;
+  notify_admin_on_airtime_to_cash: boolean;
+  notify_admin_on_wallet_withdrawal: boolean;
 };
 
 // Partial<SiteSettings> would still type mail_password as forbidden, so this

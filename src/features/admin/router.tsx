@@ -284,6 +284,14 @@ export const adminRouter: RouteObject[] = [
       },
       // Communication
       {
+        path: "notifications/inbox",
+        lazy: async () => {
+          const { default: Component } =
+            await import("../user/pages/notifications");
+          return { Component };
+        },
+      },
+      {
         path: "notifications/broadcast",
         lazy: async () => {
           const { default: Component } =

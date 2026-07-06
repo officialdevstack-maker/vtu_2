@@ -20,10 +20,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
 import { useBranding } from "@/shared/branding";
+import { notificationService } from "@/shared/notificationService";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -39,7 +40,6 @@ type NavItem = {
   label: string;
   icon: React.ElementType;
   path: string;
-  badge?: number;
 };
 
 const sections: { label: string; items: NavItem[] }[] = [
@@ -96,7 +96,6 @@ const sections: { label: string; items: NavItem[] }[] = [
         label: "Notifications",
         icon: Bell,
         path: "/notifications",
-        badge: 3,
       },
     ],
   },
@@ -128,6 +127,13 @@ export default function Sidebar({
   const { logout, user, hasPermission } = useAuth();
   const queryClient = useQueryClient();
   const branding = useBranding();
+
+  const unreadQuery = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: () => notificationService.getUnreadCount(),
+    enabled: Boolean(user),
+    refetchInterval: 60000,
+  });
 
   const prefetchNetworks = () =>
     queryClient.prefetchQuery({
@@ -236,6 +242,7 @@ export default function Sidebar({
               <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const active = isActive(item.path);
+                  const badge = item.id === "notifications" ? unreadQuery.data : undefined;
                   return (
                     <button
                       key={item.id}
@@ -258,11 +265,11 @@ export default function Sidebar({
                       >
                         {item.label}
                       </span>
-                      {"badge" in item && (
+                      {Boolean(badge) && (
                         <span
                           className={`bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium shrink-0 ${collapsed ? "lg:absolute lg:top-1 lg:right-1 lg:w-2 lg:h-2 lg:text-[0px]" : "ml-auto w-4.5 h-4.5"}`}
                         >
-                          {String(item.badge)}
+                          {badge && badge > 9 ? "9+" : badge}
                         </span>
                       )}
                     </button>

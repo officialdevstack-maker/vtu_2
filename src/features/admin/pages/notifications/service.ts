@@ -62,3 +62,52 @@ export const templateService = {
   remove: (id: string | number): Promise<void> =>
     apiClient.delete(`${BASE}/${id}`).then(() => undefined),
 };
+
+// ─── Broadcast (AdminController::broadcast) ──────────────────────────────────
+// Sends a one-off message to every user of the selected type(s), over any
+// combination of channels. `{{user.fullname}}` / `{{user.username}}` /
+// `{{user.email}}` placeholders in any text field are substituted per
+// recipient server-side (see App\Classes\TemplateParser). Delivery for
+// "Email"/"sms" is queued (App\Notifications\BroadcastNotification
+// implements ShouldQueue) — requires `php artisan queue:listen` running,
+// which `composer run dev` already starts alongside the server.
+
+export type BroadcastRecipientType = "user" | "agent" | "api" | "admin" | "bonanza";
+export type BroadcastChannel = "Email" | "sms" | "database";
+
+export type BroadcastPayload = {
+  channels: BroadcastChannel[];
+  recipients: BroadcastRecipientType[];
+  smsMessage?: string;
+  emailSubject?: string;
+  emailBody?: string;
+  notifTitle?: string;
+  notifMessage?: string;
+  sendNow: boolean;
+  scheduleDate?: string | null;
+  priorityHigh: boolean;
+};
+
+export type BroadcastResult = { notified: number };
+
+export type BroadcastHistoryItem = {
+  id: number;
+  title: string | null;
+  message: string | null;
+  channels: BroadcastChannel[];
+  audience_label: string | null;
+  scheduled_at: string | null;
+  sent: boolean;
+  created_at: string;
+};
+
+const BROADCAST_BASE = "/admin/broadcast";
+const BROADCAST_HISTORY = "/table/broadcasts";
+
+export const broadcastService = {
+  send: (payload: BroadcastPayload): Promise<BroadcastResult> =>
+    apiClient.post<TemplateEnvelope<BroadcastResult>>(BROADCAST_BASE, payload).then((r) => r.data.data),
+
+  getHistory: (): Promise<BroadcastHistoryItem[]> =>
+    apiClient.get<TemplateEnvelope<BroadcastHistoryItem[]>>(BROADCAST_HISTORY).then((r) => r.data.data),
+};

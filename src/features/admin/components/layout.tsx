@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useNavigation } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { notificationService } from "@/shared/notificationService";
 import {
   ArrowLeftRight,
   Banknote,
@@ -146,6 +147,13 @@ const Layout = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+
+  const unreadQuery = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: () => notificationService.getUnreadCount(),
+    enabled: Boolean(user),
+    refetchInterval: 60000,
+  });
 
   const displayName = user?.username ?? "Admin";
   const displayRole = user?.role?.name ?? "Admin";
@@ -385,9 +393,14 @@ const Layout = () => {
               </div>
 
               <div className="ml-auto flex items-center gap-1 sm:gap-2">
-                <button className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700">
+                <button
+                  onClick={() => navigate("/admin/notifications/inbox")}
+                  className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
+                >
                   <Bell className="h-4.5 w-4.5" />
-                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                  {Boolean(unreadQuery.data) && (
+                    <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                  )}
                 </button>
 
                 <button
