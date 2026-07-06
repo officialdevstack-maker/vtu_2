@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Wallet, ArrowDownLeft, ShoppingBag, CheckCircle2, AlertTriangle, TrendingUp,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
-  Banknote,
+  Banknote, Send, Landmark,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -16,7 +16,9 @@ import { customerService } from "../services/customerService";
 import { transactionTypeMeta, isCredit, toNumber, badgeStatus } from "../utils/transactionDisplay";
 
 const quickActions = [
-  { label: "Fund wallet", icon: Wallet, path: "/wallet" },
+  { label: "Fund wallet", icon: Wallet, path: "/wallet?tab=fund" },
+  { label: "Send money", icon: Send, path: "/wallet?tab=send" },
+  { label: "Withdraw", icon: Landmark, path: "/wallet?tab=withdraw" },
   { label: "Buy airtime", icon: Phone, path: "/buy-airtime" },
   { label: "Buy data", icon: Wifi, path: "/buy-data" },
   { label: "Electricity", icon: Plug, path: "/electricity" },

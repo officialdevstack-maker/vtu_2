@@ -1,5 +1,6 @@
 import {
   Phone, Wifi, Tv, Plug, GraduationCap, ArrowUpRight, ArrowDownLeft, MessageSquare,
+  Send, Landmark,
   type LucideIcon,
 } from "lucide-react";
 import type { UserTransaction } from "../../../shared/providers/auth";
@@ -16,11 +17,16 @@ export const transactionTypeMeta: Record<string, { label: string; icon: LucideIc
   wallet_funding: { label: "Wallet funding", icon: ArrowDownLeft },
   manual_funding: { label: "Wallet adjustment", icon: ArrowDownLeft },
   bulksms: { label: "Bulk SMS", icon: MessageSquare },
+  wallet_transfer_in: { label: "Money received", icon: Send },
+  wallet_transfer_out: { label: "Money sent", icon: Send },
+  wallet_withdrawal: { label: "Bank withdrawal", icon: Landmark },
 };
 
 export const isCredit = (tx: UserTransaction) =>
   tx.transaction_type === "wallet_funding" ||
-  (tx.transaction_type === "manual_funding" && tx.plan_type === "credit");
+  tx.transaction_type === "wallet_transfer_in" ||
+  (tx.transaction_type === "manual_funding" && tx.plan_type === "credit") ||
+  (tx.transaction_type === "wallet_withdrawal" && tx.plan_type === "credit");
 
 export const toNumber = (v: string | number | undefined | null) => {
   const n = typeof v === "string" ? parseFloat(v) : (v ?? 0);

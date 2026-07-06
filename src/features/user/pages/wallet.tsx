@@ -1,12 +1,23 @@
 import { useMemo, useState } from "react";
 import { Eye, EyeOff, Landmark, ArrowDownLeft, Building2 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader, Card, Button, CopyButton, StatusBadge, EmptyState } from "../components/shared-ui";
 import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
 import { walletService } from "../services/walletService";
 import { fmt } from "../data/mock";
 import { transactionTypeMeta, isCredit, toNumber, badgeStatus, dateLabel } from "../utils/transactionDisplay";
+import WalletTransferPage from "./wallet-transfer";
+import WalletWithdrawalPage from "./wallet-withdrawal";
 
-export default function WalletPage() {
+type Tab = "fund" | "send" | "withdraw";
+
+const tabs: { id: Tab; label: string }[] = [
+  { id: "fund", label: "Fund wallet" },
+  { id: "send", label: "Send money" },
+  { id: "withdraw", label: "Withdraw to bank" },
+];
+
+function FundTab() {
   const { user, refreshUser } = useAuth();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -38,8 +49,6 @@ export default function WalletPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Wallet" description="Fund your wallet and manage your account details" />
-
       {/* Balance banner */}
       <Card className="p-5 bg-slate-900 border-slate-900">
         <p className="text-slate-400 text-xs mb-1.5">Available balance</p>
@@ -145,6 +154,38 @@ export default function WalletPage() {
           </div>
         </Card>
       )}
+    </div>
+  );
+}
+
+export default function WalletPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as Tab | null) ?? "fund";
+  const setActiveTab = (tab: Tab) => setSearchParams({ tab }, { replace: true });
+
+  return (
+    <div className="space-y-5">
+      <PageHeader title="Wallet" description="Fund, send, and withdraw your wallet balance" />
+
+      <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === t.id
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "fund" && <FundTab />}
+      {activeTab === "send" && <WalletTransferPage />}
+      {activeTab === "withdraw" && <WalletWithdrawalPage />}
     </div>
   );
 }

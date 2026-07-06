@@ -14,6 +14,11 @@ type FormState = {
   referral_commission_rate: string;
   prune_transactions_enabled: boolean;
   prune_transactions_after_days: string;
+  wallet_transfer_min: string;
+  wallet_transfer_max: string;
+  wallet_withdrawal_auto_approve: boolean;
+  wallet_withdrawal_min: string;
+  wallet_withdrawal_max: string;
 };
 
 const toForm = (s: SiteSettings): FormState => ({
@@ -22,6 +27,11 @@ const toForm = (s: SiteSettings): FormState => ({
   referral_commission_rate: String(s.referral_commission_rate ?? "0"),
   prune_transactions_enabled: s.prune_transactions_enabled,
   prune_transactions_after_days: String(s.prune_transactions_after_days ?? "365"),
+  wallet_transfer_min: String(s.wallet_transfer_min ?? "50"),
+  wallet_transfer_max: String(s.wallet_transfer_max ?? "1000000"),
+  wallet_withdrawal_auto_approve: s.wallet_withdrawal_auto_approve,
+  wallet_withdrawal_min: String(s.wallet_withdrawal_min ?? "500"),
+  wallet_withdrawal_max: String(s.wallet_withdrawal_max ?? "500000"),
 });
 
 const dateLabel = (value: string | null) =>
@@ -78,6 +88,11 @@ export function TransactionTab() {
     setSaved(false);
   };
 
+  const toggleWithdrawalAutoApprove = () => {
+    setForm((f) => (f ? { ...f, wallet_withdrawal_auto_approve: !f.wallet_withdrawal_auto_approve } : f));
+    setSaved(false);
+  };
+
   const handleTogglePin = async () => {
     if (!pinControl) return;
     setPinToggling(true);
@@ -100,6 +115,11 @@ export function TransactionTab() {
         referral_commission_rate: Number(form.referral_commission_rate) || 0,
         prune_transactions_enabled: form.prune_transactions_enabled,
         prune_transactions_after_days: Number(form.prune_transactions_after_days) || 365,
+        wallet_transfer_min: Number(form.wallet_transfer_min) || 0,
+        wallet_transfer_max: Number(form.wallet_transfer_max) || 0,
+        wallet_withdrawal_auto_approve: form.wallet_withdrawal_auto_approve,
+        wallet_withdrawal_min: Number(form.wallet_withdrawal_min) || 0,
+        wallet_withdrawal_max: Number(form.wallet_withdrawal_max) || 0,
       });
       setSettings(updated);
       setForm(toForm(updated));
@@ -192,6 +212,72 @@ export function TransactionTab() {
           )}
         </div>
         {pinToggling && <p className="mt-2 text-xs text-slate-400">Saving…</p>}
+      </Card>
+
+      <Card className="p-5">
+        <SectionTitle>Wallet transfers</SectionTitle>
+        <p className="mb-4 -mt-2 text-xs text-slate-500">
+          The amount range a customer can send to another user's wallet in one transfer.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Minimum" hint="₦">
+            <input
+              type="number"
+              min={0}
+              value={form.wallet_transfer_min}
+              onChange={(e) => set("wallet_transfer_min", e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Maximum" hint="₦">
+            <input
+              type="number"
+              min={0}
+              value={form.wallet_transfer_max}
+              onChange={(e) => set("wallet_transfer_max", e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <SectionTitle>Wallet withdrawals</SectionTitle>
+        <p className="mb-4 -mt-2 text-xs text-slate-500">
+          Real money leaves the platform via the active payment gateway's transfer API.
+        </p>
+
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3.5 py-3">
+          <div>
+            <p className="text-sm font-medium text-slate-900">Auto-approve withdrawals</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Off (recommended): requests wait for an admin to approve before payout. On: payout is
+              attempted immediately when a customer submits a request, no review step.
+            </p>
+          </div>
+          <Toggle value={form.wallet_withdrawal_auto_approve} onChange={toggleWithdrawalAutoApprove} />
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field label="Minimum" hint="₦">
+            <input
+              type="number"
+              min={0}
+              value={form.wallet_withdrawal_min}
+              onChange={(e) => set("wallet_withdrawal_min", e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Maximum" hint="₦">
+            <input
+              type="number"
+              min={0}
+              value={form.wallet_withdrawal_max}
+              onChange={(e) => set("wallet_withdrawal_max", e.target.value)}
+              className={inputCls}
+            />
+          </Field>
+        </div>
       </Card>
 
       <Card className="p-5">

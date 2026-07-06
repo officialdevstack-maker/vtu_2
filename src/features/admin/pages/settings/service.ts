@@ -30,6 +30,11 @@ export type SiteSettings = {
   prune_transactions_enabled: boolean;
   prune_transactions_after_days: number;
   transactions_last_pruned_at: string | null;
+  wallet_transfer_min: string | number;
+  wallet_transfer_max: string | number;
+  wallet_withdrawal_auto_approve: boolean;
+  wallet_withdrawal_min: string | number;
+  wallet_withdrawal_max: string | number;
 };
 
 // Partial<SiteSettings> would still type mail_password as forbidden, so this

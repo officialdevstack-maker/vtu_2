@@ -219,6 +219,63 @@ export type UpgradeTiersResponse = {
 // envelope and returns its own {message, user} / {error} shape directly.
 export type UpgradeResult = { message: string; user: { user_type: string; wallet_balance: string | number } };
 
+// A recipient resolved by username/email/phone before sending — shown so
+// the sender can confirm they're paying the right person, mirroring how a
+// bank app shows the beneficiary name before you commit. See
+// WalletTransferController::lookup().
+export type WalletTransferRecipient = { id: number; username: string; fullname: string };
+
+export type WalletTransferPayload = {
+  identifier: string;
+  amount: number;
+  pin: string;
+  note?: string;
+};
+
+// Shape of a Transaction row (WalletTransferController::send() returns the
+// sender's own outgoing transaction, with related_reference pointing at the
+// recipient's incoming one).
+export type WalletTransferResult = {
+  id: number;
+  transaction_reference: string;
+  related_reference: string | null;
+  amount: string | number;
+  status: "success" | "pending" | "fail";
+  receiver: string | null;
+  created_at: string;
+};
+
+export type WalletBank = { code: string; name: string };
+
+export type WalletWithdrawalStatus = "pending" | "completed" | "failed" | "rejected";
+
+// A customer's own withdrawal request — real money leaving the platform via
+// a payment gateway's transfer API, so (unlike wallet-to-wallet) this may
+// sit pending for admin review depending on
+// Setting::wallet_withdrawal_auto_approve. See WalletWithdrawalController.
+export type WalletWithdrawalItem = {
+  id: number;
+  amount: string | number;
+  bank_code: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  status: WalletWithdrawalStatus;
+  rejection_reason: string | null;
+  gateway_reference: string | null;
+  transaction_reference: string;
+  created_at: string;
+};
+
+export type WalletWithdrawalPayload = {
+  amount: number;
+  bank_code: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+  pin: string;
+};
+
 export const customerService = {
   // Moves the user's entire referral_balance into wallet_balance.
   // Backend returns the updated user, but callers should prefer
@@ -339,5 +396,30 @@ export const customerService = {
   ): Promise<DiscountPreview> =>
     apiClient
       .get<ApiEnvelope<DiscountPreview>>(`/vtu/${service}/discount`, { params: { amount, network, ...extra } })
+      .then((r) => r.data.data),
+
+  lookupWalletTransferRecipient: (identifier: string): Promise<WalletTransferRecipient> =>
+    apiClient
+      .get<ApiEnvelope<WalletTransferRecipient>>("/customer/wallet-transfer/lookup", { params: { identifier } })
+      .then((r) => r.data.data),
+
+  sendWalletTransfer: (payload: WalletTransferPayload): Promise<WalletTransferResult> =>
+    apiClient
+      .post<ApiEnvelope<WalletTransferResult>>("/customer/wallet-transfer", payload)
+      .then((r) => r.data.data),
+
+  getWithdrawalBanks: (): Promise<{ available: boolean; banks: WalletBank[] }> =>
+    apiClient
+      .get<ApiEnvelope<{ available: boolean; banks: WalletBank[] }>>("/customer/wallet-withdrawals/banks")
+      .then((r) => r.data.data),
+
+  getMyWalletWithdrawals: (): Promise<WalletWithdrawalItem[]> =>
+    apiClient
+      .get<ApiEnvelope<WalletWithdrawalItem[]>>("/customer/wallet-withdrawals")
+      .then((r) => r.data.data),
+
+  submitWalletWithdrawal: (payload: WalletWithdrawalPayload): Promise<WalletWithdrawalItem> =>
+    apiClient
+      .post<ApiEnvelope<WalletWithdrawalItem>>("/customer/wallet-withdrawals", payload)
       .then((r) => r.data.data),
 };

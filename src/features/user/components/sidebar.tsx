@@ -8,7 +8,6 @@ import {
   Wallet,
   MessageCircle,
   Share2,
-  Users,
   Phone,
   Wifi,
   Tv,
@@ -56,7 +55,7 @@ const sections: { label: string; items: NavItem[] }[] = [
         icon: LayoutDashboard,
         path: "/dashboard",
       },
-      { id: "wallet", label: "Fund wallet", icon: Wallet, path: "/wallet" },
+      { id: "wallet", label: "Wallet", icon: Wallet, path: "/wallet" },
       {
         id: "transactions",
         label: "Transactions",
@@ -95,12 +94,6 @@ const sections: { label: string; items: NavItem[] }[] = [
     items: [
       { id: "pricing", label: "Pricing", icon: CreditCard, path: "/pricing" },
       { id: "referral", label: "Referral", icon: Share2, path: "/referral" },
-      {
-        id: "beneficiaries",
-        label: "Beneficiaries",
-        icon: Users,
-        path: "/beneficiaries",
-      },
       {
         id: "notifications",
         label: "Notifications",

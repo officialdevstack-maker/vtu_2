@@ -190,6 +190,13 @@ export const adminRouter: RouteObject[] = [
       },
       // Operations
       {
+        path: "wallet-withdrawals",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/wallet-withdrawals/index");
+          return { Component };
+        },
+      },
+      {
         path: "service-control",
         lazy: async () => {
           const { default: Component } =

@@ -10,6 +10,7 @@ import {
   Cable,
   ChevronRight,
   LayoutGrid,
+  Landmark,
   LogOut,
   Menu,
   Megaphone,
@@ -86,6 +87,11 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         label: "Payment Gateways",
         path: "/admin/service-control",
         icon: Sparkles,
+      },
+      {
+        label: "Wallet Withdrawals",
+        path: "/admin/wallet-withdrawals",
+        icon: Landmark,
       },
       {
         label: "Customers",
