@@ -8,6 +8,7 @@ export type RegisterPayload = {
   email: string;
   phone: string;
   password: string;
+  password_confirmation?: string;
   referral_code?: string;
 };
 
