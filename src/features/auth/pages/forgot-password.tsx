@@ -1,22 +1,34 @@
+import { useState } from "react";
 import { Mail } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
+import { authService } from "../authService";
 import { forgotPasswordSchema, type ForgotPasswordFormData } from "../validators";
 
 export default function ForgotPasswordPage() {
+  const [success, setSuccess] = useState(false);
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    setError,
+    formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => window.setTimeout(resolve, 450));
+  const onSubmit = async (data: ForgotPasswordFormData) => {
+    // The backend always reports success here regardless of whether the
+    // email is registered, so the only failure case left is a genuine
+    // network/server error — this can't be used to enumerate accounts.
+    try {
+      await authService.forgotPassword(data.email);
+      setSuccess(true);
+    } catch {
+      setError("root", { message: "Something went wrong. Please try again." });
+    }
   };
 
   return (
@@ -27,9 +39,15 @@ export default function ForgotPasswordPage() {
           <p className="text-slate-500 text-sm mt-1">Enter your email and we will prepare a secure reset link.</p>
         </div>
 
-        {isSubmitSuccessful && (
+        {errors.root && (
+          <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+            {errors.root.message}
+          </div>
+        )}
+
+        {success && (
           <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
-            Reset instructions are ready in this mock flow.
+            If an account exists for that email, a reset link is on its way.
           </div>
         )}
 

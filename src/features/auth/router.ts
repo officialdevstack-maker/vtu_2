@@ -49,5 +49,30 @@ export const authRouter: RouteObject[] = [
             const { default: Component } = await import("./pages/reset-password")
             return { Component }
         }
+    },
+    // VerifyEmailController::verifyFromLink redirects here on success
+    // (?verified=1), already-verified (?verified=1&already=true), or
+    // failure (?reason=...) — same landing page for all three paths it
+    // might redirect to.
+    {
+        path: 'verify-email',
+        lazy: async () => {
+            const { default: Component } = await import("./pages/email-verified")
+            return { Component }
+        }
+    },
+    {
+        path: 'email-verified',
+        lazy: async () => {
+            const { default: Component } = await import("./pages/email-verified")
+            return { Component }
+        }
+    },
+    {
+        path: 'email-verification-failed',
+        lazy: async () => {
+            const { default: Component } = await import("./pages/email-verified")
+            return { Component }
+        }
     }
 ];

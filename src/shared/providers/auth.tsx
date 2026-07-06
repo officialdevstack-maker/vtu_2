@@ -8,6 +8,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/apiClient";
 import { config } from "../config";
+import type { RegisterPayload } from "@/features/auth/authService";
 
 // Shape returned by GET /user (AuthenticatedSessionController::index), which
 // loads the Eloquent User model — its $appends (transactions, banks, stats,
@@ -68,6 +69,23 @@ export type UserBadge = {
   last_earned_at: string | null;
 };
 
+// A dedicated virtual account number, one per active payment provider (see
+// Payment::generateAccount on the backend) — transferring to this account
+// credits wallet_balance automatically via that provider's webhook.
+export type UserBank = {
+  id: number;
+  user_id: string;
+  account_type: string;
+  bank_account: string;
+  account_name: string | null;
+  bank_name: string;
+  provider: string;
+  status: string;
+  amount?: string | number;
+  charge?: string;
+  logo?: string;
+};
+
 interface User {
   id: string;
   email?: string;
@@ -83,6 +101,7 @@ interface User {
   transactions?: UserTransaction[];
   stats?: UserStats;
   badges?: UserBadge[];
+  banks?: UserBank[];
   joined_at?: string;
   [key: string]: any;
 }
@@ -94,46 +113,10 @@ interface AuthContextType {
   isInitializing: boolean;
   refreshUser: () => Promise<void>;
   login: (login: string, password: string) => Promise<User | null>;
+  register: (payload: RegisterPayload) => Promise<User | null>;
   logout: () => Promise<void>;
   hasPermission: (slug: string) => boolean;
-  // TEMPORARY DEMO ACCESS — remove loginAsDemo (and its callers) once real
-  // auth is wired up everywhere. Seeds a fake user into the query cache so
-  // ProtectedLayout and the dashboard render without a live backend.
-  loginAsDemo: () => void;
 }
-
-const DEMO_USER: User = {
-  id: "demo-user",
-  email: "demo@kora.app",
-  fullname: "Demo User",
-  username: "demo",
-  phone: "08012345678",
-  // user_type: "admin" so the demo account also passes AdminProtectedLayout
-  // and can reach /admin/* routes, not just the customer /dashboard.
-  user_type: "admin",
-  role_id: 1,
-  role: {
-    id: 1,
-    name: "Administrator",
-    slug: "admin",
-    permissions: [{ id: 1, name: "Switch account", slug: "switch_account" }],
-  },
-  wallet_balance: 25000,
-  referral_balance: 500,
-  referral_code: "DEMO2026",
-  transactions: [],
-  stats: {
-    daily_purchased_data: "0",
-    transaction_count: 0,
-    monthly_successful: 0,
-    monthly_failed: 0,
-    monthly_pending: 0,
-    transaction_status: { successful: 0, failed: 0, pending: 0 },
-    tx_chart: { labels: [], datasets: [] },
-    tx_amount_30d: [],
-  },
-  joined_at: new Date().toISOString(),
-};
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -179,6 +162,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [queryClient],
   );
 
+  const register = useCallback(
+    async (payload: RegisterPayload) => {
+      setIsLoading(true);
+      try {
+        await apiClient.get("/sanctum/csrf-cookie");
+        await apiClient.post("/register", payload);
+        // Registration logs the user in server-side (session cookie), so a
+        // fresh /user fetch already reflects the new account.
+        const freshUser = await fetchCurrentUser();
+        queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
+        return freshUser;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [queryClient],
+  );
+
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -203,11 +204,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [user],
   );
 
-  // TEMPORARY DEMO ACCESS — see AuthContextType.loginAsDemo above.
-  const loginAsDemo = useCallback(() => {
-    queryClient.setQueryData(AUTH_QUERY_KEY, DEMO_USER);
-  }, [queryClient]);
-
   return (
     <AuthContext.Provider
       value={{
@@ -217,9 +213,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isInitializing,
         refreshUser,
         login,
+        register,
         logout,
         hasPermission,
-        loginAsDemo,
       }}
     >
       {children}

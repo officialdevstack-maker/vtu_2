@@ -123,8 +123,6 @@ export type Discount = {
   network: string | null;
   discount_type: DiscountValueType;
   value: string | number;
-  min?: string | number | null;
-  max?: string | number | null;
   active: boolean;
   starts_at?: string | null;
   ends_at?: string | null;
@@ -138,8 +136,6 @@ export type DiscountPayload = {
   network?: string | null;
   discount_type: DiscountValueType;
   value: number;
-  min?: string | number | null;
-  max?: string | number | null;
   active?: boolean;
   starts_at?: string | null;
   ends_at?: string | null;

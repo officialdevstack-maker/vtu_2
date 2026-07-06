@@ -1,28 +1,35 @@
 import { useState } from "react";
+import axios from "axios";
 import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { useAuth } from "@/shared/providers/auth";
-import { AuthLayout, SocialLoginRow, authCardCls, authInputCls } from "../components/AuthLayout";
-import { createMockAccount } from "../mockSession";
+import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { registerSchema, type RegisterFormData } from "../validators";
+
+// Every backend failure here is either a validation-shaped 4xx or the
+// generic `fail()` 500 wrapper — both put a human-readable string at
+// response.data.message once unwrapped through the (single) envelope.
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as
+      | { message?: string; errors?: Record<string, string[]> }
+      | undefined;
+    const validationErrors = data?.errors;
+    if (validationErrors && Object.keys(validationErrors).length > 0) {
+      return Object.values(validationErrors).flat().join(" ");
+    }
+    if (typeof data?.message === "string") return data.message;
+  }
+  return "Could not create account. Please try again.";
+}
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  // TEMPORARY DEMO ACCESS — remove this along with the row below and
-  // AuthProvider.loginAsDemo once real auth is wired up end-to-end.
-  const { loginAsDemo } = useAuth();
-  const [demoLoading, setDemoLoading] = useState(false);
-
-  const handleDemoAccess = async () => {
-    setDemoLoading(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
-    loginAsDemo();
-    navigate("/dashboard", { replace: true });
-  };
+  const { register: registerAccount } = useAuth();
 
   const {
     register,
@@ -35,13 +42,16 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 500));
-      createMockAccount(data);
-      navigate("/create-transaction-pin", { replace: true });
-    } catch {
-      setError("root", {
-        message: "Could not create account. Please try again.",
+      await registerAccount({
+        fullname: data.fullname,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
       });
+      navigate("/create-transaction-pin", { replace: true });
+    } catch (err) {
+      setError("root", { message: extractErrorMessage(err) });
     }
   };
 
@@ -60,13 +70,6 @@ export default function RegisterPage() {
             {errors.root.message}
           </div>
         )}
-
-        <SocialLoginRow label="Sign up" loading={demoLoading} onClick={() => void handleDemoAccess()} />
-        <div className="flex items-center gap-3 mb-5">
-          <div className="h-px flex-1 bg-slate-100" />
-          <span className="text-xs font-medium text-slate-400">or</span>
-          <div className="h-px flex-1 bg-slate-100" />
-        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <div>

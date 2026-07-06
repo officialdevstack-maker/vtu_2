@@ -13,6 +13,14 @@ export type PasswordUpdatePayload = {
   password_confirmation: string;
 };
 
+export type PinUpdatePayload = {
+  pin: string;
+  pin_confirmation: string;
+  // Only required when the user already has a PIN set (i.e. changing it,
+  // not creating it for the first time right after registration).
+  current_pin?: string;
+};
+
 export const accountService = {
   updateProfile: (payload: ProfileUpdatePayload) =>
     apiClient
@@ -21,4 +29,7 @@ export const accountService = {
 
   updatePassword: (payload: PasswordUpdatePayload) =>
     apiClient.put<ApiEnvelope<null>>("/account/password", payload).then((r) => r.data),
+
+  updatePin: (payload: PinUpdatePayload) =>
+    apiClient.put<ApiEnvelope<null>>("/account/pin", payload).then((r) => r.data),
 };

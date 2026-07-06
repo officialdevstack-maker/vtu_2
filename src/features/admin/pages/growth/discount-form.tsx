@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import axios from "axios";
@@ -11,7 +11,7 @@ import {
   inputCls,
   selectCls,
 } from "../../../user/components/shared-ui";
-import { networkService, type Network } from "../products/airtime-data/service";
+import { networkService, networkTypeService, type Network, type NetworkType } from "../products/airtime-data/service";
 import { discountService, type Discount, type DiscountServiceType, type DiscountValueType } from "./service";
 
 const BACK = "/admin/growth/discounts";
@@ -33,8 +33,6 @@ type FormState = {
   network: string;
   discount_type: DiscountValueType;
   value: string;
-  min: string;
-  max: string;
   active: boolean;
   starts_at: string;
   ends_at: string;
@@ -147,8 +145,6 @@ const blankForm = (): FormState => ({
   network: "",
   discount_type: "percentage",
   value: "",
-  min: "",
-  max: "",
   active: true,
   starts_at: "",
   ends_at: "",
@@ -160,8 +156,6 @@ const toForm = (d: Discount): FormState => ({
   network: d.network ?? "",
   discount_type: d.discount_type ?? "percentage",
   value: d.value != null ? String(d.value) : "",
-  min: d.min != null ? String(d.min) : "",
-  max: d.max != null ? String(d.max) : "",
   active: d.active ?? true,
   starts_at: d.starts_at ?? "",
   ends_at: d.ends_at ?? "",
@@ -173,18 +167,10 @@ const toPayload = (form: FormState) => ({
   network: form.network || null,
   discount_type: form.discount_type,
   value: Number(form.value),
-  min: form.min || null,
-  max: form.max || null,
   active: form.active,
   starts_at: form.starts_at || null,
   ends_at: form.ends_at || null,
 });
-
-const amountSchema = z
-  .string()
-  .refine((v) => v === "" || (!Number.isNaN(Number(v)) && Number(v) >= 0), {
-    message: "Enter a valid non-negative amount.",
-  });
 
 const discountFormSchema = z
   .object({
@@ -193,8 +179,6 @@ const discountFormSchema = z
     network: z.string(),
     discount_type: z.enum(["percentage", "fixed"]),
     value: z.string(),
-    min: amountSchema,
-    max: amountSchema,
     active: z.boolean(),
     starts_at: z.string(),
     ends_at: z.string(),
@@ -208,14 +192,6 @@ const discountFormSchema = z
     { message: "A percentage discount can't exceed 100.", path: ["value"] },
   )
   .refine(
-    (data) =>
-      data.min === "" || data.max === "" || Number(data.max) >= Number(data.min),
-    {
-      message: "Maximum must be greater than or equal to minimum.",
-      path: ["max"],
-    },
-  )
-  .refine(
     (data) => data.starts_at === "" || data.ends_at === "" || data.ends_at >= data.starts_at,
     {
       message: "End date must be on or after the start date.",
@@ -223,7 +199,7 @@ const discountFormSchema = z
     },
   );
 
-type FormErrors = Partial<Record<"name" | "service_type" | "value" | "min" | "max" | "ends_at", string>>;
+type FormErrors = Partial<Record<"name" | "service_type" | "value" | "ends_at", string>>;
 
 function validateForm(form: FormState): FormErrors {
   const result = discountFormSchema.safeParse(form);
@@ -236,6 +212,15 @@ function validateForm(form: FormState): FormErrors {
   }
   return errors;
 }
+
+// A service that has no clean "network" list to select from yet falls back
+// to a free-text input (blank = all) — see growth/discounts.tsx's
+// SERVICE_LABELS comment for the same service_type set.
+const NETWORK_SOURCE: Partial<Record<DiscountServiceType, "network" | "network_type">> = {
+  airtime: "network",
+  data: "network",
+  cable: "network_type",
+};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -255,15 +240,14 @@ export default function DiscountFormPage() {
     stateDiscount ? toForm(stateDiscount) : blankForm(),
   );
   const [networks, setNetworks] = useState<Network[]>([]);
+  const [networkTypes, setNetworkTypes] = useState<NetworkType[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    networkService
-      .getAll()
-      .then(setNetworks)
-      .catch(() => {});
+    networkService.getAll().then(setNetworks).catch(() => {});
+    networkTypeService.getAll().then(setNetworkTypes).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -278,9 +262,32 @@ export default function DiscountFormPage() {
     }
   }, [id, stateDiscount]);
 
+  // What "network" means depends on the selected service: a telecom
+  // carrier for airtime/data, a cable provider for cable (dstv/gotv/...,
+  // modeled as NetworkType rows), or free text for anything else.
+  const networkOptions = useMemo(() => {
+    const source = NETWORK_SOURCE[form.service_type];
+    if (source === "network") {
+      return networks.map((n) => ({ value: n.name, label: n.name }));
+    }
+    if (source === "network_type") {
+      return networkTypes
+        .filter((t) => t.service_type === form.service_type)
+        .map((t) => ({ value: t.name, label: t.name }));
+    }
+    return [];
+  }, [form.service_type, networks, networkTypes]);
+
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
     setErrors((e) => (e[k as keyof FormErrors] ? { ...e, [k]: undefined } : e));
+  };
+
+  const setServiceType = (value: DiscountServiceType) => {
+    // The network options are a different list per service — a stale
+    // selection from the old list wouldn't necessarily mean anything for
+    // the new one, so clear it rather than silently keep a mismatched value.
+    setForm((f) => ({ ...f, service_type: value, network: "" }));
   };
 
   const valid = form.name.trim().length > 0 && form.value.trim().length > 0;
@@ -388,7 +395,7 @@ export default function DiscountFormPage() {
               <Field label="Service" error={errors.service_type}>
                 <select
                   value={form.service_type}
-                  onChange={(e) => set("service_type", e.target.value as DiscountServiceType)}
+                  onChange={(e) => setServiceType(e.target.value as DiscountServiceType)}
                   className={selectCls}
                 >
                   {SERVICE_OPTIONS.map((s) => (
@@ -400,16 +407,16 @@ export default function DiscountFormPage() {
               </Field>
 
               <Field label="Network" hint="optional — blank = all networks">
-                {networks.length > 0 ? (
+                {networkOptions.length > 0 ? (
                   <select
                     value={form.network}
                     onChange={(e) => set("network", e.target.value)}
                     className={selectCls}
                   >
                     <option value="">All networks</option>
-                    {networks.map((n) => (
-                      <option key={n.id} value={n.name}>
-                        {n.name}
+                    {networkOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
                       </option>
                     ))}
                   </select>
@@ -417,7 +424,7 @@ export default function DiscountFormPage() {
                   <input
                     value={form.network}
                     onChange={(e) => set("network", e.target.value)}
-                    placeholder="e.g. MTN (blank = all)"
+                    placeholder="blank = all"
                     className={inputCls}
                   />
                 )}
@@ -447,24 +454,6 @@ export default function DiscountFormPage() {
                   placeholder="0"
                   suffix={form.discount_type === "percentage" ? "%" : "₦"}
                   max={form.discount_type === "percentage" ? 100 : undefined}
-                />
-              </Field>
-
-              <Field label="Minimum amount" hint="optional" error={errors.min}>
-                <NumberInput
-                  value={form.min}
-                  onChange={(v) => set("min", v)}
-                  placeholder="0"
-                  suffix="₦"
-                />
-              </Field>
-
-              <Field label="Maximum amount" hint="optional" error={errors.max}>
-                <NumberInput
-                  value={form.max}
-                  onChange={(v) => set("max", v)}
-                  placeholder="0"
-                  suffix="₦"
                 />
               </Field>
             </div>

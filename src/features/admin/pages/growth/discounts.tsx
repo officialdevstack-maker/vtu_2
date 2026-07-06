@@ -27,12 +27,6 @@ const SERVICE_LABELS: Record<string, string> = {
   airtimeToCash: "Airtime to Cash",
 };
 
-const formatCurrency = (value: string | number | null | undefined) => {
-  if (value === null || value === undefined || value === "") return "—";
-  const n = Number(value);
-  return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(value);
-};
-
 const formatValue = (discount: Discount) => {
   const n = Number(discount.value);
   return discount.discount_type === "fixed" ? `₦${n.toLocaleString()} off` : `${n}% off`;
@@ -57,15 +51,32 @@ const discountStatus = (discount: Discount): string => {
   return "active";
 };
 
+const MENU_WIDTH = 144; // w-36
+
 function DiscountsPage() {
   const navigate = useNavigate();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceFilter, setServiceFilter] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  // The table scrolls horizontally (overflow-x-auto), which forces
+  // overflow-y to auto too per the CSS spec — an `absolute` dropdown would
+  // get clipped by that. Fixed-positioning it from the trigger's own
+  // bounding rect escapes the table's overflow context entirely.
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const toId = (value: string | number) => String(value);
+
+  const toggleMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - MENU_WIDTH });
+    setOpenMenuId(id);
+  };
 
   const handleDelete = async (discount: Discount) => {
     setDeletingId(toId(discount.id));
@@ -146,7 +157,7 @@ function DiscountsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Name", "Service | Network", "Value", "Min|Max (₦)", "Window", "Status", "Actions"].map((h) => (
+                  {["Name", "Service | Network", "Value", "Window", "Status", "Actions"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap text-left"
@@ -168,9 +179,6 @@ function DiscountsPage() {
                         {discount.network ? ` | ${discount.network}` : " | All networks"}
                       </td>
                       <td className="px-4 py-3 text-xs font-medium text-slate-900">{formatValue(discount)}</td>
-                      <td className="px-4 py-3 text-xs text-slate-600">
-                        {formatCurrency(discount.min)}|{formatCurrency(discount.max)}
-                      </td>
                       <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
                         {formatWindow(discount)}
                       </td>
@@ -178,50 +186,51 @@ function DiscountsPage() {
                         <StatusBadge status={discountStatus(discount)} />
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <div className="relative inline-flex justify-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenMenuId(openMenuId === currentId ? null : currentId);
-                            }}
-                            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
-                          >
-                            <MoreVertical className="w-3.5 h-3.5" />
-                          </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleMenu(currentId, e);
+                          }}
+                          className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
+                        >
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
 
-                          {openMenuId === currentId && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-20"
-                                onClick={() => setOpenMenuId(null)}
-                              />
-                              <div className="absolute right-0 top-full mt-1 z-30 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/admin/growth/discounts/${toId(discount.id)}/edit`, {
-                                      state: { discount },
-                                    });
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" /> Edit
-                                </button>
-                                <button
-                                  disabled={deletingId === currentId}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    void handleDelete(discount);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        {openMenuId === currentId && menuPos && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-20"
+                              onClick={() => setOpenMenuId(null)}
+                            />
+                            <div
+                              className="fixed z-30 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+                              style={{ top: menuPos.top, left: menuPos.left }}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/admin/growth/discounts/${toId(discount.id)}/edit`, {
+                                    state: { discount },
+                                  });
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" /> Edit
+                              </button>
+                              <button
+                                disabled={deletingId === currentId}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleDelete(discount);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );

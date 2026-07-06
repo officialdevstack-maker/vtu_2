@@ -1,82 +1,150 @@
-import { useState } from "react";
-import { Eye, EyeOff, Plus, ArrowUpRight, Building2, CreditCard, Smartphone, Copy, CheckCircle2 } from "lucide-react";
-import { mockUser, fmt } from "../data/mock";
-import { PageHeader, Card, Button } from "../components/shared-ui";
+import { useMemo, useState } from "react";
+import { Eye, EyeOff, Landmark, ArrowDownLeft, Building2 } from "lucide-react";
+import { PageHeader, Card, Button, CopyButton, StatusBadge, EmptyState } from "../components/shared-ui";
+import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
+import { walletService } from "../services/walletService";
+import { fmt } from "../data/mock";
+import { transactionTypeMeta, isCredit, toNumber, badgeStatus, dateLabel } from "../utils/transactionDisplay";
 
 export default function WalletPage() {
+  const { user, refreshUser } = useAuth();
   const [balanceVisible, setBalanceVisible] = useState(true);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
-  const copyText = (_text: string, key: string) => {
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
+  const banks = user?.banks ?? [];
+
+  const recentFundings = useMemo<UserTransaction[]>(
+    () =>
+      [...(user?.transactions ?? [])]
+        .filter((tx) => tx.transaction_type === "wallet_funding" || tx.transaction_type === "manual_funding")
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 8),
+    [user?.transactions],
+  );
+
+  const handleGenerateAccount = async () => {
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      await walletService.generateVirtualAccounts();
+      await refreshUser();
+    } catch {
+      setGenerateError("Could not set up your account right now. Please try again shortly.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
     <div className="space-y-4">
       <PageHeader title="Wallet" description="Fund your wallet and manage your account details" />
 
+      {/* Balance banner */}
       <Card className="p-5 bg-slate-900 border-slate-900">
-        <p className="text-slate-400 text-xs mb-1">Available balance</p>
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-white text-2xl font-semibold tabular-nums">{balanceVisible ? fmt(mockUser.balance) : "₦ ••••••"}</span>
-          <button onClick={() => setBalanceVisible(!balanceVisible)} className="text-slate-400 hover:text-white transition-colors">
+        <p className="text-slate-400 text-xs mb-1.5">Available balance</p>
+        <div className="flex items-center gap-3">
+          <span className="text-white text-2xl font-semibold tabular-nums">
+            {balanceVisible ? fmt(toNumber(user?.wallet_balance)) : "₦ ••••••"}
+          </span>
+          <button onClick={() => setBalanceVisible((v) => !v)} className="text-slate-400 hover:text-white transition-colors">
             {balanceVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        <p className="text-slate-400 text-sm font-mono mb-5">{mockUser.accountNumber}</p>
-        <div className="flex gap-2.5">
-          <Button fullWidth className="bg-white text-slate-900 hover:bg-gray-100">
-            <Plus className="w-4 h-4" /> Fund wallet
-          </Button>
-          <Button variant="secondary" fullWidth className="bg-white/10 border-white/10 text-white hover:bg-white/15">
-            <ArrowUpRight className="w-4 h-4" /> Transfer
-          </Button>
-        </div>
       </Card>
 
+      {/* Virtual account details */}
       <Card className="p-5">
         <h3 className="text-slate-900 font-semibold text-sm mb-3">Fund your wallet</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { icon: Building2, label: "Bank transfer", desc: "Transfer from any bank" },
-            { icon: CreditCard, label: "Card payment", desc: "Debit or credit card" },
-            { icon: Smartphone, label: "USSD code", desc: "Dial *738# to fund" },
-          ].map((opt) => (
-            <button key={opt.label} className="flex items-center gap-3 p-3.5 rounded-lg border border-gray-200 hover:border-[#111827]/30 hover:bg-[#111827]/5 transition-colors text-left">
-              <div className="w-9 h-9 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center shrink-0">
-                <opt.icon className="w-4.5 h-4.5" />
+
+        {banks.length === 0 ? (
+          <>
+            {generateError && (
+              <div className="mb-3 rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
+                {generateError}
               </div>
-              <div>
-                <p className="text-slate-900 text-sm font-medium">{opt.label}</p>
-                <p className="text-slate-400 text-xs">{opt.desc}</p>
+            )}
+            <EmptyState
+              icon={Building2}
+              title="No account set up yet"
+              description="Set up your dedicated account number to start funding your wallet by bank transfer."
+              action={
+                <Button size="sm" onClick={() => void handleGenerateAccount()} loading={generating} disabled={generating}>
+                  {generating ? "Setting up…" : "Set up my account"}
+                </Button>
+              }
+            />
+          </>
+        ) : (
+          <div className="space-y-3">
+            {banks.map((bank) => (
+              <div key={bank.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center shrink-0">
+                      <Landmark className="w-4 h-4" />
+                    </div>
+                    <span className="text-slate-900 text-sm font-medium">{bank.bank_name}</span>
+                  </div>
+                  <StatusBadge status={bank.status} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 text-sm">Account number</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-900 text-sm font-medium font-mono">{bank.bank_account}</span>
+                    <CopyButton value={bank.bank_account} label="account number" />
+                  </div>
+                </div>
+
+                {bank.account_name && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 text-sm">Account name</span>
+                    <span className="text-slate-900 text-sm font-medium">{bank.account_name}</span>
+                  </div>
+                )}
               </div>
-            </button>
-          ))}
-        </div>
+            ))}
+
+            <p className="text-slate-400 text-xs">
+              Transfer any amount from any bank to the account above — your wallet is credited automatically, usually within minutes.
+            </p>
+          </div>
+        )}
       </Card>
 
-      <Card className="p-5">
-        <h3 className="text-slate-900 font-semibold text-sm mb-3">Virtual account details</h3>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-          {[
-            ["Bank name", "Providus Bank", "bank"],
-            ["Account name", "KORA / Chukwuemeka Obi", "name"],
-            ["Account number", "0123456789", "acc"],
-          ].map(([label, value, key]) => (
-            <div key={label} className="flex items-center justify-between">
-              <span className="text-slate-500 text-sm">{label}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-900 text-sm font-medium font-mono">{value}</span>
-                <button onClick={() => copyText(value, key)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                  {copied === key ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-slate-400 text-xs mt-3">Transfers to this account are credited instantly, 24/7.</p>
-      </Card>
+      {/* Recent fundings */}
+      {recentFundings.length > 0 && (
+        <Card className="p-5">
+          <h3 className="text-slate-900 font-semibold text-sm mb-3">Recent fundings</h3>
+          <div className="divide-y divide-gray-100">
+            {recentFundings.map((tx) => {
+              const meta = transactionTypeMeta[tx.transaction_type] ?? { label: tx.transaction_type, icon: ArrowDownLeft };
+              const Icon = meta.icon;
+              const credit = isCredit(tx);
+              return (
+                <div key={tx.id} className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm text-slate-900 font-medium truncate">{meta.label}</p>
+                      <p className="text-xs text-slate-400">{dateLabel(tx.created_at)}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`text-sm font-medium tabular-nums ${credit ? "text-emerald-600" : "text-slate-900"}`}>
+                      {credit ? "+" : ""}{fmt(toNumber(tx.amount))}
+                    </p>
+                    <StatusBadge status={badgeStatus(tx.status)} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

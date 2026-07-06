@@ -55,9 +55,9 @@ export function AirtimeTab() {
 
   const networkOptions = useMemo(
     () =>
-      Array.from(new Set(plans.map((p) => p.network).filter(Boolean))).map(
-        (network) => ({ value: network.toLowerCase(), label: network }),
-      ),
+      Array.from(
+        new Set(plans.map((p) => p.network).filter((n): n is string => Boolean(n))),
+      ).map((network) => ({ value: network.toLowerCase(), label: network })),
     [plans],
   );
 

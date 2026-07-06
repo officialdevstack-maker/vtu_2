@@ -1,28 +1,18 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { useAuth } from "@/shared/providers/auth";
-import { AuthLayout, SocialLoginRow, authCardCls, authInputCls } from "../components/AuthLayout";
-import { saveMockLogin } from "../mockSession";
+import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { loginSchema, type LoginFormData } from "../validators";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  // TEMPORARY DEMO ACCESS — remove this along with the button below and
-  // AuthProvider.loginAsDemo once real auth is wired up end-to-end.
-  const { loginAsDemo } = useAuth();
-  const [demoLoading, setDemoLoading] = useState(false);
-
-  const handleDemoAccess = async () => {
-    setDemoLoading(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
-    loginAsDemo();
-    navigate("/dashboard", { replace: true });
-  };
+  const location = useLocation();
+  const { login } = useAuth();
 
   const {
     register,
@@ -35,9 +25,16 @@ const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 450));
-      const hasPin = saveMockLogin(data);
-      navigate(hasPin ? "/dashboard" : "/create-transaction-pin", { replace: true });
+      const user = await login(data.login, data.password);
+      // Redirect back to wherever a route guard bounced them from, when it
+      // matches their role — otherwise land on the right home for their
+      // account type. An admin redirected from an admin-only page always
+      // lands there; a non-admin never gets sent into /admin at all.
+      const from = (location.state as { from?: Location } | null)?.from?.pathname;
+      const isAdmin = user?.user_type === "admin";
+      const fallback = isAdmin ? "/admin" : "/dashboard";
+      const target = from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
+      navigate(target, { replace: true });
     } catch {
       setError("root", { message: "Invalid credentials. Please try again." });
     }
@@ -56,13 +53,6 @@ const LoginForm = () => {
             {errors.root.message}
           </div>
         )}
-
-        <SocialLoginRow label="Log in" loading={demoLoading} onClick={() => void handleDemoAccess()} />
-        <div className="flex items-center gap-3 mb-5">
-          <div className="h-px flex-1 bg-slate-100" />
-          <span className="text-xs font-medium text-slate-400">or</span>
-          <div className="h-px flex-1 bg-slate-100" />
-        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <div>

@@ -1,12 +1,27 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
-import { saveMockPin } from "../mockSession";
+import { accountService } from "@/features/account/services/accountService";
 import { transactionPinSchema, type TransactionPinFormData } from "../validators";
+
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as
+      | { message?: string; errors?: Record<string, string[]> }
+      | undefined;
+    const validationErrors = data?.errors;
+    if (validationErrors && Object.keys(validationErrors).length > 0) {
+      return Object.values(validationErrors).flat().join(" ");
+    }
+    if (typeof data?.message === "string") return data.message;
+  }
+  return "Could not save your PIN. Please try again.";
+}
 
 export default function CreateTransactionPinPage() {
   const [showPin, setShowPin] = useState(false);
@@ -17,6 +32,7 @@ export default function CreateTransactionPinPage() {
     register,
     handleSubmit,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<TransactionPinFormData>({
     resolver: zodResolver(transactionPinSchema),
@@ -28,10 +44,16 @@ export default function CreateTransactionPinPage() {
     return () => window.clearTimeout(timeout);
   }, [navigate, success]);
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => window.setTimeout(resolve, 450));
-    saveMockPin();
-    setSuccess(true);
+  const onSubmit = async (data: TransactionPinFormData) => {
+    try {
+      await accountService.updatePin({
+        pin: data.pin,
+        pin_confirmation: data.confirmPin,
+      });
+      setSuccess(true);
+    } catch (err) {
+      setError("root", { message: extractErrorMessage(err) });
+    }
   };
 
   const pinType = showPin ? "text" : "password";
@@ -55,6 +77,12 @@ export default function CreateTransactionPinPage() {
                 Use exactly 4 digits. You will need this for wallet actions.
               </p>
             </div>
+
+            {errors.root && (
+              <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+                {errors.root.message}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               <div>

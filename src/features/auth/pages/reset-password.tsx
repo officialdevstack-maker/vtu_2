@@ -1,24 +1,64 @@
 import { useState } from "react";
+import axios from "axios";
 import { Eye, EyeOff, Lock } from "lucide-react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
+import { authService } from "../authService";
 import { resetPasswordSchema, type ResetPasswordFormData } from "../validators";
+
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as
+      | { message?: string; errors?: Record<string, string[]> }
+      | undefined;
+    const validationErrors = data?.errors;
+    if (validationErrors && Object.keys(validationErrors).length > 0) {
+      return Object.values(validationErrors).flat().join(" ");
+    }
+    if (typeof data?.message === "string") return data.message;
+  }
+  return "Could not reset your password. Please request a new link and try again.";
+}
 
 export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const token = searchParams.get("token") ?? "";
+  const email = searchParams.get("email") ?? "";
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    setError,
+    formState: { errors, isSubmitting },
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => window.setTimeout(resolve, 450));
+  const onSubmit = async (data: ResetPasswordFormData) => {
+    if (!token || !email) {
+      setError("root", {
+        message: "This reset link is missing its token — please request a new one.",
+      });
+      return;
+    }
+    try {
+      await authService.resetPassword({
+        token,
+        email,
+        password: data.password,
+        password_confirmation: data.confirmPassword,
+      });
+      setSuccess(true);
+      window.setTimeout(() => navigate("/login", { replace: true }), 1200);
+    } catch (err) {
+      setError("root", { message: extractErrorMessage(err) });
+    }
   };
 
   return (
@@ -29,9 +69,15 @@ export default function ResetPasswordPage() {
           <p className="text-slate-500 text-sm mt-1">Create a fresh password for your KORA account.</p>
         </div>
 
-        {isSubmitSuccessful && (
+        {errors.root && (
+          <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+            {errors.root.message}
+          </div>
+        )}
+
+        {success && (
           <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
-            Password updated in this mock flow.
+            Password updated. Taking you to sign in…
           </div>
         )}
 
