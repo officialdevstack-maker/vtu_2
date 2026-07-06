@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
-import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
+import { Card } from "@/features/user/components/shared-ui";
+import { AuthLayout, authCardCls } from "../components/AuthLayout";
 import { accountService } from "@/features/account/services/accountService";
-import { transactionPinSchema, type TransactionPinFormData } from "../validators";
+import { PinDots, PinKeypad } from "../components/PinKeypad";
+
+const PIN_LENGTH = 4;
 
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
@@ -23,19 +23,84 @@ function extractErrorMessage(err: unknown): string {
   return "Could not save your PIN. Please try again.";
 }
 
+type Stage = "create" | "confirm";
+
 export default function CreateTransactionPinPage() {
-  const [showPin, setShowPin] = useState(false);
+  const [stage, setStage] = useState<Stage>("create");
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [shake, setShake] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<TransactionPinFormData>({
-    resolver: zodResolver(transactionPinSchema),
+  const value = stage === "create" ? pin : confirmPin;
+  const setValue = stage === "create" ? setPin : setConfirmPin;
+
+  const submit = async (finalPin: string, finalConfirm: string) => {
+    setSubmitting(true);
+    try {
+      await accountService.updatePin({ pin: finalPin, pin_confirmation: finalConfirm });
+      setSuccess(true);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+      setStage("create");
+      setPin("");
+      setConfirmPin("");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitRef = useRef(submit);
+  submitRef.current = submit;
+
+  const handleDigit = (digit: string) => {
+    if (submitting || success || value.length >= PIN_LENGTH) return;
+    setError(null);
+    const next = value + digit;
+    setValue(next);
+
+    if (next.length !== PIN_LENGTH) return;
+
+    if (stage === "create") {
+      window.setTimeout(() => setStage("confirm"), 200);
+      return;
+    }
+
+    if (next === pin) {
+      void submitRef.current(pin, next);
+    } else {
+      setError("PINs do not match. Try again.");
+      setShake(true);
+      window.setTimeout(() => {
+        setShake(false);
+        setStage("create");
+        setPin("");
+        setConfirmPin("");
+      }, 500);
+    }
+  };
+
+  const handleBackspace = () => {
+    if (submitting || success) return;
+    setValue(value.slice(0, -1));
+  };
+
+  const handleClear = () => {
+    if (submitting || success) return;
+    setValue("");
+  };
+
+  // Keyboard support alongside the on-screen keypad.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (/^\d$/.test(e.key)) handleDigit(e.key);
+      else if (e.key === "Backspace") handleBackspace();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   });
 
   useEffect(() => {
@@ -43,20 +108,6 @@ export default function CreateTransactionPinPage() {
     const timeout = window.setTimeout(() => navigate("/dashboard", { replace: true }), 900);
     return () => window.clearTimeout(timeout);
   }, [navigate, success]);
-
-  const onSubmit = async (data: TransactionPinFormData) => {
-    try {
-      await accountService.updatePin({
-        pin: data.pin,
-        pin_confirmation: data.confirmPin,
-      });
-      setSuccess(true);
-    } catch (err) {
-      setError("root", { message: extractErrorMessage(err) });
-    }
-  };
-
-  const pinType = showPin ? "text" : "password";
 
   return (
     <AuthLayout>
@@ -70,76 +121,33 @@ export default function CreateTransactionPinPage() {
             <p className="mt-2 text-sm text-slate-500">Your transaction PIN is ready. Taking you to your dashboard.</p>
           </div>
         ) : (
-          <>
-            <div className="mb-7">
-              <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Create transaction PIN</h1>
-              <p className="text-slate-500 text-sm mt-1">
-                Use exactly 4 digits. You will need this for wallet actions.
-              </p>
-            </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">
+              {stage === "create" ? "Create transaction PIN" : "Confirm transaction PIN"}
+            </h1>
+            <p className="mt-1 mb-8 text-sm text-slate-500">
+              {stage === "create"
+                ? "Choose 4 digits you'll use to authorize wallet actions."
+                : "Enter the same 4 digits again to confirm."}
+            </p>
 
-            {errors.root && (
-              <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
-                {errors.root.message}
+            {error && (
+              <div className="mb-6 rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+                {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">Transaction PIN</label>
-                <div className="relative">
-                  <LockKeyhole className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={pinType}
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="4 digits"
-                    {...register("pin", {
-                      onChange: (event) => setValue("pin", event.target.value.replace(/\D/g, "").slice(0, 4), { shouldValidate: true }),
-                    })}
-                    className={`${inputCls} ${authInputCls} pl-9 pr-10 tracking-[0.35em] ${errors.pin ? "border-red-300" : ""}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPin(!showPin)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    aria-label={showPin ? "Hide PIN" : "Show PIN"}
-                  >
-                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.pin && <p className="text-red-500 text-xs mt-1">{errors.pin.message}</p>}
-              </div>
+            <div className={`mb-10 ${shake ? "animate-shake" : ""}`}>
+              <PinDots length={PIN_LENGTH} filled={value.length} />
+            </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">Confirm Transaction PIN</label>
-                <div className="relative">
-                  <LockKeyhole className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={pinType}
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="Repeat PIN"
-                    {...register("confirmPin", {
-                      onChange: (event) => setValue("confirmPin", event.target.value.replace(/\D/g, "").slice(0, 4), { shouldValidate: true }),
-                    })}
-                    className={`${inputCls} ${authInputCls} pl-9 tracking-[0.35em] ${errors.confirmPin ? "border-red-300" : ""}`}
-                  />
-                </div>
-                {errors.confirmPin && <p className="text-red-500 text-xs mt-1">{errors.confirmPin.message}</p>}
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                loading={isSubmitting}
-                fullWidth
-                className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
-              >
-                {isSubmitting ? "" : "Create PIN"}
-              </Button>
-            </form>
-          </>
+            <PinKeypad
+              onDigit={handleDigit}
+              onBackspace={handleBackspace}
+              onClear={handleClear}
+              disabled={submitting}
+            />
+          </div>
         )}
       </Card>
     </AuthLayout>
