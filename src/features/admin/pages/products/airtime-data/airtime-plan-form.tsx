@@ -11,9 +11,7 @@ import {
   inputCls,
   selectCls,
 } from "../../../../user/components/shared-ui";
-import { networkService, networkTypeService } from "./service";
-import type { Network } from "./service";
-import { discountService, type Discount } from "../../growth/service";
+import { networkService, networkTypeService, airtimePlanService, type Network, type AirtimePlan } from "./service";
 
 const BACK = "/admin/products/airtime-data?tab=airtime";
 
@@ -126,23 +124,23 @@ function NumberInput({
 
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 
-// `type` is a fixed DB enum (airtime/exam/electricity/...) — this page only
-// ever edits airtime discounts, so it's always "airtime", never user-edited.
-const DISCOUNT_TYPE = "airtime";
+// `type` is a fixed value — this page only ever edits airtime plans, so it's
+// always "airtime", never user-edited.
+const PLAN_TYPE = "airtime";
 
 const blankForm = (): FormState => ({
   name: "",
   category: "",
-  type: DISCOUNT_TYPE,
+  type: PLAN_TYPE,
   min: "",
   max: "",
   active: true,
 });
 
-const toForm = (d: Discount): FormState => ({
+const toForm = (d: AirtimePlan): FormState => ({
   name: d.name ?? "",
   category: d.category ?? "",
-  type: d.type ?? DISCOUNT_TYPE,
+  type: d.type ?? PLAN_TYPE,
   min: d.min != null ? String(d.min) : "",
   max: d.max != null ? String(d.max) : "",
   active: d.active ?? true,
@@ -151,7 +149,7 @@ const toForm = (d: Discount): FormState => ({
 const toPayload = (form: FormState): Record<string, unknown> => ({
   name: form.name,
   category: form.category || null,
-  type: form.type || DISCOUNT_TYPE,
+  type: form.type || PLAN_TYPE,
   min: form.min || null,
   max: form.max || null,
   active: form.active,
@@ -163,7 +161,7 @@ const amountSchema = z
     message: "Enter a valid non-negative amount.",
   });
 
-const discountFormSchema = z
+const planFormSchema = z
   .object({
     name: z.string().trim().min(1, { message: "Select a network." }),
     category: z.string(),
@@ -184,7 +182,7 @@ const discountFormSchema = z
 type FormErrors = Partial<Record<"name" | "min" | "max", string>>;
 
 function validateForm(form: FormState): FormErrors {
-  const result = discountFormSchema.safeParse(form);
+  const result = planFormSchema.safeParse(form);
   if (result.success) return {};
 
   const errors: FormErrors = {};
@@ -197,20 +195,20 @@ function validateForm(form: FormState): FormErrors {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function DiscountFormPage() {
+export default function AirtimePlanFormPage() {
   const { id } = useParams<{ id?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const stateDiscount = (location.state as { discount?: Discount } | null)
-    ?.discount;
+  const statePlan = (location.state as { plan?: AirtimePlan } | null)
+    ?.plan;
 
-  const [initial, setInitial] = useState<Discount | undefined>(stateDiscount);
+  const [initial, setInitial] = useState<AirtimePlan | undefined>(statePlan);
   const [fetchingInitial, setFetchingInitial] = useState(
-    id != null && !stateDiscount,
+    id != null && !statePlan,
   );
   const [form, setForm] = useState<FormState>(
-    stateDiscount ? toForm(stateDiscount) : blankForm(),
+    statePlan ? toForm(statePlan) : blankForm(),
   );
   const [networks, setNetworks] = useState<Network[]>([]);
   const [types, setTypes] = useState<string[]>([]);
@@ -239,8 +237,8 @@ export default function DiscountFormPage() {
   }, []);
 
   useEffect(() => {
-    if (id && !stateDiscount) {
-      discountService
+    if (id && !statePlan) {
+      airtimePlanService
         .getById(id)
         .then((d) => {
           setInitial(d);
@@ -248,7 +246,7 @@ export default function DiscountFormPage() {
         })
         .finally(() => setFetchingInitial(false));
     }
-  }, [id, stateDiscount]);
+  }, [id, statePlan]);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -268,9 +266,9 @@ export default function DiscountFormPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload = toPayload(form) as any;
       if (initial) {
-        await discountService.update(String(initial.id), payload);
+        await airtimePlanService.update(String(initial.id), payload);
       } else {
-        await discountService.create(payload);
+        await airtimePlanService.create(payload);
       }
       navigate(BACK);
     } catch (err) {
@@ -311,13 +309,13 @@ export default function DiscountFormPage() {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            {initial ? "Edit discount" : "New discount"}
+            {initial ? "Edit airtime plan" : "New airtime plan"}
           </div>
         }
         description={
           initial
-            ? `Editing discount for ${initial.name}`
-            : "Configure a new airtime discount for a network."
+            ? `Editing airtime plan for ${initial.name}`
+            : "Configure a new airtime plan for a network."
         }
         actions={
           <>
@@ -334,7 +332,7 @@ export default function DiscountFormPage() {
               loading={saving}
               onClick={handleSubmit}
             >
-              {initial ? "Save changes" : "Create discount"}
+              {initial ? "Save changes" : "Create airtime plan"}
             </Button>
           </>
         }
@@ -433,7 +431,7 @@ export default function DiscountFormPage() {
               <div>
                 <p className="text-xs font-medium text-slate-700">Active</p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Enable this discount for live transactions.
+                  Enable this airtime plan for live transactions.
                 </p>
               </div>
               <Toggle

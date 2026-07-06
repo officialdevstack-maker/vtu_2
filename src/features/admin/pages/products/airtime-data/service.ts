@@ -86,8 +86,8 @@ export type NetworkType = {
   discount?: {
     id: string | number;
     network?: string | null;
-    category?: string | null;
-    type?: string | null;
+    discount_type?: string | null;
+    value?: string | number | null;
     min?: string | number | null;
     max?: string | number | null;
     active?: boolean | null;
@@ -128,10 +128,14 @@ export const networkTypeService = {
       .then((r) => r.data.data),
 };
 
-// ─── Discount ────────────────────────────────────────────────────────────────
-// Uses the Universal Table API: /table/discounts
+// ─── Airtime plan ───────────────────────────────────────────────────────────
+// Per-network airtime config (min/max transaction amount, active toggle) —
+// distinct from the Discount feature under Growth & Marketing (a scheduled
+// flash-sale price cut). This used to live on the `discounts` table before
+// that got repurposed for Discount; it's its own `airtime_plans` table now
+// so the two stop colliding. Uses the Universal Table API: /table/airtime_plans
 
-export type Discount = {
+export type AirtimePlan = {
   id: string | number;
   name: string;
   network?: string | null;
@@ -144,7 +148,7 @@ export type Discount = {
   updated_at?: string | null;
 };
 
-export type DiscountPayload = {
+export type AirtimePlanPayload = {
   name: string;
   category?: string | null;
   type?: string | null;
@@ -153,41 +157,40 @@ export type DiscountPayload = {
   active?: boolean | null;
 };
 
-const DISCOUNT = "/table/discounts";
+const AIRTIME_PLAN = "/table/airtime_plans";
 
-export const discountService = {
-  getAll: (): Promise<Discount[]> =>
-    apiClient.get<ApiEnvelope<Discount[]>>(DISCOUNT).then((r) => r.data.data),
+export const airtimePlanService = {
+  getAll: (): Promise<AirtimePlan[]> =>
+    apiClient.get<ApiEnvelope<AirtimePlan[]>>(AIRTIME_PLAN).then((r) => r.data.data),
 
-  getById: (id: string): Promise<Discount> =>
+  getById: (id: string): Promise<AirtimePlan> =>
     apiClient
-      .get<ApiEnvelope<Discount>>(`${DISCOUNT}/${id}`)
+      .get<ApiEnvelope<AirtimePlan>>(`${AIRTIME_PLAN}/${id}`)
       .then((r) => r.data.data),
 
-  create: (payload: DiscountPayload): Promise<Discount> =>
+  create: (payload: AirtimePlanPayload): Promise<AirtimePlan> =>
     apiClient
-      .post<ApiEnvelope<Discount>>(DISCOUNT, payload)
+      .post<ApiEnvelope<AirtimePlan>>(AIRTIME_PLAN, payload)
       .then((r) => r.data.data),
 
-  update: (id: string, payload: Partial<DiscountPayload>): Promise<Discount> =>
+  update: (id: string, payload: Partial<AirtimePlanPayload>): Promise<AirtimePlan> =>
     apiClient
-      .put<ApiEnvelope<Discount>>(`${DISCOUNT}/${id}`, payload)
+      .put<ApiEnvelope<AirtimePlan>>(`${AIRTIME_PLAN}/${id}`, payload)
       .then((r) => r.data.data),
 
   remove: (id: string): Promise<void> =>
-    apiClient.delete(`${DISCOUNT}/${id}`).then(() => undefined),
+    apiClient.delete(`${AIRTIME_PLAN}/${id}`).then(() => undefined),
 
-  toggleStatus: (discount: Discount): Promise<Discount> =>
+  toggleStatus: (plan: AirtimePlan): Promise<AirtimePlan> =>
     apiClient
-      .put<ApiEnvelope<Discount>>(`${DISCOUNT}/${discount.id}`, {
-        active: !(discount.active ?? false),
+      .put<ApiEnvelope<AirtimePlan>>(`${AIRTIME_PLAN}/${plan.id}`, {
+        active: !(plan.active ?? false),
       })
       .then((r) => r.data.data),
 };
 
-// ─── Discount role pricing ─────────────────────────────────────────────────────
-// Per-role discount percentage for a given discount (network) record.
-// Uses the Universal Table API: /table/discount_role
+// ─── Role ───────────────────────────────────────────────────────────────────
+// Shared by data plan pricing (below).
 
 export type Role = {
   id: string | number;
@@ -195,15 +198,6 @@ export type Role = {
   slug?: string;
   description?: string | null;
 };
-
-export type DiscountRolePrice = {
-  id: string | number;
-  discount_id: string | number;
-  role_id: string | number;
-  discount: string | number;
-};
-
-const DISCOUNT_ROLE = "/table/discount_role";
 
 export const roleService = {
   // /admin/roles isn't behind the Universal Table API — its controller body
@@ -213,32 +207,6 @@ export const roleService = {
   getAll: (): Promise<Role[]> =>
     apiClient
       .get<{ success: boolean; data: Role[]; meta: unknown }>("/admin/roles")
-      .then((r) => r.data.data),
-};
-
-export const discountRoleService = {
-  getForDiscount: (discountId: string): Promise<DiscountRolePrice[]> =>
-    apiClient
-      .get<ApiEnvelope<DiscountRolePrice[]>>(
-        `${DISCOUNT_ROLE}?discount_id=${discountId}`,
-      )
-      .then((r) => r.data.data),
-
-  create: (payload: {
-    discount_id: string | number;
-    role_id: string | number;
-    discount: number;
-  }): Promise<DiscountRolePrice> =>
-    apiClient
-      .post<ApiEnvelope<DiscountRolePrice>>(DISCOUNT_ROLE, payload)
-      .then((r) => r.data.data),
-
-  update: (
-    id: string | number,
-    payload: { discount: number },
-  ): Promise<DiscountRolePrice> =>
-    apiClient
-      .put<ApiEnvelope<DiscountRolePrice>>(`${DISCOUNT_ROLE}/${id}`, payload)
       .then((r) => r.data.data),
 };
 

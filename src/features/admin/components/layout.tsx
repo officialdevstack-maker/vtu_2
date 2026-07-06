@@ -101,6 +101,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         children: [
           { label: "Discount", path: "/admin/growth/discounts" },
           { label: "Cashback", path: "/admin/growth/cashback" },
+          { label: "Event", path: "/admin/growth/events" },
           { label: "Promo Codes", path: "/admin/growth/promos" },
         ],
       },

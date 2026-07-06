@@ -87,18 +87,18 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
-        path: "products/airtime-data/discounts/new",
+        path: "products/airtime-data/airtime-plan/new",
         lazy: async () => {
           const { default: Component } =
-            await import("./pages/products/airtime-data/discount-form");
+            await import("./pages/products/airtime-data/airtime-plan-form");
           return { Component };
         },
       },
       {
-        path: "products/airtime-data/discounts/:id/edit",
+        path: "products/airtime-data/airtime-plan/:id/edit",
         lazy: async () => {
           const { default: Component } =
-            await import("./pages/products/airtime-data/discount-form");
+            await import("./pages/products/airtime-data/airtime-plan-form");
           return { Component };
         },
       },
@@ -189,6 +189,27 @@ export const adminRouter: RouteObject[] = [
         path: "growth/cashback",
         lazy: async () => {
           const { default: Component } = await import("./pages/growth/cashback");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/events",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/events");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/events/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/event-form");
+          return { Component };
+        },
+      },
+      {
+        path: "growth/events/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/growth/event-form");
           return { Component };
         },
       },

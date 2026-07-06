@@ -108,6 +108,24 @@ export default function AccountSettingsPage() {
           )}
         </div>
 
+        {(user?.badges?.length ?? 0) > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
+            {user!.badges!.map((badge) => (
+              <span
+                key={badge.event_id}
+                title={badge.times_earned > 1 ? `Earned ${badge.times_earned} times` : undefined}
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-100 px-3 py-1.5 text-xs font-medium text-amber-800"
+              >
+                <span>{badge.icon || "🏅"}</span>
+                {badge.name}
+                {badge.times_earned > 1 && (
+                  <span className="text-amber-500">×{badge.times_earned}</span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
+
         {editingProfile && (
           <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
             <div>

@@ -27,7 +27,7 @@ const AirtimeDataPage = () => {
     <div className="space-y-5">
       <PageHeader
         title="Airtime & Data"
-        description="Configure networks, types, pricing discounts, plans, and PIN inventory."
+        description="Configure networks, types, airtime plans, data plans, and PIN inventory."
       />
 
       <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">

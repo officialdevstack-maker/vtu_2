@@ -104,22 +104,28 @@ export const promotionService = {
 };
 
 // ─── Discount ───────────────────────────────────────────────────────────────
-// A Discount is a per-network price-slash that (optionally) only applies
-// within a starts_at/ends_at window — e.g. "Black Friday, Nov 24-27". No
-// window set = always-on whenever active. Distinct from Promotion above
-// (an opt-in code) and from Event (a to-be-built reward for a user action
-// like a referral, not a price-slash). Uses the Universal Table API:
-// /table/discounts
+// A flash-sale-style price cut the platform applies automatically (no code
+// needed), scoped to a service type and optionally one network, for a flat
+// percentage or fixed amount, optionally time-boxed with a starts_at/ends_at
+// window — e.g. "Black Friday, Nov 24-27". No window set = always-on
+// whenever active. Distinct from Promotion above (an opt-in code) and from
+// Event (a reward for a user action like a referral, not a price-slash).
+// Uses the dedicated, validated /admin/discounts endpoint (not the generic
+// Universal Table API — see DiscountController on the backend).
+
+export type DiscountServiceType = "airtime" | "data" | "cable" | "electricity" | "exam" | "airtimeToCash";
+export type DiscountValueType = "percentage" | "fixed";
 
 export type Discount = {
   id: string | number;
   name: string;
-  network?: string | null;
-  category?: string | null;
-  type?: string | null;
+  service_type: DiscountServiceType;
+  network: string | null;
+  discount_type: DiscountValueType;
+  value: string | number;
   min?: string | number | null;
   max?: string | number | null;
-  active?: boolean | null;
+  active: boolean;
   starts_at?: string | null;
   ends_at?: string | null;
   created_at?: string | null;
@@ -128,45 +134,49 @@ export type Discount = {
 
 export type DiscountPayload = {
   name: string;
-  category?: string | null;
-  type?: string | null;
+  service_type: DiscountServiceType;
+  network?: string | null;
+  discount_type: DiscountValueType;
+  value: number;
   min?: string | number | null;
   max?: string | number | null;
-  active?: boolean | null;
+  active?: boolean;
   starts_at?: string | null;
   ends_at?: string | null;
 };
 
-const DISCOUNT = "/table/discounts";
+const DISCOUNT = "/admin/discounts";
 
 export const discountService = {
   getAll: (): Promise<Discount[]> =>
-    apiClient.get<ApiEnvelope<Discount[]>>(DISCOUNT).then((r) => r.data.data),
-
-  getById: (id: string): Promise<Discount> =>
     apiClient
-      .get<ApiEnvelope<Discount>>(`${DISCOUNT}/${id}`)
-      .then((r) => r.data.data),
+      .get<ApiEnvelope<{ discounts: Discount[] }>>(DISCOUNT)
+      .then((r) => r.data.data.discounts),
+
+  getById: (id: string | number): Promise<Discount> =>
+    apiClient
+      .get<ApiEnvelope<{ discount: Discount }>>(`${DISCOUNT}/${id}`)
+      .then((r) => r.data.data.discount),
 
   create: (payload: DiscountPayload): Promise<Discount> =>
     apiClient
-      .post<ApiEnvelope<Discount>>(DISCOUNT, payload)
-      .then((r) => r.data.data),
+      .post<ApiEnvelope<{ discount: Discount }>>(DISCOUNT, payload)
+      .then((r) => r.data.data.discount),
 
-  update: (id: string, payload: Partial<DiscountPayload>): Promise<Discount> =>
+  update: (id: string | number, payload: Partial<DiscountPayload>): Promise<Discount> =>
     apiClient
-      .put<ApiEnvelope<Discount>>(`${DISCOUNT}/${id}`, payload)
-      .then((r) => r.data.data),
+      .put<ApiEnvelope<{ discount: Discount }>>(`${DISCOUNT}/${id}`, payload)
+      .then((r) => r.data.data.discount),
 
-  remove: (id: string): Promise<void> =>
+  remove: (id: string | number): Promise<void> =>
     apiClient.delete(`${DISCOUNT}/${id}`).then(() => undefined),
 
   toggleStatus: (discount: Discount): Promise<Discount> =>
     apiClient
-      .put<ApiEnvelope<Discount>>(`${DISCOUNT}/${discount.id}`, {
-        active: !(discount.active ?? false),
+      .put<ApiEnvelope<{ discount: Discount }>>(`${DISCOUNT}/${discount.id}`, {
+        active: !discount.active,
       })
-      .then((r) => r.data.data),
+      .then((r) => r.data.data.discount),
 };
 
 // ─── Cashback ───────────────────────────────────────────────────────────────
@@ -204,4 +214,85 @@ export const cashbackRateService = {
     apiClient
       .put<ApiEnvelope<CashbackRate>>(`${CASHBACK_RATES}/${id}`, payload)
       .then((r) => r.data.data),
+};
+
+// ─── Event ──────────────────────────────────────────────────────────────────
+// An admin-defined condition a user must fulfil to earn a badge, cash, or
+// both — e.g. "refer 5 friends" or "spend ₦50,000 on data". Distinct from
+// Discount (automatic price-slash) and Promotion (opt-in code): Event is
+// reward-for-achievement, not a price reduction. See EventService on the
+// backend for exactly how each metric is computed and awarded.
+// Uses /admin/events.
+
+export type EventMetric =
+  | "referral_count"
+  | "transaction_volume"
+  | "transaction_count"
+  | "wallet_funding_total";
+
+export type EventRewardType = "badge" | "cash" | "both";
+
+export type EventRecord = {
+  id: number;
+  name: string;
+  description: string | null;
+  metric: EventMetric;
+  service_type: string | null;
+  threshold: string | number;
+  repeatable: boolean;
+  reward_type: EventRewardType;
+  badge_name: string | null;
+  badge_icon: string | null;
+  cash_amount: string | number | null;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type EventPayload = {
+  name: string;
+  description?: string | null;
+  metric: EventMetric;
+  service_type?: string | null;
+  threshold: number;
+  repeatable?: boolean;
+  reward_type: EventRewardType;
+  badge_name?: string | null;
+  badge_icon?: string | null;
+  cash_amount?: number | null;
+  active?: boolean;
+};
+
+const EVENTS = "/admin/events";
+
+export const eventService = {
+  getAll: (): Promise<EventRecord[]> =>
+    apiClient
+      .get<ApiEnvelope<{ events: EventRecord[] }>>(EVENTS)
+      .then((r) => r.data.data.events),
+
+  getById: (id: number | string): Promise<EventRecord> =>
+    apiClient
+      .get<ApiEnvelope<{ event: EventRecord }>>(`${EVENTS}/${id}`)
+      .then((r) => r.data.data.event),
+
+  create: (payload: EventPayload): Promise<EventRecord> =>
+    apiClient
+      .post<ApiEnvelope<{ event: EventRecord }>>(EVENTS, payload)
+      .then((r) => r.data.data.event),
+
+  update: (id: number | string, payload: Partial<EventPayload>): Promise<EventRecord> =>
+    apiClient
+      .put<ApiEnvelope<{ event: EventRecord }>>(`${EVENTS}/${id}`, payload)
+      .then((r) => r.data.data.event),
+
+  remove: (id: number | string): Promise<void> =>
+    apiClient.delete(`${EVENTS}/${id}`).then(() => undefined),
+
+  toggleStatus: (event: EventRecord): Promise<EventRecord> =>
+    apiClient
+      .put<ApiEnvelope<{ event: EventRecord }>>(`${EVENTS}/${event.id}`, {
+        active: !event.active,
+      })
+      .then((r) => r.data.data.event),
 };

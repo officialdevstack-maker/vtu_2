@@ -11,17 +11,28 @@ import {
   inputCls,
   selectCls,
 } from "../../../user/components/shared-ui";
-import { networkService, networkTypeService, type Network } from "../products/airtime-data/service";
-import { discountService, type Discount } from "./service";
+import { networkService, type Network } from "../products/airtime-data/service";
+import { discountService, type Discount, type DiscountServiceType, type DiscountValueType } from "./service";
 
 const BACK = "/admin/growth/discounts";
+
+const SERVICE_OPTIONS: { value: DiscountServiceType; label: string }[] = [
+  { value: "airtime", label: "Airtime" },
+  { value: "data", label: "Data" },
+  { value: "cable", label: "Cable" },
+  { value: "electricity", label: "Electricity" },
+  { value: "exam", label: "Exam" },
+  { value: "airtimeToCash", label: "Airtime to Cash" },
+];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = {
   name: string;
-  category: string;
-  type: string;
+  service_type: DiscountServiceType;
+  network: string;
+  discount_type: DiscountValueType;
+  value: string;
   min: string;
   max: string;
   active: boolean;
@@ -100,17 +111,20 @@ function NumberInput({
   onChange,
   placeholder,
   suffix,
+  max,
 }: {
   value: string | number | null | undefined;
   onChange: (v: string) => void;
   placeholder?: string;
   suffix?: string;
+  max?: number;
 }) {
   return (
     <div className="relative">
       <input
         type="number"
         min={0}
+        max={max}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? "0"}
@@ -127,14 +141,12 @@ function NumberInput({
 
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 
-// `type` is a fixed DB enum (airtime/exam/electricity/...) — this page only
-// ever edits airtime discounts, so it's always "airtime", never user-edited.
-const DISCOUNT_TYPE = "airtime";
-
 const blankForm = (): FormState => ({
   name: "",
-  category: "",
-  type: DISCOUNT_TYPE,
+  service_type: "airtime",
+  network: "",
+  discount_type: "percentage",
+  value: "",
   min: "",
   max: "",
   active: true,
@@ -144,8 +156,10 @@ const blankForm = (): FormState => ({
 
 const toForm = (d: Discount): FormState => ({
   name: d.name ?? "",
-  category: d.category ?? "",
-  type: d.type ?? DISCOUNT_TYPE,
+  service_type: d.service_type ?? "airtime",
+  network: d.network ?? "",
+  discount_type: d.discount_type ?? "percentage",
+  value: d.value != null ? String(d.value) : "",
   min: d.min != null ? String(d.min) : "",
   max: d.max != null ? String(d.max) : "",
   active: d.active ?? true,
@@ -153,10 +167,12 @@ const toForm = (d: Discount): FormState => ({
   ends_at: d.ends_at ?? "",
 });
 
-const toPayload = (form: FormState): Record<string, unknown> => ({
+const toPayload = (form: FormState) => ({
   name: form.name,
-  category: form.category || null,
-  type: form.type || DISCOUNT_TYPE,
+  service_type: form.service_type,
+  network: form.network || null,
+  discount_type: form.discount_type,
+  value: Number(form.value),
   min: form.min || null,
   max: form.max || null,
   active: form.active,
@@ -172,15 +188,25 @@ const amountSchema = z
 
 const discountFormSchema = z
   .object({
-    name: z.string().trim().min(1, { message: "Select a network." }),
-    category: z.string(),
-    type: z.string(),
+    name: z.string().trim().min(1, { message: "Name is required." }),
+    service_type: z.string().min(1, { message: "Select a service." }),
+    network: z.string(),
+    discount_type: z.enum(["percentage", "fixed"]),
+    value: z.string(),
     min: amountSchema,
     max: amountSchema,
     active: z.boolean(),
     starts_at: z.string(),
     ends_at: z.string(),
   })
+  .refine(
+    (data) => data.value !== "" && !Number.isNaN(Number(data.value)) && Number(data.value) >= 0,
+    { message: "Enter a valid non-negative value.", path: ["value"] },
+  )
+  .refine(
+    (data) => data.discount_type !== "percentage" || Number(data.value) <= 100,
+    { message: "A percentage discount can't exceed 100.", path: ["value"] },
+  )
   .refine(
     (data) =>
       data.min === "" || data.max === "" || Number(data.max) >= Number(data.min),
@@ -197,7 +223,7 @@ const discountFormSchema = z
     },
   );
 
-type FormErrors = Partial<Record<"name" | "min" | "max" | "ends_at", string>>;
+type FormErrors = Partial<Record<"name" | "service_type" | "value" | "min" | "max" | "ends_at", string>>;
 
 function validateForm(form: FormState): FormErrors {
   const result = discountFormSchema.safeParse(form);
@@ -229,7 +255,6 @@ export default function DiscountFormPage() {
     stateDiscount ? toForm(stateDiscount) : blankForm(),
   );
   const [networks, setNetworks] = useState<Network[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -238,19 +263,6 @@ export default function DiscountFormPage() {
     networkService
       .getAll()
       .then(setNetworks)
-      .catch(() => {});
-    networkTypeService
-      .getAll()
-      .then((all) => {
-        const names = Array.from(
-          new Set(
-            all
-              .filter((t) => t.active && t.service_type === "airtime")
-              .map((t) => t.name),
-          ),
-        );
-        setTypes(names);
-      })
       .catch(() => {});
   }, []);
 
@@ -271,7 +283,7 @@ export default function DiscountFormPage() {
     setErrors((e) => (e[k as keyof FormErrors] ? { ...e, [k]: undefined } : e));
   };
 
-  const valid = String(form.name).trim().length > 0;
+  const valid = form.name.trim().length > 0 && form.value.trim().length > 0;
 
   const handleSubmit = async () => {
     const formErrors = validateForm(form);
@@ -281,10 +293,9 @@ export default function DiscountFormPage() {
 
     setSaving(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload = toPayload(form) as any;
+      const payload = toPayload(form);
       if (initial) {
-        await discountService.update(String(initial.id), payload);
+        await discountService.update(initial.id, payload);
       } else {
         await discountService.create(payload);
       }
@@ -332,8 +343,8 @@ export default function DiscountFormPage() {
         }
         description={
           initial
-            ? `Editing price-slash discount for ${initial.name}`
-            : "Slash pricing for a network, optionally scheduled to a date window."
+            ? `Editing "${initial.name}"`
+            : "Slash pricing for any service, optionally scoped to one network and scheduled to a date window."
         }
         actions={
           <>
@@ -365,14 +376,37 @@ export default function DiscountFormPage() {
           <Card className="p-5">
             <SectionTitle>General</SectionTitle>
             <div className="space-y-4">
-              <Field label="Network" error={errors.name}>
+              <Field label="Name" error={errors.name}>
+                <input
+                  value={form.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  placeholder="e.g. Black Friday Data Sale"
+                  className={inputCls}
+                />
+              </Field>
+
+              <Field label="Service" error={errors.service_type}>
+                <select
+                  value={form.service_type}
+                  onChange={(e) => set("service_type", e.target.value as DiscountServiceType)}
+                  className={selectCls}
+                >
+                  {SERVICE_OPTIONS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Network" hint="optional — blank = all networks">
                 {networks.length > 0 ? (
                   <select
-                    value={String(form.name)}
-                    onChange={(e) => set("name", e.target.value)}
+                    value={form.network}
+                    onChange={(e) => set("network", e.target.value)}
                     className={selectCls}
                   >
-                    <option value="">Select a network</option>
+                    <option value="">All networks</option>
                     {networks.map((n) => (
                       <option key={n.id} value={n.name}>
                         {n.name}
@@ -381,33 +415,9 @@ export default function DiscountFormPage() {
                   </select>
                 ) : (
                   <input
-                    value={String(form.name)}
-                    onChange={(e) => set("name", e.target.value)}
-                    placeholder="e.g. MTN"
-                    className={inputCls}
-                  />
-                )}
-              </Field>
-
-              <Field label="Type" hint="optional">
-                {types.length > 0 ? (
-                  <select
-                    value={String(form.category ?? "")}
-                    onChange={(e) => set("category", e.target.value)}
-                    className={selectCls}
-                  >
-                    <option value="">Select a type</option>
-                    {types.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    value={String(form.category ?? "")}
-                    onChange={(e) => set("category", e.target.value)}
-                    placeholder="e.g. VTU"
+                    value={form.network}
+                    onChange={(e) => set("network", e.target.value)}
+                    placeholder="e.g. MTN (blank = all)"
                     className={inputCls}
                   />
                 )}
@@ -419,6 +429,27 @@ export default function DiscountFormPage() {
           <Card className="p-5">
             <SectionTitle>Pricing</SectionTitle>
             <div className="space-y-4">
+              <Field label="Discount type">
+                <select
+                  value={form.discount_type}
+                  onChange={(e) => set("discount_type", e.target.value as DiscountValueType)}
+                  className={selectCls}
+                >
+                  <option value="percentage">Percentage off</option>
+                  <option value="fixed">Fixed amount off</option>
+                </select>
+              </Field>
+
+              <Field label="Value" error={errors.value}>
+                <NumberInput
+                  value={form.value}
+                  onChange={(v) => set("value", v)}
+                  placeholder="0"
+                  suffix={form.discount_type === "percentage" ? "%" : "₦"}
+                  max={form.discount_type === "percentage" ? 100 : undefined}
+                />
+              </Field>
+
               <Field label="Minimum amount" hint="optional" error={errors.min}>
                 <NumberInput
                   value={form.min}
@@ -438,7 +469,10 @@ export default function DiscountFormPage() {
               </Field>
             </div>
           </Card>
+        </div>
 
+        {/* ── Right column ── */}
+        <div className="space-y-5">
           {/* Schedule */}
           <Card className="p-5">
             <SectionTitle>Schedule</SectionTitle>
@@ -467,10 +501,7 @@ export default function DiscountFormPage() {
               </p>
             </div>
           </Card>
-        </div>
 
-        {/* ── Right column ── */}
-        <div className="space-y-5">
           {/* Settings */}
           <Card className="p-5">
             <SectionTitle>Settings</SectionTitle>

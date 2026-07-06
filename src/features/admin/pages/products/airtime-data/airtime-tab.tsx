@@ -15,7 +15,7 @@ import {
   StatusBadge,
 } from "../../../../user/components/shared-ui";
 import { Toolbar, SelectFilter } from "./shared";
-import { discountService, type Discount } from "../../growth/service";
+import { airtimePlanService, type AirtimePlan } from "./service";
 
 const formatCurrency = (value: string | number | null | undefined) => {
   if (value === null || value === undefined || value === "") return "—";
@@ -25,7 +25,7 @@ const formatCurrency = (value: string | number | null | undefined) => {
 
 export function AirtimeTab() {
   const navigate = useNavigate();
-  const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [plans, setPlans] = useState<AirtimePlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [networkFilter, setNetworkFilter] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -33,13 +33,13 @@ export function AirtimeTab() {
 
   const toId = (value: string | number) => String(value);
 
-  const handleDelete = async (discount: Discount) => {
-    setDeletingId(toId(discount.id));
+  const handleDelete = async (plan: AirtimePlan) => {
+    setDeletingId(toId(plan.id));
     setOpenMenuId(null);
     try {
-      await discountService.remove(toId(discount.id));
-      setDiscounts((prev) =>
-        prev.filter((d) => toId(d.id) !== toId(discount.id)),
+      await airtimePlanService.remove(toId(plan.id));
+      setPlans((prev) =>
+        prev.filter((p) => toId(p.id) !== toId(plan.id)),
       );
     } finally {
       setDeletingId(null);
@@ -47,23 +47,23 @@ export function AirtimeTab() {
   };
 
   useEffect(() => {
-    discountService
+    airtimePlanService
       .getAll()
-      .then(setDiscounts)
+      .then(setPlans)
       .finally(() => setLoading(false));
   }, []);
 
   const networkOptions = useMemo(
     () =>
-      Array.from(new Set(discounts.map((d) => d.network).filter(Boolean))).map(
+      Array.from(new Set(plans.map((p) => p.network).filter(Boolean))).map(
         (network) => ({ value: network.toLowerCase(), label: network }),
       ),
-    [discounts],
+    [plans],
   );
 
-  const filtered = discounts.filter((d) => {
+  const filtered = plans.filter((p) => {
     const q = networkFilter.toLowerCase();
-    return !q || d.network?.toLowerCase() === q;
+    return !q || p.network?.toLowerCase() === q;
   });
 
   return (
@@ -78,10 +78,10 @@ export function AirtimeTab() {
         <div className="flex-1" />
         <Button
           size="sm"
-          onClick={() => navigate("/admin/products/airtime-data/discounts/new")}
+          onClick={() => navigate("/admin/products/airtime-data/airtime-plan/new")}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
-          Set discount
+          Set airtime plan
         </Button>
       </Toolbar>
 
@@ -102,13 +102,13 @@ export function AirtimeTab() {
           icon={PhoneCall}
           title={
             networkFilter
-              ? "No discounts for this network"
-              : "No airtime discounts configured"
+              ? "No airtime plans for this network"
+              : "No airtime plans configured"
           }
           description={
             networkFilter
-              ? "Try a different network or add a discount for it."
-              : "Set a discount rate per network to control airtime pricing."
+              ? "Try a different network or add a plan for it."
+              : "Set an amount range per network to control airtime purchases."
           }
         />
       ) : (
@@ -129,21 +129,21 @@ export function AirtimeTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((discount) => {
-                const isEnabled = Boolean(discount.active ?? false);
-                const currentId = toId(discount.id);
+              {filtered.map((plan) => {
+                const isEnabled = Boolean(plan.active ?? false);
+                const currentId = toId(plan.id);
 
                 return (
                   <tr
-                    key={discount.id}
+                    key={plan.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-4 py-3 text-xs font-medium text-slate-900">
-                      {discount.network}|{discount.category}
+                      {plan.network}|{plan.category}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
-                      {formatCurrency(discount.min)}|
-                      {formatCurrency(discount.max)}
+                      {formatCurrency(plan.min)}|
+                      {formatCurrency(plan.max)}
                     </td>
 
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
@@ -175,8 +175,8 @@ export function AirtimeTab() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(
-                                    `/admin/products/airtime-data/discounts/${toId(discount.id)}/edit`,
-                                    { state: { discount } },
+                                    `/admin/products/airtime-data/airtime-plan/${toId(plan.id)}/edit`,
+                                    { state: { plan } },
                                   );
                                   setOpenMenuId(null);
                                 }}
@@ -188,7 +188,7 @@ export function AirtimeTab() {
                                 disabled={deletingId === currentId}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  void handleDelete(discount);
+                                  void handleDelete(plan);
                                 }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                               >

@@ -60,6 +60,14 @@ export type Role = {
   permissions?: Permission[];
 };
 
+export type UserBadge = {
+  event_id: number;
+  name: string;
+  icon: string | null;
+  times_earned: number;
+  last_earned_at: string | null;
+};
+
 interface User {
   id: string;
   email?: string;
@@ -74,6 +82,7 @@ interface User {
   referral_code?: string | null;
   transactions?: UserTransaction[];
   stats?: UserStats;
+  badges?: UserBadge[];
   joined_at?: string;
   [key: string]: any;
 }
