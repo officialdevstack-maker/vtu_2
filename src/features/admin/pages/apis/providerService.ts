@@ -16,6 +16,7 @@ export type Provider = {
   id: string | number;
   name: string;
   code?: string | null;
+  base_url?: string | null;
   balance?: string | number | null;
   connection?: boolean | null;
   username?: string | null;
@@ -39,6 +40,7 @@ export type Provider = {
 export type ProviderPayload = {
   name: string;
   code?: string | null;
+  base_url?: string | null;
   username?: string | null;
   password?: string | null;
   sub_category?: string | null;
@@ -133,6 +135,17 @@ export const providerService = {
     apiClient
       .get<ApiEnvelope<{ banks: ProviderBank[] }>>(`/admin/vendor/${providerId}/banks`)
       .then((r) => r.data.data.banks ?? []),
+
+  // Only vendor classes that implement syncPlans() (currently Ogdams)
+  // support this — the backend returns a 422 for the rest.
+  syncPlans: (
+    id: string | number,
+  ): Promise<{ created: number; updated: number; skipped: number }> =>
+    apiClient
+      .post<
+        ApiEnvelope<{ created: number; updated: number; skipped: number }>
+      >(`/admin/vendor/${id}/sync-plans`)
+      .then((r) => r.data.data),
 
   getFundingHistory: (vendorId: string): Promise<FundingRecord[]> =>
     apiClient

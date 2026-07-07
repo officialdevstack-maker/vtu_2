@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Pencil,
   Eye,
   EyeOff,
-  X,
   AlertTriangle,
   Zap,
   ZapOff,
@@ -29,17 +29,25 @@ import {
 import {
   providerService,
   type Provider,
-  type ProviderPayload,
   type AutoFundPayload,
   type FundingRecord,
   type ProviderBank,
 } from "./providerService";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// sub_category "simhost" is a grouping bucket (the actual vendor — SME Plug,
+// Ogdams, vtpass… — is picked by NAME within it), not a single engine, so
+// there's no one base URL it implies the way there is for adex/spurs/msorg.
+// Per product decision, it's not shown here at all for that sub_category.
+const isEngineType = (subCategory: string | null | undefined) => (subCategory ?? "") !== "simhost";
 
-// Matches the DB's `providers.sub_category` enum exactly — any other value
-// throws a raw SQL truncation error on save.
-const SUB_CATEGORIES = ["adex", "spurs", "msorg", "simhost", "misc", "payment"] as const;
+// Only vendor classes that implement syncPlans() (currently Ogdams, grouped
+// under sub_category "simhost") support this — adex/msorg both resolve to
+// the Adex provider class, which doesn't, so the button is hidden rather
+// than shown-then-erroring.
+const supportsSyncPlans = (subCategory: string | null | undefined) =>
+  subCategory !== "adex" && subCategory !== "msorg";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (v: string | number | null | undefined) => {
   if (v === null || v === undefined || v === "") return "—";
@@ -48,15 +56,6 @@ const fmt = (v: string | number | null | undefined) => {
 };
 
 const toId = (v: string | number) => String(v);
-
-const toForm = (p: Provider): ProviderPayload => ({
-  name: p.name ?? "",
-  code: p.code ?? "",
-  username: p.username ?? "",
-  password: p.password ?? "",
-  sub_category: p.sub_category ?? "",
-  connection: p.connection ?? false,
-});
 
 const toAutoFundForm = (p: Provider) => ({
   auto_fund_enabled: p.auto_fund_enabled ?? false,
@@ -73,146 +72,6 @@ const toAutoFundForm = (p: Provider) => ({
 });
 
 type AutoFundForm = ReturnType<typeof toAutoFundForm>;
-
-// ─── Edit modal ───────────────────────────────────────────────────────────────
-
-function EditModal({
-  initial,
-  onSave,
-  onClose,
-  saving,
-}: {
-  initial: ProviderPayload;
-  onSave: (p: ProviderPayload) => void;
-  onClose: () => void;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState<ProviderPayload>(initial);
-  const [showPw, setShowPw] = useState(false);
-  const set = <K extends keyof ProviderPayload>(k: K, v: ProviderPayload[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-  const valid = form.name.trim().length > 0;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 text-sm">
-            Edit provider
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Provider name <span className="text-red-400">*</span>
-            </label>
-            <input
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Code
-            </label>
-            <input
-              value={form.code ?? ""}
-              onChange={(e) => set("code", e.target.value.toUpperCase())}
-              maxLength={10}
-              className={`${inputCls} font-mono uppercase`}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Sub category
-            </label>
-            <select
-              value={form.sub_category ?? ""}
-              onChange={(e) => set("sub_category", e.target.value)}
-              className={selectCls}
-            >
-              <option value="">Select…</option>
-              {SUB_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              API username
-            </label>
-            <input
-              value={form.username ?? ""}
-              onChange={(e) => set("username", e.target.value)}
-              className={inputCls}
-              autoComplete="off"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              API password / secret
-            </label>
-            <div className="relative">
-              <input
-                type={showPw ? "text" : "password"}
-                value={form.password ?? ""}
-                onChange={(e) => set("password", e.target.value)}
-                className={`${inputCls} pr-10`}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPw ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Connection
-            </label>
-            <select
-              value={form.connection ? "true" : "false"}
-              onChange={(e) => set("connection", e.target.value === "true")}
-              className={selectCls}
-            >
-              <option value="true">Connected</option>
-              <option value="false">Disconnected</option>
-            </select>
-          </div>
-          <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              fullWidth
-              disabled={!valid || saving}
-              loading={saving}
-              onClick={() => onSave(form)}
-            >
-              Save changes
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Delete confirm ───────────────────────────────────────────────────────────
 
@@ -291,8 +150,6 @@ const ProviderDetailPage = () => {
   const [loadingProvider, setLoadingProvider] = useState(!provider);
 
   const [showPw, setShowPw] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -319,6 +176,12 @@ const ProviderDetailPage = () => {
 
   // webhook token
   const [refreshingToken, setRefreshingToken] = useState(false);
+
+  // vendor plan sync — only providers whose class implements syncPlans()
+  // (currently Ogdams) actually do anything; others surface the backend's
+  // "not supported" message via the same banner.
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   const back = () => navigate("/admin/apis/provider");
 
@@ -397,18 +260,6 @@ const ProviderDetailPage = () => {
       .finally(() => setLoadingHistory(false));
   }, [id]);
 
-  const handleSave = async (payload: ProviderPayload) => {
-    if (!id) return;
-    setSaving(true);
-    try {
-      const updated = await providerService.update(id, payload);
-      setProvider(updated);
-      setEditing(false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleDelete = async () => {
     if (!id) return;
     setDeleting(true);
@@ -460,6 +311,27 @@ const ProviderDetailPage = () => {
       setProvider(refreshed);
     } finally {
       setRefreshingToken(false);
+    }
+  };
+
+  const handleSyncPlans = async () => {
+    if (!id) return;
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const summary = await providerService.syncPlans(id);
+      setSyncMessage({
+        ok: true,
+        text: `Synced: ${summary.created} new (as drafts), ${summary.updated} updated, ${summary.skipped} skipped.`,
+      });
+    } catch (err) {
+      const text = axios.isAxiosError(err)
+        ? ((err.response?.data as { message?: string } | undefined)?.message ??
+          "Could not sync plans for this provider.")
+        : "Could not sync plans for this provider.";
+      setSyncMessage({ ok: false, text });
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -526,13 +398,32 @@ const ProviderDetailPage = () => {
         {/* Header */}
         <PageHeader
           title={provider.name}
-          description={provider.sub_category ?? undefined}
+          description={
+            isEngineType(provider.sub_category) ? (provider.base_url ?? undefined) : undefined
+          }
           actions={
             <div className="flex items-center gap-2 flex-wrap">
               <Button variant="secondary" size="sm" onClick={back}>
                 <ArrowLeft className="w-3.5 h-3.5" /> Back
               </Button>
-              <Button size="sm" onClick={() => setEditing(true)}>
+              {supportsSyncPlans(provider.sub_category) && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={syncing}
+                  loading={syncing}
+                  onClick={() => void handleSyncPlans()}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+                  Sync plans
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={() =>
+                  navigate(`/admin/apis/provider/${id}/edit`, { state: { provider } })
+                }
+              >
                 <Pencil className="w-3.5 h-3.5" /> Edit
               </Button>
               <Button
@@ -545,6 +436,23 @@ const ProviderDetailPage = () => {
             </div>
           }
         />
+
+        {syncMessage && (
+          <div
+            className={`flex items-center gap-2 text-xs px-3.5 py-2.5 rounded-lg ${
+              syncMessage.ok
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                : "bg-red-50 text-red-700 border border-red-100"
+            }`}
+          >
+            {syncMessage.ok ? (
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            ) : (
+              <XCircle className="w-3.5 h-3.5 shrink-0" />
+            )}
+            {syncMessage.text}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* ── Left column: Details + History ── */}
@@ -560,13 +468,18 @@ const ProviderDetailPage = () => {
                 />
               </div>
               <div className="px-5 py-1">
-                {row(
-                  "Code",
-                  provider.code ? (
-                    <span className="font-mono">{provider.code}</span>
-                  ) : null,
-                )}
-                {row("Sub category", provider.sub_category)}
+                {isEngineType(provider.sub_category) &&
+                  row(
+                    "Base URL",
+                    provider.base_url ? (
+                      <span className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono truncate flex-1 min-w-0" title={provider.base_url}>
+                          {provider.base_url}
+                        </span>
+                        <CopyButton value={provider.base_url} label="base URL" />
+                      </span>
+                    ) : null,
+                  )}
                 {row("Balance", fmt(provider.balance))}
                 {row(
                   "Username",
@@ -946,15 +859,6 @@ const ProviderDetailPage = () => {
           </div>
         </div>
       </div>
-
-      {editing && (
-        <EditModal
-          initial={toForm(provider)}
-          onSave={(p) => void handleSave(p)}
-          onClose={() => setEditing(false)}
-          saving={saving}
-        />
-      )}
 
       {confirmDelete && (
         <DeleteConfirm

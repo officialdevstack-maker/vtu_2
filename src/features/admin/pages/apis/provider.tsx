@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Plus,
   MoreVertical,
+  Pencil,
   Power,
   Trash2,
   RefreshCw,
@@ -11,7 +12,6 @@ import {
   Plug,
   Wallet,
   Eye,
-  EyeOff,
   Copy,
   Check,
   ChevronLeft,
@@ -26,13 +26,10 @@ import {
   EmptyState,
   SkeletonCard,
   SkeletonRows,
-  inputCls,
-  selectCls,
 } from "../../../user/components/shared-ui";
 import {
   providerService,
   type Provider,
-  type ProviderPayload,
   type PaginatedMeta,
 } from "./providerService";
 
@@ -189,172 +186,6 @@ function TokenDialog({
   );
 }
 
-// ─── Provider form modal ──────────────────────────────────────────────────────
-
-const emptyForm = (): ProviderPayload => ({
-  name: "",
-  code: "",
-  username: "",
-  password: "",
-  sub_category: "",
-  connection: false,
-});
-
-const toForm = (p: Provider): ProviderPayload => ({
-  name: p.name ?? "",
-  code: p.code ?? "",
-  username: p.username ?? "",
-  password: p.password ?? "",
-  sub_category: p.sub_category ?? "",
-  connection: p.connection ?? false,
-});
-
-function ProviderFormModal({
-  initial,
-  onSave,
-  onClose,
-  saving,
-}: {
-  initial: ProviderPayload;
-  onSave: (payload: ProviderPayload) => void;
-  onClose: () => void;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState<ProviderPayload>(initial);
-  const [showPw, setShowPw] = useState(false);
-
-  const set = <K extends keyof ProviderPayload>(k: K, v: ProviderPayload[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-
-  const isEdit = Boolean(initial.name);
-  const valid = form.name.trim().length > 0;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 text-sm">
-            {isEdit ? "Edit provider" : "Add provider"}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Provider name <span className="text-red-400">*</span>
-            </label>
-            <input
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              placeholder="e.g. VTpass"
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Code
-            </label>
-            <input
-              value={form.code ?? ""}
-              onChange={(e) => set("code", e.target.value.toUpperCase())}
-              placeholder="e.g. VTP"
-              maxLength={10}
-              className={`${inputCls} font-mono uppercase`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Sub category
-            </label>
-            <input
-              value={form.sub_category ?? ""}
-              onChange={(e) => set("sub_category", e.target.value)}
-              placeholder="e.g. airtime"
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              API username
-            </label>
-            <input
-              value={form.username ?? ""}
-              onChange={(e) => set("username", e.target.value)}
-              placeholder="API username or key"
-              className={inputCls}
-              autoComplete="off"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              API password / secret
-            </label>
-            <div className="relative">
-              <input
-                type={showPw ? "text" : "password"}
-                value={form.password ?? ""}
-                onChange={(e) => set("password", e.target.value)}
-                placeholder="API password or secret key"
-                className={`${inputCls} pr-10`}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showPw ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Connection
-            </label>
-            <select
-              value={form.connection ? "true" : "false"}
-              onChange={(e) => set("connection", e.target.value === "true")}
-              className={selectCls}
-            >
-              <option value="true">Connected</option>
-              <option value="false">Disconnected</option>
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              fullWidth
-              disabled={!valid || saving}
-              loading={saving}
-              onClick={() => onSave(form)}
-            >
-              {isEdit ? "Save changes" : "Add provider"}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Delete confirm ───────────────────────────────────────────────────────────
 
 function DeleteConfirm({
@@ -399,23 +230,36 @@ function DeleteConfirm({
 
 // ─── Row actions menu ─────────────────────────────────────────────────────────
 
+const MENU_WIDTH = 176; // w-44
+
+// The desktop table scrolls horizontally (overflow-x-auto), which forces
+// overflow-y to auto too per the CSS spec — an `absolute` dropdown on the
+// last row gets clipped by that boundary. Fixed-positioning it from the
+// trigger's own bounding rect escapes the table's overflow context entirely
+// (same fix as the Data Plans table's row menu).
 function RowMenu({
   provider,
   open,
+  pos,
   toggling,
   refreshing,
   onToggleOpen,
+  onClose,
   onShow,
+  onEdit,
   onToggleConnection,
   onRefreshToken,
   onDelete,
 }: {
   provider: Provider;
   open: boolean;
+  pos: { top: number; left: number } | null;
   toggling: boolean;
   refreshing: boolean;
-  onToggleOpen: () => void;
+  onToggleOpen: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onClose: () => void;
   onShow: () => void;
+  onEdit: () => void;
   onToggleConnection: () => void;
   onRefreshToken: () => void;
   onDelete: () => void;
@@ -429,15 +273,25 @@ function RowMenu({
         <MoreVertical className="w-3.5 h-3.5" />
       </button>
 
-      {open && (
+      {open && pos && (
         <>
-          <div className="fixed inset-0 z-10" onClick={onToggleOpen} />
-          <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-slate-200/70 rounded-xl shadow-md py-1">
+          <div className="fixed inset-0 z-20" onClick={onClose} />
+          <div
+            className="fixed z-30 w-44 bg-white border border-slate-200/70 rounded-xl shadow-md py-1"
+            style={{ top: pos.top, left: pos.left }}
+          >
             <button
               onClick={onShow}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
             >
               <Eye className="w-3.5 h-3.5" /> Show
+            </button>
+
+            <button
+              onClick={onEdit}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit
             </button>
 
             <button
@@ -477,11 +331,7 @@ function RowMenu({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-type ModalState =
-  | { kind: "add" }
-  | { kind: "edit"; provider: Provider }
-  | { kind: "delete"; provider: Provider }
-  | null;
+type ModalState = { kind: "delete"; provider: Provider } | null;
 
 const ProviderPage = () => {
   const navigate = useNavigate();
@@ -491,6 +341,7 @@ const ProviderPage = () => {
   const rawPage = Number(searchParams.get("page") ?? "1");
   const currentPage = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -548,34 +399,6 @@ const ProviderPage = () => {
     }
   }, [page, currentPage]);
 
-  const handleAdd = async (payload: ProviderPayload) => {
-    setSaving(true);
-    try {
-      await providerService.create(payload);
-      setModal(null);
-      await load();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = async (payload: ProviderPayload) => {
-    if (modal?.kind !== "edit") return;
-    setSaving(true);
-    try {
-      const updated = await providerService.update(
-        toId(modal.provider.id),
-        payload,
-      );
-      setProviders((prev) =>
-        prev.map((p) => (p.id === updated.id ? updated : p)),
-      );
-      setModal(null);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleDelete = async () => {
     if (modal?.kind !== "delete") return;
     setSaving(true);
@@ -614,17 +437,33 @@ const ProviderPage = () => {
     }
   };
 
+  const toggleMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - MENU_WIDTH });
+    setOpenMenuId(id);
+  };
+
   const menuProps = (p: Provider) => {
     const id = toId(p.id);
     return {
       provider: p,
       open: openMenuId === id,
+      pos: openMenuId === id ? menuPos : null,
       toggling: toggling === id,
       refreshing: refreshingId === id,
-      onToggleOpen: () => setOpenMenuId((prev) => (prev === id ? null : id)),
+      onToggleOpen: (e: React.MouseEvent<HTMLButtonElement>) => toggleMenu(id, e),
+      onClose: () => setOpenMenuId(null),
       onShow: () => {
         setOpenMenuId(null);
         navigate(`/admin/apis/provider/${id}`, { state: { provider: p } });
+      },
+      onEdit: () => {
+        setOpenMenuId(null);
+        navigate(`/admin/apis/provider/${id}/edit`, { state: { provider: p } });
       },
       onToggleConnection: () => void handleToggle(p),
       onRefreshToken: () => void handleRefreshToken(p),
@@ -643,7 +482,7 @@ const ProviderPage = () => {
           title="Providers"
           description="Manage VTU API providers, credentials, and connection status."
           actions={
-            <Button size="sm" onClick={() => setModal({ kind: "add" })}>
+            <Button size="sm" onClick={() => navigate("/admin/apis/provider/new")}>
               <Plus className="w-3.5 h-3.5" />
               Add provider
             </Button>
@@ -691,7 +530,7 @@ const ProviderPage = () => {
               title="No providers configured"
               description="Add an API provider to start routing transactions."
               action={
-                <Button size="sm" onClick={() => setModal({ kind: "add" })}>
+                <Button size="sm" onClick={() => navigate("/admin/apis/provider/new")}>
                   <Plus className="w-3.5 h-3.5" /> Add provider
                 </Button>
               }
@@ -814,24 +653,6 @@ const ProviderPage = () => {
       </div>
 
       {/* Modals */}
-      {modal?.kind === "add" && (
-        <ProviderFormModal
-          initial={emptyForm()}
-          onSave={(p) => void handleAdd(p)}
-          onClose={() => setModal(null)}
-          saving={saving}
-        />
-      )}
-
-      {modal?.kind === "edit" && (
-        <ProviderFormModal
-          initial={toForm(modal.provider)}
-          onSave={(p) => void handleEdit(p)}
-          onClose={() => setModal(null)}
-          saving={saving}
-        />
-      )}
-
       {modal?.kind === "delete" && (
         <DeleteConfirm
           provider={modal.provider}

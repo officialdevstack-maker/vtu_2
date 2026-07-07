@@ -64,6 +64,7 @@ export function DataPlansTab() {
   const [search, setSearch] = useState("");
   const [networkFilter, setNetworkFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [sort, setSort] = useState<SortState>({ key: "network", direction: "asc" });
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   // The table scrolls horizontally (overflow-x-auto), which forces
@@ -150,7 +151,10 @@ export function DataPlansTab() {
         p.network?.toLowerCase().includes(q);
       const matchesNetwork = !networkFilter || p.network?.toLowerCase() === networkFilter;
       const matchesType = !typeFilter || p.plan_type?.toLowerCase() === typeFilter;
-      return matchesSearch && matchesNetwork && matchesType;
+      const matchesStatus =
+        !statusFilter ||
+        (statusFilter === "draft" ? Boolean(p.is_draft) : statusFilter === "active" ? p.active && !p.is_draft : !p.active && !p.is_draft);
+      return matchesSearch && matchesNetwork && matchesType && matchesStatus;
     });
 
     const sorted = [...rows].sort((a, b) => {
@@ -161,7 +165,7 @@ export function DataPlansTab() {
       return 0;
     });
     return sorted;
-  }, [plans, search, networkFilter, typeFilter, sort]);
+  }, [plans, search, networkFilter, typeFilter, statusFilter, sort]);
 
   const {
     currentPage,
@@ -176,7 +180,7 @@ export function DataPlansTab() {
   // filter, or sort) so the user isn't stranded on a now-empty page.
   useEffect(() => {
     setPage(1);
-  }, [search, networkFilter, typeFilter, sort, setPage]);
+  }, [search, networkFilter, typeFilter, statusFilter, sort, setPage]);
 
   // "Select all" only ever acts on the current page — selection itself
   // persists across page changes so a multi-page bulk action still works.
@@ -262,6 +266,16 @@ export function DataPlansTab() {
           value={typeFilter}
           onChange={setTypeFilter}
         />
+        <SelectFilter
+          placeholder="All statuses"
+          options={[
+            { value: "active", label: "Active" },
+            { value: "inactive", label: "Inactive" },
+            { value: "draft", label: "Draft" },
+          ]}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
         <div className="flex-1" />
         <Button
           size="sm"
@@ -321,12 +335,12 @@ export function DataPlansTab() {
         <EmptyState
           icon={Database}
           title={
-            search || networkFilter || typeFilter
+            search || networkFilter || typeFilter || statusFilter
               ? "No data plans match your filters"
               : "No data plans added"
           }
           description={
-            search || networkFilter || typeFilter
+            search || networkFilter || typeFilter || statusFilter
               ? "Try a different search or filter."
               : "Add data plan bundles per network and type to make them available for purchase."
           }
@@ -407,7 +421,9 @@ export function DataPlansTab() {
                       {plan.validity}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
-                      <StatusBadge status={plan.active ? "active" : "inactive"} />
+                      <StatusBadge
+                        status={plan.is_draft ? "draft" : plan.active ? "active" : "inactive"}
+                      />
                     </td>
                     <td className="px-4 py-3 text-left">
                       <div className="relative inline-flex justify-center">

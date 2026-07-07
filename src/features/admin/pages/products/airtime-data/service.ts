@@ -247,6 +247,11 @@ export type DataPlan = {
   plan?: string; // computed "1GB"
   validity: string;
   active: boolean;
+  // True for a plan auto-created by a vendor plan sync (e.g.
+  // Ogdams::syncPlans()) that hasn't been reviewed/priced by an admin yet —
+  // distinct from `active: false`, which also covers plans an admin
+  // deliberately turned off.
+  is_draft?: boolean;
   status?: string;
   sort_order?: number | string | null;
   // Keyed by role name (e.g. "user", "agent", "customer care").

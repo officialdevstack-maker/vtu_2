@@ -59,11 +59,25 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "apis/provider/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/apis/provider-form");
+          return { Component };
+        },
+      },
+      {
         path: "apis/provider/:id",
         lazy: async () => {
           const { default: Component } = await import(
             "./pages/apis/provider-detail"
           );
+          return { Component };
+        },
+      },
+      {
+        path: "apis/provider/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/apis/provider-form");
           return { Component };
         },
       },

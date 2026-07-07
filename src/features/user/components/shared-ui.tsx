@@ -134,6 +134,7 @@ const statusMap: Record<string, { dot: string; text: string; label: string }> = 
   suspended: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Suspended" },
   inactive: { dot: "bg-slate-400", text: "text-slate-600 bg-slate-100", label: "Inactive" },
   unverified: { dot: "bg-slate-400", text: "text-slate-600 bg-slate-100", label: "Unverified" },
+  draft: { dot: "bg-violet-500", text: "text-violet-700 bg-violet-50", label: "Draft" },
 };
 
 export function StatusBadge({ status }: { status: string }) {
