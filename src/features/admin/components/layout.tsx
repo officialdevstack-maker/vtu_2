@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
   Megaphone,
+  Network,
   PlugZap,
   ReceiptText,
   Search,
@@ -93,6 +94,11 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         label: "Wallet Withdrawals",
         path: "/admin/wallet-withdrawals",
         icon: Landmark,
+      },
+      {
+        label: "Affiliates",
+        path: "/admin/affiliates",
+        icon: Network,
       },
       {
         label: "Customers",

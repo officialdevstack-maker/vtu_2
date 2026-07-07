@@ -82,6 +82,34 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "affiliates",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/affiliates/affiliate");
+          return { Component };
+        },
+      },
+      {
+        path: "affiliates/new",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/affiliates/affiliate-form");
+          return { Component };
+        },
+      },
+      {
+        path: "affiliates/:id",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/affiliates/affiliate-detail");
+          return { Component };
+        },
+      },
+      {
+        path: "affiliates/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/affiliates/affiliate-form");
+          return { Component };
+        },
+      },
+      {
         path: "apis/gateway",
         lazy: async () => {
           const { default: Component } = await import("./pages/apis/gateway");
