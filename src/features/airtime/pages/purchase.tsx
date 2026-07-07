@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import {
   Box,
   Grid,
@@ -12,6 +12,7 @@ import {
   Stack,
   FormControl,
   InputLabel,
+  type SelectChangeEvent,
 } from "@mui/material";
 import ContactPageOutlinedIcon from "@mui/icons-material/ContactPageOutlined";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
@@ -75,7 +76,9 @@ export default function BuyAirtimePage() {
                     <Select
                       label="Airtime Type"
                       value={airtimeType}
-                      onChange={(e) => setAirtimeType(e.target.value)}
+                      onChange={(e: SelectChangeEvent<string>) =>
+                        setAirtimeType(e.target.value)
+                      }
                       sx={{ borderRadius: 2 }}
                     >
                       <MenuItem value="Prepaid">Prepaid</MenuItem>
@@ -90,7 +93,9 @@ export default function BuyAirtimePage() {
                     label="Phone Number"
                     placeholder="e.g. 08012345678"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setPhone(e.target.value)
+                    }
                     inputProps={{ maxLength: 11 }}
                     InputProps={{
                       endAdornment: (
@@ -121,7 +126,9 @@ export default function BuyAirtimePage() {
                   size="small"
                   placeholder="Minimum ₦100"
                   value={amount > 0 ? amount : ""}
-                  onChange={(e) => handleAmountChange(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    handleAmountChange(e.target.value)
+                  }
                   sx={{
                     mb: 1.5,
                     "& .MuiOutlinedInput-root": {

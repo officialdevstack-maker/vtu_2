@@ -1,4 +1,3 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 import { Box } from "@mui/material";
 import Sidebar from "../components/sidebar";
@@ -18,7 +17,7 @@ const UserLayout = () => {
         }}
         className="w-[100vw]"
       >
-        <Topbar />
+        <Topbar onToggleSidebar={() => undefined} />
         <Outlet />
       </Box>
     </Box>

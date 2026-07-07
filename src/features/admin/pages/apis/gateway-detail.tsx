@@ -39,8 +39,6 @@ const fmt = (v: string | number | null | undefined) => {
   return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(v);
 };
 
-const toId = (v: string | number) => String(v);
-
 const toForm = (g: Gateway): GatewayPayload => ({
   name: g.name ?? "",
   code: g.code ?? "",
@@ -54,7 +52,10 @@ const toForm = (g: Gateway): GatewayPayload => ({
 // ─── Edit modal ───────────────────────────────────────────────────────────────
 
 function EditModal({
-  initial, onSave, onClose, saving,
+  initial,
+  onSave,
+  onClose,
+  saving,
 }: {
   initial: GatewayPayload;
   onSave: (p: GatewayPayload) => void;
@@ -73,7 +74,10 @@ function EditModal({
       <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 text-sm">Edit gateway</h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -89,7 +93,9 @@ function EditModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Code</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Code
+            </label>
             <input
               value={form.code ?? ""}
               onChange={(e) => set("code", e.target.value.toUpperCase())}
@@ -98,11 +104,13 @@ function EditModal({
             />
           </div>
           <div className="border-t border-gray-100 pt-3">
-            <p className="text-xs font-medium text-slate-500 mb-1">API credentials</p>
+            <p className="text-xs font-medium text-slate-500 mb-1">
+              API credentials
+            </p>
             <p className="text-xs text-slate-400 mb-3">
               Not every field applies to every gateway — Flutterwave uses API
-              key only; Monnify uses API key + Secret key + Username; PaymentPoint
-              uses Password + API key.
+              key only; Monnify uses API key + Secret key + Username;
+              PaymentPoint uses Password + API key.
             </p>
             <div className="space-y-3">
               <div>
@@ -130,9 +138,16 @@ function EditModal({
                     className={`${inputCls} pr-10 font-mono`}
                     autoComplete="new-password"
                   />
-                  <button type="button" onClick={() => setShowSecret((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                    {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <button
+                    type="button"
+                    onClick={() => setShowSecret((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showSecret ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -161,16 +176,25 @@ function EditModal({
                     className={`${inputCls} pr-10`}
                     autoComplete="new-password"
                   />
-                  <button type="button" onClick={() => setShowPw((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPw ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Connection</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Connection
+            </label>
             <select
               value={form.connection ? "true" : "false"}
               onChange={(e) => set("connection", e.target.value === "true")}
@@ -181,8 +205,15 @@ function EditModal({
             </select>
           </div>
           <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-            <Button fullWidth disabled={!valid || saving} loading={saving} onClick={() => onSave(form)}>
+            <Button variant="secondary" fullWidth onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              disabled={!valid || saving}
+              loading={saving}
+              onClick={() => onSave(form)}
+            >
               Save changes
             </Button>
           </div>
@@ -195,9 +226,15 @@ function EditModal({
 // ─── Delete confirm ───────────────────────────────────────────────────────────
 
 function DeleteConfirm({
-  name, onConfirm, onClose, deleting,
+  name,
+  onConfirm,
+  onClose,
+  deleting,
 }: {
-  name: string; onConfirm: () => void; onClose: () => void; deleting: boolean;
+  name: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  deleting: boolean;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -205,13 +242,22 @@ function DeleteConfirm({
         <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
           <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
           <p className="text-xs text-red-800">
-            This permanently removes <strong>{name}</strong>. Any vendors configured to use this
-            gateway for auto-funding will stop receiving transfers.
+            This permanently removes <strong>{name}</strong>. Any vendors
+            configured to use this gateway for auto-funding will stop receiving
+            transfers.
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button variant="danger" fullWidth disabled={deleting} loading={deleting} onClick={onConfirm}>
+          <Button variant="secondary" fullWidth onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            fullWidth
+            disabled={deleting}
+            loading={deleting}
+            onClick={onConfirm}
+          >
             Delete gateway
           </Button>
         </div>
@@ -259,7 +305,9 @@ const GatewayDetailPage = () => {
       const updated = await gatewayService.update(id, payload);
       setGateway(updated);
       setEditing(false);
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -268,7 +316,9 @@ const GatewayDetailPage = () => {
     try {
       await gatewayService.remove(id);
       navigate("/admin/apis/gateway");
-    } finally { setDeleting(false); }
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleToggleConnection = async () => {
@@ -277,7 +327,9 @@ const GatewayDetailPage = () => {
     try {
       const updated = await gatewayService.toggleConnection(gateway);
       setGateway(updated);
-    } finally { setTogglingConn(false); }
+    } finally {
+      setTogglingConn(false);
+    }
   };
 
   const handleRefreshToken = async () => {
@@ -289,7 +341,9 @@ const GatewayDetailPage = () => {
       // the exact webhook URL format (host + sub_category + identifier).
       const refreshed = await gatewayService.getById(id);
       setGateway(refreshed);
-    } finally { setRefreshingToken(false); }
+    } finally {
+      setRefreshingToken(false);
+    }
   };
 
   // ── Loading ───────────────────────────────────────────────────────────────
@@ -300,11 +354,15 @@ const GatewayDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-4">
             <Card className="p-5 space-y-3">
-              {[...Array(5)].map((_, i) => <SkeletonLine key={i} className="h-4 w-full" />)}
+              {[...Array(5)].map((_, i) => (
+                <SkeletonLine key={i} className="h-4 w-full" />
+              ))}
             </Card>
           </div>
           <Card className="p-5 space-y-3">
-            {[...Array(4)].map((_, i) => <SkeletonLine key={i} className="h-4 w-full" />)}
+            {[...Array(4)].map((_, i) => (
+              <SkeletonLine key={i} className="h-4 w-full" />
+            ))}
           </Card>
         </div>
       </div>
@@ -324,7 +382,9 @@ const GatewayDetailPage = () => {
         />
         <Card className="p-10 text-center">
           <p className="text-sm text-slate-500 mb-3">Gateway not found.</p>
-          <Button variant="secondary" size="sm" onClick={back}>Go back</Button>
+          <Button variant="secondary" size="sm" onClick={back}>
+            Go back
+          </Button>
         </Card>
       </div>
     );
@@ -334,8 +394,12 @@ const GatewayDetailPage = () => {
 
   const row = (label: string, value: React.ReactNode) => (
     <div className="flex items-start gap-4 py-3 border-b border-gray-50 last:border-0">
-      <span className="text-xs text-slate-400 w-28 shrink-0 pt-0.5">{label}</span>
-      <span className="text-xs text-slate-800 flex-1 min-w-0">{value ?? "—"}</span>
+      <span className="text-xs text-slate-400 w-28 shrink-0 pt-0.5">
+        {label}
+      </span>
+      <span className="text-xs text-slate-800 flex-1 min-w-0">
+        {value ?? "—"}
+      </span>
     </div>
   );
 
@@ -364,7 +428,11 @@ const GatewayDetailPage = () => {
               <Button size="sm" onClick={() => setEditing(true)}>
                 <Pencil className="w-3.5 h-3.5" /> Edit
               </Button>
-              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+              >
                 Delete
               </Button>
             </div>
@@ -374,7 +442,6 @@ const GatewayDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* ── Left: Details + Credentials ── */}
           <div className="lg:col-span-2 space-y-5">
-
             {/* Details */}
             <Card>
               <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
@@ -382,20 +449,28 @@ const GatewayDetailPage = () => {
                 <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                   Gateway details
                 </h2>
-                <StatusBadge status={gateway.connection ? "active" : "inactive"} />
+                <StatusBadge
+                  status={gateway.connection ? "active" : "inactive"}
+                />
               </div>
               <div className="px-5 py-1">
                 {row("Name", gateway.name)}
-                {row("Code", gateway.code
-                  ? <span className="font-mono">{gateway.code}</span>
-                  : null)}
+                {row(
+                  "Code",
+                  gateway.code ? (
+                    <span className="font-mono">{gateway.code}</span>
+                  ) : null,
+                )}
                 {row("Balance", fmt(gateway.balance))}
                 {row("Category", gateway.category ?? "payment")}
                 {row(
                   "Webhook URL",
                   gateway.webhook ? (
                     <span className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono truncate flex-1 min-w-0" title={gateway.webhook}>
+                      <span
+                        className="font-mono truncate flex-1 min-w-0"
+                        title={gateway.webhook}
+                      >
                         {gateway.webhook}
                       </span>
                       <CopyButton value={gateway.webhook} label="webhook URL" />
@@ -426,8 +501,16 @@ const GatewayDetailPage = () => {
               </div>
               {(gateway.created_at || gateway.updated_at) && (
                 <div className="px-5 py-1 border-t border-gray-50">
-                  {gateway.created_at && row("Created", new Date(gateway.created_at).toLocaleString())}
-                  {gateway.updated_at && row("Updated", new Date(gateway.updated_at).toLocaleString())}
+                  {gateway.created_at &&
+                    row(
+                      "Created",
+                      new Date(gateway.created_at).toLocaleString(),
+                    )}
+                  {gateway.updated_at &&
+                    row(
+                      "Updated",
+                      new Date(gateway.updated_at).toLocaleString(),
+                    )}
                 </div>
               )}
             </Card>
@@ -447,7 +530,9 @@ const GatewayDetailPage = () => {
                   "API key",
                   gateway.api_key ? (
                     <span className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono break-all">{gateway.api_key}</span>
+                      <span className="font-mono break-all">
+                        {gateway.api_key}
+                      </span>
                       <CopyButton value={gateway.api_key} label="API key" />
                     </span>
                   ) : null,
@@ -464,11 +549,16 @@ const GatewayDetailPage = () => {
                         onClick={() => setShowSecret((v) => !v)}
                         className="text-slate-400 hover:text-slate-600 shrink-0"
                       >
-                        {showSecret
-                          ? <EyeOff className="w-3.5 h-3.5" />
-                          : <Eye className="w-3.5 h-3.5" />}
+                        {showSecret ? (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5" />
+                        )}
                       </button>
-                      <CopyButton value={gateway.secret_key} label="secret key" />
+                      <CopyButton
+                        value={gateway.secret_key}
+                        label="secret key"
+                      />
                     </span>
                   ) : null,
                 )}
@@ -485,9 +575,11 @@ const GatewayDetailPage = () => {
                         onClick={() => setShowPw((v) => !v)}
                         className="text-slate-400 hover:text-slate-600 shrink-0"
                       >
-                        {showPw
-                          ? <EyeOff className="w-3.5 h-3.5" />
-                          : <Eye className="w-3.5 h-3.5" />}
+                        {showPw ? (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5" />
+                        )}
                       </button>
                       <CopyButton value={gateway.password} label="password" />
                     </span>
@@ -509,21 +601,31 @@ const GatewayDetailPage = () => {
                 </p>
               </div>
               <div className="p-5">
-                <div className={`rounded-xl p-4 flex flex-col items-center text-center gap-3 ${
-                  supportsTransfer ? "bg-[#111827]/10" : "bg-slate-50"
-                }`}>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    supportsTransfer ? "bg-[#111827]/15" : "bg-slate-100"
-                  }`}>
-                    {supportsTransfer
-                      ? <Zap className="w-5 h-5 text-[#111827]" />
-                      : <ZapOff className="w-5 h-5 text-slate-400" />}
+                <div
+                  className={`rounded-xl p-4 flex flex-col items-center text-center gap-3 ${
+                    supportsTransfer ? "bg-[#111827]/10" : "bg-slate-50"
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      supportsTransfer ? "bg-[#111827]/15" : "bg-slate-100"
+                    }`}
+                  >
+                    {supportsTransfer ? (
+                      <Zap className="w-5 h-5 text-[#111827]" />
+                    ) : (
+                      <ZapOff className="w-5 h-5 text-slate-400" />
+                    )}
                   </div>
                   <div>
-                    <p className={`text-sm font-semibold ${
-                      supportsTransfer ? "text-[#111827]" : "text-slate-500"
-                    }`}>
-                      {supportsTransfer ? "Transfers supported" : "Transfers unavailable"}
+                    <p
+                      className={`text-sm font-semibold ${
+                        supportsTransfer ? "text-[#111827]" : "text-slate-500"
+                      }`}
+                    >
+                      {supportsTransfer
+                        ? "Transfers supported"
+                        : "Transfers unavailable"}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {supportsTransfer
@@ -537,11 +639,15 @@ const GatewayDetailPage = () => {
                   <div className="mt-4 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-400">Transfer API</span>
-                      <span className="text-emerald-600 font-medium">Active</span>
+                      <span className="text-emerald-600 font-medium">
+                        Active
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-400">Gateway endpoint</span>
-                      <span className="font-mono text-slate-600">/v3/transfers</span>
+                      <span className="font-mono text-slate-600">
+                        /v3/transfers
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-400">Currency</span>

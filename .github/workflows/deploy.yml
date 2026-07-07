@@ -16,17 +16,17 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+          cache-dependency-path: vtu_2/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+        working-directory: vtu_2
 
       - name: Build
-        # Vite bakes VITE_* vars in at build time, not runtime — without
-        # this, the deployed build silently falls back to
-        # http://localhost:8000/api (see src/shared/api/apiClient.ts).
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: npm run build
+        working-directory: vtu_2
 
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.4.0

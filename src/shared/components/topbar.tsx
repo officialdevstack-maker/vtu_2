@@ -20,7 +20,11 @@ const pageTitles: Record<string, string> = {
   "/admin": "Admin Dashboard",
 };
 
-export default function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+export default function Topbar({
+  onToggleSidebar,
+}: {
+  onToggleSidebar?: () => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const title = pageTitles[location.pathname] ?? "KORA";
@@ -28,7 +32,7 @@ export default function Topbar({ onToggleSidebar }: { onToggleSidebar: () => voi
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 lg:px-6 gap-3 shrink-0">
       <button
-        onClick={onToggleSidebar}
+        onClick={() => onToggleSidebar?.()}
         className="lg:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-700 hover:bg-gray-100 rounded-md transition-colors"
       >
         <Menu className="w-5 h-5" />
@@ -76,7 +80,9 @@ export default function Topbar({ onToggleSidebar }: { onToggleSidebar: () => voi
             CO
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-xs font-medium text-slate-900 leading-tight">Rara Avis</p>
+            <p className="text-xs font-medium text-slate-900 leading-tight">
+              Rara Avis
+            </p>
             <p className="text-[11px] text-slate-400 leading-tight">User</p>
           </div>
         </button>
