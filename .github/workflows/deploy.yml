@@ -35,5 +35,8 @@ jobs:
           username: ${{ secrets.CPANEL_USERNAME }}
           password: ${{ secrets.CPANEL_PASSWORD }}
           port: ${{ secrets.CPANEL_PORT }}
-          local-dir: dist/
+          # FIX: The path must include the vtu_2 directory prefix
+          local-dir: vtu_2/dist/
           server-dir: ${{ secrets.CPANEL_PATH_FRONTEND }}
+          # Optional: add this if you want to ensure it uses SFTP/FTPS
+          protocol: ftps
