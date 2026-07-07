@@ -4,7 +4,9 @@ import { apiClient } from "@shared/api/apiClient";
 // backend/app/Http/Middleware/HandleRequest.php).
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
-export type ChildInstanceStatus = "active" | "paused" | "revoked";
+// "pending" = registration code generated but the child hasn't completed
+// self-registration yet (no shared_secret exists server-side until then).
+export type ChildInstanceStatus = "pending" | "active" | "paused" | "revoked";
 
 export type ChildInstance = {
   id: string | number;
@@ -13,6 +15,7 @@ export type ChildInstance = {
   base_url: string | null;
   status: ChildInstanceStatus;
   last_seen_at: string | null;
+  registered_at?: string | null;
   health_status: string | null;
   config: Record<string, unknown> | null;
   created_at?: string | null;
@@ -23,6 +26,13 @@ export type ChildInstancePayload = {
   name: string;
   base_url?: string | null;
   status?: ChildInstanceStatus;
+};
+
+export type RegistrationCode = {
+  id: string | number;
+  name: string;
+  registration_code: string;
+  expires_at: string;
 };
 
 export type ChildCustomer = {
@@ -76,9 +86,13 @@ export const childInstanceService = {
       .get<ApiEnvelope<ChildInstance>>(`${INSTANCES}/${id}`)
       .then((r) => r.data.data),
 
-  create: (payload: ChildInstancePayload): Promise<ChildInstance> =>
+  // No manual create form — an admin only ever provides a name and gets a
+  // one-time registration code back; the child turns that into its own
+  // real slug/secret via POST /api/child/register the first time it
+  // connects (see child_backend's ParentSyncRegister command).
+  generateCode: (name: string): Promise<RegistrationCode> =>
     apiClient
-      .post<ApiEnvelope<ChildInstance>>(INSTANCES, payload)
+      .post<ApiEnvelope<RegistrationCode>>(`/admin/child-instances/generate-code`, { name })
       .then((r) => r.data.data),
 
   update: (id: string, payload: Partial<ChildInstancePayload>): Promise<ChildInstance> =>

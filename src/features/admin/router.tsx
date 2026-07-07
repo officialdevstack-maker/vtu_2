@@ -89,13 +89,6 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
-        path: "affiliates/new",
-        lazy: async () => {
-          const { default: Component } = await import("./pages/affiliates/affiliate-form");
-          return { Component };
-        },
-      },
-      {
         path: "affiliates/:id",
         lazy: async () => {
           const { default: Component } = await import("./pages/affiliates/affiliate-detail");

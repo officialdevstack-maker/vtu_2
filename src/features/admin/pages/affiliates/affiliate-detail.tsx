@@ -330,7 +330,17 @@ export default function AffiliateDetailPage() {
               <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Connection
               </h2>
-              <StatusBadge status={instance.status === "active" ? "active" : instance.status === "paused" ? "inactive" : "suspended"} />
+              <StatusBadge
+                status={
+                  instance.status === "pending"
+                    ? "pending"
+                    : instance.status === "active"
+                      ? "active"
+                      : instance.status === "paused"
+                        ? "inactive"
+                        : "suspended"
+                }
+              />
             </div>
             <div className="px-5 py-1">
               {row("Slug", <span className="font-mono flex items-center gap-2">{instance.slug}<CopyButton value={instance.slug} label="slug" /></span>)}
@@ -340,43 +350,59 @@ export default function AffiliateDetailPage() {
                 "Last check-in",
                 instance.last_seen_at ? new Date(instance.last_seen_at).toLocaleString() : "Never",
               )}
-              {row(
-                "Shared secret",
-                <span className="flex items-center gap-2">
-                  {showSecret && secret ? (
-                    <>
-                      <span className="font-mono truncate max-w-[10rem]">{secret}</span>
-                      <CopyButton value={secret} label="shared secret" />
-                      <button type="button" onClick={() => setShowSecret(false)} className="text-slate-400 hover:text-slate-600">
-                        <EyeOff className="w-3.5 h-3.5" />
+              {instance.status === "pending" ? (
+                row("Shared secret", <span className="text-slate-400">Not set yet — awaiting registration</span>)
+              ) : (
+                row(
+                  "Shared secret",
+                  <span className="flex items-center gap-2">
+                    {showSecret && secret ? (
+                      <>
+                        <span className="font-mono truncate max-w-[10rem]">{secret}</span>
+                        <CopyButton value={secret} label="shared secret" />
+                        <button type="button" onClick={() => setShowSecret(false)} className="text-slate-400 hover:text-slate-600">
+                          <EyeOff className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void handleRevealSecret()}
+                        disabled={loadingSecret}
+                        className="inline-flex items-center gap-1.5 text-[#111827] font-medium disabled:opacity-50"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        {loadingSecret ? "Loading…" : "Reveal"}
                       </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => void handleRevealSecret()}
-                      disabled={loadingSecret}
-                      className="inline-flex items-center gap-1.5 text-[#111827] font-medium disabled:opacity-50"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      {loadingSecret ? "Loading…" : "Reveal"}
-                    </button>
-                  )}
-                </span>,
+                    )}
+                  </span>,
+                )
               )}
             </div>
-            <div className="px-5 py-3.5 border-t border-gray-50">
-              <Button
-                variant="secondary"
-                size="sm"
-                fullWidth
-                disabled={regenerating}
-                loading={regenerating}
-                onClick={() => void handleRegenerateSecret()}
-              >
-                <RefreshCw className="w-3.5 h-3.5" /> Regenerate secret
-              </Button>
-            </div>
+            {instance.status === "pending" && (
+              <div className="px-5 py-3 border-t border-gray-50 bg-amber-50">
+                <p className="text-xs text-amber-700">
+                  This affiliate hasn't connected yet. Generate a registration code from the list page
+                  if you don't have it anymore, then run{" "}
+                  <code className="font-mono">php artisan parent-sync:register &lt;code&gt;</code> on the
+                  child app.
+                </p>
+              </div>
+            )}
+            {instance.status !== "pending" && (
+              <div className="px-5 py-3.5 border-t border-gray-50">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  fullWidth
+                  disabled={regenerating}
+                  loading={regenerating}
+                  onClick={() => void handleRegenerateSecret()}
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Regenerate secret
+                </Button>
+              </div>
+            )}
           </Card>
         </div>
 

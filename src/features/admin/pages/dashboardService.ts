@@ -16,6 +16,16 @@ type ApiEnvelope<T> = {
 // ─── /admin/stats ───────────────────────────────────────────────────────────
 // All-time platform totals. See AdminController::stats().
 
+export type AffiliateSummary = {
+  total: number;
+  active: number;
+  pending: number;
+  stale: number;
+  total_synced_customers: number;
+  total_synced_transactions: number;
+  total_synced_transaction_volume: number;
+};
+
 export type Stats = {
   total_user: number;
   total_user_balance: number;
@@ -23,6 +33,7 @@ export type Stats = {
   total_funding_today: number;
   total_signups_today: number;
   transaction_count: number;
+  affiliates: AffiliateSummary;
 };
 
 export const statsService = {

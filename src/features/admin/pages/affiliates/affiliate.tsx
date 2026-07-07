@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Plus,
   MoreVertical,
@@ -8,6 +9,9 @@ import {
   Trash2,
   Network,
   AlertTriangle,
+  X,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   PageHeader,
@@ -17,10 +21,12 @@ import {
   StatusBadge,
   EmptyState,
   SkeletonRows,
+  inputCls,
 } from "../../../user/components/shared-ui";
 import {
   childInstanceService,
   type ChildInstance,
+  type RegistrationCode,
 } from "./service";
 
 const toId = (v: string | number) => String(v);
@@ -45,6 +51,118 @@ function timeAgo(iso: string | null): string {
 function isStale(lastSeenAt: string | null): boolean {
   if (!lastSeenAt) return true;
   return Date.now() - new Date(lastSeenAt).getTime() > 15 * 60 * 1000;
+}
+
+function extractErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { message?: string } | undefined;
+    if (typeof data?.message === "string") return data.message;
+  }
+  return "Could not generate a code. Please try again.";
+}
+
+// ─── Generate code modal ──────────────────────────────────────────────────────
+// Replaces a full "create affiliate" form — an admin only ever provides a
+// name and gets a one-time code back. The child turns that into its own
+// real slug/secret the first time it connects (php artisan
+// parent-sync:register <code> on the child).
+
+function GenerateCodeModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [name, setName] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<RegistrationCode | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!name.trim()) return;
+    setGenerating(true);
+    setError(null);
+    try {
+      const code = await childInstanceService.generateCode(name.trim());
+      setResult(code);
+      onCreated();
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const copyCode = () => {
+    if (!result) return;
+    void navigator.clipboard.writeText(result.registration_code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900 text-sm">
+            {result ? "Registration code generated" : "Add affiliate"}
+          </h3>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {result ? (
+          <div className="p-4 space-y-3">
+            <p className="text-xs text-slate-500">
+              Give this code to whoever is setting up <strong>{result.name}</strong>. On the child app,
+              they run:
+            </p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+              <code className="text-xs text-slate-700 block break-all">
+                php artisan parent-sync:register {result.registration_code}
+              </code>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
+              <span className="text-xs font-mono text-slate-700 flex-1 break-all select-all">
+                {result.registration_code}
+              </span>
+              <button onClick={copyCode} className="shrink-0 text-slate-400 hover:text-[#111827] transition-colors">
+                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-amber-600">
+              Expires {new Date(result.expires_at).toLocaleString()} — the affiliate will show as
+              "Pending" until it registers with this code.
+            </p>
+            <Button variant="secondary" fullWidth onClick={onClose}>
+              Done
+            </Button>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3.5">
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                Affiliate name <span className="text-red-400">*</span>
+              </label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Adex Maditel"
+                className={inputCls}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3 pt-1">
+              <Button variant="secondary" fullWidth onClick={onClose}>
+                Cancel
+              </Button>
+              <Button fullWidth disabled={!name.trim() || generating} loading={generating} onClick={() => void handleGenerate()}>
+                Generate code
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function DeleteConfirm({
@@ -95,6 +213,7 @@ export default function AffiliatePage() {
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ChildInstance | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -130,6 +249,7 @@ export default function AffiliatePage() {
     }
   };
 
+  const pendingCount = instances.filter((i) => i.status === "pending").length;
   const activeCount = instances.filter((i) => i.status === "active").length;
   const staleCount = instances.filter((i) => i.status === "active" && isStale(i.last_seen_at)).length;
 
@@ -140,21 +260,22 @@ export default function AffiliatePage() {
           title="Affiliates"
           description="Connected child platforms — view their synced customers/transactions and manage the connection."
           actions={
-            <Button size="sm" onClick={() => navigate("/admin/affiliates/new")}>
+            <Button size="sm" onClick={() => setShowGenerateModal(true)}>
               <Plus className="w-3.5 h-3.5" />
               Add affiliate
             </Button>
           }
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <StatCard label="Total affiliates" value={String(instances.length)} icon={Network} tone="neutral" />
           <StatCard label="Active" value={String(activeCount)} icon={Network} tone="success" />
+          <StatCard label="Pending connection" value={String(pendingCount)} icon={Network} tone={pendingCount > 0 ? "warning" : "neutral"} />
           <StatCard
             label="Stale (no check-in 15m+)"
             value={String(staleCount)}
             icon={AlertTriangle}
-            tone={staleCount > 0 ? "warning" : "neutral"}
+            tone={staleCount > 0 ? "danger" : "neutral"}
           />
         </div>
 
@@ -165,9 +286,9 @@ export default function AffiliatePage() {
             <EmptyState
               icon={Network}
               title="No affiliates connected"
-              description="Add an affiliate to generate a slug + shared secret it can use to report in."
+              description="Add an affiliate to generate a one-time registration code for it."
               action={
-                <Button size="sm" onClick={() => navigate("/admin/affiliates/new")}>
+                <Button size="sm" onClick={() => setShowGenerateModal(true)}>
                   <Plus className="w-3.5 h-3.5" /> Add affiliate
                 </Button>
               }
@@ -200,17 +321,24 @@ export default function AffiliatePage() {
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-500 font-mono">{instance.slug}</td>
                         <td className="px-4 py-3">
-                          <StatusBadge
-                            status={
-                              instance.status === "active"
-                                ? stale
+                          <div className="flex items-center gap-1.5">
+                            <StatusBadge
+                              status={
+                                instance.status === "pending"
                                   ? "pending"
-                                  : "active"
-                                : instance.status === "paused"
-                                  ? "inactive"
-                                  : "suspended"
-                            }
-                          />
+                                  : instance.status === "active"
+                                    ? "active"
+                                    : instance.status === "paused"
+                                      ? "inactive"
+                                      : "suspended"
+                              }
+                            />
+                            {stale && (
+                              <span title="No check-in in 15+ minutes">
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-500">
                           {timeAgo(instance.last_seen_at)}
@@ -273,6 +401,10 @@ export default function AffiliatePage() {
           )}
         </Card>
       </div>
+
+      {showGenerateModal && (
+        <GenerateCodeModal onClose={() => { setShowGenerateModal(false); load(); }} onCreated={load} />
+      )}
 
       {deleteTarget && (
         <DeleteConfirm

@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Server,
   Activity,
+  Network,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -419,6 +420,64 @@ export default function AdminPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+      </Card>
+
+      {/* Affiliate network */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">Affiliate network</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Connected child platforms reporting in</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => navigate("/admin/affiliates")}>
+            Manage affiliates
+          </Button>
+        </div>
+        {loading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            {[...Array(5)].map((_, i) => (
+              <SkeletonLine key={i} className="h-16 rounded-lg" />
+            ))}
+          </div>
+        ) : !stats || stats.affiliates.total === 0 ? (
+          <EmptyState
+            icon={Network}
+            title="No affiliates connected"
+            description="Add an affiliate to start tracking its synced customers and transactions here."
+          />
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
+              <p className="text-xs font-medium text-slate-500">Total</p>
+              <p className="font-semibold text-sm mt-1 text-slate-900">{stats.affiliates.total}</p>
+            </div>
+            <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
+              <p className="text-xs font-medium text-slate-500">Active</p>
+              <p className="font-semibold text-sm mt-1 text-emerald-600">{stats.affiliates.active}</p>
+            </div>
+            <div className={`p-3 rounded-lg border ${stats.affiliates.pending > 0 ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
+              <p className="text-xs font-medium text-slate-500">Pending connection</p>
+              <p className={`font-semibold text-sm mt-1 ${stats.affiliates.pending > 0 ? "text-amber-600" : "text-slate-900"}`}>
+                {stats.affiliates.pending}
+              </p>
+            </div>
+            <div className={`p-3 rounded-lg border ${stats.affiliates.stale > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50"}`}>
+              <p className="text-xs font-medium text-slate-500">Stale (15m+)</p>
+              <p className={`font-semibold text-sm mt-1 ${stats.affiliates.stale > 0 ? "text-red-600" : "text-slate-900"}`}>
+                {stats.affiliates.stale}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
+              <p className="text-xs font-medium text-slate-500">Synced volume</p>
+              <p className="font-semibold text-sm mt-1 text-slate-900">
+                {fmtCompact(stats.affiliates.total_synced_transaction_volume)}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                {stats.affiliates.total_synced_customers} customers · {stats.affiliates.total_synced_transactions} txns
+              </p>
+            </div>
           </div>
         )}
       </Card>

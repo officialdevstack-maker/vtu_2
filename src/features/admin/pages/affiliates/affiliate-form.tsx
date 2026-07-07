@@ -80,16 +80,10 @@ function extractErrorMessage(err: unknown): string {
 
 type FormState = ChildInstancePayload;
 
-const blankForm = (): FormState => ({
-  name: "",
-  base_url: "",
-  status: "active",
-});
-
 const toForm = (i: ChildInstance): FormState => ({
   name: i.name ?? "",
   base_url: i.base_url ?? "",
-  status: i.status ?? "active",
+  status: i.status,
 });
 
 const affiliateFormSchema = z.object({
@@ -111,18 +105,21 @@ function validateForm(form: FormState): FormErrors {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
+// Edit-only — new affiliates are created via the "Generate code" modal on
+// the list page (childInstanceService.generateCode), not a full form. This
+// page only ever handles /admin/affiliates/:id/edit.
 
 export default function AffiliateFormPage() {
-  const { id } = useParams<{ id?: string }>();
+  const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
 
   const stateInstance = (location.state as { instance?: ChildInstance } | null)?.instance;
 
   const [initial, setInitial] = useState<ChildInstance | undefined>(stateInstance);
-  const [fetchingInitial, setFetchingInitial] = useState(id != null && !stateInstance);
+  const [fetchingInitial, setFetchingInitial] = useState(!stateInstance);
   const [form, setForm] = useState<FormState>(
-    stateInstance ? toForm(stateInstance) : blankForm(),
+    stateInstance ? toForm(stateInstance) : { name: "", base_url: "", status: "pending" },
   );
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -148,6 +145,7 @@ export default function AffiliateFormPage() {
   const valid = form.name.trim().length > 0;
 
   const handleSubmit = async () => {
+    if (!id) return;
     const formErrors = validateForm(form);
     setErrors(formErrors);
     setSubmitError(null);
@@ -155,15 +153,8 @@ export default function AffiliateFormPage() {
 
     setSaving(true);
     try {
-      if (initial) {
-        await childInstanceService.update(String(initial.id), form);
-        navigate(`${BACK}/${initial.id}`);
-      } else {
-        const created = await childInstanceService.create(form);
-        // New instance — land on its detail page so the admin can reveal
-        // the shared secret immediately (needed to configure the child).
-        navigate(`${BACK}/${created.id}`);
-      }
+      await childInstanceService.update(id, form);
+      navigate(`${BACK}/${id}`);
     } catch (err) {
       setSubmitError(extractErrorMessage(err));
     } finally {
@@ -187,36 +178,46 @@ export default function AffiliateFormPage() {
     );
   }
 
+  if (!initial) {
+    return (
+      <div className="space-y-5">
+        <PageHeader
+          title="Affiliate"
+          actions={
+            <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
+              <ChevronLeft className="w-3.5 h-3.5" /> Back
+            </Button>
+          }
+        />
+        <Card className="p-10 text-center">
+          <p className="text-sm text-slate-500">Affiliate not found.</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
         title={
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(initial ? `${BACK}/${initial.id}` : BACK)}
+              onClick={() => navigate(`${BACK}/${id}`)}
               className="p-1 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            {initial ? "Edit affiliate" : "Add affiliate"}
+            Edit affiliate
           </div>
         }
-        description={
-          initial
-            ? `Editing "${initial.name}"`
-            : "A slug + shared secret are generated automatically once created — you'll configure the child app with them on the next screen."
-        }
+        description={`Editing "${initial.name}"`}
         actions={
           <>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate(initial ? `${BACK}/${initial.id}` : BACK)}
-            >
+            <Button variant="secondary" size="sm" onClick={() => navigate(`${BACK}/${id}`)}>
               Cancel
             </Button>
             <Button size="sm" disabled={!valid || saving} loading={saving} onClick={handleSubmit}>
-              {initial ? "Save changes" : "Add affiliate"}
+              Save changes
             </Button>
           </>
         }
@@ -246,19 +247,18 @@ export default function AffiliateFormPage() {
             />
           </Field>
 
-          {initial && (
-            <Field label="Status">
-              <select
-                value={form.status}
-                onChange={(e) => set("status", e.target.value as FormState["status"])}
-                className={selectCls}
-              >
-                <option value="active">Active</option>
-                <option value="paused">Paused</option>
-                <option value="revoked">Revoked</option>
-              </select>
-            </Field>
-          )}
+          <Field label="Status">
+            <select
+              value={form.status}
+              onChange={(e) => set("status", e.target.value as FormState["status"])}
+              className={selectCls}
+            >
+              {initial.status === "pending" && <option value="pending">Pending (not yet connected)</option>}
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="revoked">Revoked</option>
+            </select>
+          </Field>
         </div>
       </Card>
     </div>
