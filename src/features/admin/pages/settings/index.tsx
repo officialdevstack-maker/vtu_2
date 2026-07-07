@@ -6,8 +6,9 @@ import { NotificationTab } from "./notification-tab";
 import { EmailTab } from "./email-tab";
 import { CustomerTab } from "./customer-tab";
 import { PaymentTab } from "./payment-tab";
+import { DangerZoneTab } from "./danger-zone-tab";
 
-type Tab = "general" | "transaction" | "notification" | "email" | "customer" | "payment";
+type Tab = "general" | "transaction" | "notification" | "email" | "customer" | "payment" | "danger";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "general", label: "General" },
@@ -16,6 +17,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "email", label: "Email" },
   { id: "customer", label: "Customer" },
   { id: "payment", label: "Payment" },
+  { id: "danger", label: "Danger zone" },
 ];
 
 const SettingsPage = () => {
@@ -36,9 +38,13 @@ const SettingsPage = () => {
             key={t.id}
             onClick={() => setActiveTab(t.id)}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-              activeTab === t.id
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+              t.id === "danger"
+                ? activeTab === t.id
+                  ? "bg-white text-red-600 shadow-sm"
+                  : "text-red-500 hover:text-red-600"
+                : activeTab === t.id
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
             }`}
           >
             {t.label}
@@ -52,6 +58,7 @@ const SettingsPage = () => {
       {activeTab === "email" && <EmailTab />}
       {activeTab === "customer" && <CustomerTab />}
       {activeTab === "payment" && <PaymentTab />}
+      {activeTab === "danger" && <DangerZoneTab />}
     </div>
   );
 };

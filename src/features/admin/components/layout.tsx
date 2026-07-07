@@ -10,6 +10,7 @@ import {
   BookOpenCheck,
   Cable,
   ChevronRight,
+  HelpCircle,
   LayoutGrid,
   Landmark,
   LogOut,
@@ -18,7 +19,6 @@ import {
   Network,
   PlugZap,
   ReceiptText,
-  Search,
   Settings,
   SlidersHorizontal,
   Sparkles,
@@ -30,6 +30,7 @@ import {
 import { useAuth } from "../../../shared/providers/auth";
 import { TopLoadingBar } from "../../user/components/shared-ui";
 import { prefetchAdminDashboard } from "../pages/dashboardService";
+import GlobalSearch from "@/shared/components/global-search";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -55,7 +56,10 @@ type NavItem = {
 const navGroups: Array<{ title: string; items: NavItem[] }> = [
   {
     title: "Core",
-    items: [{ label: "Dashboard", path: "/admin", icon: LayoutGrid }],
+    items: [
+      { label: "Dashboard", path: "/admin", icon: LayoutGrid },
+      { label: "How it works", path: "/admin/help", icon: HelpCircle },
+    ],
   },
   {
     title: "APIs",
@@ -388,12 +392,10 @@ const Layout = () => {
                   </h1>
                 </div>
 
-                <div className="ml-auto hidden items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors focus-within:border-[#111827]/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-[#111827]/10 md:flex md:w-56 lg:w-64">
-                  <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                <div className="ml-auto hidden md:block">
+                  <GlobalSearch
+                    scope="admin"
+                    wrapperClassName="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors focus-within:border-[#111827]/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-[#111827]/10 md:w-56 lg:w-64"
                   />
                 </div>
               </div>

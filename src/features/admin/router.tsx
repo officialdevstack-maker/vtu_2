@@ -13,6 +13,13 @@ export const adminRouter: RouteObject[] = [
           return { Component };
         },
       },
+      {
+        path: "help",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/help/getting-started");
+          return { Component };
+        },
+      },
       // APIs
       {
         path: "customers/users",

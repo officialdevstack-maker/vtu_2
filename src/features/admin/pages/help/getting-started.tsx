@@ -16,7 +16,6 @@ import {
   Megaphone,
   Gift,
   Landmark,
-  Banknote,
   BellRing,
   Network,
   ToggleLeft,
@@ -229,7 +228,7 @@ function AccordionItem({ topic }: { topic: Topic }) {
       </button>
 
       {open && (
-        <div className="px-4 pb-4 pl-15">
+        <div className="px-4 pb-4">
           <div className="ml-11 space-y-2.5">
             {topic.body.map((p, i) => (
               <p key={i} className="text-xs text-slate-600 leading-relaxed">

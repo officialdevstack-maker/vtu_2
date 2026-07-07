@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { ArrowLeftRight, ArrowUpCircle, Bell, LogOut, Menu, Search, Settings } from "lucide-react";
+import { ArrowLeftRight, ArrowUpCircle, Bell, LogOut, Menu, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../shared/providers/auth";
 import { useBranding } from "@/shared/branding";
+import GlobalSearch from "@/shared/components/global-search";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -67,12 +68,10 @@ export default function Topbar({
             {title}
           </h1>
 
-          <div className="ml-auto hidden items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors focus-within:border-[#111827]/40 focus-within:bg-white md:flex md:w-56 lg:w-64">
-            <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search"
-              className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+          <div className="ml-auto hidden md:block">
+            <GlobalSearch
+              scope="user"
+              wrapperClassName="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors focus-within:border-[#111827]/40 focus-within:bg-white md:w-56 lg:w-64"
             />
           </div>
         </div>
