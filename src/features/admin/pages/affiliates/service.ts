@@ -103,6 +103,15 @@ export const childInstanceService = {
   remove: (id: string): Promise<void> =>
     apiClient.delete(`${INSTANCES}/${id}`).then(() => undefined),
 
+  // Reuses the generic Universal Table CRUD's bulk path (AdminController::
+  // universalBulkCreateOrUpdate) rather than a dedicated endpoint — it
+  // already does exactly this (id-matched partial column updates), and a
+  // status-only bulk change doesn't need anything more specific.
+  bulkUpdateStatus: (ids: (string | number)[], status: ChildInstanceStatus): Promise<void> =>
+    apiClient
+      .post(INSTANCES, { items: ids.map((id) => ({ id, status })) })
+      .then(() => undefined),
+
   // shared_secret is $hidden on the model — these are the only two ways to
   // ever see it (view once, or rotate and see the new value once).
   getSecret: (id: string): Promise<string> =>
@@ -130,9 +139,20 @@ export const childTransactionService = {
       .then((r) => r.data.data),
 };
 
+export type DirectiveType = "message" | "redirect_user" | "retry_transaction" | "custom";
+
 export const childDirectiveService = {
   getByInstance: (instanceId: string | number): Promise<ChildDirective[]> =>
     apiClient
       .get<ApiEnvelope<ChildDirective[]>>(DIRECTIVES, { params: { child_instance_id: instanceId } })
+      .then((r) => r.data.data),
+
+  // Deliberately not the generic /table/child_directives write path — its
+  // create routes all require an id up front (they're update-by-id
+  // endpoints), so there's no generic "create new row" primitive to reuse
+  // here. See AdminController::createChildDirective.
+  create: (instanceId: string | number, type: string, payload: Record<string, unknown>): Promise<ChildDirective> =>
+    apiClient
+      .post<ApiEnvelope<ChildDirective>>(`/admin/child-instances/${instanceId}/directives`, { type, payload })
       .then((r) => r.data.data),
 };

@@ -2,12 +2,22 @@ name: Build and Deploy vtu_2 to cPanel
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - master
+    paths:
+      - '.github/workflows/deploy.yml'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'index.html'
+      - 'tsconfig*.json'
+  workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   build-and-deploy:
@@ -21,30 +31,23 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: vtu_2/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: vtu_2
 
       - name: Build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: npm run build
-        working-directory: vtu_2
-      
-      - name: List files to be deployed
-        run: ls -R vtu_2/dist/
 
-      - name: Deploy to cPanel via FTP
+      - name: Deploy frontend to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.4.0
         with:
           server: ${{ secrets.CPANEL_HOST }}
           username: ${{ secrets.CPANEL_USERNAME }}
           password: ${{ secrets.CPANEL_PASSWORD }}
           port: ${{ secrets.CPANEL_PORT }}
-          # FIX: The path must include the vtu_2 directory prefix
-          local-dir: vtu_2/dist/
+          local-dir: dist/
           server-dir: ${{ secrets.CPANEL_PATH_FRONTEND }}
-          # Optional: add this if you want to ensure it uses SFTP/FTPS
           protocol: ftps

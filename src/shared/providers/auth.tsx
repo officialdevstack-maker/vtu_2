@@ -168,7 +168,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (loginValue: string, password: string) => {
       setIsLoading(true);
       try {
-        clearDemoUser();
         setAuthToken(null);
         await apiClient.get("/sanctum/csrf-cookie");
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", { login: loginValue, password });
@@ -238,7 +237,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isInitializing,
         refreshUser,
         login,
-        demoLogin,
         register,
         logout,
         hasPermission,

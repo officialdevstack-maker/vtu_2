@@ -12,6 +12,10 @@ import {
   X,
   Copy,
   Check,
+  PauseCircle,
+  PlayCircle,
+  ShieldOff,
+  HeartPulse,
 } from "lucide-react";
 import {
   PageHeader,
@@ -26,6 +30,7 @@ import {
 import {
   childInstanceService,
   type ChildInstance,
+  type ChildInstanceStatus,
   type RegistrationCode,
 } from "./service";
 
@@ -205,6 +210,130 @@ function DeleteConfirm({
   );
 }
 
+// A per-instance breakdown beyond the four top-line StatCards — specifically
+// the instances that need a human to look at them (stale check-in, paused,
+// or revoked), so an admin doesn't have to scan the whole table to find
+// them. Collapses to nothing when everything is healthy.
+function HealthPanel({
+  instances,
+  onSelect,
+}: {
+  instances: ChildInstance[];
+  onSelect: (instance: ChildInstance) => void;
+}) {
+  const attention = instances.filter(
+    (i) => i.status === "revoked" || i.status === "paused" || (i.status === "active" && isStale(i.last_seen_at)),
+  );
+
+  if (attention.length === 0) {
+    return (
+      <Card className="px-5 py-4 flex items-center gap-2.5">
+        <HeartPulse className="w-4 h-4 text-emerald-500 shrink-0" />
+        <p className="text-xs text-slate-500">
+          All connected affiliates are healthy — active and checking in normally.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
+        <HeartPulse className="w-3.5 h-3.5 text-amber-500" />
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Needs attention ({attention.length})
+        </h2>
+      </div>
+      <div className="divide-y divide-gray-50">
+        {attention.map((instance) => {
+          const stale = instance.status === "active" && isStale(instance.last_seen_at);
+          const reason = instance.status === "revoked"
+            ? "Revoked"
+            : instance.status === "paused"
+              ? "Paused"
+              : "No check-in in 15+ minutes";
+          return (
+            <button
+              key={instance.id}
+              onClick={() => onSelect(instance)}
+              className="w-full flex items-center justify-between gap-3 px-5 py-2.5 text-left hover:bg-gray-50 transition-colors"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-900 truncate">{instance.name}</p>
+                <p className="text-[11px] text-slate-400">{reason}</p>
+              </div>
+              <StatusBadge
+                status={
+                  instance.status === "paused" ? "inactive" : instance.status === "revoked" ? "suspended" : "active"
+                }
+              />
+              {stale && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function BulkActionBar({
+  count,
+  busy,
+  onSetStatus,
+  onClear,
+}: {
+  count: number;
+  busy: boolean;
+  onSetStatus: (status: ChildInstanceStatus) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-[#111827]/15 bg-[#111827]/10 px-4 py-2">
+      <p className="text-xs font-medium text-[#111827]">
+        {count} affiliate{count === 1 ? "" : "s"} selected
+      </p>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onSetStatus("paused")}
+          className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-white disabled:opacity-50 transition-colors"
+        >
+          <PauseCircle className="w-3.5 h-3.5" /> Pause
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onSetStatus("active")}
+          className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-white disabled:opacity-50 transition-colors"
+        >
+          <PlayCircle className="w-3.5 h-3.5" /> Resume
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            if (window.confirm(`Revoke ${count} affiliate${count === 1 ? "" : "s"}? Their sync credentials will stop being accepted.`)) {
+              onSetStatus("revoked");
+            }
+          }}
+          className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-white disabled:opacity-50 transition-colors"
+        >
+          <ShieldOff className="w-3.5 h-3.5" /> Revoke
+        </button>
+        <div className="w-px h-4 bg-[#111827]/15 mx-1" />
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-xs font-medium text-[#111827] hover:text-[#111827] px-2"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AffiliatePage() {
   const navigate = useNavigate();
   const [instances, setInstances] = useState<ChildInstance[]>([]);
@@ -214,6 +343,8 @@ export default function AffiliatePage() {
   const [deleteTarget, setDeleteTarget] = useState<ChildInstance | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -253,6 +384,31 @@ export default function AffiliatePage() {
   const activeCount = instances.filter((i) => i.status === "active").length;
   const staleCount = instances.filter((i) => i.status === "active" && isStale(i.last_seen_at)).length;
 
+  const allSelected = instances.length > 0 && instances.every((i) => selected.has(toId(i.id)));
+  const toggleRow = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    setSelected(allSelected ? new Set() : new Set(instances.map((i) => toId(i.id))));
+  };
+  const handleBulkStatus = async (status: ChildInstanceStatus) => {
+    setBulkBusy(true);
+    try {
+      await childInstanceService.bulkUpdateStatus(Array.from(selected), status);
+      setInstances((prev) =>
+        prev.map((i) => (selected.has(toId(i.id)) ? { ...i, status } : i)),
+      );
+      setSelected(new Set());
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   return (
     <>
       <div className="space-y-5">
@@ -279,6 +435,13 @@ export default function AffiliatePage() {
           />
         </div>
 
+        {!loading && instances.length > 0 && (
+          <HealthPanel
+            instances={instances}
+            onSelect={(instance) => navigate(`/admin/affiliates/${toId(instance.id)}`, { state: { instance } })}
+          />
+        )}
+
         <Card className="overflow-hidden">
           {loading ? (
             <SkeletonRows count={4} />
@@ -295,9 +458,26 @@ export default function AffiliatePage() {
             />
           ) : (
             <div className="overflow-x-auto">
+              {selected.size > 0 && (
+                <BulkActionBar
+                  count={selected.size}
+                  busy={bulkBusy}
+                  onSetStatus={(status) => void handleBulkStatus(status)}
+                  onClear={() => setSelected(new Set())}
+                />
+              )}
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
+                    <th className="w-10 px-4 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleAll}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-[#111827] focus:ring-[#111827]"
+                        aria-label="Select all affiliates"
+                      />
+                    </th>
                     {["Name", "Slug", "Status", "Last check-in", "Actions"].map((h, i) => (
                       <th
                         key={h}
@@ -315,7 +495,16 @@ export default function AffiliatePage() {
                     const id = toId(instance.id);
                     const stale = instance.status === "active" && isStale(instance.last_seen_at);
                     return (
-                      <tr key={id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={id} className={`hover:bg-gray-50 transition-colors ${selected.has(id) ? "bg-[#111827]/5" : ""}`}>
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(id)}
+                            onChange={() => toggleRow(id)}
+                            className="h-3.5 w-3.5 rounded border-gray-300 text-[#111827] focus:ring-[#111827]"
+                            aria-label={`Select ${instance.name}`}
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <span className="font-medium text-slate-900 text-xs">{instance.name}</span>
                         </td>
