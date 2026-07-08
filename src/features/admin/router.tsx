@@ -29,10 +29,28 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "customers/users/new",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/customers/customer-form"
+          );
+          return { Component };
+        },
+      },
+      {
         path: "customers/users/:id",
         lazy: async () => {
           const { default: Component } = await import(
             "./pages/customers/customer-detail"
+          );
+          return { Component };
+        },
+      },
+      {
+        path: "customers/users/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/customers/customer-form"
           );
           return { Component };
         },
@@ -117,10 +135,28 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "apis/gateway/new",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/gateway-form"
+          );
+          return { Component };
+        },
+      },
+      {
         path: "apis/gateway/:id",
         lazy: async () => {
           const { default: Component } = await import(
             "./pages/apis/gateway-detail"
+          );
+          return { Component };
+        },
+      },
+      {
+        path: "apis/gateway/:id/edit",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/gateway-form"
           );
           return { Component };
         },

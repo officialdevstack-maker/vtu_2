@@ -5,7 +5,6 @@ import {
   Pencil,
   Eye,
   EyeOff,
-  X,
   AlertTriangle,
   Zap,
   ZapOff,
@@ -20,15 +19,12 @@ import {
   Button,
   StatusBadge,
   SkeletonLine,
-  inputCls,
-  selectCls,
   CopyButton,
 } from "../../../user/components/shared-ui";
 import {
   gatewayService,
   gatewaySupportsTransfer,
   type Gateway,
-  type GatewayPayload,
 } from "./gatewayService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,190 +34,6 @@ const fmt = (v: string | number | null | undefined) => {
   const n = Number(v);
   return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(v);
 };
-
-const toForm = (g: Gateway): GatewayPayload => ({
-  name: g.name ?? "",
-  code: g.code ?? "",
-  username: g.username ?? "",
-  password: g.password ?? "",
-  api_key: g.api_key ?? "",
-  secret_key: g.secret_key ?? "",
-  connection: g.connection ?? false,
-});
-
-// ─── Edit modal ───────────────────────────────────────────────────────────────
-
-function EditModal({
-  initial,
-  onSave,
-  onClose,
-  saving,
-}: {
-  initial: GatewayPayload;
-  onSave: (p: GatewayPayload) => void;
-  onClose: () => void;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState<GatewayPayload>(initial);
-  const [showPw, setShowPw] = useState(false);
-  const [showSecret, setShowSecret] = useState(false);
-  const set = <K extends keyof GatewayPayload>(k: K, v: GatewayPayload[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-  const valid = form.name.trim().length > 0;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 text-sm">Edit gateway</h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Gateway name <span className="text-red-400">*</span>
-            </label>
-            <input
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Code
-            </label>
-            <input
-              value={form.code ?? ""}
-              onChange={(e) => set("code", e.target.value.toUpperCase())}
-              maxLength={10}
-              className={`${inputCls} font-mono uppercase`}
-            />
-          </div>
-          <div className="border-t border-gray-100 pt-3">
-            <p className="text-xs font-medium text-slate-500 mb-1">
-              API credentials
-            </p>
-            <p className="text-xs text-slate-400 mb-3">
-              Not every field applies to every gateway — Flutterwave uses API
-              key only; Monnify uses API key + Secret key + Username;
-              PaymentPoint uses Password + API key.
-            </p>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  API key
-                </label>
-                <input
-                  value={form.api_key ?? ""}
-                  onChange={(e) => set("api_key", e.target.value)}
-                  placeholder="Public/API key"
-                  className={`${inputCls} font-mono`}
-                  autoComplete="off"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  Secret key
-                </label>
-                <div className="relative">
-                  <input
-                    type={showSecret ? "text" : "password"}
-                    value={form.secret_key ?? ""}
-                    onChange={(e) => set("secret_key", e.target.value)}
-                    placeholder="Secret key"
-                    className={`${inputCls} pr-10 font-mono`}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowSecret((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showSecret ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  Username / contract code
-                </label>
-                <input
-                  value={form.username ?? ""}
-                  onChange={(e) => set("username", e.target.value)}
-                  placeholder="Username or contract code"
-                  className={inputCls}
-                  autoComplete="off"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  Password / token
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPw ? "text" : "password"}
-                    value={form.password ?? ""}
-                    onChange={(e) => set("password", e.target.value)}
-                    placeholder="Password or token"
-                    className={`${inputCls} pr-10`}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPw ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Connection
-            </label>
-            <select
-              value={form.connection ? "true" : "false"}
-              onChange={(e) => set("connection", e.target.value === "true")}
-              className={selectCls}
-            >
-              <option value="true">Connected</option>
-              <option value="false">Disconnected</option>
-            </select>
-          </div>
-          <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              fullWidth
-              disabled={!valid || saving}
-              loading={saving}
-              onClick={() => onSave(form)}
-            >
-              Save changes
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Delete confirm ───────────────────────────────────────────────────────────
 
@@ -280,8 +92,6 @@ const GatewayDetailPage = () => {
 
   const [showPw, setShowPw] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [togglingConn, setTogglingConn] = useState(false);
@@ -289,26 +99,18 @@ const GatewayDetailPage = () => {
 
   const back = () => navigate("/admin/apis/gateway");
 
+  const openEdit = () =>
+    navigate(`/admin/apis/gateway/${id}/edit`, { state: { gateway } });
+
+  // Always re-fetch, even when the row was passed through navigation state —
+  // it may be stale (e.g. after saving on the edit page).
   useEffect(() => {
-    if (!id || gateway) return;
-    setLoadingGateway(true);
+    if (!id) return;
     gatewayService
       .getById(id)
       .then(setGateway)
       .finally(() => setLoadingGateway(false));
   }, [id]);
-
-  const handleSave = async (payload: GatewayPayload) => {
-    if (!id) return;
-    setSaving(true);
-    try {
-      const updated = await gatewayService.update(id, payload);
-      setGateway(updated);
-      setEditing(false);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!id) return;
@@ -425,7 +227,7 @@ const GatewayDetailPage = () => {
                 <Power className="w-3.5 h-3.5" />
                 {gateway.connection ? "Disconnect" : "Connect"}
               </Button>
-              <Button size="sm" onClick={() => setEditing(true)}>
+              <Button size="sm" onClick={openEdit}>
                 <Pencil className="w-3.5 h-3.5" /> Edit
               </Button>
               <Button
@@ -667,7 +469,7 @@ const GatewayDetailPage = () => {
                 variant="secondary"
                 fullWidth
                 size="sm"
-                onClick={() => setEditing(true)}
+                onClick={openEdit}
               >
                 <Pencil className="w-3.5 h-3.5" /> Edit credentials
               </Button>
@@ -694,15 +496,6 @@ const GatewayDetailPage = () => {
           </div>
         </div>
       </div>
-
-      {editing && (
-        <EditModal
-          initial={toForm(gateway)}
-          onSave={(p) => void handleSave(p)}
-          onClose={() => setEditing(false)}
-          saving={saving}
-        />
-      )}
 
       {confirmDelete && (
         <DeleteConfirm

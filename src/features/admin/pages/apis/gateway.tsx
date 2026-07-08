@@ -2,15 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Plus,
-  MoreVertical,
   Power,
   Trash2,
-  X,
   AlertTriangle,
   CreditCard,
   Zap,
   Eye,
-  EyeOff,
+  Pencil,
   ChevronLeft,
   ChevronRight,
   ArrowUpRight,
@@ -24,14 +22,12 @@ import {
   EmptyState,
   SkeletonCard,
   SkeletonRows,
-  inputCls,
-  selectCls,
 } from "../../../user/components/shared-ui";
+import { ActionMenu } from "../../../../shared/components/action-menu";
 import {
   gatewayService,
   gatewaySupportsTransfer,
   type Gateway,
-  type GatewayPayload,
 } from "./gatewayService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -134,163 +130,6 @@ function Pagination({
   );
 }
 
-// ─── Gateway form modal ───────────────────────────────────────────────────────
-
-const emptyForm = (): GatewayPayload => ({
-  name: "",
-  code: "",
-  username: "",
-  password: "",
-  connection: false,
-});
-
-const toForm = (g: Gateway): GatewayPayload => ({
-  name: g.name ?? "",
-  code: g.code ?? "",
-  username: g.username ?? "",
-  password: g.password ?? "",
-  connection: g.connection ?? false,
-});
-
-function GatewayFormModal({
-  initial,
-  isEdit,
-  onSave,
-  onClose,
-  saving,
-}: {
-  initial: GatewayPayload;
-  isEdit: boolean;
-  onSave: (p: GatewayPayload) => void;
-  onClose: () => void;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState<GatewayPayload>(initial);
-  const [showPw, setShowPw] = useState(false);
-  const set = <K extends keyof GatewayPayload>(k: K, v: GatewayPayload[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-  const valid = form.name.trim().length > 0;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 text-sm">
-            {isEdit ? "Edit gateway" : "Add gateway"}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Gateway name <span className="text-red-400">*</span>
-            </label>
-            <input
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              placeholder="e.g. Flutterwave"
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Code
-            </label>
-            <input
-              value={form.code ?? ""}
-              onChange={(e) => set("code", e.target.value.toUpperCase())}
-              placeholder="e.g. FLW"
-              maxLength={10}
-              className={`${inputCls} font-mono uppercase`}
-            />
-          </div>
-
-          <div className="border-t border-gray-100 pt-3">
-            <p className="text-xs font-medium text-slate-500 mb-3">
-              API credentials
-            </p>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  API key / username
-                </label>
-                <input
-                  value={form.username ?? ""}
-                  onChange={(e) => set("username", e.target.value)}
-                  placeholder="Public key or username"
-                  className={inputCls}
-                  autoComplete="off"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                  Secret key / password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPw ? "text" : "password"}
-                    value={form.password ?? ""}
-                    onChange={(e) => set("password", e.target.value)}
-                    placeholder="Secret key"
-                    className={`${inputCls} pr-10`}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPw ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Connection
-            </label>
-            <select
-              value={form.connection ? "true" : "false"}
-              onChange={(e) => set("connection", e.target.value === "true")}
-              className={selectCls}
-            >
-              <option value="true">Connected</option>
-              <option value="false">Disconnected</option>
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              fullWidth
-              disabled={!valid || saving}
-              loading={saving}
-              onClick={() => onSave(form)}
-            >
-              {isEdit ? "Save changes" : "Add gateway"}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Delete confirm ───────────────────────────────────────────────────────────
 
 function DeleteConfirm({
@@ -334,72 +173,7 @@ function DeleteConfirm({
   );
 }
 
-// ─── Row menu ─────────────────────────────────────────────────────────────────
-
-function RowMenu({
-  gateway,
-  open,
-  toggling,
-  onToggleOpen,
-  onShow,
-  onToggleConnection,
-  onDelete,
-}: {
-  gateway: Gateway;
-  open: boolean;
-  toggling: boolean;
-  onToggleOpen: () => void;
-  onShow: () => void;
-  onToggleConnection: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="relative inline-flex">
-      <button
-        onClick={onToggleOpen}
-        className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
-      >
-        <MoreVertical className="w-3.5 h-3.5" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={onToggleOpen} />
-          <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-slate-200/70 rounded-xl shadow-md py-1">
-            <button
-              onClick={onShow}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-            >
-              <Eye className="w-3.5 h-3.5" /> Show
-            </button>
-            <button
-              disabled={toggling}
-              onClick={onToggleConnection}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              <Power className="w-3.5 h-3.5" />
-              {gateway.connection ? "Disconnect" : "Connect"}
-            </button>
-            <div className="border-t border-gray-100 my-1" />
-            <button
-              onClick={onDelete}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Delete
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
-
-type ModalState =
-  | { kind: "add" }
-  | { kind: "edit"; gateway: Gateway }
-  | { kind: "delete"; gateway: Gateway }
-  | null;
 
 const PAGE_SIZE = 10;
 
@@ -411,9 +185,8 @@ const GatewayPage = () => {
 
   const [gateways, setGateways] = useState<Gateway[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [modal, setModal] = useState<ModalState>(null);
-  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Gateway | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
   const load = async () => {
@@ -451,50 +224,29 @@ const GatewayPage = () => {
   ).length;
 
   // handlers
-  const handleAdd = async (payload: GatewayPayload) => {
-    setSaving(true);
-    try {
-      await gatewayService.create(payload);
-      setModal(null);
-      await load();
-    } finally {
-      setSaving(false);
-    }
-  };
+  const openCreate = () => navigate("/admin/apis/gateway/new");
 
-  const handleEdit = async (payload: GatewayPayload) => {
-    if (modal?.kind !== "edit") return;
-    setSaving(true);
-    try {
-      const updated = await gatewayService.update(
-        toId(modal.gateway.id),
-        payload,
-      );
-      setGateways((prev) =>
-        prev.map((g) => (g.id === updated.id ? updated : g)),
-      );
-      setModal(null);
-    } finally {
-      setSaving(false);
-    }
-  };
+  const openView = (g: Gateway) =>
+    navigate(`/admin/apis/gateway/${toId(g.id)}`, { state: { gateway: g } });
+
+  const openEdit = (g: Gateway) =>
+    navigate(`/admin/apis/gateway/${toId(g.id)}/edit`, { state: { gateway: g } });
 
   const handleDelete = async () => {
-    if (modal?.kind !== "delete") return;
-    setSaving(true);
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await gatewayService.remove(toId(modal.gateway.id));
-      setGateways((prev) => prev.filter((g) => g.id !== modal.gateway.id));
-      setModal(null);
+      await gatewayService.remove(toId(deleteTarget.id));
+      setGateways((prev) => prev.filter((g) => g.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   };
 
   const handleToggle = async (gateway: Gateway) => {
     const id = toId(gateway.id);
     setToggling(id);
-    setOpenMenuId(null);
     try {
       const updated = await gatewayService.toggleConnection(gateway);
       setGateways((prev) =>
@@ -505,24 +257,23 @@ const GatewayPage = () => {
     }
   };
 
-  const menuProps = (g: Gateway) => {
-    const id = toId(g.id);
-    return {
-      gateway: g,
-      open: openMenuId === id,
-      toggling: toggling === id,
-      onToggleOpen: () => setOpenMenuId((prev) => (prev === id ? null : id)),
-      onShow: () => {
-        setOpenMenuId(null);
-        navigate(`/admin/apis/gateway/${id}`, { state: { gateway: g } });
-      },
-      onToggleConnection: () => void handleToggle(g),
-      onDelete: () => {
-        setModal({ kind: "delete", gateway: g });
-        setOpenMenuId(null);
-      },
-    };
-  };
+  const menuItems = (g: Gateway) => [
+    { label: "Show", icon: Eye, onClick: () => openView(g) },
+    { label: "Edit", icon: Pencil, onClick: () => openEdit(g) },
+    {
+      label: g.connection ? "Disconnect" : "Connect",
+      icon: Power,
+      disabled: toggling === toId(g.id),
+      onClick: () => void handleToggle(g),
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      tone: "danger" as const,
+      separatorBefore: true,
+      onClick: () => setDeleteTarget(g),
+    },
+  ];
 
   return (
     <>
@@ -531,7 +282,7 @@ const GatewayPage = () => {
           title="Payment Gateways"
           description="Manage payment provider credentials used for auto-funding vendor balances."
           actions={
-            <Button size="sm" onClick={() => setModal({ kind: "add" })}>
+            <Button size="sm" onClick={openCreate}>
               <Plus className="w-3.5 h-3.5" /> Add gateway
             </Button>
           }
@@ -579,7 +330,7 @@ const GatewayPage = () => {
               title="No payment gateways"
               description="Add a gateway to enable automatic vendor top-ups."
               action={
-                <Button size="sm" onClick={() => setModal({ kind: "add" })}>
+                <Button size="sm" onClick={openCreate}>
                   <Plus className="w-3.5 h-3.5" /> Add gateway
                 </Button>
               }
@@ -620,12 +371,16 @@ const GatewayPage = () => {
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => openView(g)}
+                            className="flex items-center gap-2.5 text-left"
+                          >
                             <div className="w-7 h-7 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-semibold shrink-0">
                               {g.name[0]?.toUpperCase()}
                             </div>
                             <div>
-                              <span className="font-medium text-slate-900 text-xs block">
+                              <span className="font-medium text-slate-900 text-xs block hover:underline">
                                 {g.name}
                               </span>
                               {g.code && (
@@ -634,7 +389,7 @@ const GatewayPage = () => {
                                 </span>
                               )}
                             </div>
-                          </div>
+                          </button>
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-600 text-right tabular-nums">
                           {fmt(g.balance)}
@@ -650,7 +405,7 @@ const GatewayPage = () => {
                           />
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <RowMenu {...menuProps(g)} />
+                          <ActionMenu items={menuItems(g)} />
                         </td>
                       </tr>
                     ))}
@@ -665,33 +420,39 @@ const GatewayPage = () => {
                     key={g.id}
                     className="p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="w-9 h-9 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-sm font-semibold shrink-0">
-                      {g.name[0]?.toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-slate-900 text-sm">
-                          {g.name}
-                        </span>
-                        {g.code && (
-                          <span className="text-xs font-mono text-slate-400">
-                            {g.code}
+                    <button
+                      type="button"
+                      onClick={() => openView(g)}
+                      className="flex-1 min-w-0 flex items-start gap-3 text-left"
+                    >
+                      <div className="w-9 h-9 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-sm font-semibold shrink-0">
+                        {g.name[0]?.toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-slate-900 text-sm">
+                            {g.name}
                           </span>
-                        )}
+                          {g.code && (
+                            <span className="text-xs font-mono text-slate-400">
+                              {g.code}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <StatusBadge
+                            status={g.connection ? "active" : "inactive"}
+                          />
+                          <TransferBadge
+                            supported={gatewaySupportsTransfer(g.name)}
+                          />
+                          <span className="text-xs text-slate-500 tabular-nums">
+                            {fmt(g.balance)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <StatusBadge
-                          status={g.connection ? "active" : "inactive"}
-                        />
-                        <TransferBadge
-                          supported={gatewaySupportsTransfer(g.name)}
-                        />
-                        <span className="text-xs text-slate-500 tabular-nums">
-                          {fmt(g.balance)}
-                        </span>
-                      </div>
-                    </div>
-                    <RowMenu {...menuProps(g)} />
+                    </button>
+                    <ActionMenu items={menuItems(g)} />
                   </div>
                 ))}
               </div>
@@ -709,32 +470,12 @@ const GatewayPage = () => {
         </Card>
       </div>
 
-      {modal?.kind === "add" && (
-        <GatewayFormModal
-          initial={emptyForm()}
-          isEdit={false}
-          onSave={(p) => void handleAdd(p)}
-          onClose={() => setModal(null)}
-          saving={saving}
-        />
-      )}
-
-      {modal?.kind === "edit" && (
-        <GatewayFormModal
-          initial={toForm(modal.gateway)}
-          isEdit={true}
-          onSave={(p) => void handleEdit(p)}
-          onClose={() => setModal(null)}
-          saving={saving}
-        />
-      )}
-
-      {modal?.kind === "delete" && (
+      {deleteTarget && (
         <DeleteConfirm
-          gateway={modal.gateway}
+          gateway={deleteTarget}
           onConfirm={() => void handleDelete()}
-          onClose={() => setModal(null)}
-          deleting={saving}
+          onClose={() => setDeleteTarget(null)}
+          deleting={deleting}
         />
       )}
     </>
