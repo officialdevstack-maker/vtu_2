@@ -235,9 +235,13 @@ type RoleEnvelope<T> = { success: boolean; message?: string; data: T };
 
 export type RoleStatus = "active" | "inactive";
 
-// Account tiers referenced elsewhere in the API (see section 5.3 "Upgrade Account")
-// — these are built-in roles the backend relies on and shouldn't be deletable from the UI.
-const SYSTEM_ROLE_SLUGS = new Set(["admin", "user", "agent", "bonanza", "api"]);
+// Built-in roles the backend relies on (seeded staff roles + pricing tiers) —
+// RoleController::destroy refuses to delete these; the UI disables the option
+// up front. Keep in sync with RoleController::PROTECTED_SLUGS.
+const SYSTEM_ROLE_SLUGS = new Set([
+  "owner", "co-owner", "customer-care", "admin", "user",
+  "agent", "bonanza", "api", "basic",
+]);
 
 // Real, backend-defined permissions (App\Models\Permission) — distinct from
 // the old locally-faked PermissionGroup list that was never sent to the API.
@@ -282,10 +286,36 @@ const slugify = (value: string) =>
 
 const mapPermission = (item: any): Permission => ({
   id: String(item?.id ?? ""),
-  name: item?.name ?? "",
-  slug: item?.slug ?? "",
+  // Legacy rows carry a display name ("Customers"); rows created by the
+  // current seeder may only have the machine key — fall back to slug.
+  name: item?.name ?? item?.slug ?? "",
+  slug: item?.slug ?? item?.name ?? "",
   description: item?.description ?? "",
 });
+
+// RoleController wraps responses in the app envelope with a named key:
+// { success, message, data: { roles: [...] } } (and data.role / data.permissions
+// for the other endpoints) — dig for the named key rather than assuming
+// data itself is the array.
+const digNamedArray = (payload: any, key: string): any[] => {
+  let node = payload;
+  for (let i = 0; i < 4 && node != null; i++) {
+    if (Array.isArray(node[key])) return node[key];
+    if (Array.isArray(node)) return node;
+    node = node.data;
+  }
+  return [];
+};
+
+const digRole = (payload: any): any => {
+  let node = payload;
+  for (let i = 0; i < 4 && node != null; i++) {
+    if (node.role) return node.role;
+    if (node.id != null && node.name != null) return node;
+    node = node.data;
+  }
+  return node ?? {};
+};
 
 const mapRole = (item: any): Role => {
   const slug = String(item?.slug ?? "");
@@ -317,20 +347,20 @@ const toRoleBody = (payload: RolePayload, existingSlug?: string) => ({
 
 export const permissionService = {
   getAll: async (): Promise<Permission[]> => {
-    const response = await apiClient.get<RoleEnvelope<any[]>>("/admin/permissions");
-    return (response.data.data ?? []).map(mapPermission);
+    const response = await apiClient.get<RoleEnvelope<any>>("/admin/permissions");
+    return digNamedArray(response.data, "permissions").map(mapPermission);
   },
 };
 
 export const roleService = {
   getAll: async (): Promise<Role[]> => {
-    const response = await apiClient.get<RoleEnvelope<any[]>>("/admin/roles");
-    return (response.data.data ?? []).map(mapRole);
+    const response = await apiClient.get<RoleEnvelope<any>>("/admin/roles");
+    return digNamedArray(response.data, "roles").map(mapRole);
   },
 
   getById: async (id: string): Promise<Role> => {
     const response = await apiClient.get<RoleEnvelope<any>>(`/admin/roles/${id}`);
-    return mapRole(response.data.data);
+    return mapRole(digRole(response.data));
   },
 
   create: async (payload: RolePayload): Promise<Role> => {
@@ -338,7 +368,7 @@ export const roleService = {
       "/admin/roles",
       toRoleBody(payload),
     );
-    return mapRole(response.data.data);
+    return mapRole(digRole(response.data));
   },
 
   update: async (id: string, payload: RolePayload, existingSlug?: string): Promise<Role> => {
@@ -346,7 +376,7 @@ export const roleService = {
       `/admin/roles/${id}`,
       toRoleBody(payload, existingSlug),
     );
-    return mapRole(response.data.data);
+    return mapRole(digRole(response.data));
   },
 
   remove: async (id: string): Promise<void> => {
