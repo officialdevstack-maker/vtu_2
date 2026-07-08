@@ -9,18 +9,22 @@ import {
   Wallet,
   AlertTriangle,
   Receipt,
-  X,
+  CalendarDays,
+  Mail,
+  Phone,
 } from "lucide-react";
 import {
   PageHeader,
   Card,
   Button,
+  StatCard,
   StatusBadge,
   EmptyState,
   Pagination,
   inputCls,
   selectCls,
   SkeletonLine,
+  CopyButton,
 } from "../../../user/components/shared-ui";
 import { usePagination } from "../../../../shared/pagination";
 import { fmt } from "../../../user/data/mock";
@@ -28,11 +32,8 @@ import {
   customerService,
   transactionService,
   type Customer,
-  type CustomerPayload,
   type Transaction,
 } from "./service";
-
-type CustomerStatus = "active" | "suspended" | "inactive";
 
 const formatDate = (iso?: string) =>
   iso
@@ -45,73 +46,9 @@ const initials = (name: string) =>
 const row = (label: string, value: React.ReactNode) => (
   <div className="flex items-start gap-4 py-3 border-b border-gray-50 last:border-0">
     <span className="text-xs text-slate-400 w-32 shrink-0 pt-0.5">{label}</span>
-    <span className="text-xs text-slate-800 flex-1">{value ?? "—"}</span>
+    <span className="text-xs text-slate-800 flex-1 min-w-0">{value ?? "—"}</span>
   </div>
 );
-
-// ─── Edit modal ─────────────────────────────────────────────────────────────
-
-function EditModal({
-  initial,
-  onSave,
-  onClose,
-  saving,
-}: {
-  initial: CustomerPayload;
-  onSave: (payload: CustomerPayload) => void;
-  onClose: () => void;
-  saving: boolean;
-}) {
-  const [form, setForm] = useState<CustomerPayload>(initial);
-  const set = <K extends keyof CustomerPayload>(k: K, v: CustomerPayload[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-  const valid = form.name.trim().length > 0 && form.email.trim().length > 0;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
-          <h3 className="font-semibold text-slate-900 text-sm">Edit customer</h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-4 space-y-3.5">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Full name</label>
-            <input value={form.name} onChange={(e) => set("name", e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Email</label>
-            <input value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Phone</label>
-            <input value={form.phone} onChange={(e) => set("phone", e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-            <select
-              value={form.status}
-              onChange={(e) => set("status", e.target.value as CustomerStatus)}
-              className={selectCls}
-            >
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-          <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-            <Button fullWidth disabled={!valid || saving} loading={saving} onClick={() => onSave(form)}>
-              Save changes
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Fund / debit wallet card ───────────────────────────────────────────────
 
@@ -164,6 +101,9 @@ function FundWalletCard({
           <Wallet className="w-3.5 h-3.5" />
           {type === "debit" ? "Debit wallet" : "Credit wallet"}
         </Button>
+        <p className="text-xs text-slate-400">
+          Each credit or debit is written to the customer's transaction history.
+        </p>
       </div>
     </Card>
   );
@@ -358,8 +298,6 @@ export default function CustomerDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [suspending, setSuspending] = useState(false);
   const [confirmSuspend, setConfirmSuspend] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -368,29 +306,22 @@ export default function CustomerDetailPage() {
 
   const back = () => navigate("/admin/customers/users");
 
+  // Always re-fetch, even when the row was passed through navigation state —
+  // the list row may be stale (e.g. after an edit on the form page).
   useEffect(() => {
-    if (!id || customer) return;
+    if (!id) return;
     customerService
       .getById(id)
-      .then(setCustomer)
-      .catch(() => setNotFound(true))
+      .then((c) => {
+        setCustomer(c);
+        setNotFound(false);
+      })
+      .catch(() => {
+        setNotFound(true);
+        setCustomer(null);
+      })
       .finally(() => setLoading(false));
-  }, [customer, id]);
-
-  const handleSave = async (payload: CustomerPayload) => {
-    if (!id) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const updated = await customerService.update(id, payload);
-      setCustomer(updated);
-      setEditing(false);
-    } catch {
-      setError("The customer could not be saved right now.");
-    } finally {
-      setSaving(false);
-    }
-  };
+  }, [id]);
 
   const handleToggleSuspend = async () => {
     if (!customer) return;
@@ -439,6 +370,9 @@ export default function CustomerDetailPage() {
     return (
       <div className="space-y-5">
         <SkeletonLine className="h-7 w-48" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <SkeletonLine key={i} className="h-20 w-full" />)}
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-5">
             <Card className="p-5 space-y-3">
@@ -472,35 +406,36 @@ export default function CustomerDetailPage() {
     );
   }
 
+  const displayName = customer.username || customer.name;
+
   return (
     <>
       <div className="space-y-5">
         <PageHeader
-          title={customer.username || customer.name}
+          title={
+            <div className="flex items-center gap-2">
+              <button
+                onClick={back}
+                className="p-1 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              {displayName}
+              <StatusBadge status={customer.status} />
+            </div>
+          }
           description={customer.email}
           actions={
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="secondary" size="sm" onClick={back}>
-                <ArrowLeft className="w-3.5 h-3.5" /> Back
-              </Button>
-              <Button size="sm" onClick={() => setEditing(true)}>
-                <Pencil className="w-3.5 h-3.5" /> Edit
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setConfirmSuspend(true)}
-              >
-                {customer.status === "suspended" ? (
-                  <><ShieldCheck className="w-3.5 h-3.5" /> Reactivate</>
-                ) : (
-                  <><Ban className="w-3.5 h-3.5" /> Suspend</>
-                )}
-              </Button>
-              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                <Trash2 className="w-3.5 h-3.5" /> Delete
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              onClick={() =>
+                navigate(`/admin/customers/users/${customer.id}/edit`, {
+                  state: { customer },
+                })
+              }
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit customer
+            </Button>
           }
         />
 
@@ -510,28 +445,80 @@ export default function CustomerDetailPage() {
           </div>
         )}
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Wallet balance"
+            value={fmt(customer.balance)}
+            icon={Wallet}
+            tone="success"
+            meta="Available funds"
+          />
+          <StatCard
+            label="Transactions"
+            value={String(customer.txns)}
+            icon={Receipt}
+            tone="neutral"
+            meta="All-time purchases"
+          />
+          <StatCard
+            label="Verification"
+            value={customer.kyc === "verified" ? "Verified" : customer.kyc === "pending" ? "Pending" : "Unverified"}
+            icon={ShieldCheck}
+            tone={customer.kyc === "verified" ? "success" : "neutral"}
+            meta="Email verification"
+          />
+          <StatCard
+            label="Date joined"
+            value={formatDate(customer.dateJoined)}
+            icon={CalendarDays}
+            tone="neutral"
+            meta="Registration date"
+          />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* ── Left column ── */}
           <div className="lg:col-span-2 space-y-5">
             <Card>
-              <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2 flex-wrap">
-                <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-medium shrink-0">
-                  {initials(customer.username || customer.name)}
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                <div className="w-11 h-11 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-sm font-semibold shrink-0">
+                  {initials(displayName)}
                 </div>
-                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  Customer details
-                </h2>
-                <StatusBadge status={customer.status} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{customer.name}</p>
+                  <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400 flex-wrap">
+                    <span className="inline-flex items-center gap-1 min-w-0">
+                      <Mail className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{customer.email}</span>
+                    </span>
+                    {customer.phone && (
+                      <span className="inline-flex items-center gap-1">
+                        <Phone className="w-3 h-3" /> {customer.phone}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <StatusBadge status={customer.kyc} />
               </div>
               <div className="px-5 py-1">
                 {row("Username", customer.username)}
                 {row("Full name", customer.name)}
-                {row("Email", customer.email)}
-                {row("Phone", customer.phone)}
-                {row("Account type", customer.userType)}
-                {row("Wallet balance", <span className="font-medium">{fmt(customer.balance)}</span>)}
-                {row("Transactions", customer.txns)}
+                {row(
+                  "Email",
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="truncate">{customer.email}</span>
+                    {customer.email && <CopyButton value={customer.email} label="email" />}
+                  </span>,
+                )}
+                {row(
+                  "Phone",
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span>{customer.phone || "—"}</span>
+                    {customer.phone && <CopyButton value={customer.phone} label="phone" />}
+                  </span>,
+                )}
+                {row("Account type", <span className="capitalize">{customer.userType}</span>)}
+                {row("Status", <StatusBadge status={customer.status} />)}
                 {row("Date joined", formatDate(customer.dateJoined))}
               </div>
             </Card>
@@ -542,27 +529,41 @@ export default function CustomerDetailPage() {
           {/* ── Right column ── */}
           <div className="space-y-5">
             <FundWalletCard onSubmit={(amt, type) => void handleFund(amt, type)} submitting={funding} />
+
+            <Card className="p-5">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+                Account actions
+              </h2>
+              <div className="space-y-2">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  size="sm"
+                  onClick={() => setConfirmSuspend(true)}
+                >
+                  {customer.status === "suspended" ? (
+                    <><ShieldCheck className="w-3.5 h-3.5" /> Reactivate account</>
+                  ) : (
+                    <><Ban className="w-3.5 h-3.5" /> Suspend account</>
+                  )}
+                </Button>
+                <Button
+                  variant="danger"
+                  fullWidth
+                  size="sm"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Delete customer
+                </Button>
+              </div>
+              <p className="text-xs text-slate-400 mt-3">
+                Suspending blocks login until reactivated. Deleting is permanent
+                and removes the account entirely.
+              </p>
+            </Card>
           </div>
         </div>
       </div>
-
-      {editing && (
-        <EditModal
-          initial={{
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            balance: customer.balance,
-            status: customer.status,
-            kyc: customer.kyc,
-            username: customer.username,
-            userType: customer.userType,
-          }}
-          onSave={(p) => void handleSave(p)}
-          onClose={() => setEditing(false)}
-          saving={saving}
-        />
-      )}
 
       {confirmSuspend && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -571,8 +572,8 @@ export default function CustomerDetailPage() {
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800">
                 {customer.status === "suspended"
-                  ? `${customer.username || customer.name} will regain full access to their account.`
-                  : `${customer.username || customer.name} will lose access to their account until reactivated.`}
+                  ? `${displayName} will regain full access to their account.`
+                  : `${displayName} will lose access to their account until reactivated.`}
               </p>
             </div>
             <div className="flex gap-3">
@@ -597,7 +598,7 @@ export default function CustomerDetailPage() {
             <div className="flex gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <p className="text-xs text-red-800">
-                This permanently deletes {customer.username || customer.name}'s account and cannot be undone.
+                This permanently deletes {displayName}'s account and cannot be undone.
               </p>
             </div>
             <div className="flex gap-3">

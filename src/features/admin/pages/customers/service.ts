@@ -21,11 +21,11 @@ export type CustomerPayload = {
   name: string;
   email: string;
   phone: string;
-  balance: number;
-  status?: CustomerStatus;
-  kyc?: KycStatus;
   username?: string;
   userType?: string;
+  status?: CustomerStatus;
+  // Required on create; optional on update (blank = keep current password).
+  password?: string;
 };
 
 const normalizeStatus = (value: unknown): CustomerStatus => {
@@ -81,24 +81,25 @@ const digUsers = (payload: any): any[] => {
   return [];
 };
 
-const randomPassword = () =>
-  `Vtu${Math.random().toString(36).slice(2, 8)}${Math.floor(Math.random() * 90 + 10)}!`;
-
 const toCreatePayload = (payload: CustomerPayload) => ({
   fullname: payload.name,
   username: payload.username || payload.name.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 12),
   email: payload.email,
   phone: payload.phone,
-  password: randomPassword(),
+  password: payload.password,
   user_type: payload.userType || "user",
 });
 
+// wallet_balance is intentionally never sent — balance changes go through
+// POST /admin/users/{id}/fund so every change has a transaction record.
 const toUpdatePayload = (payload: CustomerPayload) => ({
   fullname: payload.name,
+  username: payload.username,
   email: payload.email,
   phone: payload.phone,
-  wallet_balance: payload.balance,
   user_type: payload.userType || "user",
+  ...(payload.status ? { status: payload.status } : {}),
+  ...(payload.password ? { password: payload.password } : {}),
 });
 
 type ApiEnvelope<T> = { status: boolean; message: string; data: T };
@@ -134,30 +135,19 @@ export const customerService = {
       `${USERS}/${id}`,
       toUpdatePayload(payload),
     );
-    let user = digUser(response.data);
-    // `status` isn't part of the /admin/users update contract — write it
-    // through the Universal Table API when the edit form changed it.
-    if (payload.status) {
-      const statusResponse = await apiClient.put<ApiEnvelope<any>>(`/table/users/${id}`, {
-        status: payload.status,
-      });
-      user = { ...user, ...statusResponse.data.data };
-    }
-    return mapCustomer(user);
+    return mapCustomer(digUser(response.data));
   },
 
   remove: async (id: string): Promise<void> => {
     await apiClient.delete(`${USERS}/${id}`);
   },
 
-  // /admin/users doesn't document a `status` field — it's a plain column on the
-  // `users` table, so go through the Universal Table API to set it directly.
   toggleStatus: async (customer: Customer): Promise<Customer> => {
     const nextStatus = customer.status === "suspended" ? "active" : "suspended";
-    const response = await apiClient.put<ApiEnvelope<any>>(`/table/users/${customer.id}`, {
+    const response = await apiClient.put<ApiEnvelope<any>>(`${USERS}/${customer.id}`, {
       status: nextStatus,
     });
-    return mapCustomer(response.data.data);
+    return mapCustomer(digUser(response.data));
   },
 
   // POST /admin/users/{id}/fund — see API_DOCUMENTATION.md section 7.3.

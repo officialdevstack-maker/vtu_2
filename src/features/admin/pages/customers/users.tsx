@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
-  MoreVertical,
   Eye,
   Pencil,
   Ban,
@@ -11,7 +10,6 @@ import {
   Users,
   UserCheck,
   UserPlus,
-  X,
   AlertTriangle,
   Plus,
 } from "lucide-react";
@@ -29,150 +27,16 @@ import {
   inputCls,
   selectCls,
 } from "../../../user/components/shared-ui";
+import { ActionMenu } from "../../../../shared/components/action-menu";
 import { usePagination } from "../../../../shared/pagination";
 import { customerService, type Customer } from "./service";
 
 type CustomerStatus = "active" | "suspended" | "inactive";
 type KycStatus = "verified" | "pending" | "unverified";
 
-const initialCustomers: Customer[] = [
-  {
-    id: "CUS001",
-    name: "Chukwuemeka Obi",
-    email: "emeka.obi@gmail.com",
-    phone: "+234 803 210 4471",
-    balance: 45820,
-    txns: 47,
-    status: "active",
-    kyc: "verified",
-    dateJoined: "2025-11-02",
-  },
-  {
-    id: "CUS002",
-    name: "Adaeze Nwosu",
-    email: "adaeze.nwosu@outlook.com",
-    phone: "+234 706 552 8890",
-    balance: 12300,
-    txns: 23,
-    status: "active",
-    kyc: "verified",
-    dateJoined: "2025-12-18",
-  },
-  {
-    id: "CUS003",
-    name: "Kunle Adeleke",
-    email: "kunle.adeleke@gmail.com",
-    phone: "+234 812 447 6631",
-    balance: 89700,
-    txns: 112,
-    status: "active",
-    kyc: "pending",
-    dateJoined: "2026-01-09",
-  },
-  {
-    id: "CUS004",
-    name: "Fatima Bello",
-    email: "fatima.bello@yahoo.com",
-    phone: "+234 905 331 2204",
-    balance: 5100,
-    txns: 8,
-    status: "suspended",
-    kyc: "verified",
-    dateJoined: "2025-08-27",
-  },
-  {
-    id: "CUS005",
-    name: "Tunde Bakare",
-    email: "tunde.bakare@gmail.com",
-    phone: "+234 701 998 3312",
-    balance: 0,
-    txns: 2,
-    status: "inactive",
-    kyc: "unverified",
-    dateJoined: "2026-06-30",
-  },
-  {
-    id: "CUS006",
-    name: "Ngozi Eze",
-    email: "ngozi.eze@gmail.com",
-    phone: "+234 814 665 0092",
-    balance: 27650,
-    txns: 34,
-    status: "active",
-    kyc: "verified",
-    dateJoined: "2026-05-14",
-  },
-  {
-    id: "CUS007",
-    name: "Ibrahim Musa",
-    email: "ibrahim.musa@hotmail.com",
-    phone: "+234 809 221 7743",
-    balance: 3200,
-    txns: 5,
-    status: "active",
-    kyc: "pending",
-    dateJoined: "2026-06-25",
-  },
-  {
-    id: "CUS008",
-    name: "Chidinma Okafor",
-    email: "chidinma.okafor@gmail.com",
-    phone: "+234 703 118 9954",
-    balance: 156400,
-    txns: 201,
-    status: "active",
-    kyc: "verified",
-    dateJoined: "2025-04-11",
-  },
-  {
-    id: "CUS009",
-    name: "Segun Owolabi",
-    email: "segun.owolabi@gmail.com",
-    phone: "+234 810 774 3321",
-    balance: 890,
-    txns: 1,
-    status: "suspended",
-    kyc: "unverified",
-    dateJoined: "2026-02-20",
-  },
-  {
-    id: "CUS010",
-    name: "Blessing Udo",
-    email: "blessing.udo@gmail.com",
-    phone: "+234 802 556 1187",
-    balance: 18200,
-    txns: 19,
-    status: "active",
-    kyc: "verified",
-    dateJoined: "2026-06-10",
-  },
-  {
-    id: "CUS011",
-    name: "Yusuf Abdullahi",
-    email: "yusuf.abdullahi@gmail.com",
-    phone: "+234 816 442 9903",
-    balance: 0,
-    txns: 0,
-    status: "inactive",
-    kyc: "unverified",
-    dateJoined: "2026-06-29",
-  },
-  {
-    id: "CUS012",
-    name: "Halima Sani",
-    email: "halima.sani@gmail.com",
-    phone: "+234 708 330 6621",
-    balance: 62100,
-    txns: 58,
-    status: "active",
-    kyc: "verified",
-    dateJoined: "2025-09-30",
-  },
-];
-
 const daysAgo = (iso?: string) => {
   if (!iso) return 9999;
-  const diff = Date.parse("2026-07-04") - Date.parse(iso);
+  const diff = Date.now() - Date.parse(iso);
   return Number.isFinite(diff)
     ? Math.floor(diff / (1000 * 60 * 60 * 24))
     : 9999;
@@ -195,21 +59,10 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-type ModalMode = "edit" | "create" | null;
-
-const emptyForm = {
-  name: "",
-  email: "",
-  phone: "",
-  balance: "",
-  status: "active" as CustomerStatus,
-  kyc: "pending" as KycStatus,
-};
-
 export default function CustomersPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | CustomerStatus>(
     "all",
@@ -218,14 +71,9 @@ export default function CustomersPage() {
   const [dateFilter, setDateFilter] = useState<"all" | "7" | "30" | "90">(
     "all",
   );
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [modalCustomer, setModalCustomer] = useState<Customer | null>(null);
-  const [modalMode, setModalMode] = useState<ModalMode>(null);
-  const [editForm, setEditForm] = useState(emptyForm);
   const [suspendTarget, setSuspendTarget] = useState<Customer | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -235,15 +83,12 @@ export default function CustomersPage() {
       try {
         const response = await customerService.getAll();
         if (mounted) {
-          console.log(response)
-          setCustomers(response.length ? response : initialCustomers);
+          setCustomers(response);
           setError(null);
         }
       } catch {
         if (mounted) {
-          setError(
-            "Could not load customer data from the API. Showing the cached list instead.",
-          );
+          setError("Could not load customer data from the API.");
         }
       } finally {
         if (mounted) setLoading(false);
@@ -303,75 +148,30 @@ export default function CustomersPage() {
     setCustomerPage(1);
   };
 
-  const openView = (c: Customer) => {
-    setOpenMenuId(null);
+  const openView = (c: Customer) =>
     navigate(`/admin/customers/users/${c.id}`, { state: { customer: c } });
-  };
 
-  const openEdit = (c: Customer) => {
-    setModalCustomer(c);
-    setEditForm({
-      name: c.name,
-      email: c.email,
-      phone: c.phone,
-      balance: String(c.balance),
-      status: c.status,
-      kyc: c.kyc,
-    });
-    setModalMode("edit");
-    setOpenMenuId(null);
-  };
+  const openEdit = (c: Customer) =>
+    navigate(`/admin/customers/users/${c.id}/edit`, { state: { customer: c } });
 
-  const openCreate = () => {
-    setModalCustomer(null);
-    setEditForm(emptyForm);
-    setModalMode("create");
-  };
+  const openCreate = () => navigate("/admin/customers/users/new");
 
-  const closeModal = () => {
-    setModalCustomer(null);
-    setModalMode(null);
-  };
-
-  const saveCustomer = async () => {
-    if (!editForm.name.trim() || !editForm.email.trim()) return;
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      if (modalMode === "edit" && modalCustomer) {
-        const updated = await customerService.update(modalCustomer.id, {
-          name: editForm.name,
-          email: editForm.email,
-          phone: editForm.phone,
-          balance: Number(editForm.balance) || 0,
-          status: editForm.status,
-          kyc: editForm.kyc,
-        });
-        setCustomers((prev) =>
-          prev.map((c) => (c.id === modalCustomer.id ? updated : c)),
-        );
-      } else if (modalMode === "create") {
-        const created = await customerService.create({
-          name: editForm.name,
-          email: editForm.email,
-          phone: editForm.phone,
-          balance: Number(editForm.balance) || 0,
-          status: editForm.status,
-          kyc: editForm.kyc,
-        });
-        resetFilters();
-        setCustomers((prev) => [created, ...prev]);
-        setCustomerPage(1);
-      }
-      closeModal();
-    } catch {
-      setError("The customer could not be saved right now. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const menuItems = (c: Customer) => [
+    { label: "View", icon: Eye, onClick: () => openView(c) },
+    { label: "Edit", icon: Pencil, onClick: () => openEdit(c) },
+    {
+      label: c.status === "suspended" ? "Reactivate" : "Suspend",
+      icon: c.status === "suspended" ? ShieldCheck : Ban,
+      onClick: () => setSuspendTarget(c),
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      tone: "danger" as const,
+      separatorBefore: true,
+      onClick: () => setDeleteTarget(c),
+    },
+  ];
 
   const confirmSuspend = async () => {
     if (!suspendTarget) return;
@@ -534,13 +334,21 @@ export default function CustomersPage() {
           <EmptyState
             icon={Users}
             title="No customers found"
-            description="Try adjusting your search or filters"
+            description={
+              hasActiveFilters
+                ? "Try adjusting your search or filters"
+                : "Newly registered customers will appear here"
+            }
             action={
               hasActiveFilters ? (
                 <Button variant="secondary" size="sm" onClick={resetFilters}>
                   Clear filters
                 </Button>
-              ) : undefined
+              ) : (
+                <Button size="sm" onClick={openCreate}>
+                  <Plus className="w-3.5 h-3.5" /> Create customer
+                </Button>
+              )
             }
           />
         ) : (
@@ -565,61 +373,8 @@ export default function CustomersPage() {
                       </div>
                     </button>
 
-                    <div className="relative shrink-0">
-                      <button
-                        onClick={() =>
-                          setOpenMenuId(openMenuId === c.id ? null : c.id)
-                        }
-                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-gray-100"
-                        title="Actions"
-                      >
-                        <MoreVertical className="h-3.5 w-3.5" />
-                      </button>
-                      {openMenuId === c.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setOpenMenuId(null)}
-                          />
-                          <div className="absolute right-0 top-8 z-20 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-                            <button
-                              onClick={() => openView(c)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                            >
-                              <Eye className="h-3.5 w-3.5" /> View
-                            </button>
-                            <button
-                              onClick={() => openEdit(c)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                            >
-                              <Pencil className="h-3.5 w-3.5" /> Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSuspendTarget(c);
-                                setOpenMenuId(null);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                            >
-                              {c.status === "suspended" ? (
-                                <ShieldCheck className="h-3.5 w-3.5" />
-                              ) : (
-                                <Ban className="h-3.5 w-3.5" />
-                              )}
-                              {c.status === "suspended" ? "Reactivate" : "Suspend"}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setDeleteTarget(c);
-                                setOpenMenuId(null);
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" /> Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
+                    <div className="shrink-0">
+                      <ActionMenu items={menuItems(c)} />
                     </div>
                   </div>
 
@@ -694,14 +449,18 @@ export default function CustomersPage() {
                       className="hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => openView(c)}
+                          className="flex items-center gap-2.5 text-left"
+                        >
                           <div className="w-7 h-7 bg-[#111827]/10 text-[#111827] rounded-full flex items-center justify-center text-xs font-medium shrink-0">
                             {initials(c.username || c.name)}
                           </div>
-                          <span className="font-medium text-slate-900 text-xs whitespace-nowrap">
+                          <span className="font-medium text-slate-900 text-xs whitespace-nowrap hover:underline">
                             {c.username || c.name}
                           </span>
-                        </div>
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
                         {c.email}
@@ -721,65 +480,8 @@ export default function CustomersPage() {
                       <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
                         {formatDate(c.dateJoined)}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="relative flex justify-center">
-                          <button
-                            onClick={() =>
-                              setOpenMenuId(openMenuId === c.id ? null : c.id)
-                            }
-                            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
-                            title="Actions"
-                          >
-                            <MoreVertical className="w-3.5 h-3.5" />
-                          </button>
-                          {openMenuId === c.id && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setOpenMenuId(null)}
-                              />
-                              <div className="absolute right-0 top-8 z-20 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-                                <button
-                                  onClick={() => openView(c)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Eye className="w-3.5 h-3.5" /> View
-                                </button>
-                                <button
-                                  onClick={() => openEdit(c)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" /> Edit
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSuspendTarget(c);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                                >
-                                  {c.status === "suspended" ? (
-                                    <ShieldCheck className="w-3.5 h-3.5" />
-                                  ) : (
-                                    <Ban className="w-3.5 h-3.5" />
-                                  )}
-                                  {c.status === "suspended"
-                                    ? "Reactivate"
-                                    : "Suspend"}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setDeleteTarget(c);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
+                      <td className="px-4 py-3 text-center">
+                        <ActionMenu items={menuItems(c)} />
                       </td>
                     </tr>
                   ))}
@@ -797,129 +499,6 @@ export default function CustomersPage() {
           </>
         )}
       </Card>
-
-      {/* Edit / Create modal */}
-      {modalMode && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-xl w-full max-w-sm shadow-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
-              <h3 className="font-semibold text-slate-900 text-sm">
-                {modalMode === "create" ? "Create customer" : "Edit customer"}
-              </h3>
-              <button
-                onClick={closeModal}
-                className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-3.5">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Full name
-                  </label>
-                  <input
-                    value={editForm.name}
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, name: e.target.value }))
-                    }
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Email
-                  </label>
-                  <input
-                    value={editForm.email}
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, email: e.target.value }))
-                    }
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Phone
-                  </label>
-                  <input
-                    value={editForm.phone}
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, phone: e.target.value }))
-                    }
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Wallet balance
-                  </label>
-                  <input
-                    type="number"
-                    value={editForm.balance}
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, balance: e.target.value }))
-                    }
-                    placeholder="0.00"
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Status
-                  </label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        status: e.target.value as CustomerStatus,
-                      }))
-                    }
-                    className={selectCls}
-                  >
-                    <option value="active">Active</option>
-                    <option value="suspended">Suspended</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Verification status
-                  </label>
-                  <select value={editForm.kyc} disabled className={`${selectCls} bg-gray-50 text-slate-400`}>
-                    <option value="verified">Verified</option>
-                    <option value="pending">Pending</option>
-                    <option value="unverified">Unverified</option>
-                  </select>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Read-only — determined by the customer's email verification, not editable here.
-                  </p>
-                </div>
-                <div className="flex gap-3 pt-1">
-                  <Button variant="secondary" fullWidth onClick={closeModal}>
-                    Cancel
-                  </Button>
-                  <Button
-                    fullWidth
-                    loading={saving}
-                    disabled={
-                      !editForm.name.trim() || !editForm.email.trim() || saving
-                    }
-                    onClick={saveCustomer}
-                  >
-                    {saving
-                      ? "Saving..."
-                      : modalMode === "create"
-                        ? "Create customer"
-                        : "Save changes"}
-                  </Button>
-                </div>
-              </div>
-          </div>
-        </div>
-      )}
 
       {/* Suspend / reactivate confirm */}
       {suspendTarget && (
