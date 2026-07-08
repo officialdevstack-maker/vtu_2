@@ -5,6 +5,10 @@ type ApiEnvelope<T> = { message: string; success: boolean; data: T; type: string
 export type ProfileUpdatePayload = {
   fullname?: string;
   phone?: string;
+  // Accepted by PUT /account/profile so the default owner bootstrap account
+  // (see DefaultCredentialsModal) can rotate its login identity.
+  username?: string;
+  email?: string;
 };
 
 export type PasswordUpdatePayload = {

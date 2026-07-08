@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../shared/providers/auth";
 import { TopLoadingBar } from "../../user/components/shared-ui";
+import DefaultCredentialsModal from "./DefaultCredentialsModal";
 import { prefetchAdminDashboard } from "../pages/dashboardService";
 import GlobalSearch from "@/shared/components/global-search";
 
@@ -535,6 +536,10 @@ const Layout = () => {
           </div>
         </div>
       ) : null}
+
+      {/* Blocks the panel while the /setup bootstrap account still has its
+          default credentials — renders null for everyone else. */}
+      <DefaultCredentialsModal />
     </div>
   );
 };
