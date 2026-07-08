@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Phone } from "lucide-react";
+import { Info, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fmt } from "../data/mock";
@@ -65,6 +65,7 @@ export default function BuyAirtimePage() {
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
   const [ported, setPorted] = useState(false);
+  const [showPortedHelp, setShowPortedHelp] = useState(false);
   const [showPromo, setShowPromo] = useState(false);
   const [code, setCode] = useState("");
   const [pin, setPin] = useState("");
@@ -243,15 +244,31 @@ export default function BuyAirtimePage() {
             {phone && phone.length !== 11 && (
               <p className="text-xs text-red-500 mt-1">Enter a valid 11-digit phone number</p>
             )}
-            <label className="flex items-center gap-2 mt-2 text-xs text-slate-500 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={ported}
-                onChange={(e) => setPorted(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-gray-300 accent-[#111827]"
-              />
-              This number was ported from another network
-            </label>
+            <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+              <label className="flex min-w-0 items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={ported}
+                  onChange={(e) => setPorted(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-gray-300 accent-[#111827]"
+                />
+                <span>This number was ported from another network</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowPortedHelp((v) => !v)}
+                aria-expanded={showPortedHelp}
+                aria-label="What does ported number mean?"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#111827]/20"
+              >
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {showPortedHelp && (
+              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                Select this if your phone number has been moved from its original network to another network. It stops automatic network detection from changing your selected network.
+              </div>
+            )}
           </div>
 
           <div>

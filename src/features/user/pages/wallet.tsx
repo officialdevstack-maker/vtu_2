@@ -164,7 +164,7 @@ export default function WalletPage() {
   const setActiveTab = (tab: Tab) => setSearchParams({ tab }, { replace: true });
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-xl space-y-5">
       <PageHeader title="Wallet" description="Fund, send, and withdraw your wallet balance" />
 
       <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
