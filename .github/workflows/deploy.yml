@@ -49,5 +49,5 @@ jobs:
           password: ${{ secrets.CPANEL_PASSWORD }}
           port: ${{ secrets.CPANEL_PORT }}
           local-dir: dist/
-          server-dir: ${{ secrets.CPANEL_PATH_FRONTEND }}
+          server-dir: /public_html/
           protocol: ftps

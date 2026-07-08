@@ -82,7 +82,11 @@ const setRequestHeader = (headers: unknown, name: string, value: string) => {
 };
 
 apiClient.interceptors.request.use((config) => {
-  if (config.url?.includes('/sanctum/csrf-cookie')) {
+  const requestUrl = config.url ?? '';
+  const normalizedUrl = requestUrl.replace(/^\/+/, '');
+  config.url = normalizedUrl;
+
+  if (normalizedUrl.includes('sanctum/csrf-cookie')) {
     config.baseURL = siteBaseUrl;
   }
 
