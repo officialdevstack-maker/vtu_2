@@ -372,7 +372,7 @@ export function Pagination({
 
 export function PurchaseShell({ children, maxWidth = "max-w-xl" }: { children: ReactNode; maxWidth?: string }) {
   return (
-    <div className={maxWidth}>
+    <div className={cn("mx-auto w-full", maxWidth)}>
       <Card className="overflow-hidden">{children}</Card>
     </div>
   );

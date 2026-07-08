@@ -312,29 +312,35 @@ export default function Sidebar({
                   className="fixed inset-0 z-10"
                   onClick={() => setAccountMenuOpen(false)}
                 />
-                <div className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-xl border border-white/10 bg-gray-900 py-1 shadow-2xl">
+                <div
+                  className={`absolute bottom-full left-0 right-0 z-20 mb-2 rounded-xl border border-white/10 bg-gray-900 py-1 shadow-2xl ${
+                    collapsed ? "lg:bottom-0 lg:left-full lg:right-auto lg:mb-0 lg:ml-2 lg:w-48" : ""
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={goToSettings}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                   >
-                    <Settings className="h-3.5 w-3.5" /> Settings
+                    <Settings className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate whitespace-nowrap">Settings</span>
                   </button>
                   <button
                     type="button"
                     onClick={goToUpgradeAccount}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                   >
-                    <ArrowUpCircle className="h-3.5 w-3.5" /> Upgrade account
+                    <ArrowUpCircle className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate whitespace-nowrap">Upgrade account</span>
                   </button>
                   {canSwitchAccount && (
                     <button
                       type="button"
                       onClick={handleSwitchToAdminView}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                     >
-                      <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to admin
-                      view
+                      <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate whitespace-nowrap">Switch to admin view</span>
                     </button>
                   )}
                   <button
@@ -343,9 +349,10 @@ export default function Sidebar({
                       setAccountMenuOpen(false);
                       setShowLogoutModal(true);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-400 transition-colors hover:bg-red-500/10"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-red-400 transition-colors hover:bg-red-500/10"
                   >
-                    <LogOut className="h-3.5 w-3.5" /> Log out
+                    <LogOut className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate whitespace-nowrap">Log out</span>
                   </button>
                 </div>
               </>
