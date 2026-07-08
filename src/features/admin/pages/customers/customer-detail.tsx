@@ -12,6 +12,7 @@ import {
   CalendarDays,
   Mail,
   Phone,
+  UserCog,
 } from "lucide-react";
 import {
   PageHeader,
@@ -28,6 +29,8 @@ import {
 } from "../../../user/components/shared-ui";
 import { usePagination } from "../../../../shared/pagination";
 import { fmt } from "../../../user/data/mock";
+import { startImpersonation } from "@/shared/impersonation";
+import { extractErrorMessage } from "../settings/shared";
 import {
   customerService,
   transactionService,
@@ -303,6 +306,7 @@ export default function CustomerDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [funding, setFunding] = useState(false);
+  const [impersonating, setImpersonating] = useState(false);
 
   const back = () => navigate("/admin/customers/users");
 
@@ -349,6 +353,21 @@ export default function CustomerDetailPage() {
       setError("The customer could not be deleted right now.");
       setDeleting(false);
       setConfirmDelete(false);
+    }
+  };
+
+  const handleImpersonate = async () => {
+    if (!id) return;
+    setImpersonating(true);
+    setError(null);
+    try {
+      const token = await customerService.impersonate(id);
+      // Parks the admin token and does a full reload into /dashboard —
+      // this page unmounts, so no state reset needed on success.
+      startImpersonation(token, `/admin/customers/users/${id}`);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+      setImpersonating(false);
     }
   };
 
@@ -517,7 +536,7 @@ export default function CustomerDetailPage() {
                     {customer.phone && <CopyButton value={customer.phone} label="phone" />}
                   </span>,
                 )}
-                {row("Account type", <span className="capitalize">{customer.userType}</span>)}
+                {row("Role", <span className="capitalize">{customer.roleName ?? "—"}</span>)}
                 {row("Status", <StatusBadge status={customer.status} />)}
                 {row("Date joined", formatDate(customer.dateJoined))}
               </div>
@@ -535,6 +554,17 @@ export default function CustomerDetailPage() {
                 Account actions
               </h2>
               <div className="space-y-2">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  size="sm"
+                  disabled={impersonating}
+                  loading={impersonating}
+                  onClick={() => void handleImpersonate()}
+                >
+                  <UserCog className="w-3.5 h-3.5" />
+                  {impersonating ? "Starting session…" : "Sign in as customer"}
+                </Button>
                 <Button
                   variant="secondary"
                   fullWidth
@@ -557,8 +587,10 @@ export default function CustomerDetailPage() {
                 </Button>
               </div>
               <p className="text-xs text-slate-400 mt-3">
-                Suspending blocks login until reactivated. Deleting is permanent
-                and removes the account entirely.
+                "Sign in as customer" opens their dashboard in this tab — use
+                the banner to return. Suspending blocks login until
+                reactivated. Deleting is permanent and removes the account
+                entirely.
               </p>
             </Card>
           </div>

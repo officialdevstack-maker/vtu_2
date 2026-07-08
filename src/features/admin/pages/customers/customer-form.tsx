@@ -11,25 +11,22 @@ import {
   SkeletonLine,
 } from "../../../user/components/shared-ui";
 import { SectionTitle, Field, ErrorBanner, extractErrorMessage } from "../settings/shared";
-import { customerService, type Customer, type CustomerPayload } from "./service";
+import {
+  customerService,
+  roleService,
+  type Customer,
+  type CustomerPayload,
+  type Role,
+} from "./service";
 
 const BACK = "/admin/customers/users";
-
-// users.user_type enum on the backend — drives pricing-tier lookups.
-const USER_TYPES = [
-  { value: "user", label: "User (default)" },
-  { value: "agent", label: "Agent" },
-  { value: "api", label: "API" },
-  { value: "bonanza", label: "Bonanza" },
-  { value: "admin", label: "Admin (full access)" },
-] as const;
 
 type FormState = {
   name: string;
   username: string;
   email: string;
   phone: string;
-  userType: string;
+  roleId: string;
   status: "active" | "suspended" | "inactive";
   password: string;
 };
@@ -39,7 +36,7 @@ const blankForm = (): FormState => ({
   username: "",
   email: "",
   phone: "",
-  userType: "user",
+  roleId: "",
   status: "active",
   password: "",
 });
@@ -49,7 +46,7 @@ const toForm = (c: Customer): FormState => ({
   username: c.username ?? "",
   email: c.email,
   phone: c.phone,
-  userType: c.userType ?? "user",
+  roleId: c.roleId ?? "",
   status: c.status,
   password: "",
 });
@@ -109,6 +106,8 @@ export default function CustomerFormPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
 
   useEffect(() => {
     if (id && !stateCustomer) {
@@ -121,6 +120,29 @@ export default function CustomerFormPage() {
         .finally(() => setFetchingInitial(false));
     }
   }, [id, stateCustomer]);
+
+  useEffect(() => {
+    roleService
+      .getAll()
+      .then((all) => {
+        const active = all.filter((r) => r.status === "active");
+        setRoles(active);
+        // New customers default to the same role self-registration assigns.
+        setForm((f) =>
+          f.roleId
+            ? f
+            : {
+                ...f,
+                roleId:
+                  active.find((r) => r.slug.toLowerCase() === "basic")?.id ??
+                  active[0]?.id ??
+                  "",
+              },
+        );
+      })
+      .catch(() => setRoles([]))
+      .finally(() => setRolesLoading(false));
+  }, []);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -150,7 +172,7 @@ export default function CustomerFormPage() {
       username: form.username.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
-      userType: form.userType,
+      roleId: form.roleId || undefined,
       ...(isEdit ? { status: form.status } : {}),
       ...(form.password ? { password: form.password } : {}),
     };
@@ -311,17 +333,31 @@ export default function CustomerFormPage() {
             <SectionTitle>Account & access</SectionTitle>
             <div className="space-y-4">
               <Field
-                label="Account type"
-                hint="controls which pricing tier applies"
+                label="Role"
+                hint="sets permissions and pricing tier"
               >
                 <select
-                  value={form.userType}
-                  onChange={(e) => set("userType", e.target.value)}
+                  value={form.roleId}
+                  onChange={(e) => set("roleId", e.target.value)}
+                  disabled={rolesLoading}
                   className={selectCls}
                 >
-                  {USER_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
+                  {rolesLoading && <option value="">Loading roles…</option>}
+                  {!rolesLoading && !form.roleId && (
+                    <option value="">Select a role…</option>
+                  )}
+                  {/* Keep an edited customer's current role selectable even
+                      when it's inactive and thus filtered from the list. */}
+                  {!rolesLoading &&
+                    form.roleId &&
+                    !roles.some((r) => r.id === form.roleId) && (
+                      <option value={form.roleId}>
+                        {initial?.roleName ?? "Current role"}
+                      </option>
+                    )}
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
                     </option>
                   ))}
                 </select>

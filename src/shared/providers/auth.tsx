@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, setAuthToken } from "../api/apiClient";
+import { clearImpersonation } from "../impersonation";
 import { config } from "../config";
 import type { RegisterPayload } from "@/features/auth/authService";
 
@@ -215,6 +216,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // this device (e.g. a shared computer, or switching accounts).
       queryClient.clear();
       setAuthToken(null);
+      // A plain logout during an impersonation session must also drop the
+      // parked admin token, or the next login would show the banner again.
+      clearImpersonation();
       setIsLoading(false);
     }
   }, [queryClient]);

@@ -14,7 +14,8 @@ export type Customer = {
   kyc: KycStatus;
   dateJoined: string;
   username?: string;
-  userType?: string;
+  roleId?: string | null;
+  roleName?: string | null;
 };
 
 export type CustomerPayload = {
@@ -22,7 +23,7 @@ export type CustomerPayload = {
   email: string;
   phone: string;
   username?: string;
-  userType?: string;
+  roleId?: string | null;
   status?: CustomerStatus;
   // Required on create; optional on update (blank = keep current password).
   password?: string;
@@ -53,7 +54,15 @@ const mapCustomer = (item: any): Customer => ({
   kyc: normalizeKyc(item?.kyc_status ?? item?.verification_status ?? item?.email_verified_at ?? item?.is_verified),
   dateJoined: item?.created_at || item?.date_joined || "",
   username: item?.username,
-  userType: item?.user_type || item?.role || "user",
+  roleId:
+    item?.role_id != null
+      ? String(item.role_id)
+      : item?.role?.id != null
+        ? String(item.role.id)
+        : null,
+  // index/show eager-load the role relation; fall back to user_type for
+  // payloads that don't carry it (e.g. the /table/users fallback).
+  roleName: item?.role?.name ?? item?.user_type ?? null,
 });
 
 // The live API wraps /admin/users responses more deeply than the docs show
@@ -87,7 +96,9 @@ const toCreatePayload = (payload: CustomerPayload) => ({
   email: payload.email,
   phone: payload.phone,
   password: payload.password,
-  user_type: payload.userType || "user",
+  // The backend defaults to the "basic" role when omitted, and derives
+  // user_type from the role itself (see UserController::userTypeForRole).
+  ...(payload.roleId ? { role_id: payload.roleId } : {}),
 });
 
 // wallet_balance is intentionally never sent — balance changes go through
@@ -97,7 +108,7 @@ const toUpdatePayload = (payload: CustomerPayload) => ({
   username: payload.username,
   email: payload.email,
   phone: payload.phone,
-  user_type: payload.userType || "user",
+  ...(payload.roleId ? { role_id: payload.roleId } : {}),
   ...(payload.status ? { status: payload.status } : {}),
   ...(payload.password ? { password: payload.password } : {}),
 });
@@ -157,6 +168,19 @@ export const customerService = {
       type,
     });
     return mapCustomer(digUser(response.data));
+  },
+
+  // Issues a login token for the customer so the admin can browse the app as
+  // them — see UserController::impersonate. The caller hands the token to
+  // startImpersonation(), which parks the admin session and reloads.
+  impersonate: async (id: string): Promise<string> => {
+    const response = await apiClient.post<ApiEnvelope<any>>(`${USERS}/${id}/impersonate`);
+    let node: any = response.data;
+    for (let i = 0; i < 4 && node != null; i++) {
+      if (typeof node.token === "string") return node.token;
+      node = node.data;
+    }
+    throw new Error("The impersonation response did not include a token.");
   },
 };
 
