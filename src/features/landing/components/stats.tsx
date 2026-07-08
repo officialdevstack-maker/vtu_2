@@ -3,11 +3,19 @@ import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransf
 import { Reveal } from "./motion";
 import { GlowOrb } from "./ui";
 
-const stats = [
-  { value: 150000, prefix: "", suffix: "+", label: "Active customers" },
-  { value: 2, prefix: "₦", suffix: "B+", label: "Processed to date" },
-  { value: 99.9, prefix: "", suffix: "%", label: "Platform uptime", decimals: 1 },
-  { value: 10, prefix: "<", suffix: "s", label: "Average delivery time" },
+type Stat = {
+  value: number;
+  prefix: string;
+  suffix: string;
+  label: string;
+  decimals?: number;
+};
+
+const stats: Stat[] = [
+  { value: 4, prefix: "", suffix: "", label: "Major mobile networks" },
+  { value: 30, prefix: "", suffix: "+", label: "Data and airtime plans" },
+  { value: 24, prefix: "", suffix: "/7", label: "Wallet access" },
+  { value: 60, prefix: "<", suffix: "s", label: "Typical delivery window" },
 ];
 
 function Counter({ value, decimals = 0 }: { value: number; decimals?: number }) {
@@ -42,10 +50,10 @@ export function Stats() {
       <div className="relative mx-auto max-w-6xl px-4">
         <Reveal>
           <p className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/70">
-            By the numbers
+            Everyday coverage
           </p>
           <h2 className="text-balance mx-auto mt-3 max-w-xl text-center text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
-            Trusted at a scale that speaks for itself
+            Built around the payments people make most
           </h2>
         </Reveal>
 
