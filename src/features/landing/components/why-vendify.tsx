@@ -29,13 +29,13 @@ const reasons = [
   },
 ];
 
-export function WhyKora() {
+export function WhyVendify() {
   return (
-    <section id="why-kora" className="relative py-24 sm:py-28">
+    <section id="why-vendify" className="relative py-24 sm:py-28">
       <div className="mx-auto max-w-6xl px-4">
         <Reveal>
           <SectionHeading
-            kicker="Why KORA"
+            kicker="Why Vendify"
             title="Built to feel inevitable, not impressive"
             description="No gimmicks — just a payment experience that gets out of your way."
           />

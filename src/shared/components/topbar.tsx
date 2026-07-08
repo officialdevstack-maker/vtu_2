@@ -27,7 +27,7 @@ export default function Topbar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const title = pageTitles[location.pathname] ?? "KORA";
+  const title = pageTitles[location.pathname] ?? "Vendify";
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 lg:px-6 gap-3 shrink-0">

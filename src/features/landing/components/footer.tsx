@@ -16,7 +16,7 @@ const columns = [
   {
     title: "Company",
     links: [
-      { label: "About", href: "#why-kora" },
+      { label: "About", href: "#why-vendify" },
       { label: "How it works", href: "#showcase" },
       { label: "FAQ", href: "#faq" },
     ],
@@ -82,8 +82,8 @@ export function Footer() {
           <p className="text-xs text-slate-400">
             &copy; {new Date().getFullYear()} {app_name}. All rights reserved.
           </p>
-          <a href="mailto:support@kora.com" className="text-xs text-slate-400 transition-colors hover:text-slate-700">
-            support@kora.com
+          <a href="mailto:support@vendify.com" className="text-xs text-slate-400 transition-colors hover:text-slate-700">
+            support@vendify.com
           </a>
         </div>
       </Reveal>

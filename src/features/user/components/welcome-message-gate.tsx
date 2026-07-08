@@ -27,7 +27,7 @@ export function WelcomeMessageGate() {
     evaluate();
 
     const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === "kora-welcome-message") evaluate();
+      if (!e.key || e.key === "vendify-welcome-message") evaluate();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);

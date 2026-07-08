@@ -33,7 +33,7 @@ export type Stats = {
   total_funding_today: number;
   total_signups_today: number;
   transaction_count: number;
-  affiliates: AffiliateSummary;
+  affiliates?: AffiliateSummary;
 };
 
 export const statsService = {

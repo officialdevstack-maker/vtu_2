@@ -8,7 +8,7 @@ import { Button } from "./ui";
 const navLinks = [
   { label: "Features", href: "#services" },
   { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#why-kora" },
+  { label: "About", href: "#why-vendify" },
   { label: "Support", href: "#faq" },
 ];
 

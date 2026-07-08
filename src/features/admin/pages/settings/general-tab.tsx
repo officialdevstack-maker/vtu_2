@@ -242,7 +242,7 @@ export function GeneralTab() {
               <input
                 value={form.app_name}
                 onChange={(e) => set("app_name", e.target.value)}
-                placeholder="e.g. Spur Connect"
+                placeholder="e.g. Vendify"
                 className={inputCls}
               />
             </Field>
@@ -328,7 +328,7 @@ export function GeneralTab() {
             <input
               value={form.meta_title}
               onChange={(e) => set("meta_title", e.target.value)}
-              placeholder={form.app_name || "e.g. Spur Connect — Airtime, Data & Bills"}
+              placeholder={form.app_name || "e.g. Vendify — Airtime, Data & Bills"}
               className={inputCls}
             />
           </Field>

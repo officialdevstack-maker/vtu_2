@@ -36,7 +36,7 @@ export default function CreateTransactionPinPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
-  const { user, isAuthenticated, isInitializing } = useAuth();
+  const { user, isAuthenticated, isInitializing, refreshUser } = useAuth();
 
   const value = stage === "create" ? pin : confirmPin;
   const setValue = stage === "create" ? setPin : setConfirmPin;
@@ -51,6 +51,7 @@ export default function CreateTransactionPinPage() {
     setSubmitting(true);
     try {
       await accountService.updatePin({ pin: finalPin, pin_confirmation: finalConfirm });
+      await refreshUser();
       setSuccess(true);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {

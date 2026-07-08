@@ -218,7 +218,7 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
         <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center">
           <Zap className="w-5 h-5 text-indigo-700" />
         </div>
-        <span className="text-white font-semibold text-xl tracking-tight">KORA</span>
+        <span className="text-white font-semibold text-xl tracking-tight">Vendify</span>
       </div>
       <div className="relative z-10">
         <h1 className="text-4xl font-semibold text-white leading-tight mb-4">Fast. Reliable.<br />Always on.</h1>
@@ -254,7 +254,7 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
       <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
         <Zap className="w-4 h-4 text-white" />
       </div>
-      <span className="font-semibold text-gray-900">KORA</span>
+      <span className="font-semibold text-gray-900">Vendify</span>
     </div>
   );
 
@@ -281,7 +281,7 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
             <>
               <div className="mb-8">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-1">Welcome back</h2>
-                <p className="text-gray-500 text-sm">Sign in to your KORA account</p>
+                <p className="text-gray-500 text-sm">Sign in to your Vendify account</p>
               </div>
               <div className="space-y-4">
                 <div>
@@ -323,7 +323,7 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
             <>
               <div className="mb-8">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-1">Create account</h2>
-                <p className="text-gray-500 text-sm">Join KORA and start transacting instantly</p>
+                <p className="text-gray-500 text-sm">Join Vendify and start transacting instantly</p>
               </div>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -546,7 +546,7 @@ function Sidebar({
             <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-gray-900 tracking-tight">KORA</span>
+            <span className="font-semibold text-gray-900 tracking-tight">Vendify</span>
           </div>
           {isAdmin && (
             <span className="ml-auto text-xs bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded-full">Admin</span>
@@ -644,7 +644,7 @@ function TopBar({ page, onToggleSidebar }: { page: Page; onToggleSidebar: () => 
       <button onClick={onToggleSidebar} className="lg:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition">
         <Menu className="w-5 h-5" />
       </button>
-      <h1 className="text-gray-900 font-semibold">{pageTitles[page] ?? "KORA"}</h1>
+      <h1 className="text-gray-900 font-semibold">{pageTitles[page] ?? "Vendify"}</h1>
       <div className="ml-auto flex items-center gap-2">
         <button className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition">
           <Bell className="w-4 h-4" />
@@ -1201,7 +1201,7 @@ function ReceiptPage() {
             ["Recipient", tx.detail],
             ["Network", tx.network || "N/A"],
             ["Date & Time", tx.date],
-            ["Payment Method", "KORA Wallet"],
+            ["Payment Method", "Vendify Wallet"],
             ["Transaction Fee", "Free"],
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between text-sm">
@@ -1223,7 +1223,7 @@ function ReceiptPage() {
             <Share2 className="w-4 h-4" /> Share Receipt
           </button>
           <div className="text-center">
-            <p className="text-gray-400 text-xs">Powered by KORA · Ref: {tx.ref}</p>
+            <p className="text-gray-400 text-xs">Powered by Vendify · Ref: {tx.ref}</p>
           </div>
         </div>
       </div>
@@ -1247,7 +1247,7 @@ function WalletPage() {
         <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5" />
         <div className="absolute -bottom-16 right-10 w-56 h-56 rounded-full bg-white/5" />
         <div className="relative z-10">
-          <p className="text-indigo-300 text-xs font-medium uppercase tracking-wide mb-1">KORA Wallet</p>
+          <p className="text-indigo-300 text-xs font-medium uppercase tracking-wide mb-1">Vendify Wallet</p>
           <div className="flex items-center gap-3 mb-1">
             <span className="text-white text-3xl font-semibold">{balanceVisible ? fmt(mockUser.balance) : "₦ ••••••"}</span>
             <button onClick={() => setBalanceVisible(!balanceVisible)} className="text-indigo-300 hover:text-white transition">
@@ -1295,7 +1295,7 @@ function WalletPage() {
         <div className="bg-gray-50 rounded-xl p-4 space-y-3">
           {[
             ["Bank Name", "Providus Bank", "bank"],
-            ["Account Name", "KORA / Chukwuemeka Obi", "name"],
+            ["Account Name", "Vendify / Chukwuemeka Obi", "name"],
             ["Account Number", "0123456789", "acc"],
           ].map(([label, value, key]) => (
             <div key={label} className="flex items-center justify-between">
@@ -1438,7 +1438,7 @@ function ReferralPage() {
         <div className="space-y-4">
           {[
             { step: "1", title: "Share your code", desc: "Share your unique referral code or link with friends and family" },
-            { step: "2", title: "Friend signs up", desc: "Your friend creates a KORA account using your referral code" },
+            { step: "2", title: "Friend signs up", desc: "Your friend creates a Vendify account using your referral code" },
             { step: "3", title: "Earn your reward", desc: "Get ₦500 credited to your wallet once they complete a transaction" },
           ].map(item => (
             <div key={item.step} className="flex gap-4">
@@ -1691,7 +1691,7 @@ function SupportPage() {
     { q: "Why did my transaction fail?", a: "Transactions fail due to insufficient balance, incorrect recipient details, or a temporary service disruption. Check your transaction history for the specific error and contact support if needed." },
     { q: "How long does airtime delivery take?", a: "Airtime is delivered within seconds in most cases. If it has not arrived within 2 minutes, open a support ticket and our team will resolve it promptly." },
     { q: "How do I reset my transaction PIN?", a: "Go to Settings > Security > Transaction PIN and tap \"Update\". You will be asked to verify your identity via OTP before setting a new PIN." },
-    { q: "Is my money safe on KORA?", a: "Yes. KORA uses bank-grade 256-bit encryption and is registered with the CBN. Your wallet balance is fully protected." },
+    { q: "Is my money safe on Vendify?", a: "Yes. Vendify uses bank-grade 256-bit encryption and is registered with the CBN. Your wallet balance is fully protected." },
   ];
 
   return (
@@ -1740,7 +1740,7 @@ function SupportPage() {
         </div>
         <div>
           <p className="text-indigo-900 text-sm font-medium">Need urgent help?</p>
-          <p className="text-indigo-600 text-xs mt-0.5">Email <span className="font-medium">support@kora.com</span> or call <span className="font-medium">0800-KORA</span></p>
+          <p className="text-indigo-600 text-xs mt-0.5">Email <span className="font-medium">support@vendify.com</span> or call <span className="font-medium">0800-Vendify</span></p>
         </div>
       </div>
 

@@ -13,7 +13,7 @@ const faqs = [
   {
     question: "Are there any hidden fees?",
     answer:
-      "No. Airtime purchases come with a discount, and every other transaction carries zero KORA fees. Any charge is always shown before you confirm.",
+      "No. Airtime purchases come with a discount, and every other transaction carries zero Vendify fees. Any charge is always shown before you confirm.",
   },
   {
     question: "Is my money safe?",
@@ -31,7 +31,7 @@ const faqs = [
       "All four major mobile networks, DStv, GOtv and Startimes for cable TV, and every major electricity distribution company nationwide.",
   },
   {
-    question: "Can I use KORA for my business?",
+    question: "Can I use Vendify for my business?",
     answer:
       "Yes — many customers use their wallet and virtual account to resell data and airtime to their own customers at a markup.",
   },

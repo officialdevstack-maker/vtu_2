@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
   Plus,
   Eye,
@@ -87,6 +87,8 @@ const extractVariables = (content: string): string[] => {
 
 type ModalMode = "create" | "edit" | "view" | null;
 
+const MENU_WIDTH = 160; // w-40
+
 export default function TemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -98,6 +100,7 @@ export default function TemplatesPage() {
   const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">("all");
 
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -137,6 +140,17 @@ export default function TemplatesPage() {
       ...f,
       channels: f.channels.includes(c) ? f.channels.filter((x) => x !== c) : [...f.channels, c],
     }));
+  };
+
+  const toggleMenu = (id: number, e: MouseEvent<HTMLButtonElement>) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - MENU_WIDTH });
+    setOpenMenuId(id);
   };
 
   const openCreate = () => {
@@ -247,7 +261,7 @@ export default function TemplatesPage() {
         )}
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <div className="px-4 py-3 border-b border-gray-100 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h3 className="text-sm font-semibold text-slate-900">All templates</h3>
           <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
@@ -340,33 +354,49 @@ export default function TemplatesPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={t.enabled ? "active" : "inactive"} />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="relative flex justify-center">
+                    <td className="px-4 py-3 text-center">
+                      <div className="inline-flex justify-center">
                         <button
-                          onClick={() => setOpenMenuId(openMenuId === t.id ? null : t.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleMenu(t.id, e);
+                          }}
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                           title="Actions"
                         >
                           <MoreVertical className="w-3.5 h-3.5" />
                         </button>
-                        {openMenuId === t.id && (
+                        {openMenuId === t.id && menuPos && (
                           <>
-                            <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                            <div className="absolute right-0 top-8 z-20 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                            <div className="fixed inset-0 z-20" onClick={() => setOpenMenuId(null)} />
+                            <div
+                              className="fixed z-30 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+                              style={{ top: menuPos.top, left: menuPos.left }}
+                            >
                               <button
-                                onClick={() => openView(t)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openView(t);
+                                }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
                               >
                                 <Eye className="w-3.5 h-3.5" /> View
                               </button>
                               <button
-                                onClick={() => openEdit(t)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEdit(t);
+                                }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
                               >
                                 <Pencil className="w-3.5 h-3.5" /> Edit
                               </button>
                               <button
-                                onClick={() => { setDeleteTarget(t); setOpenMenuId(null); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTarget(t);
+                                  setOpenMenuId(null);
+                                }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" /> Delete

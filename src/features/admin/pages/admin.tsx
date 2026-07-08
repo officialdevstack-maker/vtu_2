@@ -64,6 +64,16 @@ const RANGE_OPTIONS = [
   { label: "90d", days: 90 },
 ] as const;
 
+const emptyAffiliates = {
+  total: 0,
+  active: 0,
+  pending: 0,
+  stale: 0,
+  total_synced_customers: 0,
+  total_synced_transactions: 0,
+  total_synced_transaction_volume: 0,
+};
+
 const toDateParam = (d: Date) => d.toISOString().slice(0, 10);
 
 const rangeParams = (days: number) => {
@@ -108,6 +118,7 @@ export default function AdminPage() {
   const analytics: Analytics | null = analyticsQuery.data ?? null;
   const providers: Provider[] = providersQuery.data ?? [];
   const recentTxns: Transaction[] = recentTxnsQuery.data ?? [];
+  const affiliates = stats?.affiliates ?? emptyAffiliates;
 
   const loading = statsQuery.isPending || analyticsQuery.isPending;
   const isSyncing =
@@ -441,7 +452,7 @@ export default function AdminPage() {
               <SkeletonLine key={i} className="h-16 rounded-lg" />
             ))}
           </div>
-        ) : !stats || stats.affiliates.total === 0 ? (
+        ) : affiliates.total === 0 ? (
           <EmptyState
             icon={Network}
             title="No affiliates connected"
@@ -451,31 +462,31 @@ export default function AdminPage() {
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
               <p className="text-xs font-medium text-slate-500">Total</p>
-              <p className="font-semibold text-sm mt-1 text-slate-900">{stats.affiliates.total}</p>
+              <p className="font-semibold text-sm mt-1 text-slate-900">{affiliates.total}</p>
             </div>
             <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
               <p className="text-xs font-medium text-slate-500">Active</p>
-              <p className="font-semibold text-sm mt-1 text-emerald-600">{stats.affiliates.active}</p>
+              <p className="font-semibold text-sm mt-1 text-emerald-600">{affiliates.active}</p>
             </div>
-            <div className={`p-3 rounded-lg border ${stats.affiliates.pending > 0 ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
+            <div className={`p-3 rounded-lg border ${affiliates.pending > 0 ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
               <p className="text-xs font-medium text-slate-500">Pending connection</p>
-              <p className={`font-semibold text-sm mt-1 ${stats.affiliates.pending > 0 ? "text-amber-600" : "text-slate-900"}`}>
-                {stats.affiliates.pending}
+              <p className={`font-semibold text-sm mt-1 ${affiliates.pending > 0 ? "text-amber-600" : "text-slate-900"}`}>
+                {affiliates.pending}
               </p>
             </div>
-            <div className={`p-3 rounded-lg border ${stats.affiliates.stale > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50"}`}>
+            <div className={`p-3 rounded-lg border ${affiliates.stale > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50"}`}>
               <p className="text-xs font-medium text-slate-500">Stale (15m+)</p>
-              <p className={`font-semibold text-sm mt-1 ${stats.affiliates.stale > 0 ? "text-red-600" : "text-slate-900"}`}>
-                {stats.affiliates.stale}
+              <p className={`font-semibold text-sm mt-1 ${affiliates.stale > 0 ? "text-red-600" : "text-slate-900"}`}>
+                {affiliates.stale}
               </p>
             </div>
             <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
               <p className="text-xs font-medium text-slate-500">Synced volume</p>
               <p className="font-semibold text-sm mt-1 text-slate-900">
-                {fmtCompact(stats.affiliates.total_synced_transaction_volume)}
+                {fmtCompact(affiliates.total_synced_transaction_volume)}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                {stats.affiliates.total_synced_customers} customers · {stats.affiliates.total_synced_transactions} txns
+                {affiliates.total_synced_customers} customers · {affiliates.total_synced_transactions} txns
               </p>
             </div>
           </div>

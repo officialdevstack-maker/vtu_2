@@ -47,7 +47,7 @@ export function ProductShowcase() {
         <SectionHeading
           kicker="Product tour"
           title="One wallet. Every payment, handled."
-          description="See how KORA turns a handful of taps into a confirmed, settled payment — no waiting on 'processing'."
+          description="See how Vendify turns a handful of taps into a confirmed, settled payment — no waiting on 'processing'."
           align="center"
         />
       </Reveal>

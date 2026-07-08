@@ -12,8 +12,8 @@ export type WelcomeMessage = {
   updatedAt: string;
 };
 
-const MESSAGE_KEY = "kora-welcome-message";
-const SEEN_KEY = "kora-welcome-message-seen";
+const MESSAGE_KEY = "vendify-welcome-message";
+const SEEN_KEY = "vendify-welcome-message-seen";
 
 export const getWelcomeMessage = (): WelcomeMessage | null => {
   try {

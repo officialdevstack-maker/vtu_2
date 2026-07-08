@@ -35,5 +35,7 @@ export const accountService = {
     apiClient.put<ApiEnvelope<null>>("/account/password", payload).then((r) => r.data),
 
   updatePin: (payload: PinUpdatePayload) =>
-    apiClient.put<ApiEnvelope<null>>("/account/pin", payload).then((r) => r.data),
+    apiClient
+      .put<ApiEnvelope<{ user: Record<string, unknown> }>>("/account/pin", payload)
+      .then((r) => r.data.data.user),
 };

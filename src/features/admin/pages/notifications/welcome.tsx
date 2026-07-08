@@ -69,7 +69,7 @@ export default function WelcomePage() {
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Welcome to Kora VTU!"
+                placeholder="e.g. Welcome to Vendify VTU!"
                 className={inputCls}
               />
             </div>
