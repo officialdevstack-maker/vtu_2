@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
 import { WelcomeMessageGate } from "./welcome-message-gate";
+import { ImpersonationBanner } from "@/shared/components/impersonation-banner";
 import { LayoutDashboard, Zap, Receipt, Wallet, Settings } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
@@ -57,6 +58,7 @@ const UserLayout = () => {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <ImpersonationBanner />
         <Topbar onToggleSidebar={() => setSidebarOpen((o) => !o)} />
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-7xl flex-col px-3 py-3 pb-24 sm:px-4 sm:py-4 lg:px-6 lg:py-6 lg:pb-6">
