@@ -225,7 +225,7 @@ export function EmailTab() {
             <input
               value={form.mail_from_name}
               onChange={(e) => set("mail_from_name", e.target.value)}
-              placeholder="Spur Connect"
+              placeholder="Vendify"
               className={inputCls}
             />
           </Field>

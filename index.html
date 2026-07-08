@@ -8,11 +8,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KORA</title>
+    <title>Vendify</title>
     <!--
       Applies the last-known admin-configured brand title before React (or
       even the JS bundle) loads, so a repeat visit never flashes this static
-      "KORA" default. Reads the exact same localStorage key
+      "Vendify" default. Reads the exact same localStorage key
       src/shared/branding.ts writes to after each successful /branding
       fetch — first-ever visit (nothing cached yet) still shows this
       fallback until that fetch resolves, which is unavoidable without SSR.
@@ -20,7 +20,7 @@
     <script>
       (function () {
         try {
-          var raw = localStorage.getItem('branding-cache-v1');
+          var raw = localStorage.getItem('vendify-branding-cache-v1');
           if (!raw) return;
           var cached = JSON.parse(raw);
           if (cached && cached.data && cached.data.meta_title) {

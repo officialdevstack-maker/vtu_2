@@ -1,57 +1,57 @@
-/* Design tokens and utility classes scoped to the KORA landing page.
-   Deliberately isolated (under .kora-landing) so it never bleeds into the
+/* Design tokens and utility classes scoped to the Vendify landing page.
+   Deliberately isolated (under .vendify-landing) so it never bleeds into the
    authenticated app's dashboard/admin styling in src/index.css. */
 
-.kora-landing {
+.vendify-landing {
   background-color: #fafafb;
   position: relative;
   isolation: isolate;
 }
 
-.kora-landing .glass {
+.vendify-landing .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(15, 23, 42, 0.07);
 }
 
-.kora-landing .glass-strong {
+.vendify-landing .glass-strong {
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-.kora-landing .glass-dark {
+.vendify-landing .glass-dark {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.kora-landing .shadow-premium {
+.vendify-landing .shadow-premium {
   box-shadow:
     0 24px 60px -20px rgba(15, 23, 42, 0.14),
     0 8px 24px -12px rgba(15, 23, 42, 0.08);
 }
 
-.kora-landing .shadow-premium-sm {
+.vendify-landing .shadow-premium-sm {
   box-shadow:
     0 12px 32px -12px rgba(15, 23, 42, 0.12),
     0 4px 12px -6px rgba(15, 23, 42, 0.06);
 }
 
-.kora-landing .shadow-premium-brand {
+.vendify-landing .shadow-premium-brand {
   box-shadow:
     0 24px 64px -16px var(--brand-primary-shadow),
     0 8px 24px -8px var(--brand-primary-shadow);
 }
 
-.kora-landing .landing-brand-glow {
+.vendify-landing .landing-brand-glow {
   background: radial-gradient(closest-side, var(--brand-primary-soft), transparent 75%);
 }
 
-.kora-landing .landing-brand-ring {
+.vendify-landing .landing-brand-ring {
   background: conic-gradient(
     from 180deg,
     color-mix(in srgb, var(--brand-primary) 34%, transparent),
@@ -60,7 +60,7 @@
   );
 }
 
-.kora-landing .landing-brand-line {
+.vendify-landing .landing-brand-line {
   background: linear-gradient(
     90deg,
     transparent,
@@ -71,7 +71,7 @@
 }
 
 /* Subtle film grain so gradients don't look like flat digital blobs. */
-.kora-landing .noise-layer {
+.vendify-landing .noise-layer {
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -80,46 +80,46 @@
   pointer-events: none;
 }
 
-.kora-landing .text-balance {
+.vendify-landing .text-balance {
   text-wrap: balance;
 }
 
-@keyframes kora-float {
+@keyframes vendify-float {
   0%, 100% { transform: translateY(0) rotate(var(--float-rot, 0deg)); }
   50% { transform: translateY(var(--float-y, -14px)) rotate(var(--float-rot, 0deg)); }
 }
 
-.kora-landing .animate-float {
-  animation: kora-float var(--float-duration, 7s) ease-in-out infinite;
+.vendify-landing .animate-float {
+  animation: vendify-float var(--float-duration, 7s) ease-in-out infinite;
   animation-delay: var(--float-delay, 0s);
 }
 
-@keyframes kora-pulse-glow {
+@keyframes vendify-pulse-glow {
   0%, 100% { opacity: 0.5; transform: scale(1); }
   50% { opacity: 0.85; transform: scale(1.06); }
 }
 
-.kora-landing .animate-glow-pulse {
-  animation: kora-pulse-glow 8s ease-in-out infinite;
+.vendify-landing .animate-glow-pulse {
+  animation: vendify-pulse-glow 8s ease-in-out infinite;
 }
 
-@keyframes kora-marquee {
+@keyframes vendify-marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 
-.kora-landing .animate-marquee {
-  animation: kora-marquee 32s linear infinite;
+.vendify-landing .animate-marquee {
+  animation: vendify-marquee 32s linear infinite;
 }
 
-.kora-landing .marquee-track:hover .animate-marquee {
+.vendify-landing .marquee-track:hover .animate-marquee {
   animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .kora-landing .animate-float,
-  .kora-landing .animate-glow-pulse,
-  .kora-landing .animate-marquee {
+  .vendify-landing .animate-float,
+  .vendify-landing .animate-glow-pulse,
+  .vendify-landing .animate-marquee {
     animation: none;
   }
 }

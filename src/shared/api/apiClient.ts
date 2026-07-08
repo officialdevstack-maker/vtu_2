@@ -3,7 +3,7 @@ import { env } from '../env';
 import Cookies from 'js-cookie';
 
 const apiBaseUrl = env('VITE_API_BASE_URL', 'http://localhost:8000/api').replace(/\/+$|\/api\/?$/i, '/api').replace(/\/$/, '');
-export const AUTH_TOKEN_KEY = 'kora-auth-token';
+export const AUTH_TOKEN_KEY = 'vendify-auth-token';
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;

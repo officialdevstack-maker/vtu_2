@@ -17,9 +17,9 @@ export type Branding = {
 };
 
 const FALLBACK: Branding = {
-  app_name: "KORA",
+  app_name: "Vendify",
   logo: null,
-  meta_title: "KORA",
+  meta_title: "Vendify",
   meta_description: null,
 };
 
@@ -28,7 +28,7 @@ const FALLBACK: Branding = {
 // index.html's inline bootstrap script reads this exact same key to set
 // document.title before React (or even the JS bundle) has loaded, and this
 // hook reads it again as `initialData` so there's no loading flash either.
-export const BRANDING_STORAGE_KEY = "branding-cache-v1";
+export const BRANDING_STORAGE_KEY = "vendify-branding-cache-v1";
 
 function readCache(): { data: Branding; updatedAt: number } | null {
   try {

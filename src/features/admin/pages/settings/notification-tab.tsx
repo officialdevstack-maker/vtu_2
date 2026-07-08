@@ -269,7 +269,7 @@ export function NotificationTab() {
               <input
                 value={welcome.title}
                 onChange={(e) => setWelcome((w) => ({ ...w, title: e.target.value }))}
-                placeholder="Welcome to Spur Connect!"
+                placeholder="Welcome to Vendify!"
                 className={inputCls}
               />
             </Field>

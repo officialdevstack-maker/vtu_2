@@ -14,7 +14,7 @@ const mobileNavItems = [
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
-const SIDEBAR_COLLAPSED_KEY = "kora-sidebar-collapsed";
+const SIDEBAR_COLLAPSED_KEY = "vendify-sidebar-collapsed";
 
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
