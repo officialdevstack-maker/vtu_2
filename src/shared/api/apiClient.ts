@@ -2,7 +2,9 @@ import axios from 'axios';
 import { env } from '../env';
 import Cookies from 'js-cookie';
 
-const apiBaseUrl = env('VITE_API_BASE_URL', 'http://localhost:8000/api').replace(/\/+$|\/api\/?$/i, '/api').replace(/\/$/, '');
+// Dev: '/api' (vite proxy). Prod: absolute URL injected at build time via VITE_API_BASE_URL.
+const rawBaseUrl = env('VITE_API_BASE_URL', '/api') as string;
+const apiBaseUrl = `${rawBaseUrl.replace(/\/+$/, '').replace(/\/api$/i, '')}/api`;
 export const AUTH_TOKEN_KEY = 'kora-auth-token';
 
 export const getAuthToken = () => {
