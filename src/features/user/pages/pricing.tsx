@@ -85,24 +85,24 @@ export default function PricingPage() {
   const networks: NetworkTab[] = ["mtn", "airtel", "glo", "9mobile"];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
+    <div className="mx-auto w-full max-w-5xl min-w-0 space-y-4">
       <PageHeader title="Pricing" description="Transparent rates across every service, no hidden fees" />
 
-      <Card className="overflow-hidden">
-        <div className="flex border-b border-gray-100 overflow-x-auto">
+      <Card className="min-w-0 overflow-hidden">
+        <div className="flex overflow-x-auto border-b border-gray-100 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {serviceTabs.map((t) => (
             <button key={t.id} onClick={() => setServiceTab(t.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${serviceTab === t.id ? "text-[#111827] border-b-2 border-[#111827] bg-[#111827]/10" : "text-slate-500 hover:text-slate-700 hover:bg-gray-50"}`}>
-              <t.icon className="w-4 h-4" />
+              className={`flex min-w-[8.5rem] flex-none items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors whitespace-nowrap sm:flex-1 sm:px-4 ${serviceTab === t.id ? "text-[#111827] border-b-2 border-[#111827] bg-[#111827]/10" : "text-slate-500 hover:text-slate-700 hover:bg-gray-50"}`}>
+              <t.icon className="h-4 w-4 shrink-0" />
               {t.label}
             </button>
           ))}
         </div>
 
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {serviceTab === "data" && (
             <>
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+              <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {networks.map((n) => {
                   const c = networkColors[n];
                   return (
@@ -115,13 +115,13 @@ export default function PricingPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {dataPlans[networkTab].map((p, i) => (
-                  <div key={i} className="relative flex items-center justify-between p-3.5 rounded-lg border border-gray-200 hover:border-[#111827]/30 transition-colors">
+                  <div key={i} className="relative flex min-w-0 items-center justify-between gap-3 rounded-lg border border-gray-200 p-3.5 transition-colors hover:border-[#111827]/30">
                     {p.tag && <span className="absolute -top-2 left-3 bg-[#111827] text-white text-xs px-1.5 py-0.5 rounded-full font-medium">{p.tag}</span>}
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium text-slate-900 text-sm">{p.size}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{p.duration}</p>
                     </div>
-                    <p className="font-semibold text-[#111827]">{p.price}</p>
+                    <p className="shrink-0 font-semibold text-[#111827]">{p.price}</p>
                   </div>
                 ))}
               </div>
@@ -135,15 +135,15 @@ export default function PricingPage() {
                 {networks.map((n) => {
                   const c = networkColors[n];
                   return (
-                    <div key={n} className="flex items-center justify-between p-3.5 rounded-lg border border-gray-200">
-                      <div className="flex items-center gap-3">
+                    <div key={n} className="flex min-w-0 flex-col gap-3 rounded-lg border border-gray-200 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center gap-3">
                         <div className={`w-9 h-9 ${c.bg} rounded-full flex items-center justify-center ${c.text} font-semibold text-sm`}>{n[0].toUpperCase()}</div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-medium text-slate-900 uppercase text-sm">{n}</p>
                           <p className="text-xs text-slate-400">All denominations</p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="sm:text-right">
                         <p className="font-medium text-emerald-600 text-sm">{airtimeDiscount[n]}</p>
                         <p className="text-xs text-slate-400">on all purchases</p>
                       </div>
@@ -163,14 +163,14 @@ export default function PricingPage() {
               {cablePackages.map((provider) => (
                 <div key={provider.provider}>
                   <h3 className="text-sm font-semibold text-slate-900 mb-2">{provider.provider}</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     {provider.packages.map((pkg) => (
-                      <div key={pkg.name} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
-                        <div>
+                      <div key={pkg.name} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-gray-200 p-3">
+                        <div className="min-w-0">
                           <p className="font-medium text-slate-900 text-sm">{pkg.name}</p>
                           <p className="text-xs text-slate-400">Monthly</p>
                         </div>
-                        <p className="font-medium text-[#111827] text-sm">{pkg.price}</p>
+                        <p className="shrink-0 text-sm font-medium text-[#111827]">{pkg.price}</p>
                       </div>
                     ))}
                   </div>
@@ -187,12 +187,12 @@ export default function PricingPage() {
               <p className="text-sm text-slate-500 mb-2">Recharge prepaid and postpaid meters for all discos instantly with zero transaction fees.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {electricityDiscos.map((d) => (
-                  <div key={d.name} className="flex items-center justify-between p-3.5 rounded-lg border border-gray-200">
-                    <div>
+                  <div key={d.name} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-gray-200 p-3.5">
+                    <div className="min-w-0">
                       <p className="font-medium text-slate-900 text-sm">{d.name}</p>
                       <p className="text-xs text-slate-400">Min: {d.min}</p>
                     </div>
-                    <span className="text-xs bg-emerald-50 text-emerald-700 font-medium px-2 py-1 rounded-md">Free</span>
+                    <span className="shrink-0 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">Free</span>
                   </div>
                 ))}
               </div>
