@@ -49,6 +49,7 @@ export default function RolesPage() {
   const loadRoles = async () => {
     try {
       const data = await roleService.getAll();
+      console.log(data)
       setRoles(data);
       setError(null);
     } catch {
@@ -170,6 +171,7 @@ export default function RolesPage() {
           />
         ) : (
           <>
+          {JSON.stringify(roles)}
           <div className="divide-y divide-gray-100 md:hidden">
             {paginatedRoles.map((r) => (
               <div key={r.id} className="p-4">
