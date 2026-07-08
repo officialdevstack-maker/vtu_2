@@ -189,18 +189,11 @@ const GatewayPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const data = await gatewayService.getAll();
-      setGateways(data);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    void load();
+    gatewayService
+      .getAll()
+      .then(setGateways)
+      .finally(() => setLoading(false));
   }, []);
 
   // client-side pagination
