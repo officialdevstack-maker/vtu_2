@@ -2,7 +2,7 @@ import axios from 'axios';
 import { env } from '../env';
 import Cookies from 'js-cookie';
 
-// Dev: '/api' (vite proxy). Prod: absolute URL injected at build time via VITE_API_BASE_URL.
+// API base URL comes from VITE_API_BASE_URL in the environment; no Vite proxy is required.
 const normalizeApiBaseUrl = (value: string | undefined) => {
   const raw = (value ?? '').trim();
 
