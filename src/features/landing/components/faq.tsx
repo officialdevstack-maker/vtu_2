@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import { useBranding } from "@/shared/branding";
 import { SectionHeading } from "./ui";
 import { Reveal } from "./motion";
 
-const faqs = [
+const buildFaqs = (appName: string) => [
   {
     question: "How fast are payments delivered?",
     answer:
@@ -12,8 +13,7 @@ const faqs = [
   },
   {
     question: "Are there any hidden fees?",
-    answer:
-      "No. Airtime purchases come with a discount, and every other transaction carries zero Vendify fees. Any charge is always shown before you confirm.",
+    answer: `No. Airtime purchases come with a discount, and every other transaction carries zero ${appName} fees. Any charge is always shown before you confirm.`,
   },
   {
     question: "Is my money safe?",
@@ -31,7 +31,7 @@ const faqs = [
       "All four major mobile networks, DStv, GOtv and Startimes for cable TV, and every major electricity distribution company nationwide.",
   },
   {
-    question: "Can I use Vendify for my business?",
+    question: `Can I use ${appName} for my business?`,
     answer:
       "Yes — many customers use their wallet and virtual account to resell data and airtime to their own customers at a markup.",
   },
@@ -39,6 +39,8 @@ const faqs = [
 
 export function Faq() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const { app_name } = useBranding();
+  const faqs = buildFaqs(app_name);
 
   return (
     <section id="faq" className="relative py-24 sm:py-28">

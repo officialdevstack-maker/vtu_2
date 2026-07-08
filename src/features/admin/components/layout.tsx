@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../../shared/providers/auth";
+import { useBranding } from "@/shared/branding";
 import { TopLoadingBar } from "../../user/components/shared-ui";
 import DefaultCredentialsModal from "./DefaultCredentialsModal";
 import { prefetchAdminDashboard } from "../pages/dashboardService";
@@ -151,6 +152,7 @@ const Layout = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
   const { logout, user, hasPermission } = useAuth();
+  const { app_name, logo } = useBranding();
   const queryClient = useQueryClient();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -213,12 +215,16 @@ const Layout = () => {
     <>
       <div className="border-b border-slate-100 px-5 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] shadow-sm shadow-[#111827]/20">
-            <LayoutGrid className="h-5 w-5 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#111827] shadow-sm shadow-[#111827]/20">
+            {logo ? (
+              <img src={logo} alt={app_name} className="h-full w-full object-contain" />
+            ) : (
+              <LayoutGrid className="h-5 w-5 text-white" />
+            )}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Admin Center</p>
-            <p className="text-xs text-slate-400">Operations control</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900">{app_name}</p>
+            <p className="text-xs text-slate-400">Admin Center</p>
           </div>
         </div>
       </div>

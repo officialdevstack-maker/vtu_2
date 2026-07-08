@@ -14,6 +14,11 @@ export type Branding = {
   logo: string | null;
   meta_title: string;
   meta_description: string | null;
+  // Public contact details from Settings > General (shown in the landing
+  // footer). Optional because caches written before these fields existed
+  // won't have them.
+  app_email?: string | null;
+  app_phone?: string | null;
 };
 
 const FALLBACK: Branding = {
@@ -21,6 +26,8 @@ const FALLBACK: Branding = {
   logo: null,
   meta_title: "Vendify",
   meta_description: null,
+  app_email: null,
+  app_phone: null,
 };
 
 // Persisted across full page reloads (not just within one SPA session) so
@@ -69,10 +76,10 @@ export function useBranding(): Branding & { isLoading: boolean } {
   return { ...FALLBACK, ...data, isLoading };
 }
 
-// Keeps the browser tab title and meta description tallied with whatever
-// the admin has configured, site-wide. Mount once near the app root.
+// Keeps the browser tab title, meta description and favicon tallied with
+// whatever the admin has configured, site-wide. Mount once near the app root.
 export function useDocumentBranding(): void {
-  const { meta_title, meta_description, isLoading } = useBranding();
+  const { meta_title, meta_description, logo, isLoading } = useBranding();
 
   useEffect(() => {
     if (isLoading) return;
@@ -87,5 +94,18 @@ export function useDocumentBranding(): void {
       }
       tag.content = meta_description;
     }
-  }, [meta_title, meta_description, isLoading]);
+
+    if (logo) {
+      let icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+      if (!icon) {
+        icon = document.createElement("link");
+        icon.rel = "icon";
+        document.head.appendChild(icon);
+      }
+      // The static tag declares type="image/svg+xml" for the bundled default;
+      // the uploaded logo is usually PNG/JPG, so drop the stale hint.
+      icon.removeAttribute("type");
+      icon.href = logo;
+    }
+  }, [meta_title, meta_description, logo, isLoading]);
 }

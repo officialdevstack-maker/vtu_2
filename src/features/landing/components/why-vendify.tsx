@@ -1,4 +1,5 @@
 import { ShieldCheck, Zap, MapPinned, PercentCircle } from "lucide-react";
+import { useBranding } from "@/shared/branding";
 import { SectionHeading } from "./ui";
 import { Reveal } from "./motion";
 
@@ -30,12 +31,14 @@ const reasons = [
 ];
 
 export function WhyVendify() {
+  const { app_name } = useBranding();
+
   return (
     <section id="why-vendify" className="relative py-24 sm:py-28">
       <div className="mx-auto max-w-6xl px-4">
         <Reveal>
           <SectionHeading
-            kicker="Why Vendify"
+            kicker={`Why ${app_name}`}
             title="Built to feel inevitable, not impressive"
             description="No gimmicks — just a payment experience that gets out of your way."
           />

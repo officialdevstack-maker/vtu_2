@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Wallet, Wifi, ScanLine, CheckCircle2 } from "lucide-react";
+import { useBranding } from "@/shared/branding";
 import { SectionHeading, GlowOrb } from "./ui";
 import { Reveal } from "./motion";
 import { WalletMockup, BuyDataMockup, QrMockup, SuccessMockup, AccountMockup, HistoryMockup } from "./mockups";
@@ -38,6 +39,7 @@ const tabs = [
 
 export function ProductShowcase() {
   const [active, setActive] = useState<(typeof tabs)[number]["id"]>("wallet");
+  const { app_name } = useBranding();
   const activeTab = tabs.find((t) => t.id === active) ?? tabs[0];
   const ActiveMockup = activeTab.Mockup;
 
@@ -47,7 +49,7 @@ export function ProductShowcase() {
         <SectionHeading
           kicker="Product tour"
           title="One wallet. Every payment, handled."
-          description="See how Vendify turns a handful of taps into a confirmed, settled payment — no waiting on 'processing'."
+          description={`See how ${app_name} turns a handful of taps into a confirmed, settled payment — no waiting on 'processing'.`}
           align="center"
         />
       </Reveal>

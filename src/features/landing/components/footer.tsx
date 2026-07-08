@@ -31,7 +31,7 @@ const columns = [
 ];
 
 export function Footer() {
-  const { app_name, logo } = useBranding();
+  const { app_name, logo, app_email } = useBranding();
 
   return (
     <footer className="relative border-t border-slate-900/[0.06] pb-8 pt-16 sm:pt-20">
@@ -82,9 +82,11 @@ export function Footer() {
           <p className="text-xs text-slate-400">
             &copy; {new Date().getFullYear()} {app_name}. All rights reserved.
           </p>
-          <a href="mailto:support@vendify.com" className="text-xs text-slate-400 transition-colors hover:text-slate-700">
-            support@vendify.com
-          </a>
+          {app_email && (
+            <a href={`mailto:${app_email}`} className="text-xs text-slate-400 transition-colors hover:text-slate-700">
+              {app_email}
+            </a>
+          )}
         </div>
       </Reveal>
     </footer>
