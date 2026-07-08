@@ -125,10 +125,33 @@ export const childInstanceService = {
       .then((r) => r.data.data.secret),
 };
 
+export type MigrationResult = {
+  user: { id: string | number; username: string; email: string; phone: string };
+  linked_existing: boolean;
+  directive_id: string | number;
+  wallet_balance_at_migration: number;
+};
+
 export const childCustomerService = {
   getByInstance: (instanceId: string | number): Promise<ChildCustomer[]> =>
     apiClient
       .get<ApiEnvelope<ChildCustomer[]>>(CUSTOMERS, { params: { child_instance_id: instanceId } })
+      .then((r) => r.data.data),
+
+  // The "promote to real account" action: creates a parent User (or links an
+  // existing one on email/phone match), stamps migrated_to_user_id, and
+  // auto-queues a redirect_user directive. The customer's child wallet
+  // balance is deliberately NOT credited — see ChildCustomerMigrationController.
+  migrate: (
+    instanceId: string | number,
+    customerId: string | number,
+    targetUrl?: string,
+  ): Promise<MigrationResult> =>
+    apiClient
+      .post<ApiEnvelope<MigrationResult>>(
+        `/admin/child-instances/${instanceId}/customers/${customerId}/migrate`,
+        targetUrl ? { target_url: targetUrl } : {},
+      )
       .then((r) => r.data.data),
 };
 

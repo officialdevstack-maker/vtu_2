@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
+  ArrowRightLeft,
   Pencil,
   Eye,
   EyeOff,
   RefreshCw,
+  UserCheck,
   Users,
   Wallet2,
   ListChecks,
@@ -34,6 +36,7 @@ import {
   type ChildTransaction,
   type ChildDirective,
   type DirectiveType,
+  type MigrationResult,
 } from "./service";
 
 const fmt = (v: string | number | null | undefined) => {
@@ -78,7 +81,13 @@ function TabButton({
   );
 }
 
-function CustomersTable({ customers }: { customers: ChildCustomer[] }) {
+function CustomersTable({
+  customers,
+  onMigrate,
+}: {
+  customers: ChildCustomer[];
+  onMigrate: (customer: ChildCustomer) => void;
+}) {
   const { pageItems, currentPage, totalPages, totalItems, pageSize, setPage } = usePagination(customers);
   if (customers.length === 0) {
     return <EmptyState icon={Users} title="No synced customers yet" description="They'll appear here once the affiliate's cron pushes a batch." />;
@@ -88,7 +97,7 @@ function CustomersTable({ customers }: { customers: ChildCustomer[] }) {
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-gray-100">
-            {["External ID", "Username", "Email", "Phone", "Balance", "Status"].map((h) => (
+            {["External ID", "Username", "Email", "Phone", "Balance", "Status", "Parent account"].map((h) => (
               <th key={h} className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">{h}</th>
             ))}
           </tr>
@@ -103,6 +112,24 @@ function CustomersTable({ customers }: { customers: ChildCustomer[] }) {
               <td className="px-4 py-3 text-slate-700 tabular-nums">{fmt(c.wallet_balance)}</td>
               <td className="px-4 py-3">
                 <StatusBadge status={c.status ?? "pending"} />
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap">
+                {c.migrated_to_user_id ? (
+                  <Link
+                    to={`/admin/customers/users/${c.migrated_to_user_id}`}
+                    className="inline-flex items-center gap-1 text-emerald-600 font-medium hover:underline"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" /> Migrated
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onMigrate(c)}
+                    className="inline-flex items-center gap-1 text-[#111827] font-medium hover:underline"
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate
+                  </button>
+                )}
               </td>
             </tr>
           ))}
@@ -196,12 +223,139 @@ function DirectivesTable({ directives }: { directives: ChildDirective[] }) {
   );
 }
 
-function extractErrorMessage(err: unknown): string {
+function extractErrorMessage(err: unknown, fallback: string): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as { message?: string } | undefined;
     if (typeof data?.message === "string") return data.message;
   }
-  return "Could not send the directive. Please try again.";
+  return fallback;
+}
+
+// One customer's hand-off to the parent platform. Two-step: a confirm view
+// spelling out exactly what will (and won't — the wallet balance) happen,
+// then a result view once the backend has created/linked the account and
+// queued the redirect_user directive.
+function MigrateCustomerModal({
+  instanceId,
+  customer,
+  onClose,
+  onMigrated,
+}: {
+  instanceId: string;
+  customer: ChildCustomer;
+  onClose: () => void;
+  onMigrated: () => void;
+}) {
+  const [targetUrl, setTargetUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<MigrationResult | null>(null);
+
+  const handleMigrate = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await childCustomerService.migrate(instanceId, customer.id, targetUrl.trim() || undefined);
+      setResult(res);
+      onMigrated();
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not migrate this customer. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900 text-sm">
+            {result ? "Migration queued" : "Migrate to parent"}
+          </h3>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {result ? (
+          <div className="p-4 space-y-3.5">
+            <p className="text-xs text-slate-600">
+              {result.linked_existing
+                ? "This customer already had a matching account here, so they were linked to it."
+                : "A parent account was created. The customer claims it via the normal password-reset email flow."}
+            </p>
+            <div className="rounded-lg bg-gray-50 px-3 py-2.5">
+              <p className="text-xs text-slate-700 font-medium">{result.user.username}</p>
+              <p className="text-[11px] text-slate-400">{result.user.email}</p>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Directive #{result.directive_id} is queued — the child app picks it up on its next
+              poll and starts steering this customer here.
+            </p>
+            <div className="flex gap-3 pt-1">
+              <Button variant="secondary" fullWidth onClick={onClose}>
+                Done
+              </Button>
+              <Link to={`/admin/customers/users/${result.user.id}`} className="w-full">
+                <Button fullWidth>
+                  <UserCheck className="w-3.5 h-3.5" /> View account
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
+            {error && <p className="text-xs text-red-600">{error}</p>}
+
+            <div className="rounded-lg bg-gray-50 px-3 py-2.5 space-y-0.5">
+              <p className="text-xs text-slate-700 font-medium">{customer.username ?? customer.external_id}</p>
+              <p className="text-[11px] text-slate-400">{customer.email ?? "no email synced"}</p>
+              <p className="text-[11px] text-slate-400">{customer.phone ?? "no phone synced"}</p>
+            </div>
+
+            <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
+              <li>
+                Creates a real account for this customer here on the parent — or links an existing
+                one if the email or phone already matches a user.
+              </li>
+              <li>
+                Queues a <code className="font-mono text-[11px]">redirect_user</code> directive so
+                the child starts steering them to the parent at their next login.
+              </li>
+            </ul>
+
+            <div className="rounded-lg bg-amber-50 px-3 py-2.5">
+              <p className="text-[11px] text-amber-700">
+                Their child wallet balance ({fmt(customer.wallet_balance)}) is <strong>not</strong>{" "}
+                transferred. If it should carry over, fund their parent account manually afterwards.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                Redirect URL (optional)
+              </label>
+              <input
+                value={targetUrl}
+                onChange={(e) => setTargetUrl(e.target.value)}
+                placeholder="Defaults to this platform's site URL"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <Button variant="secondary" fullWidth onClick={onClose}>
+                Cancel
+              </Button>
+              <Button fullWidth disabled={busy} loading={busy} onClick={() => void handleMigrate()}>
+                <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const DIRECTIVE_TYPE_OPTIONS: { value: DirectiveType; label: string; description: string }[] = [
@@ -268,7 +422,7 @@ function SendDirectiveModal({
       onSent();
       onClose();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      setError(extractErrorMessage(err, "Could not send the directive. Please try again."));
     } finally {
       setSending(false);
     }
@@ -419,12 +573,18 @@ export default function AffiliateDetailPage() {
   const [directives, setDirectives] = useState<ChildDirective[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [showDirectiveModal, setShowDirectiveModal] = useState(false);
+  const [migrateTarget, setMigrateTarget] = useState<ChildCustomer | null>(null);
 
   const back = () => navigate("/admin/affiliates");
 
   const refreshDirectives = () => {
     if (!id) return;
     childDirectiveService.getByInstance(id).then(setDirectives);
+  };
+
+  const refreshCustomers = () => {
+    if (!id) return;
+    childCustomerService.getByInstance(id).then(setCustomers);
   };
 
   useEffect(() => {
@@ -640,7 +800,7 @@ export default function AffiliateDetailPage() {
                 ))}
               </div>
             ) : tab === "customers" ? (
-              <CustomersTable customers={customers} />
+              <CustomersTable customers={customers} onMigrate={setMigrateTarget} />
             ) : tab === "transactions" ? (
               <TransactionsTable transactions={transactions} />
             ) : (
@@ -655,6 +815,18 @@ export default function AffiliateDetailPage() {
           instanceId={id}
           onClose={() => setShowDirectiveModal(false)}
           onSent={refreshDirectives}
+        />
+      )}
+
+      {migrateTarget && id && (
+        <MigrateCustomerModal
+          instanceId={id}
+          customer={migrateTarget}
+          onClose={() => setMigrateTarget(null)}
+          onMigrated={() => {
+            refreshCustomers();
+            refreshDirectives();
+          }}
         />
       )}
     </div>
