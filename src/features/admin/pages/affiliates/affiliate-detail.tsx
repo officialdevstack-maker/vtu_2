@@ -4,6 +4,7 @@ import axios from "axios";
 import {
   ArrowLeft,
   ArrowRightLeft,
+  Mail,
   Pencil,
   Eye,
   EyeOff,
@@ -37,6 +38,8 @@ import {
   type ChildDirective,
   type DirectiveType,
   type MigrationResult,
+  type ChildCustomerMessage,
+  childBroadcastService,
 } from "./service";
 
 const fmt = (v: string | number | null | undefined) => {
@@ -84,9 +87,11 @@ function TabButton({
 function CustomersTable({
   customers,
   onMigrate,
+  onEmail,
 }: {
   customers: ChildCustomer[];
   onMigrate: (customer: ChildCustomer) => void;
+  onEmail: (customer: ChildCustomer) => void;
 }) {
   const { pageItems, currentPage, totalPages, totalItems, pageSize, setPage } = usePagination(customers);
   if (customers.length === 0) {
@@ -114,22 +119,33 @@ function CustomersTable({
                 <StatusBadge status={c.status ?? "pending"} />
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                {c.migrated_to_user_id ? (
-                  <Link
-                    to={`/admin/customers/users/${c.migrated_to_user_id}`}
-                    className="inline-flex items-center gap-1 text-emerald-600 font-medium hover:underline"
-                  >
-                    <UserCheck className="w-3.5 h-3.5" /> Migrated
-                  </Link>
-                ) : (
+                <span className="inline-flex items-center gap-3">
+                  {c.migrated_to_user_id ? (
+                    <Link
+                      to={`/admin/customers/users/${c.migrated_to_user_id}`}
+                      className="inline-flex items-center gap-1 text-emerald-600 font-medium hover:underline"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" /> Migrated
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onMigrate(c)}
+                      className="inline-flex items-center gap-1 text-[#111827] font-medium hover:underline"
+                    >
+                      <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => onMigrate(c)}
-                    className="inline-flex items-center gap-1 text-[#111827] font-medium hover:underline"
+                    onClick={() => onEmail(c)}
+                    disabled={!c.email}
+                    title={c.email ? `Email ${c.email}` : "No email synced for this customer"}
+                    className="inline-flex items-center gap-1 text-slate-500 font-medium hover:underline disabled:opacity-40 disabled:no-underline"
                   >
-                    <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate
+                    <Mail className="w-3.5 h-3.5" /> Email
                   </button>
-                )}
+                </span>
               </td>
             </tr>
           ))}
@@ -282,7 +298,9 @@ function MigrateCustomerModal({
             <p className="text-xs text-slate-600">
               {result.linked_existing
                 ? "This customer already had a matching account here, so they were linked to it."
-                : "A parent account was created. The customer claims it via the normal password-reset email flow."}
+                : result.invite_sent
+                  ? "A parent account was created and a claim email with a set-your-password link is on its way to the customer."
+                  : "A parent account was created, but the claim email could not be sent — the customer can still use the normal forgot-password flow."}
             </p>
             <div className="rounded-lg bg-gray-50 px-3 py-2.5">
               <p className="text-xs text-slate-700 font-medium">{result.user.username}</p>
@@ -349,6 +367,236 @@ function MigrateCustomerModal({
               </Button>
               <Button fullWidth disabled={busy} loading={busy} onClick={() => void handleMigrate()}>
                 <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// One-off email thread with a single child customer — history on top,
+// compose below, so repeated contact reads as a conversation. Only our
+// outbound half is recorded; replies go to the admin's normal inbox.
+function EmailCustomerModal({
+  instanceId,
+  customer,
+  onClose,
+}: {
+  instanceId: string;
+  customer: ChildCustomer;
+  onClose: () => void;
+}) {
+  const [messages, setMessages] = useState<ChildCustomerMessage[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    childCustomerService
+      .getMessages(instanceId, customer.id)
+      .then(setMessages)
+      .finally(() => setLoadingHistory(false));
+  }, [instanceId, customer.id]);
+
+  const handleSend = async () => {
+    if (!subject.trim() || !body.trim()) return;
+    setSending(true);
+    setError(null);
+    try {
+      const sent = await childCustomerService.sendMessage(instanceId, customer.id, subject.trim(), body.trim());
+      setMessages((prev) => [sent, ...prev]);
+      setSubject("");
+      setBody("");
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not send the email. Please try again."));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-md shadow-xl">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-slate-900 text-sm">Email customer</h3>
+            <p className="text-[11px] text-slate-400 truncate">{customer.username ?? customer.external_id} · {customer.email}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Subject <span className="text-red-400">*</span>
+            </label>
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="e.g. Your account is moving"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Message <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={4}
+              placeholder={"Hi {{ user.username }}, …"}
+              className={inputCls}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Placeholders like <code className="font-mono">{"{{ user.username }}"}</code> are filled in per customer.
+            </p>
+          </div>
+
+          <Button fullWidth disabled={!subject.trim() || !body.trim() || sending} loading={sending} onClick={() => void handleSend()}>
+            <Send className="w-3.5 h-3.5" /> Send email
+          </Button>
+
+          <div className="pt-1">
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">Previous emails</p>
+            {loadingHistory ? (
+              <SkeletonLine className="h-4 w-full" />
+            ) : messages.length === 0 ? (
+              <p className="text-xs text-slate-400">None yet — this is the first contact.</p>
+            ) : (
+              <div className="space-y-2">
+                {messages.map((m) => (
+                  <div key={m.id} className="rounded-lg bg-gray-50 px-3 py-2">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-xs text-slate-700 font-medium truncate">{m.subject}</p>
+                      <span className="text-[10px] text-slate-400 shrink-0">
+                        {m.created_at ? new Date(m.created_at).toLocaleString() : ""}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 whitespace-pre-wrap break-words">{m.body}</p>
+                    {m.sender && <p className="text-[10px] text-slate-400 mt-1">sent by {m.sender.username}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Bulk email to every synced customer of this child that has an email
+// address — rides the admin broadcast engine (child_customers audience),
+// so it lands in broadcast history too.
+function EmailAllCustomersModal({
+  instanceId,
+  onClose,
+}: {
+  instanceId: string;
+  onClose: () => void;
+}) {
+  const [count, setCount] = useState<number | null>(null);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentCount, setSentCount] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    childBroadcastService.countEmailable(instanceId).then(setCount).catch(() => setCount(null));
+  }, [instanceId]);
+
+  const handleSend = async () => {
+    if (!subject.trim() || !body.trim()) return;
+    setSending(true);
+    setError(null);
+    try {
+      const notified = await childBroadcastService.emailAll(instanceId, subject.trim(), body.trim());
+      setSentCount(notified);
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not send the broadcast. Please try again."));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900 text-sm">Email all customers</h3>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {sentCount !== null ? (
+          <div className="p-4 space-y-3.5">
+            <p className="text-xs text-slate-600">
+              Sent to {sentCount} customer{sentCount === 1 ? "" : "s"}. It's also recorded in the
+              broadcast history.
+            </p>
+            <Button variant="secondary" fullWidth onClick={onClose}>
+              Done
+            </Button>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
+            {error && <p className="text-xs text-red-600">{error}</p>}
+
+            <p className="text-xs text-slate-500">
+              {count === null
+                ? "Counting reachable customers…"
+                : `Reaches ${count} synced customer${count === 1 ? "" : "s"} with an email address.`}
+            </p>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                Subject <span className="text-red-400">*</span>
+              </label>
+              <input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="e.g. We're upgrading your service"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                Message <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={5}
+                placeholder={"Hi {{ user.username }}, …"}
+                className={inputCls}
+              />
+              <p className="text-[11px] text-slate-400 mt-1">
+                Placeholders like <code className="font-mono">{"{{ user.username }}"}</code> are filled in per customer.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <Button variant="secondary" fullWidth onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                fullWidth
+                disabled={!subject.trim() || !body.trim() || sending || count === 0}
+                loading={sending}
+                onClick={() => void handleSend()}
+              >
+                <Send className="w-3.5 h-3.5" /> Send
               </Button>
             </div>
           </div>
@@ -574,6 +822,8 @@ export default function AffiliateDetailPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [showDirectiveModal, setShowDirectiveModal] = useState(false);
   const [migrateTarget, setMigrateTarget] = useState<ChildCustomer | null>(null);
+  const [emailTarget, setEmailTarget] = useState<ChildCustomer | null>(null);
+  const [showEmailAll, setShowEmailAll] = useState(false);
 
   const back = () => navigate("/admin/affiliates");
 
@@ -791,6 +1041,11 @@ export default function AffiliateDetailPage() {
                   <Send className="w-3.5 h-3.5" /> Send directive
                 </Button>
               )}
+              {tab === "customers" && customers.length > 0 && (
+                <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setShowEmailAll(true)}>
+                  <Mail className="w-3.5 h-3.5" /> Email all
+                </Button>
+              )}
             </div>
 
             {loadingData ? (
@@ -800,7 +1055,7 @@ export default function AffiliateDetailPage() {
                 ))}
               </div>
             ) : tab === "customers" ? (
-              <CustomersTable customers={customers} onMigrate={setMigrateTarget} />
+              <CustomersTable customers={customers} onMigrate={setMigrateTarget} onEmail={setEmailTarget} />
             ) : tab === "transactions" ? (
               <TransactionsTable transactions={transactions} />
             ) : (
@@ -828,6 +1083,18 @@ export default function AffiliateDetailPage() {
             refreshDirectives();
           }}
         />
+      )}
+
+      {emailTarget && id && (
+        <EmailCustomerModal
+          instanceId={id}
+          customer={emailTarget}
+          onClose={() => setEmailTarget(null)}
+        />
+      )}
+
+      {showEmailAll && id && (
+        <EmailAllCustomersModal instanceId={id} onClose={() => setShowEmailAll(false)} />
       )}
     </div>
   );

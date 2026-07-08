@@ -128,8 +128,19 @@ export const childInstanceService = {
 export type MigrationResult = {
   user: { id: string | number; username: string; email: string; phone: string };
   linked_existing: boolean;
+  invite_sent: boolean;
   directive_id: string | number;
   wallet_balance_at_migration: number;
+};
+
+export type ChildCustomerMessage = {
+  id: string | number;
+  child_customer_id: string | number;
+  sent_by: string | number | null;
+  subject: string;
+  body: string;
+  created_at?: string | null;
+  sender?: { id: string | number; username: string } | null;
 };
 
 export const childCustomerService = {
@@ -153,6 +164,62 @@ export const childCustomerService = {
         targetUrl ? { target_url: targetUrl } : {},
       )
       .then((r) => r.data.data),
+
+  // One-off emails to this customer via the parent's own mail infra, with a
+  // persisted outbound log (replies land in the admin's inbox, not here).
+  // Subject/body support {{ user.username }}-style placeholders.
+  getMessages: (
+    instanceId: string | number,
+    customerId: string | number,
+  ): Promise<ChildCustomerMessage[]> =>
+    apiClient
+      .get<ApiEnvelope<ChildCustomerMessage[]>>(
+        `/admin/child-instances/${instanceId}/customers/${customerId}/messages`,
+      )
+      .then((r) => r.data.data),
+
+  sendMessage: (
+    instanceId: string | number,
+    customerId: string | number,
+    subject: string,
+    body: string,
+  ): Promise<ChildCustomerMessage> =>
+    apiClient
+      .post<ApiEnvelope<ChildCustomerMessage>>(
+        `/admin/child-instances/${instanceId}/customers/${customerId}/messages`,
+        { subject, body },
+      )
+      .then((r) => r.data.data),
+};
+
+// Rides the existing admin broadcast engine with the child_customers
+// audience mode (email-only — child customers have no login here for in-app,
+// and SMS is reserved for our own users).
+export const childBroadcastService = {
+  countEmailable: (instanceId: string | number): Promise<number> =>
+    apiClient
+      .post<ApiEnvelope<{ count: number }>>(`/admin/broadcast/audience-count`, {
+        audience_mode: "child_customers",
+        child_instance_id: instanceId,
+      })
+      .then((r) => r.data.data.count),
+
+  emailAll: (
+    instanceId: string | number,
+    subject: string,
+    body: string,
+  ): Promise<number> =>
+    apiClient
+      .post<ApiEnvelope<{ notified: number }>>(`/admin/broadcast`, {
+        audience_mode: "child_customers",
+        child_instance_id: instanceId,
+        channels: ["Email"],
+        emailSubject: subject,
+        emailBody: body,
+        sendNow: true,
+        priorityHigh: false,
+      })
+      .then((r) => r.data.data.notified),
 };
 
 export const childTransactionService = {
