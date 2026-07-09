@@ -78,13 +78,6 @@ export const userRouter: RouteObject[] = [
     },
   },
   {
-    path: "admin",
-    lazy: async () => {
-      const { default: Component } = await import("../admin/pages/admin");
-      return { Component };
-    },
-  },
-  {
     path: "notifications",
     lazy: async () => {
       const { default: Component } = await import("./pages/notifications");
@@ -94,9 +87,8 @@ export const userRouter: RouteObject[] = [
   {
     path: "settings",
     lazy: async () => {
-      const { default: Component } = await import(
-        "../account/pages/AccountSettings"
-      );
+      const { default: Component } =
+        await import("../account/pages/AccountSettings");
       return { Component };
     },
   },
