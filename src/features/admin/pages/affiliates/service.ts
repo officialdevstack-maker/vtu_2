@@ -4,6 +4,17 @@ import { apiClient } from "@shared/api/apiClient";
 // backend/app/Http/Middleware/HandleRequest.php).
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
+export type PaginatedMeta = {
+  current_page: number;
+  last_page: number;
+  total: number;
+  per_page: number;
+  from: number | null;
+  to: number | null;
+};
+
+type PaginatedApiEnvelope<T> = ApiEnvelope<T> & { meta: PaginatedMeta };
+
 // "pending" = registration code generated but the child hasn't completed
 // self-registration yet (no shared_secret exists server-side until then).
 export type ChildInstanceStatus = "pending" | "active" | "paused" | "revoked";
