@@ -127,7 +127,7 @@ export default function BuyDataPage() {
     setLoading(true);
     setError(null);
     try {
-      const purchase = await customerService.purchaseData({
+        const params = {
         network,
         phone,
         amount: planPrice,
@@ -137,7 +137,8 @@ export default function BuyDataPage() {
         pin,
         code: code.trim() || undefined,
         tx_ref: generateTxRef("DT"),
-      });
+      }
+      const purchase = await customerService.purchaseData(params);
       setResult(purchase);
       setStep("success");
       await refreshUser();

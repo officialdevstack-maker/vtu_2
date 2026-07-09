@@ -26,6 +26,7 @@ import {
   Network,
   PlugZap,
   ReceiptText,
+  Route,
   Settings,
   SlidersHorizontal,
   Sparkles,
@@ -80,6 +81,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         path: "/admin/apis/gateway",
         icon: SlidersHorizontal,
       },
+      { label: "Service Routing", path: "/admin/apis/routing", icon: Route },
     ],
   },
   {

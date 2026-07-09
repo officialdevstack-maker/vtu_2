@@ -214,6 +214,15 @@ export const adminRouter: RouteObject[] = [
           return { Component };
         },
       },
+      {
+        path: "apis/routing",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/service-routing"
+          );
+          return { Component };
+        },
+      },
       // Products
       {
         path: "products/airtime-data",
