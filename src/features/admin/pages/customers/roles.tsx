@@ -6,7 +6,6 @@ import {
   Pencil,
   Copy,
   Trash2,
-  MoreVertical,
   ShieldCheck,
   Users,
   UserCog,
@@ -26,13 +25,13 @@ import {
   SkeletonStatGrid,
 } from "../../../user/components/shared-ui";
 import { usePagination } from "../../../../shared/pagination";
+import { ActionMenu } from "../../../../shared/components/action-menu";
 import { roleService, type Role } from "./service";
 
 export default function RolesPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [activeRole, setActiveRole] = useState<Role | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,16 +76,13 @@ export default function RolesPage() {
 
   const openView = (r: Role) => {
     setActiveRole(r);
-    setOpenMenuId(null);
   };
 
   const openEdit = (r: Role) => {
-    setOpenMenuId(null);
     navigate(`/admin/customers/roles/${r.id}/edit`, { state: { role: r } });
   };
 
   const duplicateRole = async (r: Role) => {
-    setOpenMenuId(null);
     setError(null);
     try {
       const created = await roleService.create({
@@ -107,6 +103,31 @@ export default function RolesPage() {
       setError("The role could not be duplicated right now.");
     }
   };
+
+  const menuItems = (r: Role) => [
+    {
+      label: "View",
+      icon: Eye,
+      onClick: () => openView(r),
+    },
+    {
+      label: "Edit",
+      icon: Pencil,
+      onClick: () => openEdit(r),
+    },
+    {
+      label: "Duplicate",
+      icon: Copy,
+      onClick: () => void duplicateRole(r),
+    },
+    {
+      label: "Delete",
+      icon: Trash2,
+      tone: "danger" as const,
+      disabled: r.isSystem,
+      onClick: () => setDeleteTarget(r),
+    },
+  ];
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
@@ -223,59 +244,8 @@ export default function RolesPage() {
                       </p>
                     </button>
 
-                    <div className="relative shrink-0">
-                      <button
-                        onClick={() =>
-                          setOpenMenuId(openMenuId === r.id ? null : r.id)
-                        }
-                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-gray-100"
-                        title="Actions"
-                      >
-                        <MoreVertical className="h-3.5 w-3.5" />
-                      </button>
-                      {openMenuId === r.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setOpenMenuId(null)}
-                          />
-                          <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200/70 bg-white py-1 shadow-md">
-                            <button
-                              onClick={() => openView(r)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                            >
-                              <Eye className="h-3.5 w-3.5" /> View
-                            </button>
-                            <button
-                              onClick={() => openEdit(r)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                            >
-                              <Pencil className="h-3.5 w-3.5" /> Edit
-                            </button>
-                            <button
-                              onClick={() => duplicateRole(r)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
-                            >
-                              <Copy className="h-3.5 w-3.5" /> Duplicate
-                            </button>
-                            <button
-                              disabled={r.isSystem}
-                              onClick={() => {
-                                setDeleteTarget(r);
-                                setOpenMenuId(null);
-                              }}
-                              title={
-                                r.isSystem
-                                  ? "System roles cannot be deleted"
-                                  : undefined
-                              }
-                              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" /> Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
+                    <div className="shrink-0">
+                      <ActionMenu items={menuItems(r)} label="Role actions" />
                     </div>
                   </div>
 
@@ -366,59 +336,8 @@ export default function RolesPage() {
                         <StatusBadge status={r.status} />
                       </td>
                       <td className="px-2 py-3">
-                        <div className="relative flex justify-center">
-                          <button
-                            onClick={() =>
-                              setOpenMenuId(openMenuId === r.id ? null : r.id)
-                            }
-                            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
-                            title="Actions"
-                          >
-                            <MoreVertical className="w-3.5 h-3.5" />
-                          </button>
-                          {openMenuId === r.id && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setOpenMenuId(null)}
-                              />
-                              <div className="absolute right-0 top-8 z-20 w-40 bg-white border border-slate-200/70 rounded-xl shadow-md py-1">
-                                <button
-                                  onClick={() => openView(r)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Eye className="w-3.5 h-3.5" /> View
-                                </button>
-                                <button
-                                  onClick={() => openEdit(r)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" /> Edit
-                                </button>
-                                <button
-                                  onClick={() => duplicateRole(r)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
-                                >
-                                  <Copy className="w-3.5 h-3.5" /> Duplicate
-                                </button>
-                                <button
-                                  disabled={r.isSystem}
-                                  onClick={() => {
-                                    setDeleteTarget(r);
-                                    setOpenMenuId(null);
-                                  }}
-                                  title={
-                                    r.isSystem
-                                      ? "System roles cannot be deleted"
-                                      : undefined
-                                  }
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                                </button>
-                              </div>
-                            </>
-                          )}
+                        <div className="flex justify-center">
+                          <ActionMenu items={menuItems(r)} label="Role actions" />
                         </div>
                       </td>
                     </tr>
