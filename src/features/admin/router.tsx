@@ -114,11 +114,57 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        // One affiliate's own little admin — a shared shell (header + tab
+        // nav + instance context) with each concern as a nested page.
         path: "affiliates/:id",
         lazy: async () => {
-          const { default: Component } = await import("./pages/affiliates/affiliate-detail");
+          const { default: Component } = await import("./pages/affiliates/affiliate-layout");
           return { Component };
         },
+        children: [
+          {
+            index: true,
+            lazy: async () => {
+              const { default: Component } = await import("./pages/affiliates/overview");
+              return { Component };
+            },
+          },
+          {
+            path: "customers",
+            lazy: async () => {
+              const { default: Component } = await import("./pages/affiliates/customers");
+              return { Component };
+            },
+          },
+          {
+            path: "transactions",
+            lazy: async () => {
+              const { default: Component } = await import("./pages/affiliates/transactions");
+              return { Component };
+            },
+          },
+          {
+            path: "messages",
+            lazy: async () => {
+              const { default: Component } = await import("./pages/affiliates/messages");
+              return { Component };
+            },
+          },
+          {
+            path: "controls",
+            lazy: async () => {
+              const { default: Component } = await import("./pages/affiliates/controls");
+              return { Component };
+            },
+          },
+          {
+            path: "directives",
+            lazy: async () => {
+              const { default: Component } = await import("./pages/affiliates/directives");
+              return { Component };
+            },
+          },
+        ],
       },
       {
         path: "affiliates/:id/edit",
