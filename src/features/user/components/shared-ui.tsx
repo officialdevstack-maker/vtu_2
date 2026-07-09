@@ -336,22 +336,76 @@ export function Pagination({
           <ChevronLeft className="h-3.5 w-3.5" />
           Previous
         </button>
-        {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-          (pageNumber) => (
-            <button
-              key={pageNumber}
-              type="button"
-              onClick={() => onPageChange(pageNumber)}
-              className={`h-8 min-w-8 rounded-xl px-2 text-xs font-medium transition-colors ${
-                currentPage === pageNumber
-                  ? "brand-primary-button"
-                  : "text-slate-500 hover:bg-slate-100"
-              }`}
-            >
-              {pageNumber}
-            </button>
-          ),
-        )}
+        {(() => {
+          const pages: Array<number | "left-ellipsis" | "right-ellipsis"> = [];
+          if (totalPages <= 9) {
+            for (let page = 1; page <= totalPages; page += 1) {
+              pages.push(page);
+            }
+          } else {
+            const leftBound = Math.max(2, currentPage - 2);
+            const rightBound = Math.min(totalPages - 1, currentPage + 2);
+
+            pages.push(1);
+
+            if (leftBound > 2) {
+              pages.push("left-ellipsis");
+            }
+
+            for (let page = leftBound; page <= rightBound; page += 1) {
+              pages.push(page);
+            }
+
+            if (rightBound < totalPages - 1) {
+              pages.push("right-ellipsis");
+            }
+
+            pages.push(totalPages);
+          }
+
+          return pages.map((pageNumber, index) => {
+            if (pageNumber === "left-ellipsis") {
+              return (
+                <button
+                  key={`${pageNumber}-${index}`}
+                  type="button"
+                  onClick={() => onPageChange(Math.max(1, currentPage - 5))}
+                  className="h-8 min-w-8 rounded-xl px-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100"
+                >
+                  …
+                </button>
+              );
+            }
+
+            if (pageNumber === "right-ellipsis") {
+              return (
+                <button
+                  key={`${pageNumber}-${index}`}
+                  type="button"
+                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 5))}
+                  className="h-8 min-w-8 rounded-xl px-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100"
+                >
+                  …
+                </button>
+              );
+            }
+
+            return (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => onPageChange(pageNumber)}
+                className={`h-8 min-w-8 rounded-xl px-2 text-xs font-medium transition-colors ${
+                  currentPage === pageNumber
+                    ? "brand-primary-button"
+                    : "text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          });
+        })()}
         <button
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
