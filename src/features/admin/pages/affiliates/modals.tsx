@@ -52,11 +52,20 @@ export function MigrateCustomerModal({
     setBusy(true);
     setError(null);
     try {
-      const res = await childCustomerService.migrate(instanceId, customer.id, targetUrl.trim() || undefined);
+      const res = await childCustomerService.migrate(
+        instanceId,
+        customer.id,
+        targetUrl.trim() || undefined,
+      );
       setResult(res);
       onMigrated();
     } catch (err) {
-      setError(extractErrorMessage(err, "Could not migrate this customer. Please try again."));
+      setError(
+        extractErrorMessage(
+          err,
+          "Could not migrate this customer. Please try again.",
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -69,7 +78,10 @@ export function MigrateCustomerModal({
           <h3 className="font-semibold text-slate-900 text-sm">
             {result ? "Migration queued" : "Migrate to parent"}
           </h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -84,7 +96,9 @@ export function MigrateCustomerModal({
                   : "A parent account was created, but the claim email could not be sent — the customer can still use the normal forgot-password flow."}
             </p>
             <div className="rounded-lg bg-gray-50 px-3 py-2.5">
-              <p className="text-xs text-slate-700 font-medium">{result.user.username}</p>
+              <p className="text-xs text-slate-700 font-medium">
+                {result.user.username}
+              </p>
               <p className="text-[11px] text-slate-400">{result.user.email}</p>
             </div>
             <div className="rounded-lg bg-emerald-50 px-3 py-2.5">
@@ -95,14 +109,17 @@ export function MigrateCustomerModal({
               </p>
             </div>
             <p className="text-[11px] text-slate-400">
-              Directive #{result.directive_id} is queued — the child app picks it up on its next
-              poll and starts steering this customer here.
+              Directive #{result.directive_id} is queued — the child app picks
+              it up on its next poll and starts steering this customer here.
             </p>
             <div className="flex gap-3 pt-1">
               <Button variant="secondary" fullWidth onClick={onClose}>
                 Done
               </Button>
-              <Link to={`/admin/customers/users/${result.user.id}`} className="w-full">
+              <Link
+                to={`/admin/customers/users/${result.user.id}`}
+                className="w-full"
+              >
                 <Button fullWidth>
                   <UserCheck className="w-3.5 h-3.5" /> View account
                 </Button>
@@ -114,26 +131,35 @@ export function MigrateCustomerModal({
             {error && <p className="text-xs text-red-600">{error}</p>}
 
             <div className="rounded-lg bg-gray-50 px-3 py-2.5 space-y-0.5">
-              <p className="text-xs text-slate-700 font-medium">{customer.username ?? customer.external_id}</p>
-              <p className="text-[11px] text-slate-400">{customer.email ?? "no email synced"}</p>
-              <p className="text-[11px] text-slate-400">{customer.phone ?? "no phone synced"}</p>
+              <p className="text-xs text-slate-700 font-medium">
+                {customer.username ?? customer.external_id}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                {customer.email ?? "no email synced"}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                {customer.phone ?? "no phone synced"}
+              </p>
             </div>
 
             <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
               <li>
-                Creates a real account for this customer here on the parent — or links an existing
-                one if the email or phone already matches a user.
+                Creates a real account for this customer here on the parent — or
+                links an existing one if the email or phone already matches a
+                user.
               </li>
               <li>
-                Queues a <code className="font-mono text-[11px]">redirect_user</code> directive so
-                the child starts steering them to the parent at their next login.
+                Queues a{" "}
+                <code className="font-mono text-[11px]">redirect_user</code>{" "}
+                directive so the child starts steering them to the parent at
+                their next login.
               </li>
             </ul>
 
             <div className="rounded-lg bg-emerald-50 px-3 py-2.5">
               <p className="text-[11px] text-emerald-700">
-                Their child wallet balance ({fmt(customer.wallet_balance)}) will be transferred to the parent
-                account as part of this migration.
+                Their child wallet balance ({fmt(customer.wallet_balance)}) will
+                be transferred to the parent account as part of this migration.
               </p>
             </div>
 
@@ -153,7 +179,12 @@ export function MigrateCustomerModal({
               <Button variant="secondary" fullWidth onClick={onClose}>
                 Cancel
               </Button>
-              <Button fullWidth disabled={busy} loading={busy} onClick={() => void handleMigrate()}>
+              <Button
+                fullWidth
+                disabled={busy}
+                loading={busy}
+                onClick={() => void handleMigrate()}
+              >
                 <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate
               </Button>
             </div>
@@ -197,13 +228,20 @@ export function EmailCustomerModal({
     setSending(true);
     setError(null);
     try {
-      const sent = await childCustomerService.sendMessage(instanceId, customer.id, subject.trim(), body.trim());
+      const sent = await childCustomerService.sendMessage(
+        instanceId,
+        customer.id,
+        subject.trim(),
+        body.trim(),
+      );
       setMessages((prev) => [sent, ...prev]);
       setSubject("");
       setBody("");
       onSent?.();
     } catch (err) {
-      setError(extractErrorMessage(err, "Could not send the email. Please try again."));
+      setError(
+        extractErrorMessage(err, "Could not send the email. Please try again."),
+      );
     } finally {
       setSending(false);
     }
@@ -214,10 +252,17 @@ export function EmailCustomerModal({
       <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-md shadow-xl">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="min-w-0">
-            <h3 className="font-semibold text-slate-900 text-sm">Email customer</h3>
-            <p className="text-[11px] text-slate-400 truncate">{customer.username ?? customer.external_id} · {customer.email}</p>
+            <h3 className="font-semibold text-slate-900 text-sm">
+              Email customer
+            </h3>
+            <p className="text-[11px] text-slate-400 truncate">
+              {customer.username ?? customer.external_id} · {customer.email}
+            </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -248,32 +293,53 @@ export function EmailCustomerModal({
               className={inputCls}
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              Placeholders like <code className="font-mono">{"{{ user.username }}"}</code> are filled in per customer.
+              Placeholders like{" "}
+              <code className="font-mono">{"{{ user.username }}"}</code> are
+              filled in per customer.
             </p>
           </div>
 
-          <Button fullWidth disabled={!subject.trim() || !body.trim() || sending} loading={sending} onClick={() => void handleSend()}>
+          <Button
+            fullWidth
+            disabled={!subject.trim() || !body.trim() || sending}
+            loading={sending}
+            onClick={() => void handleSend()}
+          >
             <Send className="w-3.5 h-3.5" /> Send email
           </Button>
 
           <div className="pt-1">
-            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">Previous emails</p>
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-2">
+              Previous emails
+            </p>
             {loadingHistory ? (
               <SkeletonLine className="h-4 w-full" />
             ) : messages.length === 0 ? (
-              <p className="text-xs text-slate-400">None yet — this is the first contact.</p>
+              <p className="text-xs text-slate-400">
+                None yet — this is the first contact.
+              </p>
             ) : (
               <div className="space-y-2">
                 {messages.map((m) => (
                   <div key={m.id} className="rounded-lg bg-gray-50 px-3 py-2">
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className="text-xs text-slate-700 font-medium truncate">{m.subject}</p>
+                      <p className="text-xs text-slate-700 font-medium truncate">
+                        {m.subject}
+                      </p>
                       <span className="text-[10px] text-slate-400 shrink-0">
-                        {m.created_at ? new Date(m.created_at).toLocaleString() : ""}
+                        {m.created_at
+                          ? new Date(m.created_at).toLocaleString()
+                          : ""}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 whitespace-pre-wrap break-words">{m.body}</p>
-                    {m.sender && <p className="text-[10px] text-slate-400 mt-1">sent by {m.sender.username}</p>}
+                    <p className="text-[11px] text-slate-500 whitespace-pre-wrap break-words">
+                      {m.body}
+                    </p>
+                    {m.sender && (
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        sent by {m.sender.username}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
