@@ -253,7 +253,7 @@ export default function AirtimePlanFormPage() {
     statePlan ? toForm(statePlan) : blankForm(),
   );
   const [networks, setNetworks] = useState<Network[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
+  const [types, setTypes] = useState<{ name: string; active: boolean }[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -271,14 +271,15 @@ export default function AirtimePlanFormPage() {
     networkTypeService
       .getAll()
       .then((all) => {
-        const names = Array.from(
-          new Set(
-            all
-              .filter((t) => t.active && t.service_type === "airtime")
-              .map((t) => t.name),
-          ),
-        );
-        setTypes(names);
+        // Include inactive types too — an admin still needs to see/keep the
+        // type on a plan whose category was later deactivated, and to assign
+        // one deliberately. Inactive ones are just marked in the label.
+        const seen = new Set<string>();
+        const airtimeTypes = all
+          .filter((t) => t.service_type === "airtime")
+          .filter((t) => (seen.has(t.name) ? false : (seen.add(t.name), true)))
+          .map((t) => ({ name: t.name, active: Boolean(t.active) }));
+        setTypes(airtimeTypes);
       })
       .catch(() => {});
   }, []);
@@ -430,8 +431,8 @@ export default function AirtimePlanFormPage() {
                   >
                     <option value="">Select a type</option>
                     {types.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                      <option key={t.name} value={t.name}>
+                        {t.active ? t.name : `${t.name} (inactive)`}
                       </option>
                     ))}
                   </select>

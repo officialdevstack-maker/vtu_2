@@ -23,6 +23,8 @@ import {
 import { Toolbar } from "./shared";
 import { networkService, type Network, type NetworkPayload } from "./service";
 
+const MENU_WIDTH = 176; // w-44
+
 // ─── Form modal (edit only — creating a network now uses its own page,
 // see network-form.tsx at /admin/products/airtime-data/airtime/new) ─────────
 
@@ -227,9 +229,24 @@ export function NetworkTab() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  // The table scrolls horizontally (overflow-x-auto → overflow-y auto per the
+  // CSS spec) and sits inside an overflow-hidden Card, both of which clip an
+  // `absolute` menu. Fixed-position it from the trigger's own rect to escape
+  // those overflow contexts (same fix the airtime tab uses).
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
+
+  const toggleMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - MENU_WIDTH });
+    setOpenMenuId(id);
+  };
 
   useEffect(() => {
     networkService
@@ -377,21 +394,22 @@ export function NetworkTab() {
                     <td className="px-4 py-3">
                       <div className="relative flex justify-center">
                         <button
-                          onClick={() =>
-                            setOpenMenuId(openMenuId === n.id ? null : n.id)
-                          }
+                          onClick={(e) => toggleMenu(n.id, e)}
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                         >
                           <MoreVertical className="w-3.5 h-3.5" />
                         </button>
 
-                        {openMenuId === n.id && (
+                        {openMenuId === n.id && menuPos && (
                           <>
                             <div
-                              className="fixed inset-0 z-10"
+                              className="fixed inset-0 z-20"
                               onClick={() => setOpenMenuId(null)}
                             />
-                            <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                            <div
+                              className="fixed z-30 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
+                              style={{ top: menuPos.top, left: menuPos.left }}
+                            >
                               <button
                                 onClick={() => {
                                   setModal({ kind: "edit", network: n });
