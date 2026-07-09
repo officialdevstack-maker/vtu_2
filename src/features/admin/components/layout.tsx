@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate, useNavigation } from "react-router-dom";
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useNavigation,
+} from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { notificationService } from "@/shared/notificationService";
 import {
@@ -85,7 +91,11 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
       { label: "Cable", path: "/admin/products/cable", icon: Cable },
       { label: "Bill", path: "/admin/products/bill", icon: ReceiptText },
       { label: "Exam", path: "/admin/products/exam", icon: BookOpenCheck },
-      { label: "Airtime to Cash", path: "/admin/airtime-to-cash", icon: Banknote },
+      {
+        label: "Airtime to Cash",
+        path: "/admin/airtime-to-cash",
+        icon: Banknote,
+      },
     ],
   },
   {
@@ -219,13 +229,19 @@ const Layout = () => {
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#111827] shadow-sm shadow-[#111827]/20">
             {logo ? (
-              <img src={logo} alt={app_name} className="h-full w-full object-contain" />
+              <img
+                src={logo}
+                alt={app_name}
+                className="h-full w-full object-contain"
+              />
             ) : (
               <LayoutGrid className="h-5 w-5 text-white" />
             )}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900">{app_name}</p>
+            <p className="truncate text-sm font-semibold text-slate-900">
+              {app_name}
+            </p>
             <p className="text-xs text-slate-400">Admin Center</p>
           </div>
         </div>
@@ -241,8 +257,7 @@ const Layout = () => {
               {group.items.map((item) => {
                 const active = isActive(item.path);
                 const hasActiveChild =
-                  item.children?.some((child) => isActive(child.path)) ??
-                  false;
+                  item.children?.some((child) => isActive(child.path)) ?? false;
                 const isExpanded =
                   expandedItems.includes(item.path) || hasActiveChild;
 
@@ -469,7 +484,8 @@ const Layout = () => {
                             onClick={handleSwitchToUserView}
                             className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
                           >
-                            <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to user view
+                            <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to
+                            user view
                           </button>
                         )}
                         <button
