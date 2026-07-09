@@ -153,6 +153,13 @@ export type AirtimePlan = {
   active?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
+  // Provider association (same `providerables` pivot as data plans) — which
+  // vendor/server this network's airtime maps to.
+  provider_id?: string | number | null;
+  server_id?: string | number | null;
+  cost_price?: string | number | null;
+  provider?: DataPlanProvider;
+  use_provider_as_providerable?: boolean | null;
 };
 
 export type AirtimePlanPayload = {
@@ -162,6 +169,12 @@ export type AirtimePlanPayload = {
   min?: string | number | null;
   max?: string | number | null;
   active?: boolean | null;
+  use_provider_as_providerable?: boolean;
+  providerable?: {
+    provider_id: string | number | null;
+    cost_price?: number;
+    server_id?: string | number | null;
+  };
 };
 
 const AIRTIME_PLAN = "/table/airtime_plans";

@@ -12,6 +12,7 @@ import {
   selectCls,
 } from "../../../../user/components/shared-ui";
 import { networkService, networkTypeService, airtimePlanService, type Network, type AirtimePlan } from "./service";
+import { providerService, type Provider } from "../../apis/providerService";
 
 const BACK = "/admin/products/airtime-data?tab=airtime";
 
@@ -24,6 +25,10 @@ type FormState = {
   min: string;
   max: string;
   active: boolean;
+  useCustomProvider: boolean;
+  provider_id: string;
+  server_id: string;
+  cost_price: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -135,6 +140,10 @@ const blankForm = (): FormState => ({
   min: "",
   max: "",
   active: true,
+  useCustomProvider: false,
+  provider_id: "",
+  server_id: "",
+  cost_price: "",
 });
 
 const toForm = (d: AirtimePlan): FormState => ({
@@ -144,16 +153,44 @@ const toForm = (d: AirtimePlan): FormState => ({
   min: d.min != null ? String(d.min) : "",
   max: d.max != null ? String(d.max) : "",
   active: d.active ?? true,
+  useCustomProvider: Boolean(d.use_provider_as_providerable ?? d.provider?.id != null),
+  provider_id: d.provider?.id != null ? String(d.provider.id) : d.provider_id != null ? String(d.provider_id) : "",
+  server_id:
+    d.provider?.pivot?.server_id != null
+      ? String(d.provider.pivot.server_id)
+      : d.server_id != null
+        ? String(d.server_id)
+        : "",
+  cost_price:
+    d.provider?.pivot?.cost_price != null
+      ? String(d.provider.pivot.cost_price)
+      : d.cost_price != null
+        ? String(d.cost_price)
+        : "",
 });
 
-const toPayload = (form: FormState): Record<string, unknown> => ({
-  name: form.name,
-  category: form.category || null,
-  type: form.type || PLAN_TYPE,
-  min: form.min || null,
-  max: form.max || null,
-  active: form.active,
-});
+const toPayload = (form: FormState): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {
+    name: form.name,
+    category: form.category || null,
+    type: form.type || PLAN_TYPE,
+    min: form.min || null,
+    max: form.max || null,
+    active: form.active,
+    use_provider_as_providerable: form.useCustomProvider,
+  };
+
+  if (form.useCustomProvider) {
+    payload.providerable = {
+      provider_id: form.provider_id || null,
+      // providerables.server_id is an integer column — must be numeric or null.
+      server_id: form.server_id !== "" ? Number(form.server_id) : null,
+      cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
+    };
+  }
+
+  return payload;
+};
 
 const amountSchema = z
   .string()
@@ -169,6 +206,10 @@ const planFormSchema = z
     min: amountSchema,
     max: amountSchema,
     active: z.boolean(),
+    useCustomProvider: z.boolean(),
+    provider_id: z.string(),
+    server_id: amountSchema,
+    cost_price: amountSchema,
   })
   .refine(
     (data) =>
@@ -177,9 +218,13 @@ const planFormSchema = z
       message: "Maximum must be greater than or equal to minimum.",
       path: ["max"],
     },
-  );
+  )
+  .refine((data) => !data.useCustomProvider || data.provider_id !== "", {
+    message: "Select a provider.",
+    path: ["provider_id"],
+  });
 
-type FormErrors = Partial<Record<"name" | "min" | "max", string>>;
+type FormErrors = Partial<Record<"name" | "min" | "max" | "provider_id" | "server_id" | "cost_price", string>>;
 
 function validateForm(form: FormState): FormErrors {
   const result = planFormSchema.safeParse(form);
@@ -212,11 +257,16 @@ export default function AirtimePlanFormPage() {
   );
   const [networks, setNetworks] = useState<Network[]>([]);
   const [types, setTypes] = useState<string[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
+    providerService
+      .getAll()
+      .then(setProviders)
+      .catch(() => {});
     networkService
       .getAll()
       .then(setNetworks)
@@ -424,6 +474,63 @@ export default function AirtimePlanFormPage() {
 
         {/* ── Right column ── */}
         <div className="space-y-5">
+          {/* Provider */}
+          <Card className="p-5">
+            <SectionTitle>Provider</SectionTitle>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-slate-700">
+                    Use a specific provider
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Off uses the network's default provider instead.
+                  </p>
+                </div>
+                <Toggle
+                  value={form.useCustomProvider}
+                  onChange={(v) => set("useCustomProvider", v)}
+                />
+              </div>
+
+              {form.useCustomProvider && (
+                <>
+                  <Field label="Provider" error={errors.provider_id}>
+                    <select
+                      value={form.provider_id}
+                      onChange={(e) => set("provider_id", e.target.value)}
+                      className={selectCls}
+                    >
+                      <option value="">Select a provider</option>
+                      {providers.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field label="Plan ID" hint="optional" error={errors.server_id}>
+                    <NumberInput
+                      value={form.server_id}
+                      onChange={(v) => set("server_id", v)}
+                      placeholder="Provider's numeric plan/server ID"
+                    />
+                  </Field>
+
+                  <Field label="Cost price" hint="optional" error={errors.cost_price}>
+                    <NumberInput
+                      value={form.cost_price}
+                      onChange={(v) => set("cost_price", v)}
+                      placeholder="0"
+                      suffix="₦"
+                    />
+                  </Field>
+                </>
+              )}
+            </div>
+          </Card>
+
           {/* Settings */}
           <Card className="p-5">
             <SectionTitle>Settings</SectionTitle>
