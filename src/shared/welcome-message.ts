@@ -1,45 +1,72 @@
-// Frontend-only placeholder for the welcome message feature — there is no
-// backend endpoint for this yet. Persisting to localStorage lets the admin
-// composer and the customer-facing app talk to each other in the meantime;
-// swap this module for real API calls (e.g. a dedicated endpoint, or
-// POST /admin/broadcast + GET /table/notifications) once one exists.
+import { apiClient } from "@shared/api/apiClient";
+
+// Backend-backed welcome message (see WelcomeMessageController). A single
+// record shown to every user as a modal after login; the customer endpoint
+// also reports whether THIS user has already seen the current version, so
+// editing the message re-shows it to everyone.
+type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
 export type WelcomeMessage = {
-  id: string;
-  title: string;
+  id: number;
   body: string;
   active: boolean;
-  updatedAt: string;
+  updated_at: string;
 };
 
-const MESSAGE_KEY = "vendify-welcome-message";
-const SEEN_KEY = "vendify-welcome-message-seen";
-
-export const getWelcomeMessage = (): WelcomeMessage | null => {
-  try {
-    const raw = localStorage.getItem(MESSAGE_KEY);
-    return raw ? (JSON.parse(raw) as WelcomeMessage) : null;
-  } catch {
-    return null;
-  }
+export type WelcomeMessagePayload = {
+  body: string;
+  active: boolean;
 };
 
-export const saveWelcomeMessage = (message: Pick<WelcomeMessage, "title" | "body" | "active">): WelcomeMessage => {
-  const saved: WelcomeMessage = {
-    ...message,
-    id: crypto.randomUUID(),
-    updatedAt: new Date().toISOString(),
-  };
-  localStorage.setItem(MESSAGE_KEY, JSON.stringify(saved));
-  return saved;
+type RawWelcomeMessage = {
+  id?: number | string;
+  body?: string;
+  active?: boolean | number;
+  updated_at?: string;
 };
 
-export const clearWelcomeMessage = () => {
-  localStorage.removeItem(MESSAGE_KEY);
-};
+const mapMessage = (raw: RawWelcomeMessage | null | undefined): WelcomeMessage | null =>
+  raw
+    ? {
+        id: Number(raw.id),
+        body: raw.body ?? "",
+        active: Boolean(raw.active),
+        updated_at: raw.updated_at ?? "",
+      }
+    : null;
 
-export const getSeenMessageId = (): string | null => localStorage.getItem(SEEN_KEY);
+export const welcomeMessageService = {
+  // Customer-facing: the active message + whether this user has seen it.
+  getForUser: async (): Promise<{ message: WelcomeMessage | null; seen: boolean }> => {
+    const response = await apiClient.get<
+      ApiEnvelope<{ welcome_message: RawWelcomeMessage | null; seen: boolean }>
+    >("/welcome-message");
+    return {
+      message: mapMessage(response.data.data?.welcome_message),
+      seen: Boolean(response.data.data?.seen),
+    };
+  },
 
-export const markMessageSeen = (id: string) => {
-  localStorage.setItem(SEEN_KEY, id);
+  markSeen: async (id: number): Promise<void> => {
+    await apiClient.post("/welcome-message/seen", { welcome_message_id: id });
+  },
+
+  // Admin: the configured message regardless of active state.
+  getAdmin: async (): Promise<WelcomeMessage | null> => {
+    const response = await apiClient.get<
+      ApiEnvelope<{ welcome_message: RawWelcomeMessage | null }>
+    >("/admin/welcome-message");
+    return mapMessage(response.data.data?.welcome_message);
+  },
+
+  save: async (payload: WelcomeMessagePayload): Promise<WelcomeMessage | null> => {
+    const response = await apiClient.put<
+      ApiEnvelope<{ welcome_message: RawWelcomeMessage | null }>
+    >("/admin/welcome-message", payload);
+    return mapMessage(response.data.data?.welcome_message);
+  },
+
+  remove: async (): Promise<void> => {
+    await apiClient.delete("/admin/welcome-message");
+  },
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mail, Eye, Trash2, CheckCircle2 } from "lucide-react";
 import {
   PageHeader,
@@ -6,40 +6,72 @@ import {
   Button,
   Toggle,
   inputCls,
+  SkeletonLine,
 } from "../../../user/components/shared-ui";
 import { WelcomeMessageModal } from "../../../user/components/welcome-message-modal";
-import {
-  clearWelcomeMessage,
-  getWelcomeMessage,
-  saveWelcomeMessage,
-  type WelcomeMessage,
-} from "@shared/welcome-message";
+import { welcomeMessageService, type WelcomeMessage } from "@shared/welcome-message";
 
 export default function WelcomePage() {
-  const existing = getWelcomeMessage();
-  const [title, setTitle] = useState(existing?.title ?? "");
-  const [body, setBody] = useState(existing?.body ?? "");
-  const [active, setActive] = useState(existing?.active ?? true);
-  const [saved, setSaved] = useState<WelcomeMessage | null>(existing);
+  const [loading, setLoading] = useState(true);
+  const [body, setBody] = useState("");
+  const [active, setActive] = useState(true);
+  const [saved, setSaved] = useState<WelcomeMessage | null>(null);
   const [previewing, setPreviewing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const valid = title.trim().length > 0 && body.trim().length > 0;
+  useEffect(() => {
+    let mounted = true;
+    welcomeMessageService
+      .getAdmin()
+      .then((message) => {
+        if (!mounted) return;
+        setSaved(message);
+        if (message) {
+          setBody(message.body);
+          setActive(message.active);
+        }
+      })
+      .catch(() => mounted && setError("Could not load the welcome message."))
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const handleSave = () => {
+  const valid = body.trim().length > 0;
+
+  const handleSave = async () => {
     if (!valid) return;
-    const message = saveWelcomeMessage({ title: title.trim(), body: body.trim(), active });
-    setSaved(message);
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 2500);
+    setSaving(true);
+    setError(null);
+    try {
+      const message = await welcomeMessageService.save({ body: body.trim(), active });
+      setSaved(message);
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 2500);
+    } catch {
+      setError("The welcome message could not be saved. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleClear = () => {
-    clearWelcomeMessage();
-    setSaved(null);
-    setTitle("");
-    setBody("");
-    setActive(true);
+  const handleClear = async () => {
+    setRemoving(true);
+    setError(null);
+    try {
+      await welcomeMessageService.remove();
+      setSaved(null);
+      setBody("");
+      setActive(true);
+    } catch {
+      setError("The welcome message could not be removed right now.");
+    } finally {
+      setRemoving(false);
+    }
   };
 
   return (
@@ -50,55 +82,69 @@ export default function WelcomePage() {
             <div className="rounded-lg bg-[#111827]/15 p-2.5">
               <Mail className="h-5 w-5 text-[#111827]" />
             </div>
-            Welcome Messages
+            Welcome Message
           </div>
         }
-        description="Configure the message shown to users the next time they open the app"
+        description="Shown to every user as a modal the next time they open their dashboard"
       />
 
-      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-        This is frontend-only for now â€” the message is stored locally in this browser
-        (no backend endpoint exists yet) so it can be previewed end-to-end.
-      </div>
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
           <Card className="p-5 space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">Title</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Welcome to Vendify VTU!"
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">Message</label>
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="What should new and returning users see?"
-                rows={5}
-                className={`${inputCls} resize-none`}
-              />
-            </div>
-            <div className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2.5">
-              <div>
-                <p className="text-sm text-slate-700">Active</p>
-                <p className="text-xs text-slate-400 mt-0.5">Show this message to users</p>
+            {loading ? (
+              <div className="space-y-3">
+                <SkeletonLine className="h-24 w-full" />
+                <SkeletonLine className="h-12 w-full" />
               </div>
-              <Toggle value={active} onChange={setActive} />
-            </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Message
+                  </label>
+                  <textarea
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="What should every user see when they open the app?"
+                    rows={5}
+                    className={`${inputCls} resize-none`}
+                  />
+                </div>
+                <div className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2.5">
+                  <div>
+                    <p className="text-sm text-slate-700">Active</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Show this message to users</p>
+                  </div>
+                  <Toggle value={active} onChange={setActive} />
+                </div>
 
-            <div className="flex gap-3 pt-1">
-              <Button variant="secondary" fullWidth disabled={!valid} onClick={() => setPreviewing(true)}>
-                <Eye className="w-4 h-4" /> Preview
-              </Button>
-              <Button fullWidth disabled={!valid} onClick={handleSave}>
-                {justSaved ? <><CheckCircle2 className="w-4 h-4" /> Saved</> : "Save & publish"}
-              </Button>
-            </div>
+                <div className="flex gap-3 pt-1">
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    disabled={!valid}
+                    onClick={() => setPreviewing(true)}
+                  >
+                    <Eye className="w-4 h-4" /> Preview
+                  </Button>
+                  <Button fullWidth disabled={!valid || saving} loading={saving} onClick={handleSave}>
+                    {justSaved ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" /> Saved
+                      </>
+                    ) : (
+                      "Save & publish"
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
           </Card>
         </div>
 
@@ -107,23 +153,36 @@ export default function WelcomePage() {
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
               Currently published
             </h2>
-            {saved ? (
+            {loading ? (
+              <SkeletonLine className="h-16 w-full" />
+            ) : saved ? (
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-slate-400">Title</p>
-                  <p className="text-sm font-medium text-slate-900">{saved.title}</p>
+                  <p className="text-xs text-slate-400">Message</p>
+                  <p className="text-sm text-slate-800 whitespace-pre-line line-clamp-4">
+                    {saved.body}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Status</p>
                   <p className="text-sm text-slate-700">{saved.active ? "Active" : "Inactive"}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-slate-400">Last updated</p>
-                  <p className="text-sm text-slate-700">
-                    {new Date(saved.updatedAt).toLocaleString()}
-                  </p>
-                </div>
-                <Button variant="danger" size="sm" fullWidth onClick={handleClear}>
+                {saved.updated_at && (
+                  <div>
+                    <p className="text-xs text-slate-400">Last updated</p>
+                    <p className="text-sm text-slate-700">
+                      {new Date(saved.updated_at).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                <Button
+                  variant="danger"
+                  size="sm"
+                  fullWidth
+                  loading={removing}
+                  disabled={removing}
+                  onClick={handleClear}
+                >
                   <Trash2 className="w-3.5 h-3.5" /> Remove message
                 </Button>
               </div>
@@ -134,12 +193,7 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      <WelcomeMessageModal
-        open={previewing}
-        title={title}
-        message={body}
-        onClose={() => setPreviewing(false)}
-      />
+      <WelcomeMessageModal open={previewing} message={body} onClose={() => setPreviewing(false)} />
     </div>
   );
 }

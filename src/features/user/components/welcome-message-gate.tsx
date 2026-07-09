@@ -1,46 +1,45 @@
 import { useEffect, useState } from "react";
 import { WelcomeMessageModal } from "./welcome-message-modal";
-import {
-  getSeenMessageId,
-  getWelcomeMessage,
-  markMessageSeen,
-  type WelcomeMessage,
-} from "@shared/welcome-message";
+import { welcomeMessageService, type WelcomeMessage } from "@shared/welcome-message";
 
-// Mounted once in the customer-facing layout. Watches for a welcome message
-// the admin has published and shows it once per message (tracked by id),
-// including live across tabs — an admin editing the message in one tab
-// pops the modal open in any customer tab that's already loaded.
+// Mounted once in the customer-facing layout, so it runs right after login
+// routes the user to their dashboard. Asks the backend for the active
+// welcome message and whether THIS user has already seen the current
+// version; shows the modal once per version, then records that it was seen.
 export function WelcomeMessageGate() {
   const [message, setMessage] = useState<WelcomeMessage | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const evaluate = () => {
-      const msg = getWelcomeMessage();
-      if (msg && msg.active && msg.id !== getSeenMessageId()) {
-        setMessage(msg);
-        setOpen(true);
-      }
-    };
+    let mounted = true;
 
-    evaluate();
+    welcomeMessageService
+      .getForUser()
+      .then(({ message, seen }) => {
+        if (mounted && message && message.active && !seen) {
+          setMessage(message);
+          setOpen(true);
+        }
+      })
+      .catch(() => {
+        // A welcome message is non-essential — never let it block the app.
+      });
 
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key === "vendify-welcome-message") evaluate();
+    return () => {
+      mounted = false;
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const handleClose = () => {
-    if (message) markMessageSeen(message.id);
     setOpen(false);
+    if (message) {
+      // Fire-and-forget: if this fails the modal just shows again next
+      // login, which is harmless.
+      void welcomeMessageService.markSeen(message.id).catch(() => {});
+    }
   };
 
   if (!message) return null;
 
-  return (
-    <WelcomeMessageModal open={open} title={message.title} message={message.body} onClose={handleClose} />
-  );
+  return <WelcomeMessageModal open={open} message={message.body} onClose={handleClose} />;
 }

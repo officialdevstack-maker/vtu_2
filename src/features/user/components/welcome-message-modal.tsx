@@ -2,12 +2,10 @@ import { PartyPopper, X } from "lucide-react";
 
 export function WelcomeMessageModal({
   open,
-  title,
   message,
   onClose,
 }: {
   open: boolean;
-  title: string;
   message: string;
   onClose: () => void;
 }) {
@@ -25,8 +23,7 @@ export function WelcomeMessageModal({
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#111827]/10 text-[#111827]">
           <PartyPopper className="h-7 w-7" />
         </div>
-        <h2 className="text-lg font-semibold text-slate-900">{title || "Welcome!"}</h2>
-        <p className="mt-2 text-sm text-slate-600 whitespace-pre-line">{message}</p>
+        <p className="text-sm text-slate-700 whitespace-pre-line">{message}</p>
         <button
           onClick={onClose}
           className="mt-5 w-full rounded-lg bg-[#111827] py-2.5 text-sm font-medium text-white hover:bg-[#111827] transition-colors"
