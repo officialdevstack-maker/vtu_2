@@ -229,7 +229,14 @@ export const childTransactionService = {
       .then((r) => r.data.data),
 };
 
-export type DirectiveType = "message" | "redirect_user" | "retry_transaction" | "custom";
+export type DirectiveType =
+  | "message"
+  | "redirect_user"
+  | "redirect_all_users"
+  | "reroute_provider"
+  | "update_settings"
+  | "retry_transaction"
+  | "custom";
 
 export const childDirectiveService = {
   getByInstance: (instanceId: string | number): Promise<ChildDirective[]> =>
@@ -245,4 +252,69 @@ export const childDirectiveService = {
     apiClient
       .post<ApiEnvelope<ChildDirective>>(`/admin/child-instances/${instanceId}/directives`, { type, payload })
       .then((r) => r.data.data),
+};
+
+// ─── Remote controls ────────────────────────────────────────────────────────
+// The desired state the parent last pushed, persisted in
+// child_instances.config.controls so the Controls page survives reloads.
+// This is what we ASKED the child to do — whether it actually applied is
+// only visible through the matching directive's delivered/pending status
+// (the child polls every ~5 minutes and never reports its live values back).
+
+export type ProviderRouteSlot = "1" | "2" | "3";
+
+// Column names in the child app's `settings` table (adex_maditel) — the
+// update_settings directive writes them verbatim, so these keys must match.
+export type ProcessFlagKey =
+  | "is_verify_email"
+  | "flutterwave"
+  | "monnify"
+  | "monnify_atm"
+  | "wema"
+  | "earning"
+  | "referral";
+
+export type AffiliateControlsState = {
+  redirect_all?: { enabled: boolean; target_url: string; updated_at: string };
+  provider_routes?: Partial<
+    Record<ProviderRouteSlot, { website_url: string; username?: string; updated_at: string }>
+  >;
+  process_flags?: { values: Partial<Record<ProcessFlagKey, boolean>>; updated_at: string };
+};
+
+export const getControls = (instance: ChildInstance | null): AffiliateControlsState =>
+  ((instance?.config as { controls?: AffiliateControlsState } | null)?.controls) ?? {};
+
+export const affiliateControlsService = {
+  // Merge-write: keeps whatever else lives in config (the child's own
+  // registration metadata etc.) and only replaces the controls key.
+  save: (instance: ChildInstance, controls: AffiliateControlsState): Promise<ChildInstance> =>
+    apiClient
+      .put<ApiEnvelope<ChildInstance>>(`${INSTANCES}/${instance.id}`, {
+        config: { ...(instance.config ?? {}), controls },
+      })
+      .then((r) => r.data.data),
+};
+
+// Outbound email log across every customer of one affiliate. Messages are
+// keyed by child_customer_id only, so we pull them with their customer and
+// filter to this instance client-side (volumes here are one-off admin
+// emails, not a firehose).
+export type ChildCustomerMessageWithCustomer = ChildCustomerMessage & {
+  child_customer?: (ChildCustomer & { child_instance_id: string | number }) | null;
+  childCustomer?: (ChildCustomer & { child_instance_id: string | number }) | null;
+};
+
+export const childMessageService = {
+  getForInstance: (instanceId: string | number): Promise<ChildCustomerMessageWithCustomer[]> =>
+    apiClient
+      .get<ApiEnvelope<ChildCustomerMessageWithCustomer[]>>("/table/child_customer_messages", {
+        params: { with: "sender,childCustomer", sort: "created_at,desc" },
+      })
+      .then((r) =>
+        r.data.data.filter((m) => {
+          const customer = m.child_customer ?? m.childCustomer;
+          return customer && String(customer.child_instance_id) === String(instanceId);
+        }),
+      ),
 };
