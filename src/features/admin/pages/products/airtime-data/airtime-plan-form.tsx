@@ -220,7 +220,9 @@ const planFormSchema = z
     path: ["provider_id"],
   });
 
-type FormErrors = Partial<Record<"name" | "min" | "max" | "provider_id", string>>;
+type FormErrors = Partial<
+  Record<"name" | "min" | "max" | "provider_id", string>
+>;
 
 function validateForm(form: FormState): FormErrors {
   const result = planFormSchema.safeParse(form);
