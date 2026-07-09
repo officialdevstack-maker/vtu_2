@@ -35,26 +35,41 @@ export type NetworkPayload = Omit<Network, "id">;
 
 const NET = "/table/networks";
 
+// The `networks` table stores an `active` boolean; the UI speaks in
+// "status" ("active"/"inactive"). Translate on write so the value actually
+// persists (the Universal Table API drops the non-column `status` key), and
+// let the backend's `status` accessor supply it back on read.
+const toNetworkWrite = (
+  payload: Partial<NetworkPayload>,
+): Record<string, unknown> => {
+  const { status, ...rest } = payload;
+  return status === undefined
+    ? rest
+    : { ...rest, active: status === "active" };
+};
+
 export const networkService = {
   getAll: (): Promise<Network[]> =>
     apiClient.get<ApiEnvelope<Network[]>>(NET).then((r) => r.data.data),
 
   create: (payload: NetworkPayload): Promise<Network> =>
-    apiClient.post<ApiEnvelope<Network>>(NET, payload).then((r) => r.data.data),
+    apiClient
+      .post<ApiEnvelope<Network>>(NET, toNetworkWrite(payload))
+      .then((r) => r.data.data),
 
   update: (id: string, payload: Partial<NetworkPayload>): Promise<Network> =>
     apiClient
-      .put<ApiEnvelope<Network>>(`${NET}/${id}`, payload)
+      .put<ApiEnvelope<Network>>(`${NET}/${id}`, toNetworkWrite(payload))
       .then((r) => r.data.data),
 
   remove: (id: string): Promise<void> =>
     apiClient.delete(`${NET}/${id}`).then(() => undefined),
 
-  // No dedicated toggle endpoint — PUT the flipped status value.
+  // No dedicated toggle endpoint — PUT the flipped active flag.
   toggleStatus: (network: Network): Promise<Network> =>
     apiClient
       .put<ApiEnvelope<Network>>(`${NET}/${network.id}`, {
-        status: network.status === "active" ? "inactive" : "active",
+        active: network.status !== "active",
       })
       .then((r) => r.data.data),
 };
