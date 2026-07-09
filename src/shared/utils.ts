@@ -1,6 +1,7 @@
-import { useEffect, useState, type ClassValue, clsx } from "react";
+import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import axios from "axios";
+import { clsx, type ClassValue } from "clsx";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
