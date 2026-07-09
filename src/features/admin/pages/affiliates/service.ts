@@ -1,4 +1,5 @@
 import { apiClient } from "@shared/api/apiClient";
+import { DEFAULT_PAGE_SIZE } from "@shared/pagination";
 
 // The real payload sits exactly one `.data` deep: r.data.data (see
 // backend/app/Http/Middleware/HandleRequest.php).
@@ -14,6 +15,14 @@ export type PaginatedMeta = {
 };
 
 type PaginatedApiEnvelope<T> = ApiEnvelope<T> & { meta: PaginatedMeta };
+
+export type TableQueryParams = {
+  query?: string;
+  sort?: string;
+  page?: number;
+  per_page?: number;
+  [key: string]: string | number | undefined;
+};
 
 // "pending" = registration code generated but the child hasn't completed
 // self-registration yet (no shared_secret exists server-side until then).
@@ -160,6 +169,16 @@ export const childCustomerService = {
       .get<ApiEnvelope<ChildCustomer[]>>(CUSTOMERS, { params: { child_instance_id: instanceId } })
       .then((r) => r.data.data),
 
+  getPaginatedByInstance: (
+    instanceId: string | number,
+    params: TableQueryParams,
+  ): Promise<{ data: ChildCustomer[]; meta: PaginatedMeta }> =>
+    apiClient
+      .get<PaginatedApiEnvelope<ChildCustomer[]>>(CUSTOMERS, {
+        params: { child_instance_id: instanceId, per_page: DEFAULT_PAGE_SIZE, ...params },
+      })
+      .then((r) => ({ data: r.data.data, meta: r.data.meta })),
+
   // The "promote to real account" action: creates a parent User (or links an
   // existing one on email/phone match), stamps migrated_to_user_id, auto-queues
   // a redirect_user directive, and transfers the customer's child wallet
@@ -238,6 +257,16 @@ export const childTransactionService = {
     apiClient
       .get<ApiEnvelope<ChildTransaction[]>>(TRANSACTIONS, { params: { child_instance_id: instanceId } })
       .then((r) => r.data.data),
+
+  getPaginatedByInstance: (
+    instanceId: string | number,
+    params: TableQueryParams,
+  ): Promise<{ data: ChildTransaction[]; meta: PaginatedMeta }> =>
+    apiClient
+      .get<PaginatedApiEnvelope<ChildTransaction[]>>(TRANSACTIONS, {
+        params: { child_instance_id: instanceId, per_page: DEFAULT_PAGE_SIZE, ...params },
+      })
+      .then((r) => ({ data: r.data.data, meta: r.data.meta })),
 };
 
 export type DirectiveType =
