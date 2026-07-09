@@ -18,9 +18,13 @@ import {
   inputCls,
   selectCls,
 } from "../../../user/components/shared-ui";
-import { DEFAULT_PAGE_SIZE, usePagination } from "@shared/pagination";
+import { DEFAULT_PAGE_SIZE } from "@shared/pagination";
 import { useLocalStorageState } from "@/shared/utils";
-import { childCustomerService, type ChildCustomer } from "./service";
+import {
+  childCustomerService,
+  type ChildCustomer,
+  type PaginatedMeta,
+} from "./service";
 import { useAffiliate } from "./affiliate-layout";
 import { EmailCustomerModal, MigrateCustomerModal, fmt } from "./modals";
 
@@ -34,6 +38,7 @@ export default function AffiliateCustomersPage() {
   const id = String(instance.id);
 
   const [customers, setCustomers] = useState<ChildCustomer[]>([]);
+  const [meta, setMeta] = useState<PaginatedMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useLocalStorageState<string>(
     `affiliate:${id}:customers:query`,
@@ -85,49 +90,52 @@ export default function AffiliateCustomersPage() {
   };
 
   const refresh = () => {
-    childCustomerService.getByInstance(id).then(setCustomers);
+    childCustomerService
+      .getPaginatedByInstance(id, {
+        query: query.trim() || undefined,
+        sort: `${sort.key},${sort.direction}`,
+        page,
+        per_page: DEFAULT_PAGE_SIZE,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      })
+      .then(({ data, meta: nextMeta }) => {
+        setCustomers(data);
+        setMeta(nextMeta);
+      });
   };
 
   useEffect(() => {
     setLoading(true);
     childCustomerService
-      .getByInstance(id)
-      .then(setCustomers)
+      .getPaginatedByInstance(id, {
+        query: query.trim() || undefined,
+        sort: `${sort.key},${sort.direction}`,
+        page,
+        per_page: DEFAULT_PAGE_SIZE,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      })
+      .then(({ data, meta: nextMeta }) => {
+        setCustomers(data);
+        setMeta(nextMeta);
+      })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, query, sort, statusFilter, page]);
 
   const statuses = useMemo(
     () =>
       [
         "all",
+        statusFilter !== "all" ? statusFilter : undefined,
         ...new Set(customers.map((c) => c.status).filter(Boolean)),
-      ] as string[],
-    [customers],
+      ].filter(Boolean) as string[],
+    [customers, statusFilter],
   );
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const rows = customers.filter((c) => {
-      const matchesSearch = q
-        ? [c.external_id, c.username, c.email, c.phone]
-            .filter(Boolean)
-            .some((v) => String(v).toLowerCase().includes(q))
-        : true;
-      const matchesStatus = statusFilter === "all" || c.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-
-    return [...rows].sort((a, b) => {
-      const av = sortValue(a, sort.key);
-      const bv = sortValue(b, sort.key);
-      if (av < bv) return sort.direction === "asc" ? -1 : 1;
-      if (av > bv) return sort.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [customers, query, statusFilter, sort]);
-
-  const { pageItems, currentPage, totalPages, totalItems, pageSize } =
-    usePagination(filtered, DEFAULT_PAGE_SIZE, page);
+  const pageItems = customers;
+  const currentPage = meta?.current_page ?? page;
+  const totalPages = meta?.last_page ?? 1;
+  const totalItems = meta?.total ?? customers.length;
+  const pageSize = meta?.per_page ?? DEFAULT_PAGE_SIZE;
 
   return (
     <div className="space-y-5">

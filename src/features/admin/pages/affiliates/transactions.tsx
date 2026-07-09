@@ -9,9 +9,13 @@ import {
   selectCls,
   inputCls,
 } from "../../../user/components/shared-ui";
-import { DEFAULT_PAGE_SIZE, usePagination } from "@shared/pagination";
+import { DEFAULT_PAGE_SIZE } from "@shared/pagination";
 import { useLocalStorageState } from "@/shared/utils";
-import { childTransactionService, type ChildTransaction } from "./service";
+import {
+  childTransactionService,
+  type ChildTransaction,
+  type PaginatedMeta,
+} from "./service";
 import { useAffiliate } from "./affiliate-layout";
 import { fmt } from "./modals";
 
@@ -28,6 +32,7 @@ export default function AffiliateTransactionsPage() {
   const id = String(instance.id);
 
   const [transactions, setTransactions] = useState<ChildTransaction[]>([]);
+  const [meta, setMeta] = useState<PaginatedMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useLocalStorageState<string>(
     `affiliate:${id}:transactions:typeFilter`,
@@ -84,67 +89,54 @@ export default function AffiliateTransactionsPage() {
   useEffect(() => {
     setLoading(true);
     childTransactionService
-      .getByInstance(id)
-      .then(setTransactions)
+      .getPaginatedByInstance(id, {
+        query: query.trim() || undefined,
+        sort: `${sort.key},${sort.direction}`,
+        page,
+        per_page: DEFAULT_PAGE_SIZE,
+        transaction_type: typeFilter === "all" ? undefined : typeFilter,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      })
+      .then(({ data, meta: nextMeta }) => {
+        setTransactions(data);
+        setMeta(nextMeta);
+      })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, query, sort, typeFilter, statusFilter, page]);
 
   const types = useMemo(
     () =>
       [
+        typeFilter !== "all" ? typeFilter : undefined,
         ...new Set(transactions.map((t) => t.transaction_type).filter(Boolean)),
-      ] as string[],
-    [transactions],
+      ].filter(Boolean) as string[],
+    [transactions, typeFilter],
   );
   const statuses = useMemo(
     () =>
       [
+        statusFilter !== "all" ? statusFilter : undefined,
         ...new Set(transactions.map((t) => t.status).filter(Boolean)),
-      ] as string[],
-    [transactions],
+      ].filter(Boolean) as string[],
+    [transactions, statusFilter],
   );
 
-  const filtered = useMemo(
-    () =>
-      transactions
-        .filter((t) => {
-          const queryMatches = query.trim()
-            ? [t.external_id, t.transaction_type, t.status]
-                .filter(Boolean)
-                .some((v) =>
-                  String(v).toLowerCase().includes(query.trim().toLowerCase()),
-                )
-            : true;
+  const volume = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
-          return (
-            queryMatches &&
-            (typeFilter === "all" || t.transaction_type === typeFilter) &&
-            (statusFilter === "all" || t.status === statusFilter)
-          );
-        })
-        .sort((a, b) => {
-          const av = sortValue(a, sort.key);
-          const bv = sortValue(b, sort.key);
-          if (av < bv) return sort.direction === "asc" ? -1 : 1;
-          if (av > bv) return sort.direction === "asc" ? 1 : -1;
-          return 0;
-        }),
-    [transactions, query, typeFilter, statusFilter, sort],
-  );
-
-  const volume = filtered.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-
-  const { pageItems, currentPage, totalPages, totalItems, pageSize } =
-    usePagination(filtered, DEFAULT_PAGE_SIZE, page);
+  const pageItems = transactions;
+  const currentPage = meta?.current_page ?? page;
+  const totalPages = meta?.last_page ?? 1;
+  const totalItems = meta?.total ?? transactions.length;
+  const pageSize = meta?.per_page ?? DEFAULT_PAGE_SIZE;
 
   return (
     <Card>
       <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3 flex-wrap">
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Transactions{" "}
-          {filtered.length > 0 && (
+          {transactions.length > 0 && (
             <span className="text-slate-400 normal-case font-normal">
-              — {filtered.length} shown · {fmt(volume)} total
+              — {transactions.length} shown · {fmt(volume)} total
             </span>
           )}
         </h2>
