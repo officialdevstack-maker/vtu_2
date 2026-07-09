@@ -274,6 +274,7 @@ export type Role = {
   usersAssigned: number;
   status: RoleStatus;
   isSystem: boolean;
+  isDefault: boolean;
   permissions: Permission[];
   // Whether a customer can self-upgrade into this role from
   // /upgrade-account, and what it costs — see CustomerController::upgrade.
@@ -287,6 +288,7 @@ export type RolePayload = {
   description: string;
   status: RoleStatus;
   permissionIds: string[];
+  isDefault?: boolean;
   upgradable: boolean;
   upgradeCost: number | null;
 };
@@ -343,6 +345,7 @@ const mapRole = (item: any): Role => {
       : Number(item?.users_count ?? 0),
     status: item?.is_active === false ? "inactive" : "active",
     isSystem: SYSTEM_ROLE_SLUGS.has(slug.toLowerCase()),
+    isDefault: Boolean(item?.is_default ?? false),
     permissions: Array.isArray(item?.permissions) ? item.permissions.map(mapPermission) : [],
     upgradable: Boolean(item?.upgradable),
     upgradeCost: item?.upgrade_cost != null ? Number(item.upgrade_cost) : null,
@@ -355,6 +358,7 @@ const toRoleBody = (payload: RolePayload, existingSlug?: string) => ({
   description: payload.description,
   is_active: payload.status === "active",
   permission_ids: payload.permissionIds,
+  is_default: payload.isDefault ?? false,
   upgradable: payload.upgradable,
   upgrade_cost: payload.upgradable ? payload.upgradeCost : null,
 });

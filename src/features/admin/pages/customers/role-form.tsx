@@ -29,6 +29,7 @@ type FormState = {
   permissionIds: string[];
   upgradable: boolean;
   upgradeCost: string;
+  isDefault: boolean;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -55,8 +56,12 @@ function Field({
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5">
-        <label className="block text-xs font-medium text-slate-600">{label}</label>
-        {hint && !error && <span className="text-xs text-slate-400">{hint}</span>}
+        <label className="block text-xs font-medium text-slate-600">
+          {label}
+        </label>
+        {hint && !error && (
+          <span className="text-xs text-slate-400">{hint}</span>
+        )}
       </div>
       {children}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
@@ -76,8 +81,7 @@ function ErrorBanner({ message }: { message: string }) {
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as
-      | { message?: string; errors?: Record<string, string[]> }
-      | undefined;
+      { message?: string; errors?: Record<string, string[]> } | undefined;
     const validationErrors = data?.errors;
     if (validationErrors && Object.keys(validationErrors).length > 0) {
       return Object.values(validationErrors).flat().join(" ");
@@ -97,6 +101,7 @@ const blankForm = (): FormState => ({
   permissionIds: [],
   upgradable: false,
   upgradeCost: "",
+  isDefault: false,
 });
 
 const toForm = (r: Role): FormState => ({
@@ -106,6 +111,7 @@ const toForm = (r: Role): FormState => ({
   permissionIds: r.permissions.map((p) => p.id),
   upgradable: r.upgradable,
   upgradeCost: r.upgradeCost != null ? String(r.upgradeCost) : "",
+  isDefault: r.isDefault ?? false,
 });
 
 const roleFormSchema = z
@@ -143,15 +149,22 @@ export default function RoleFormPage() {
   const stateRole = (location.state as { role?: Role } | null)?.role;
 
   const [initial, setInitial] = useState<Role | undefined>(stateRole);
-  const [fetchingInitial, setFetchingInitial] = useState(id != null && !stateRole);
-  const [form, setForm] = useState<FormState>(stateRole ? toForm(stateRole) : blankForm());
+  const [fetchingInitial, setFetchingInitial] = useState(
+    id != null && !stateRole,
+  );
+  const [form, setForm] = useState<FormState>(
+    stateRole ? toForm(stateRole) : blankForm(),
+  );
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    permissionService.getAll().then(setPermissions).catch(() => {});
+    permissionService
+      .getAll()
+      .then(setPermissions)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -195,6 +208,7 @@ export default function RoleFormPage() {
         description: form.description,
         status: form.status,
         permissionIds: form.permissionIds,
+        isDefault: form.isDefault,
         upgradable: form.upgradable,
         upgradeCost: form.upgradeCost.trim() ? Number(form.upgradeCost) : null,
       };
@@ -222,7 +236,10 @@ export default function RoleFormPage() {
           <div className="space-y-5">
             <Card className="p-5 space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-8 w-full bg-slate-100 rounded animate-pulse" />
+                <div
+                  key={i}
+                  className="h-8 w-full bg-slate-100 rounded animate-pulse"
+                />
               ))}
             </Card>
           </div>
@@ -252,10 +269,19 @@ export default function RoleFormPage() {
         }
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(BACK)}
+            >
               Cancel
             </Button>
-            <Button size="sm" disabled={!valid || saving} loading={saving} onClick={handleSubmit}>
+            <Button
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving}
+              onClick={handleSubmit}
+            >
               {initial ? "Save changes" : "Create role"}
             </Button>
           </>
@@ -293,14 +319,23 @@ export default function RoleFormPage() {
           <Card className="p-5">
             <SectionTitle>Permissions</SectionTitle>
             {permissions.length === 0 ? (
-              <p className="text-xs text-slate-400">No permissions configured yet.</p>
+              <p className="text-xs text-slate-400">
+                No permissions configured yet.
+              </p>
             ) : (
               <div className="border border-slate-200/70 rounded-xl divide-y divide-gray-100">
                 {permissions.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between px-3 py-2.5">
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between px-3 py-2.5"
+                  >
                     <div>
                       <span className="text-sm text-slate-700">{p.name}</span>
-                      {p.description && <p className="text-xs text-slate-400">{p.description}</p>}
+                      {p.description && (
+                        <p className="text-xs text-slate-400">
+                          {p.description}
+                        </p>
+                      )}
                     </div>
                     <Toggle
                       value={form.permissionIds.includes(p.id)}
@@ -324,6 +359,18 @@ export default function RoleFormPage() {
                 onChange={(v) => set("status", v ? "active" : "inactive")}
               />
             </div>
+            <div className="mt-3 flex items-center justify-between border border-slate-200/70 rounded-xl px-3 py-2.5">
+              <div>
+                <span className="text-sm text-slate-700">Default role</span>
+                <p className="text-xs text-slate-400">
+                  When selected, new registrations get this role by default.
+                </p>
+              </div>
+              <Toggle
+                value={form.isDefault}
+                onChange={(v) => set("isDefault", v)}
+              />
+            </div>
           </Card>
 
           <Card className="p-5">
@@ -333,10 +380,14 @@ export default function RoleFormPage() {
                 <div>
                   <span className="text-sm text-slate-700">Upgradable</span>
                   <p className="text-xs text-slate-400">
-                    Customers can self-upgrade into this role from Upgrade Account
+                    Customers can self-upgrade into this role from Upgrade
+                    Account
                   </p>
                 </div>
-                <Toggle value={form.upgradable} onChange={(v) => set("upgradable", v)} />
+                <Toggle
+                  value={form.upgradable}
+                  onChange={(v) => set("upgradable", v)}
+                />
               </div>
               {form.upgradable && (
                 <Field label="Upgrade cost (₦)" error={errors.upgradeCost}>

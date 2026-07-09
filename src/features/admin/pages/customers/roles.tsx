@@ -180,7 +180,7 @@ export default function RolesPage() {
         )}
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <h3 className="text-sm font-semibold text-slate-900">All roles</h3>
         </div>
