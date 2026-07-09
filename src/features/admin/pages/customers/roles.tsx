@@ -197,8 +197,7 @@ export default function RolesPage() {
                 <Plus className="w-3.5 h-3.5" /> Create role
               </Button>
             }
-          />
-        ) : (
+          />        ) : (
           <>
             <div className="divide-y divide-gray-100 md:hidden">
               {paginatedRoles.map((r) => (

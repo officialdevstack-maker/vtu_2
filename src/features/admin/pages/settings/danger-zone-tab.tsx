@@ -157,10 +157,8 @@ function ResetDoneModal({
 export function DangerZoneTab() {
   const [confirming, setConfirming] = useState(false);
   const [doneCounts, setDoneCounts] = useState<ResetCounts | null>(null);
-  const [migrating, setMigrating] = useState(false);
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
   const [migrateOutput, setMigrateOutput] = useState<string | null>(null);
-  const [migrateError, setMigrateError] = useState<string | null>(null);
 
   async function runMigrations(): Promise<{
     exit_code: number;

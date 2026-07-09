@@ -13,8 +13,7 @@ import {
   IconButton,
   Stack,
   Chip,
-  useMediaQuery,
-  useTheme,
+  
 } from "@mui/material";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import PhoneAndroidRoundedIcon from "@mui/icons-material/PhoneAndroidRounded";
@@ -28,6 +27,9 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 // Local navigation stub — replace with your router
 const redirect = (href: string) => { window.location.href = href; };
 
@@ -92,7 +94,7 @@ function WalletWidget() {
       <Box sx={{ position: "absolute", top: -24, right: -24, width: 80, height: 80, borderRadius: "50%", border: "20px solid rgba(255,255,255,0.07)", pointerEvents: "none" }} />
       <Box sx={{ position: "absolute", bottom: -30, right: 10, width: 60, height: 60, borderRadius: "50%", border: "15px solid rgba(255,255,255,0.05)", pointerEvents: "none" }} />
 
-      <Stack direction="row" alignItems="center" spacing={0.8} mb={1}>
+      <Stack direction="row" sx={{ alignItems:'center', mb:1 }} spacing={0.8}>
         <AccountBalanceWalletRoundedIcon sx={{ fontSize: 13, opacity: 0.75 }} />
         <Typography variant="caption" sx={{ opacity: 0.75, fontWeight: 500, fontSize: 11 }}>
           Wallet Balance
@@ -103,7 +105,7 @@ function WalletWidget() {
         ₦45,250.00
       </Typography>
 
-      <Stack direction="row" alignItems="center" spacing={0.5} mb={1.8}>
+      <Stack direction="row" sx={{ alignItems:'center', mb:1.8 }} spacing={0.5}>
         <TrendingUpRoundedIcon sx={{ fontSize: 12, color: "#4ade80" }} />
         <Typography variant="caption" sx={{ color: "#4ade80", fontWeight: 600, fontSize: 11 }}>
           +₦2,100 this week
@@ -139,8 +141,8 @@ function UserProfile() {
       <Stack
         direction="row"
         spacing={1.5}
-        alignItems="center"
         sx={{
+          alignItems:"center",
           bgcolor: "grey.50",
           borderRadius: 2,
           p: 1.2,
@@ -289,7 +291,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ currentHref = "/dashboard", onNavigate }: SidebarProps) {
-  const theme = useTheme();
+  const theme = useTheme<any>();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -315,7 +317,7 @@ export default function Sidebar({ currentHref = "/dashboard", onNavigate }: Side
           <Typography variant="h6" sx={{ color: "#111827" }} fontWeight={800} letterSpacing="-0.5px">
             SwiftVTU
           </Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <Avatar src="https://i.pravatar.cc/40?img=11" sx={{ width: 28, height: 28 }} />
             <IconButton size="small" onClick={() => setDrawerOpen(true)} sx={{ bgcolor: "grey.100", borderRadius: 1.5 }}>
               <MenuRoundedIcon fontSize="small" />
