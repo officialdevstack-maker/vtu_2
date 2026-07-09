@@ -20,6 +20,13 @@ export const adminRouter: RouteObject[] = [
           return { Component };
         },
       },
+      {
+        path: "ai-manager",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/ai-manager/ai-manager");
+          return { Component };
+        },
+      },
       // APIs
       {
         path: "customers/users",

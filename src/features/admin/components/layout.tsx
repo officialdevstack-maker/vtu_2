@@ -14,6 +14,7 @@ import {
   Bell,
   BellRing,
   BookOpenCheck,
+  Bot,
   Cable,
   ChevronRight,
   HelpCircle,
@@ -66,6 +67,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     title: "Core",
     items: [
       { label: "Dashboard", path: "/admin", icon: LayoutGrid },
+      { label: "AI Manager", path: "/admin/ai-manager", icon: Bot },
       { label: "How it works", path: "/admin/help", icon: HelpCircle },
     ],
   },
