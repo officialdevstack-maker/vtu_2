@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2, Zap } from "lucide-react";
 import { apiClient } from "@shared/api/apiClient";
 import { Card, Button, inputCls } from "../../../user/components/shared-ui";
 import { SectionTitle, ErrorBanner, extractErrorMessage } from "./shared";
@@ -136,6 +136,78 @@ function ResetDoneModal({ counts, onClose }: { counts: ResetCounts; onClose: () 
 export function DangerZoneTab() {
   const [confirming, setConfirming] = useState(false);
   const [doneCounts, setDoneCounts] = useState<ResetCounts | null>(null);
+  const [migrating, setMigrating] = useState(false);
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
+  const [migrateOutput, setMigrateOutput] = useState<string | null>(null);
+  const [migrateError, setMigrateError] = useState<string | null>(null);
+
+  async function runMigrations(): Promise<{ exit_code: number; output: string }> {
+    return apiClient.post<ApiEnvelope<{ exit_code: number; output: string }>>("/admin/migrate-db").then((r) => r.data.data);
+  }
+
+  function MigrateConfirmModal({ onClose, onDone }: { onClose: () => void; onDone: (out: string) => void }) {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handle = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await runMigrations();
+        onDone(res.output);
+      } catch (err) {
+        setError(extractErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-xl p-5">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-yellow-50 text-yellow-600 flex items-center justify-center shrink-0">
+              <Zap className="w-4.5 h-4.5" />
+            </div>
+            <h3 className="font-semibold text-slate-900 text-sm">Run migrations</h3>
+          </div>
+
+          <p className="text-xs text-slate-500 mb-4">This runs any pending framework/database migrations on the server. Typically safe, but review changes before running in production.</p>
+
+          {error && (
+            <div className="mb-3">
+              <ErrorBanner message={error} />
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <Button variant="secondary" fullWidth onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button variant="danger" fullWidth loading={loading} onClick={handle}>
+              {loading ? "Running…" : "Run migrations"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function MigrateDoneModal({ output, onClose }: { output: string; onClose: () => void }) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-lg shadow-xl p-5">
+          <h3 className="font-semibold text-slate-900 text-sm mb-3">Migrations completed</h3>
+          <pre className="max-h-64 overflow-auto text-xs bg-gray-50 p-3 rounded border">{output}</pre>
+          <div className="mt-3">
+            <Button fullWidth onClick={onClose}>
+              Done
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -155,6 +227,31 @@ export function DangerZoneTab() {
           </Button>
         </div>
       </Card>
+
+      <Card className="p-5 border-yellow-200 mt-4">
+        <SectionTitle>Migrations</SectionTitle>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="max-w-md">
+            <p className="text-sm font-medium text-slate-900">Run pending migrations</p>
+            <p className="text-xs text-slate-500 mt-1">Execute any pending framework or database migrations on the server.</p>
+          </div>
+          <Button variant="danger" size="sm" onClick={() => setMigrateModalOpen(true)}>
+            <Zap className="w-3.5 h-3.5" /> Run migrations
+          </Button>
+        </div>
+      </Card>
+
+      {migrateModalOpen && (
+        <MigrateConfirmModal
+          onClose={() => setMigrateModalOpen(false)}
+          onDone={(out) => {
+            setMigrateModalOpen(false);
+            setMigrateOutput(out);
+          }}
+        />
+      )}
+
+      {migrateOutput && <MigrateDoneModal output={migrateOutput} onClose={() => setMigrateOutput(null)} />}
 
       {confirming && (
         <ResetConfirmModal
