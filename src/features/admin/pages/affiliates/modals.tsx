@@ -103,8 +103,8 @@ export function MigrateCustomerModal({
             </div>
             <div className="rounded-lg bg-emerald-50 px-3 py-2.5">
               <p className="text-[11px] text-emerald-700">
-                {result.wallet_balance_at_migration > 0
-                  ? `₦${result.wallet_balance_at_migration.toLocaleString()} has been credited to the parent wallet.`
+                {Number(result.wallet_balance_at_migration) > 0
+                  ? `${fmt(result.wallet_balance_at_migration)} has been credited to the parent wallet.`
                   : "No affiliate wallet balance was present to transfer."}
               </p>
             </div>

@@ -99,7 +99,10 @@ export default function AffiliateTransactionsPage() {
     [transactions, statusFilter],
   );
 
-  const volume = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const volume = transactions.reduce(
+    (sum, t) => sum + (Number(t.amount) || 0),
+    0,
+  );
 
   const pageItems = transactions;
   const currentPage = meta?.current_page ?? page;
@@ -114,7 +117,8 @@ export default function AffiliateTransactionsPage() {
           Transactions{" "}
           {totalItems > 0 && (
             <span className="text-slate-400 normal-case font-normal">
-              — {currentPage ? `${currentPage}` : "1"} of {totalItems} shown · {fmt(volume)} total
+              — {currentPage ? `${currentPage}` : "1"} of {totalItems} shown ·{" "}
+              {fmt(volume)} total
             </span>
           )}
         </h2>
