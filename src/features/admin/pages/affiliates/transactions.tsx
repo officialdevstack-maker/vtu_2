@@ -64,28 +64,6 @@ export default function AffiliateTransactionsPage() {
     setPage(1);
   };
 
-  const sortValue = (
-    transaction: ChildTransaction,
-    key: TransactionSortKey,
-  ) => {
-    switch (key) {
-      case "amount":
-        return Number(transaction.amount) || 0;
-      case "created_at":
-        return transaction.created_at
-          ? new Date(transaction.created_at).getTime()
-          : 0;
-      case "external_id":
-        return transaction.external_id ?? "";
-      case "transaction_type":
-        return transaction.transaction_type ?? "";
-      case "status":
-        return transaction.status ?? "";
-      default:
-        return "";
-    }
-  };
-
   useEffect(() => {
     setLoading(true);
     childTransactionService
@@ -134,9 +112,9 @@ export default function AffiliateTransactionsPage() {
       <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3 flex-wrap">
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Transactions{" "}
-          {transactions.length > 0 && (
+          {totalItems > 0 && (
             <span className="text-slate-400 normal-case font-normal">
-              — {transactions.length} shown · {fmt(volume)} total
+              — {currentPage ? `${currentPage}` : "1"} of {totalItems} shown · {fmt(volume)} total
             </span>
           )}
         </h2>
