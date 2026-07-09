@@ -89,9 +89,12 @@ export const providerService = {
       .get<ApiEnvelope<Provider>>(`${BASE}/${id}`)
       .then((r) => r.data.data),
 
+  // category is set explicitly (and defaulted by Vendor::creating on the
+  // backend) — without it the row lands outside the Vendor model's
+  // category=vendor scope and the new vendor is invisible everywhere.
   create: (payload: ProviderPayload): Promise<Provider> =>
     apiClient
-      .post<ApiEnvelope<Provider>>(BASE, payload)
+      .post<ApiEnvelope<Provider>>(BASE, { ...payload, category: "vendor" })
       .then((r) => r.data.data),
 
   update: (id: string, payload: Partial<ProviderPayload>): Promise<Provider> =>
