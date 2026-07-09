@@ -1,9 +1,27 @@
 import {
-  CheckCircle2, XCircle, Clock, AlertCircle, ChevronLeft, ChevronRight, Loader2, RefreshCw, User,
-  Copy, Check, Eye, EyeOff, LockKeyhole, Zap,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  RefreshCw,
+  User,
+  Copy,
+  Check,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
+import {
+  useState,
+  type ButtonHTMLAttributes,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import { fmt } from "../data/mock";
 import { cn } from "@/shared/utils";
 import { useBranding } from "@/shared/branding";
@@ -26,7 +44,8 @@ type ButtonSize = "sm" | "md";
 
 const buttonVariants: Record<ButtonVariant, string> = {
   primary: "brand-primary-button",
-  secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-50",
+  secondary:
+    "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-50",
   ghost: "text-slate-600 hover:bg-slate-100 disabled:opacity-50",
   danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
 };
@@ -37,9 +56,19 @@ const buttonSizes: Record<ButtonSize, string> = {
 };
 
 export function Button({
-  variant = "primary", size = "md", fullWidth, loading, disabled, className = "", children, ...props
+  variant = "primary",
+  size = "md",
+  fullWidth,
+  loading,
+  disabled,
+  className = "",
+  children,
+  ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: ButtonVariant; size?: ButtonSize; fullWidth?: boolean; loading?: boolean;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  fullWidth?: boolean;
+  loading?: boolean;
 }) {
   return (
     <button
@@ -59,22 +88,46 @@ export function Button({
   );
 }
 
-export function Card({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
+export function Card({
+  className = "",
+  children,
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("bg-white border border-slate-200/70 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)]", className)} {...props}>
+    <div
+      className={cn(
+        "bg-white border border-slate-200/70 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </div>
   );
 }
 
-export function PageHeader({ title, description, actions }: { title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+}) {
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap">
       <div>
-        <h1 className="text-lg font-semibold text-slate-900 tracking-tight">{title}</h1>
-        {description && <p className="text-sm text-slate-500 mt-0.5">{description}</p>}
+        <h1 className="text-lg font-semibold text-slate-900 tracking-tight">
+          {title}
+        </h1>
+        {description && (
+          <p className="text-sm text-slate-500 mt-0.5">{description}</p>
+        )}
       </div>
-      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      {actions && (
+        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+      )}
     </div>
   );
 }
@@ -88,25 +141,47 @@ const toneStyles: Record<Tone, string> = {
   danger: "bg-red-50 text-red-600",
 };
 
-export function StatCard({ label, value, icon: Icon, tone = "neutral", meta }: {
-  label: string; value: string; icon: LucideIcon; tone?: Tone; meta?: string;
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone = "neutral",
+  meta,
+}: {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+  tone?: Tone;
+  meta?: string;
 }) {
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-2.5">
         <p className="text-xs font-medium text-slate-500">{label}</p>
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${toneStyles[tone]}`}>
+        <div
+          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${toneStyles[tone]}`}
+        >
           <Icon className="w-4 h-4" />
         </div>
       </div>
-      <p className="text-xl font-semibold text-slate-900 tabular-nums">{value}</p>
+      <p className="text-xl font-semibold text-slate-900 tabular-nums">
+        {value}
+      </p>
       {meta && <p className="text-xs text-slate-400 mt-1">{meta}</p>}
     </Card>
   );
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: {
-  icon: LucideIcon; title: string; description?: string; action?: ReactNode;
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  action?: ReactNode;
 }) {
   return (
     <div className="py-14 text-center">
@@ -114,40 +189,107 @@ export function EmptyState({ icon: Icon, title, description, action }: {
         <Icon className="w-5 h-5 text-slate-400" />
       </div>
       <p className="text-sm font-medium text-slate-700">{title}</p>
-      {description && <p className="text-xs text-slate-400 mt-1">{description}</p>}
+      {description && (
+        <p className="text-xs text-slate-400 mt-1">{description}</p>
+      )}
       {action && <div className="mt-3">{action}</div>}
     </div>
   );
 }
 
-const statusMap: Record<string, { dot: string; text: string; label: string }> = {
-  success: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Successful" },
-  successful: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Successful" },
-  completed: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Completed" },
-  pending: { dot: "bg-amber-500", text: "text-amber-700 bg-amber-50", label: "Pending" },
-  processing: { dot: "bg-blue-500", text: "text-blue-700 bg-blue-50", label: "Processing" },
-  failed: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Failed" },
-  approved: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Approved" },
-  rejected: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Rejected" },
-  verified: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Verified" },
-  active: { dot: "bg-emerald-500", text: "text-emerald-700 bg-emerald-50", label: "Active" },
-  suspended: { dot: "bg-red-500", text: "text-red-700 bg-red-50", label: "Suspended" },
-  inactive: { dot: "bg-slate-400", text: "text-slate-600 bg-slate-100", label: "Inactive" },
-  unverified: { dot: "bg-slate-400", text: "text-slate-600 bg-slate-100", label: "Unverified" },
-  draft: { dot: "bg-violet-500", text: "text-violet-700 bg-violet-50", label: "Draft" },
-};
+const statusMap: Record<string, { dot: string; text: string; label: string }> =
+  {
+    success: {
+      dot: "bg-emerald-500",
+      text: "text-emerald-700 bg-emerald-50",
+      label: "Successful",
+    },
+    successful: {
+      dot: "bg-emerald-500",
+      text: "text-emerald-700 bg-emerald-50",
+      label: "Successful",
+    },
+    completed: {
+      dot: "bg-emerald-500",
+      text: "text-emerald-700 bg-emerald-50",
+      label: "Completed",
+    },
+    pending: {
+      dot: "bg-amber-500",
+      text: "text-amber-700 bg-amber-50",
+      label: "Pending",
+    },
+    processing: {
+      dot: "bg-blue-500",
+      text: "text-blue-700 bg-blue-50",
+      label: "Processing",
+    },
+    failed: {
+      dot: "bg-red-500",
+      text: "text-red-700 bg-red-50",
+      label: "Failed",
+    },
+    approved: {
+      dot: "bg-emerald-500",
+      text: "text-emerald-700 bg-emerald-50",
+      label: "Approved",
+    },
+    rejected: {
+      dot: "bg-red-500",
+      text: "text-red-700 bg-red-50",
+      label: "Rejected",
+    },
+    verified: {
+      dot: "bg-emerald-500",
+      text: "text-emerald-700 bg-emerald-50",
+      label: "Verified",
+    },
+    active: {
+      dot: "bg-emerald-500",
+      text: "text-emerald-700 bg-emerald-50",
+      label: "Active",
+    },
+    suspended: {
+      dot: "bg-red-500",
+      text: "text-red-700 bg-red-50",
+      label: "Suspended",
+    },
+    inactive: {
+      dot: "bg-slate-400",
+      text: "text-slate-600 bg-slate-100",
+      label: "Inactive",
+    },
+    unverified: {
+      dot: "bg-slate-400",
+      text: "text-slate-600 bg-slate-100",
+      label: "Unverified",
+    },
+    draft: {
+      dot: "bg-violet-500",
+      text: "text-violet-700 bg-violet-50",
+      label: "Draft",
+    },
+  };
 
 export function StatusBadge({ status }: { status: string }) {
   const s = statusMap[status?.toLowerCase()] ?? statusMap.pending;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${s.text}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${s.text}`}
+    >
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {s.label}
     </span>
   );
 }
 
-export function CopyButton({ value, label }: { value: string; label?: string }) {
+export function CopyButton({
+  value,
+  label,
+}: {
+  value: string;
+  label?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -177,13 +319,21 @@ export function CopyButton({ value, label }: { value: string; label?: string }) 
   );
 }
 
-export function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+export function Toggle({
+  value,
+  onChange,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <button
       onClick={() => onChange(!value)}
       className={`brand-primary-toggle w-10 h-5.5 rounded-full transition-colors relative shrink-0 focus:outline-none ${value ? "brand-primary-bg" : "bg-slate-200"}`}
     >
-      <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full shadow-sm transition-transform ${value ? "translate-x-5" : "translate-x-0.5"}`} />
+      <div
+        className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full shadow-sm transition-transform ${value ? "translate-x-5" : "translate-x-0.5"}`}
+      />
     </button>
   );
 }
@@ -212,13 +362,38 @@ export function SkeletonCard() {
 
 const spinnerSizes = { sm: "w-4 h-4", md: "w-6 h-6", lg: "w-8 h-8" } as const;
 
-export function Spinner({ size = "md", className = "" }: { size?: keyof typeof spinnerSizes; className?: string }) {
-  return <Loader2 className={cn(spinnerSizes[size], "animate-spin brand-primary-text", className)} />;
+export function Spinner({
+  size = "md",
+  className = "",
+}: {
+  size?: keyof typeof spinnerSizes;
+  className?: string;
+}) {
+  return (
+    <Loader2
+      className={cn(
+        spinnerSizes[size],
+        "animate-spin brand-primary-text",
+        className,
+      )}
+    />
+  );
 }
 
-export function LoadingScreen({ label = "Loading…", fullScreen = true }: { label?: string; fullScreen?: boolean }) {
+export function LoadingScreen({
+  label = "Loading…",
+  fullScreen = true,
+}: {
+  label?: string;
+  fullScreen?: boolean;
+}) {
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-3", fullScreen ? "min-h-[60vh]" : "py-16")}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-3",
+        fullScreen ? "min-h-[60vh]" : "py-16",
+      )}
+    >
       <Spinner size="lg" />
       <p className="text-sm text-slate-400">{label}</p>
     </div>
@@ -228,7 +403,11 @@ export function LoadingScreen({ label = "Loading…", fullScreen = true }: { lab
 // Branded full-screen preloader — shown while the session/auth check is in
 // flight (see ProtectedLayout / AdminProtectedLayout), so that moment reads
 // as "the app is starting up" rather than a bare spinner + string.
-export function SessionPreloader({ label = "Checking your session…" }: { label?: string }) {
+export function SessionPreloader({
+  label = "Checking your session…",
+}: {
+  label?: string;
+}) {
   const { app_name, logo } = useBranding();
 
   return (
@@ -237,7 +416,11 @@ export function SessionPreloader({ label = "Checking your session…" }: { label
         <span className="absolute inset-0 rounded-2xl brand-primary-bg opacity-20 animate-ping" />
         <div className="relative w-14 h-14 rounded-2xl brand-primary-bg flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden">
           {logo ? (
-            <img src={logo} alt={app_name} className="w-full h-full object-contain" />
+            <img
+              src={logo}
+              alt={app_name}
+              className="w-full h-full object-contain"
+            />
           ) : (
             <Zap className="w-7 h-7 text-white" />
           )}
@@ -266,8 +449,12 @@ export function TopLoadingBar({ active }: { active: boolean }) {
   );
 }
 
-export function SkeletonStatGrid({ count = 4, className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" }: {
-  count?: number; className?: string;
+export function SkeletonStatGrid({
+  count = 4,
+  className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4",
+}: {
+  count?: number;
+  className?: string;
 }) {
   return (
     <div className={className}>
@@ -284,14 +471,22 @@ export function SkeletonStatGrid({ count = 4, className = "grid grid-cols-1 sm:g
   );
 }
 
-export function SkeletonRows({ count = 5, withAvatar = true, className = "" }: {
-  count?: number; withAvatar?: boolean; className?: string;
+export function SkeletonRows({
+  count = 5,
+  withAvatar = true,
+  className = "",
+}: {
+  count?: number;
+  withAvatar?: boolean;
+  className?: string;
 }) {
   return (
     <div className={cn("p-4 space-y-3", className)}>
       {[...Array(count)].map((_, i) => (
         <div key={i} className="flex items-center gap-3">
-          {withAvatar && <SkeletonLine className="h-8 w-8 rounded-full shrink-0" />}
+          {withAvatar && (
+            <SkeletonLine className="h-8 w-8 rounded-full shrink-0" />
+          )}
           <SkeletonLine className="h-3 flex-1" />
           <SkeletonLine className="h-3 w-24" />
           <SkeletonLine className="h-3 w-16" />
@@ -382,7 +577,9 @@ export function Pagination({
                 <button
                   key={`${pageNumber}-${index}`}
                   type="button"
-                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 5))}
+                  onClick={() =>
+                    onPageChange(Math.min(totalPages, currentPage + 5))
+                  }
                   className="h-8 min-w-8 rounded-xl px-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100"
                 >
                   …
@@ -424,7 +621,13 @@ export function Pagination({
 // Shared building blocks for the "select → confirm → success" pattern used by
 // buy-airtime, buy-data, cable-tv, and electricity.
 
-export function PurchaseShell({ children, maxWidth = "max-w-xl" }: { children: ReactNode; maxWidth?: string }) {
+export function PurchaseShell({
+  children,
+  maxWidth = "max-w-xl",
+}: {
+  children: ReactNode;
+  maxWidth?: string;
+}) {
   return (
     <div className={cn("mx-auto w-full", maxWidth)}>
       <Card className="overflow-hidden">{children}</Card>
@@ -433,12 +636,24 @@ export function PurchaseShell({ children, maxWidth = "max-w-xl" }: { children: R
 }
 
 export function ServiceHeader({
-  icon: Icon, iconBg, iconColor, title, subtitle,
-}: { icon: LucideIcon; iconBg: string; iconColor: string; title: string; subtitle: string }) {
+  icon: Icon,
+  iconBg,
+  iconColor,
+  title,
+  subtitle,
+}: {
+  icon: LucideIcon;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <div className="px-5 pt-5 pb-4 border-b border-gray-100">
       <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconBg}`}>
+        <div
+          className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconBg}`}
+        >
           <Icon className={`w-4.5 h-4.5 ${iconColor}`} />
         </div>
         <div>
@@ -454,24 +669,45 @@ export function WalletBalanceBanner({ balance }: { balance: number }) {
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-3 flex items-center justify-between">
       <span className="text-sm text-slate-500">Wallet balance</span>
-      <span className="text-sm font-semibold text-slate-900">{fmt(balance)}</span>
+      <span className="text-sm font-semibold text-slate-900">
+        {fmt(balance)}
+      </span>
     </div>
   );
 }
 
-export function FieldLabel({ children, hint }: { children: ReactNode; hint?: string }) {
+export function FieldLabel({
+  children,
+  hint,
+}: {
+  children: ReactNode;
+  hint?: string;
+}) {
   return (
     <div className="flex items-baseline justify-between mb-1.5">
-      <label className="block text-xs font-medium text-slate-600">{children}</label>
+      <label className="block text-xs font-medium text-slate-600">
+        {children}
+      </label>
       {hint && <span className="text-xs text-slate-400">{hint}</span>}
     </div>
   );
 }
 
-export type NetworkOption = { id: string; name: string; bg: string; extra?: string };
+export type NetworkOption = {
+  id: string;
+  name: string;
+  bg: string;
+  extra?: string;
+};
 
-export function NetworkPicker({ networks, value, onChange }: {
-  networks: NetworkOption[]; value: string; onChange: (id: string) => void;
+export function NetworkPicker({
+  networks,
+  value,
+  onChange,
+}: {
+  networks: NetworkOption[];
+  value: string;
+  onChange: (id: string) => void;
 }) {
   return (
     <div className="grid grid-cols-4 gap-2">
@@ -481,20 +717,36 @@ export function NetworkPicker({ networks, value, onChange }: {
           onClick={() => onChange(n.id)}
           className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border transition-colors ${value === n.id ? "brand-primary-border brand-primary-soft" : "border-gray-200 hover:border-gray-300"}`}
         >
-          <div className={`w-8 h-8 ${n.bg} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>{n.name[0]}</div>
+          <div
+            className={`w-8 h-8 ${n.bg} rounded-full flex items-center justify-center text-white text-xs font-semibold`}
+          >
+            {n.name[0]}
+          </div>
           <span className="text-xs font-medium text-slate-700">{n.name}</span>
-          {n.extra && <span className="text-xs text-emerald-600">{n.extra}</span>}
+          {n.extra && (
+            <span className="text-xs text-emerald-600">{n.extra}</span>
+          )}
         </button>
       ))}
     </div>
   );
 }
 
-export function QuickAmountGrid({ amounts, value, onChange, columns = 3 }: {
-  amounts: number[]; value: string; onChange: (v: string) => void; columns?: 3 | 4;
+export function QuickAmountGrid({
+  amounts,
+  value,
+  onChange,
+  columns = 3,
+}: {
+  amounts: number[];
+  value: string;
+  onChange: (v: string) => void;
+  columns?: 3 | 4;
 }) {
   return (
-    <div className={`grid ${columns === 4 ? "grid-cols-4" : "grid-cols-3"} gap-2 mb-2.5`}>
+    <div
+      className={`grid ${columns === 4 ? "grid-cols-4" : "grid-cols-3"} gap-2 mb-2.5`}
+    >
       {amounts.map((a) => (
         <button
           key={a}
@@ -509,7 +761,16 @@ export function QuickAmountGrid({ amounts, value, onChange, columns = 3 }: {
 }
 
 export function VerifyField({
-  label, value, onChange, onVerify, verifying, verified, verifiedLabel, verifiedSub, maxLength, placeholder,
+  label,
+  value,
+  onChange,
+  onVerify,
+  verifying,
+  verified,
+  verifiedLabel,
+  verifiedSub,
+  maxLength,
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -534,7 +795,12 @@ export function VerifyField({
           placeholder={placeholder}
           className={`${inputCls} flex-1 font-mono`}
         />
-        <Button variant="secondary" onClick={onVerify} disabled={verifying} loading={verifying}>
+        <Button
+          variant="secondary"
+          onClick={onVerify}
+          disabled={verifying}
+          loading={verifying}
+        >
           {verifying ? "" : "Verify"}
         </Button>
       </div>
@@ -545,7 +811,9 @@ export function VerifyField({
             <span className="text-sm font-medium">{verifiedLabel}</span>
             <CheckCircle2 className="w-3.5 h-3.5 ml-auto" />
           </div>
-          {verifiedSub && <p className="text-xs text-emerald-600 mt-0.5">{verifiedSub}</p>}
+          {verifiedSub && (
+            <p className="text-xs text-emerald-600 mt-0.5">{verifiedSub}</p>
+          )}
         </div>
       )}
     </div>
@@ -556,8 +824,14 @@ export function VerifyField({
 // confirm" step — the backend requires `pin` on the purchase request
 // itself (see VTUServicesController::handle -> ServiceControlService::verify),
 // there's no separate PIN-confirmation endpoint.
-export function PinField({ value, onChange, error }: {
-  value: string; onChange: (v: string) => void; error?: string;
+export function PinField({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -570,7 +844,9 @@ export function PinField({ value, onChange, error }: {
           inputMode="numeric"
           maxLength={4}
           value={value}
-          onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          onChange={(e) =>
+            onChange(e.target.value.replace(/\D/g, "").slice(0, 4))
+          }
           placeholder="4-digit PIN"
           className={`${inputCls} pl-9 pr-10 tracking-[0.35em] ${error ? "border-red-300" : ""}`}
         />
@@ -580,7 +856,11 @@ export function PinField({ value, onChange, error }: {
           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
           aria-label={visible ? "Hide PIN" : "Show PIN"}
         >
-          {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {visible ? (
+            <EyeOff className="w-4 h-4" />
+          ) : (
+            <Eye className="w-4 h-4" />
+          )}
         </button>
       </div>
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
@@ -588,28 +868,56 @@ export function PinField({ value, onChange, error }: {
   );
 }
 
-export function ContinueButton({ onClick, disabled, children = "Continue" }: {
-  onClick: () => void; disabled?: boolean; children?: ReactNode;
+export function ContinueButton({
+  onClick,
+  disabled,
+  children = "Continue",
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  children?: ReactNode;
 }) {
   return (
-    <Button onClick={onClick} disabled={disabled} fullWidth size="md" className="py-3">
+    <Button
+      onClick={onClick}
+      disabled={disabled}
+      fullWidth
+      size="md"
+      className="py-3"
+    >
       {children} <ChevronRight className="w-4 h-4" />
     </Button>
   );
 }
 
-export type ConfirmRow = { label: string; value: string; emphasize?: "success" };
+export type ConfirmRow = {
+  label: string;
+  value: string;
+  emphasize?: "success";
+};
 
-export function ConfirmSummary({ title = "Confirm purchase", rows, totalRow }: {
-  title?: string; rows: ConfirmRow[]; totalRow?: { label: string; value: string };
+export function ConfirmSummary({
+  title = "Confirm purchase",
+  rows,
+  totalRow,
+}: {
+  title?: string;
+  rows: ConfirmRow[];
+  totalRow?: { label: string; value: string };
 }) {
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-5 space-y-3">
-      {title && <h3 className="text-sm font-semibold text-slate-900 mb-1">{title}</h3>}
+      {title && (
+        <h3 className="text-sm font-semibold text-slate-900 mb-1">{title}</h3>
+      )}
       {rows.map((r) => (
         <div key={r.label} className="flex justify-between text-sm">
           <span className="text-slate-500">{r.label}</span>
-          <span className={`font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}>{r.value}</span>
+          <span
+            className={`font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}
+          >
+            {r.value}
+          </span>
         </div>
       ))}
       {totalRow && (
@@ -622,13 +930,29 @@ export function ConfirmSummary({ title = "Confirm purchase", rows, totalRow }: {
   );
 }
 
-export function ConfirmActions({ onBack, onConfirm, loading, confirmLabel = "Confirm & pay" }: {
-  onBack: () => void; onConfirm: () => void; loading: boolean; confirmLabel?: string;
+export function ConfirmActions({
+  onBack,
+  onConfirm,
+  loading,
+  confirmLabel = "Confirm & pay",
+}: {
+  onBack: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+  confirmLabel?: string;
 }) {
   return (
     <div className="flex gap-3">
-      <Button variant="secondary" onClick={onBack} fullWidth className="py-3">Back</Button>
-      <Button onClick={onConfirm} disabled={loading} loading={loading} fullWidth className="py-3">
+      <Button variant="secondary" onClick={onBack} fullWidth className="py-3">
+        Back
+      </Button>
+      <Button
+        onClick={onConfirm}
+        disabled={loading}
+        loading={loading}
+        fullWidth
+        className="py-3"
+      >
         {loading ? "" : confirmLabel}
       </Button>
     </div>
@@ -636,7 +960,13 @@ export function ConfirmActions({ onBack, onConfirm, loading, confirmLabel = "Con
 }
 
 export function SuccessScreen({
-  title, message, onReset, resetLabel = "Make another payment", secondaryLabel = "View receipt", onSecondary, children,
+  title,
+  message,
+  onReset,
+  resetLabel = "Make another payment",
+  secondaryLabel = "View receipt",
+  onSecondary,
+  children,
 }: {
   title: string;
   message: ReactNode;
@@ -656,8 +986,12 @@ export function SuccessScreen({
         <div className="text-slate-500 text-sm mb-5">{message}</div>
         {children}
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onReset} fullWidth>{resetLabel}</Button>
-          <Button onClick={onSecondary} fullWidth>{secondaryLabel}</Button>
+          <Button variant="secondary" onClick={onReset} fullWidth>
+            {resetLabel}
+          </Button>
+          <Button onClick={onSecondary} fullWidth>
+            {secondaryLabel}
+          </Button>
         </div>
       </Card>
     </div>
