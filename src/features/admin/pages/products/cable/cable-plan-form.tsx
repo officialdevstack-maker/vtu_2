@@ -178,8 +178,20 @@ const toForm = (d: CablePlan): FormState => ({
   active: d.active ?? true,
   useCustomProvider: d.use_provider_as_providerable ?? false,
   provider_id: d.provider?.id != null ? String(d.provider.id) : "",
-  server_id: d.provider?.pivot?.server_id != null ? String(d.provider.pivot.server_id) : "",
-  cost_price: d.provider?.pivot?.cost_price != null ? String(d.provider.pivot.cost_price) : "",
+  // Prefer the attached provider's pivot, falling back to the plan's top-level
+  // value so a cost price saved without a custom provider still reloads.
+  server_id:
+    d.provider?.pivot?.server_id != null
+      ? String(d.provider.pivot.server_id)
+      : d.server_id != null
+        ? String(d.server_id)
+        : "",
+  cost_price:
+    d.provider?.pivot?.cost_price != null
+      ? String(d.provider.pivot.cost_price)
+      : d.cost_price != null
+        ? String(d.cost_price)
+        : "",
 });
 
 // A role's fee entry — normalize into editable form state.

@@ -32,6 +32,10 @@ export type CablePlan = {
   price_ngn?: string | null;
   provider?: CablePlanProvider;
   use_provider_as_providerable?: boolean;
+  // Top-level fallbacks (CablePlan appends) so the edit form reloads these even
+  // when no plan-specific provider is attached (provider is then null).
+  cost_price?: string | number | null;
+  server_id?: string | number | null;
   active: boolean;
   status?: string;
   created_at?: string | null;
