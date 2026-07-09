@@ -39,7 +39,9 @@ const toId = (v: string | number) => String(v);
 
 const formatBalance = (v: string | number | null | undefined) => {
   if (v === null || v === undefined || v === "") return "—";
-  const n = Number(v);
+  // Strip grouping commas first — Number("4,495") is NaN, which would fall
+  // through to the raw string instead of formatting.
+  const n = Number(String(v).replace(/,/g, ""));
   return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(v);
 };
 
@@ -382,7 +384,7 @@ const ProviderPage = () => {
 
   const connected = paginatedProviders.filter((p) => p.connection).length;
   const pageBalance = paginatedProviders.reduce((sum, p) => {
-    const n = Number(p.balance);
+    const n = Number(String(p.balance ?? "").replace(/,/g, ""));
     return sum + (Number.isFinite(n) ? n : 0);
   }, 0);
 

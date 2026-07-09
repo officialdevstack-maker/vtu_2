@@ -36,7 +36,8 @@ const toId = (v: string | number) => String(v);
 
 const fmt = (v: string | number | null | undefined) => {
   if (v === null || v === undefined || v === "") return "—";
-  const n = Number(v);
+  // Strip grouping commas — Number("4,495") is NaN otherwise.
+  const n = Number(String(v).replace(/,/g, ""));
   return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(v);
 };
 
