@@ -1,9 +1,32 @@
-import { type ClassValue, clsx } from "clsx";
+import { useEffect, useState, type ClassValue, clsx } from "react";
 import { twMerge } from "tailwind-merge";
 import axios from "axios";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function useLocalStorageState<T>(key: string, initialValue: T) {
+  const [state, setState] = useState<T>(() => {
+    if (typeof window === "undefined") return initialValue;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return initialValue;
+      return JSON.parse(raw) as T;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(state));
+    } catch {
+      // Ignore localStorage errors in restricted environments.
+    }
+  }, [key, state]);
+
+  return [state, setState] as const;
 }
 
 // The backend returns a few different error envelope shapes across
