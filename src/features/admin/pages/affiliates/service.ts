@@ -150,9 +150,9 @@ export const childCustomerService = {
       .then((r) => r.data.data),
 
   // The "promote to real account" action: creates a parent User (or links an
-  // existing one on email/phone match), stamps migrated_to_user_id, and
-  // auto-queues a redirect_user directive. The customer's child wallet
-  // balance is deliberately NOT credited — see ChildCustomerMigrationController.
+  // existing one on email/phone match), stamps migrated_to_user_id, auto-queues
+  // a redirect_user directive, and transfers the customer's child wallet
+  // balance into the parent account.
   migrate: (
     instanceId: string | number,
     customerId: string | number,

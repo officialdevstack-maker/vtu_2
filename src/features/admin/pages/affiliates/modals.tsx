@@ -87,6 +87,13 @@ export function MigrateCustomerModal({
               <p className="text-xs text-slate-700 font-medium">{result.user.username}</p>
               <p className="text-[11px] text-slate-400">{result.user.email}</p>
             </div>
+            <div className="rounded-lg bg-emerald-50 px-3 py-2.5">
+              <p className="text-[11px] text-emerald-700">
+                {result.wallet_balance_at_migration > 0
+                  ? `₦${result.wallet_balance_at_migration.toLocaleString()} has been credited to the parent wallet.`
+                  : "No affiliate wallet balance was present to transfer."}
+              </p>
+            </div>
             <p className="text-[11px] text-slate-400">
               Directive #{result.directive_id} is queued — the child app picks it up on its next
               poll and starts steering this customer here.
@@ -123,10 +130,10 @@ export function MigrateCustomerModal({
               </li>
             </ul>
 
-            <div className="rounded-lg bg-amber-50 px-3 py-2.5">
-              <p className="text-[11px] text-amber-700">
-                Their child wallet balance ({fmt(customer.wallet_balance)}) is <strong>not</strong>{" "}
-                transferred. If it should carry over, fund their parent account manually afterwards.
+            <div className="rounded-lg bg-emerald-50 px-3 py-2.5">
+              <p className="text-[11px] text-emerald-700">
+                Their child wallet balance ({fmt(customer.wallet_balance)}) will be transferred to the parent
+                account as part of this migration.
               </p>
             </div>
 
