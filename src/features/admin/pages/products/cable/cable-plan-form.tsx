@@ -213,13 +213,16 @@ const toPayload = (form: FormState, fee: Record<string, RoleFee>): Record<string
     use_provider_as_providerable: form.useCustomProvider,
   };
 
-  if (form.useCustomProvider) {
-    payload.providerable = {
-      provider_id: form.provider_id || null,
-      server_id: form.server_id !== "" ? Number(form.server_id) : null,
-      cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
-    };
-  }
+  // Always persist Cost price / Plan ID on the providerable pivot, even without
+  // a custom provider — it's the subscription cost basis and the plan's id on
+  // the fulfilling vendor. Only provider_id overrides routing
+  // (VTUServiceFactory), and it's kept null unless the toggle is on, so a plain
+  // cost price never re-routes the plan away from Service Routing.
+  payload.providerable = {
+    provider_id: form.useCustomProvider ? form.provider_id || null : null,
+    server_id: form.server_id !== "" ? Number(form.server_id) : null,
+    cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
+  };
 
   return payload;
 };
@@ -468,9 +471,10 @@ export default function CablePlanFormPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-slate-700">Attach a provider</p>
+                  <p className="text-xs font-medium text-slate-700">Route to a specific provider</p>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Required — the subscription cost comes from here.
+                    Off routes this plan via Service Routing. Cost price still
+                    applies either way.
                   </p>
                 </div>
                 <Toggle
@@ -480,40 +484,46 @@ export default function CablePlanFormPage() {
               </div>
 
               {form.useCustomProvider && (
-                <>
-                  <Field label="Provider" error={errors.provider_id}>
-                    <select
-                      value={form.provider_id}
-                      onChange={(e) => set("provider_id", e.target.value)}
-                      className={selectCls}
-                    >
-                      <option value="">Select a provider</option>
-                      {providers.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field label="Plan ID" hint="optional" error={errors.server_id}>
-                    <NumberInput
-                      value={form.server_id}
-                      onChange={(v) => set("server_id", v)}
-                      placeholder="Provider's numeric plan ID"
-                    />
-                  </Field>
-
-                  <Field label="Cost price" error={errors.cost_price}>
-                    <NumberInput
-                      value={form.cost_price}
-                      onChange={(v) => set("cost_price", v)}
-                      placeholder="0"
-                      suffix="₦"
-                    />
-                  </Field>
-                </>
+                <Field label="Provider" error={errors.provider_id}>
+                  <select
+                    value={form.provider_id}
+                    onChange={(e) => set("provider_id", e.target.value)}
+                    className={selectCls}
+                  >
+                    <option value="">Select a provider</option>
+                    {providers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               )}
+
+              {/* Cost price / Plan ID stay editable regardless of the toggle:
+                  they're the subscription cost basis and the plan's id on the
+                  fulfilling vendor. Only the Provider above overrides which
+                  vendor fulfils the plan. */}
+              <Field label="Plan ID" hint="optional" error={errors.server_id}>
+                <NumberInput
+                  value={form.server_id}
+                  onChange={(v) => set("server_id", v)}
+                  placeholder="Provider's numeric plan ID"
+                />
+              </Field>
+
+              <Field
+                label="Cost price"
+                hint="cost basis for pricing"
+                error={errors.cost_price}
+              >
+                <NumberInput
+                  value={form.cost_price}
+                  onChange={(v) => set("cost_price", v)}
+                  placeholder="0"
+                  suffix="₦"
+                />
+              </Field>
             </div>
           </Card>
 

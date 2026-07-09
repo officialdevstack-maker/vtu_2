@@ -252,14 +252,18 @@ const toPayload = (
     use_provider_as_providerable: form.useCustomProvider,
   };
 
-  if (form.useCustomProvider) {
-    payload.providerable = {
-      provider_id: form.provider_id || null,
-      // providerables.server_id is an integer column — must be numeric or null.
-      server_id: form.server_id !== "" ? Number(form.server_id) : null,
-      cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
-    };
-  }
+  // Always persist Cost price / Plan ID on the providerable pivot, even when no
+  // custom provider is chosen — it's the cost basis for percentage pricing and
+  // the plan's id on the fulfilling vendor. provider_id is the ONLY thing that
+  // overrides routing (VTUServiceFactory → DataPlan::resolveVendor); it's kept
+  // null unless the custom-provider toggle is on, so a plain cost price never
+  // re-routes the plan away from Service Routing.
+  payload.providerable = {
+    provider_id: form.useCustomProvider ? form.provider_id || null : null,
+    // providerables.server_id is an integer column — must be numeric or null.
+    server_id: form.server_id !== "" ? Number(form.server_id) : null,
+    cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
+  };
 
   return payload;
 };
@@ -644,10 +648,11 @@ export default function DataPlanFormPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-slate-700">
-                    Use a specific provider
+                    Route to a specific provider
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Off uses the network's default provider instead.
+                    Off routes this plan via Service Routing. Cost price still
+                    applies either way.
                   </p>
                 </div>
                 <Toggle
@@ -657,40 +662,46 @@ export default function DataPlanFormPage() {
               </div>
 
               {form.useCustomProvider && (
-                <>
-                  <Field label="Provider" error={errors.provider_id}>
-                    <select
-                      value={form.provider_id}
-                      onChange={(e) => set("provider_id", e.target.value)}
-                      className={selectCls}
-                    >
-                      <option value="">Select a provider</option>
-                      {providers.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field label="Plan ID" hint="optional" error={errors.server_id}>
-                    <NumberInput
-                      value={form.server_id}
-                      onChange={(v) => set("server_id", v)}
-                      placeholder="Provider's numeric plan ID"
-                    />
-                  </Field>
-
-                  <Field label="Cost price" error={errors.cost_price}>
-                    <NumberInput
-                      value={form.cost_price}
-                      onChange={(v) => set("cost_price", v)}
-                      placeholder="0"
-                      suffix="₦"
-                    />
-                  </Field>
-                </>
+                <Field label="Provider" error={errors.provider_id}>
+                  <select
+                    value={form.provider_id}
+                    onChange={(e) => set("provider_id", e.target.value)}
+                    className={selectCls}
+                  >
+                    <option value="">Select a provider</option>
+                    {providers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
               )}
+
+              {/* Cost price / Plan ID stay editable regardless of the toggle:
+                  they're the cost basis for percentage pricing and the plan's
+                  id on the fulfilling vendor. Only the Provider above overrides
+                  which vendor fulfils the plan. */}
+              <Field label="Plan ID" hint="optional" error={errors.server_id}>
+                <NumberInput
+                  value={form.server_id}
+                  onChange={(v) => set("server_id", v)}
+                  placeholder="Provider's numeric plan ID"
+                />
+              </Field>
+
+              <Field
+                label="Cost price"
+                hint="cost basis for % pricing"
+                error={errors.cost_price}
+              >
+                <NumberInput
+                  value={form.cost_price}
+                  onChange={(v) => set("cost_price", v)}
+                  placeholder="0"
+                  suffix="₦"
+                />
+              </Field>
             </div>
           </Card>
 
