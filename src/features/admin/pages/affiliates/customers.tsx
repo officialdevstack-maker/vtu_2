@@ -163,22 +163,99 @@ export default function AffiliateCustomersPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    {[
-                      "External ID",
-                      "Username",
-                      "Email",
-                      "Phone",
-                      "Balance",
-                      "Status",
-                      "Parent account",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap"
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                        onClick={() => toggleSort("external_id")}
                       >
-                        {h}
-                      </th>
-                    ))}
+                        External ID
+                        {sort.key === "external_id" &&
+                          (sort.direction === "asc" ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          ))}
+                      </button>
+                    </th>
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                        onClick={() => toggleSort("username")}
+                      >
+                        Username
+                        {sort.key === "username" &&
+                          (sort.direction === "asc" ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          ))}
+                      </button>
+                    </th>
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                        onClick={() => toggleSort("email")}
+                      >
+                        Email
+                        {sort.key === "email" &&
+                          (sort.direction === "asc" ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          ))}
+                      </button>
+                    </th>
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                        onClick={() => toggleSort("phone")}
+                      >
+                        Phone
+                        {sort.key === "phone" &&
+                          (sort.direction === "asc" ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          ))}
+                      </button>
+                    </th>
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                        onClick={() => toggleSort("wallet_balance")}
+                      >
+                        Balance
+                        {sort.key === "wallet_balance" &&
+                          (sort.direction === "asc" ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          ))}
+                      </button>
+                    </th>
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                        onClick={() => toggleSort("status")}
+                      >
+                        Status
+                        {sort.key === "status" &&
+                          (sort.direction === "asc" ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          ))}
+                      </button>
+                    </th>
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      Parent account
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">

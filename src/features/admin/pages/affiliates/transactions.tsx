@@ -191,16 +191,81 @@ export default function AffiliateTransactionsPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["External ID", "Type", "Amount", "Status", "Synced"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                      onClick={() => toggleSort("external_id")}
+                    >
+                      External ID
+                      {sort.key === "external_id" &&
+                        (sort.direction === "asc" ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        ))}
+                    </button>
+                  </th>
+                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                      onClick={() => toggleSort("transaction_type")}
+                    >
+                      Type
+                      {sort.key === "transaction_type" &&
+                        (sort.direction === "asc" ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        ))}
+                    </button>
+                  </th>
+                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                      onClick={() => toggleSort("amount")}
+                    >
+                      Amount
+                      {sort.key === "amount" &&
+                        (sort.direction === "asc" ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        ))}
+                    </button>
+                  </th>
+                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                      onClick={() => toggleSort("status")}
+                    >
+                      Status
+                      {sort.key === "status" &&
+                        (sort.direction === "asc" ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        ))}
+                    </button>
+                  </th>
+                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
+                      onClick={() => toggleSort("created_at")}
+                    >
+                      Synced
+                      {sort.key === "created_at" &&
+                        (sort.direction === "asc" ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        ))}
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
