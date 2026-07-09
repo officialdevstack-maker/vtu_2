@@ -93,6 +93,7 @@ const GatewayDetailPage = () => {
 
   const [showPw, setShowPw] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const [showWebhookSecret, setShowWebhookSecret] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [togglingConn, setTogglingConn] = useState(false);
@@ -387,6 +388,32 @@ const GatewayDetailPage = () => {
                       <CopyButton value={gateway.password} label="password" />
                     </span>
                   ) : null,
+                )}
+                {row(
+                  "Webhook secret",
+                  gateway.webhook_access ? (
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono break-all">
+                        {showWebhookSecret ? gateway.webhook_access : "••••••••"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowWebhookSecret((v) => !v)}
+                        className="text-slate-400 hover:text-slate-600 shrink-0"
+                      >
+                        {showWebhookSecret ? (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <CopyButton value={gateway.webhook_access} label="webhook secret" />
+                    </span>
+                  ) : (
+                    <span className="text-amber-600">
+                      Not set — Flutterwave/PaymentPoint webhooks will be rejected
+                    </span>
+                  ),
                 )}
               </div>
             </Card>

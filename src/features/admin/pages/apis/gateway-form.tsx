@@ -25,6 +25,7 @@ type FormState = Required<Pick<GatewayPayload, "name">> & {
   password: string;
   api_key: string;
   secret_key: string;
+  webhook_access: string;
   connection: boolean;
 };
 
@@ -35,6 +36,7 @@ const blankForm = (): FormState => ({
   password: "",
   api_key: "",
   secret_key: "",
+  webhook_access: "",
   connection: false,
 });
 
@@ -45,6 +47,7 @@ const toForm = (g: Gateway): FormState => ({
   password: g.password ?? "",
   api_key: g.api_key ?? "",
   secret_key: g.secret_key ?? "",
+  webhook_access: g.webhook_access ?? "",
   connection: g.connection ?? false,
 });
 
@@ -145,6 +148,7 @@ export default function GatewayFormPage() {
       password: form.password || null,
       api_key: form.api_key || null,
       secret_key: form.secret_key || null,
+      webhook_access: form.webhook_access || null,
       connection: form.connection,
     };
 
@@ -326,6 +330,22 @@ export default function GatewayFormPage() {
                   onChange={(v) => set("password", v)}
                   placeholder="Password or token"
                 />
+              </Field>
+
+              <Field
+                label="Webhook secret"
+                hint="required for Flutterwave / PaymentPoint"
+              >
+                <SecretInput
+                  value={form.webhook_access}
+                  onChange={(v) => set("webhook_access", v)}
+                  placeholder="Verifies inbound funding webhooks"
+                />
+                <p className="mt-1.5 text-xs text-slate-400">
+                  Flutterwave's verif-hash and PaymentPoint's HMAC key are
+                  checked against this. Leave blank only for Monnify, which
+                  verifies against the Password above.
+                </p>
               </Field>
             </div>
           </Card>

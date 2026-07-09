@@ -17,6 +17,11 @@ export type Gateway = {
   password?: string | null;
   api_key?: string | null;
   secret_key?: string | null;
+  // Secret used to VERIFY inbound webhooks — Flutterwave's verif-hash and
+  // PaymentPoint's HMAC key both read this column. Distinct from the API
+  // credentials above (which authenticate our OUTbound calls). Without it,
+  // those two gateways reject every funding webhook, so wallets never credit.
+  webhook_access?: string | null;
   category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -31,6 +36,7 @@ export type GatewayPayload = {
   password?: string | null;
   api_key?: string | null;
   secret_key?: string | null;
+  webhook_access?: string | null;
   connection?: boolean;
 };
 
@@ -59,9 +65,19 @@ export const gatewayService = {
       .get<ApiEnvelope<Gateway>>(`${BASE}/${id}`)
       .then((r) => r.data.data),
 
+  // sub_category="payment" is what makes the webhook URL route to the
+  // payment handler: Provider::getWebhookAttribute builds
+  // /api/webhook/{sub_category}/{identifier}, and WebhookController only
+  // dispatches to Payment::webhook when {type} is "payment". Without it the
+  // generated webhook URL is malformed (empty type segment) and funding
+  // callbacks never reach the crediting code.
   create: (payload: GatewayPayload): Promise<Gateway> =>
     apiClient
-      .post<ApiEnvelope<Gateway>>(BASE, { ...payload, category: "payment" })
+      .post<ApiEnvelope<Gateway>>(BASE, {
+        ...payload,
+        category: "payment",
+        sub_category: "payment",
+      })
       .then((r) => r.data.data),
 
   update: (id: string, payload: Partial<GatewayPayload>): Promise<Gateway> =>
