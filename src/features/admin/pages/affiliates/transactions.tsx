@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Wallet2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, Wallet2 } from "lucide-react";
 import {
   Card,
   EmptyState,
@@ -7,6 +7,7 @@ import {
   SkeletonRows,
   StatusBadge,
   selectCls,
+  inputCls,
 } from "../../../user/components/shared-ui";
 import { DEFAULT_PAGE_SIZE, usePagination } from "@shared/pagination";
 import { useLocalStorageState } from "@/shared/utils";
@@ -31,6 +32,10 @@ export default function AffiliateTransactionsPage() {
   const [typeFilter, setTypeFilter] = useLocalStorageState<string>(
     `affiliate:${id}:transactions:typeFilter`,
     "all",
+  );
+  const [query, setQuery] = useLocalStorageState<string>(
+    `affiliate:${id}:transactions:query`,
+    "",
   );
   const [statusFilter, setStatusFilter] = useLocalStorageState<string>(
     `affiliate:${id}:transactions:statusFilter`,
@@ -102,11 +107,21 @@ export default function AffiliateTransactionsPage() {
   const filtered = useMemo(
     () =>
       transactions
-        .filter(
-          (t) =>
+        .filter((t) => {
+          const queryMatches = query.trim()
+            ? [t.external_id, t.transaction_type, t.status]
+                .filter(Boolean)
+                .some((v) =>
+                  String(v).toLowerCase().includes(query.trim().toLowerCase()),
+                )
+            : true;
+
+          return (
+            queryMatches &&
             (typeFilter === "all" || t.transaction_type === typeFilter) &&
-            (statusFilter === "all" || t.status === statusFilter),
-        )
+            (statusFilter === "all" || t.status === statusFilter)
+          );
+        })
         .sort((a, b) => {
           const av = sortValue(a, sort.key);
           const bv = sortValue(b, sort.key);
@@ -114,7 +129,7 @@ export default function AffiliateTransactionsPage() {
           if (av > bv) return sort.direction === "asc" ? 1 : -1;
           return 0;
         }),
-    [transactions, typeFilter, statusFilter, sort],
+    [transactions, query, typeFilter, statusFilter, sort],
   );
 
   const volume = filtered.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
@@ -133,7 +148,19 @@ export default function AffiliateTransactionsPage() {
             </span>
           )}
         </h2>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search ID, type or status…"
+              className={`${inputCls} pl-8 w-full`}
+            />
+          </div>
           <select
             value={typeFilter}
             onChange={(e) => {

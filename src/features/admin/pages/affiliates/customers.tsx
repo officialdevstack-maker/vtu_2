@@ -16,6 +16,7 @@ import {
   SkeletonRows,
   StatusBadge,
   inputCls,
+  selectCls,
 } from "../../../user/components/shared-ui";
 import { DEFAULT_PAGE_SIZE, usePagination } from "@shared/pagination";
 import { useLocalStorageState } from "@/shared/utils";
@@ -41,6 +42,10 @@ export default function AffiliateCustomersPage() {
   const [sort, setSort] = useLocalStorageState<CustomerSortState>(
     `affiliate:${id}:customers:sort`,
     { key: "external_id", direction: "asc" },
+  );
+  const [statusFilter, setStatusFilter] = useLocalStorageState<string>(
+    `affiliate:${id}:customers:statusFilter`,
+    "all",
   );
   const [page, setPage] = useLocalStorageState<number>(
     `affiliate:${id}:customers:page`,
@@ -91,15 +96,26 @@ export default function AffiliateCustomersPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const statuses = useMemo(
+    () =>
+      [
+        "all",
+        ...new Set(customers.map((c) => c.status).filter(Boolean)),
+      ] as string[],
+    [customers],
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const rows = q
-      ? customers.filter((c) =>
-          [c.external_id, c.username, c.email, c.phone]
+    const rows = customers.filter((c) => {
+      const matchesSearch = q
+        ? [c.external_id, c.username, c.email, c.phone]
             .filter(Boolean)
-            .some((v) => String(v).toLowerCase().includes(q)),
-        )
-      : customers;
+            .some((v) => String(v).toLowerCase().includes(q))
+        : true;
+      const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
 
     return [...rows].sort((a, b) => {
       const av = sortValue(a, sort.key);
@@ -108,7 +124,7 @@ export default function AffiliateCustomersPage() {
       if (av > bv) return sort.direction === "asc" ? 1 : -1;
       return 0;
     });
-  }, [customers, query, sort]);
+  }, [customers, query, statusFilter, sort]);
 
   const { pageItems, currentPage, totalPages, totalItems, pageSize } =
     usePagination(filtered, DEFAULT_PAGE_SIZE, page);
@@ -125,17 +141,33 @@ export default function AffiliateCustomersPage() {
               </span>
             )}
           </h2>
-          <div className="relative ml-auto w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              value={query}
+          <div className="relative ml-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:w-auto w-full">
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search id, name, email, phone…"
+                className={`${inputCls} pl-8 w-full`}
+              />
+            </div>
+            <select
+              value={statusFilter}
               onChange={(e) => {
-                setQuery(e.target.value);
+                setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search id, name, email, phone…"
-              className={`${inputCls} pl-8`}
-            />
+              className={selectCls}
+            >
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status === "all" ? "All statuses" : status}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
