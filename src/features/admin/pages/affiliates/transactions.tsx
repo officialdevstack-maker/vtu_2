@@ -190,7 +190,7 @@ export default function AffiliateTransactionsPage() {
         <div className="p-5">
           <SkeletonRows count={6} withAvatar={false} />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : transactions.length === 0 ? (
         <EmptyState
           icon={Wallet2}
           title={

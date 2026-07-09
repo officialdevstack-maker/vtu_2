@@ -70,25 +70,6 @@ export default function AffiliateCustomersPage() {
     setPage(1);
   };
 
-  const sortValue = (customer: ChildCustomer, key: CustomerSortKey) => {
-    switch (key) {
-      case "wallet_balance":
-        return Number(customer.wallet_balance) || 0;
-      case "external_id":
-        return customer.external_id ?? "";
-      case "username":
-        return customer.username ?? "";
-      case "email":
-        return customer.email ?? "";
-      case "phone":
-        return customer.phone ?? "";
-      case "status":
-        return customer.status ?? "";
-      default:
-        return "";
-    }
-  };
-
   const refresh = () => {
     childCustomerService
       .getPaginatedByInstance(id, {
@@ -183,7 +164,7 @@ export default function AffiliateCustomersPage() {
           <div className="p-5">
             <SkeletonRows count={6} withAvatar={false} />
           </div>
-        ) : filtered.length === 0 ? (
+        ) : customers.length === 0 ? (
           <EmptyState
             icon={Users}
             title={
