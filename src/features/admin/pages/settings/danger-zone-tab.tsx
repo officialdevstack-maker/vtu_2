@@ -60,17 +60,22 @@ function ResetConfirmModal({
           <div className="w-9 h-9 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-4.5 h-4.5" />
           </div>
-          <h3 className="font-semibold text-slate-900 text-sm">This cannot be undone</h3>
+          <h3 className="font-semibold text-slate-900 text-sm">
+            This cannot be undone
+          </h3>
         </div>
 
         <ul className="text-xs text-red-800 bg-red-50 border border-red-100 rounded-lg px-3.5 py-3 space-y-1 mb-4 list-disc list-inside">
           <li>Every non-admin customer account will be permanently deleted</li>
           <li>Every transaction record will be permanently deleted</li>
-          <li>All notifications and synced affiliate customer/transaction data will be permanently deleted</li>
+          <li>
+            All notifications and synced affiliate customer/transaction data
+            will be permanently deleted
+          </li>
         </ul>
         <p className="text-xs text-slate-500 mb-4">
-          Provider/gateway configuration, the product catalog, pricing, site settings, and admin
-          accounts are <strong>not</strong> affected.
+          Provider/gateway configuration, the product catalog, pricing, site
+          settings, and admin accounts are <strong>not</strong> affected.
         </p>
 
         {error && (
@@ -80,8 +85,11 @@ function ResetConfirmModal({
         )}
 
         <label className="block text-xs font-medium text-slate-600 mb-1.5">
-          Type <code className="font-mono bg-gray-100 px-1 py-0.5 rounded text-slate-800">{CONFIRMATION_PHRASE}</code> to
-          confirm
+          Type{" "}
+          <code className="font-mono bg-gray-100 px-1 py-0.5 rounded text-slate-800">
+            {CONFIRMATION_PHRASE}
+          </code>{" "}
+          to confirm
         </label>
         <input
           value={phrase}
@@ -93,7 +101,12 @@ function ResetConfirmModal({
         />
 
         <div className="flex gap-3">
-          <Button variant="secondary" fullWidth onClick={onClose} disabled={resetting}>
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={onClose}
+            disabled={resetting}
+          >
             Cancel
           </Button>
           <Button
@@ -111,18 +124,26 @@ function ResetConfirmModal({
   );
 }
 
-function ResetDoneModal({ counts, onClose }: { counts: ResetCounts; onClose: () => void }) {
+function ResetDoneModal({
+  counts,
+  onClose,
+}: {
+  counts: ResetCounts;
+  onClose: () => void;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-sm shadow-xl p-5">
-        <h3 className="font-semibold text-slate-900 text-sm mb-3">Website data has been reset</h3>
+        <h3 className="font-semibold text-slate-900 text-sm mb-3">
+          Website data has been reset
+        </h3>
         <div className="text-xs text-slate-600 space-y-1 mb-4">
           <p>{counts.users} customer account(s) deleted</p>
           <p>{counts.transactions} transaction(s) deleted</p>
           <p>{counts.notifications} notification(s) deleted</p>
           <p>
-            {counts.child_customers} affiliate customer record(s), {counts.child_transactions} affiliate
-            transaction(s) deleted
+            {counts.child_customers} affiliate customer record(s),{" "}
+            {counts.child_transactions} affiliate transaction(s) deleted
           </p>
         </div>
         <Button fullWidth onClick={onClose}>
@@ -141,11 +162,24 @@ export function DangerZoneTab() {
   const [migrateOutput, setMigrateOutput] = useState<string | null>(null);
   const [migrateError, setMigrateError] = useState<string | null>(null);
 
-  async function runMigrations(): Promise<{ exit_code: number; output: string }> {
-    return apiClient.post<ApiEnvelope<{ exit_code: number; output: string }>>("/admin/migrate-db").then((r) => r.data.data);
+  async function runMigrations(): Promise<{
+    exit_code: number;
+    output: string;
+  }> {
+    return apiClient
+      .post<ApiEnvelope<{ exit_code: number; output: string }>>(
+        "/admin/migrate-db",
+      )
+      .then((r) => r.data.data);
   }
 
-  function MigrateConfirmModal({ onClose, onDone }: { onClose: () => void; onDone: (out: string) => void }) {
+  function MigrateConfirmModal({
+    onClose,
+    onDone,
+  }: {
+    onClose: () => void;
+    onDone: (out: string) => void;
+  }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -169,10 +203,15 @@ export function DangerZoneTab() {
             <div className="w-9 h-9 rounded-lg bg-yellow-50 text-yellow-600 flex items-center justify-center shrink-0">
               <Zap className="w-4.5 h-4.5" />
             </div>
-            <h3 className="font-semibold text-slate-900 text-sm">Run migrations</h3>
+            <h3 className="font-semibold text-slate-900 text-sm">
+              Run migrations
+            </h3>
           </div>
 
-          <p className="text-xs text-slate-500 mb-4">This runs any pending framework/database migrations on the server. Typically safe, but review changes before running in production.</p>
+          <p className="text-xs text-slate-500 mb-4">
+            This runs any pending framework/database migrations on the server.
+            Typically safe, but review changes before running in production.
+          </p>
 
           {error && (
             <div className="mb-3">
@@ -181,10 +220,20 @@ export function DangerZoneTab() {
           )}
 
           <div className="flex gap-3">
-            <Button variant="secondary" fullWidth onClick={onClose} disabled={loading}>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={onClose}
+              disabled={loading}
+            >
               Cancel
             </Button>
-            <Button variant="danger" fullWidth loading={loading} onClick={handle}>
+            <Button
+              variant="danger"
+              fullWidth
+              loading={loading}
+              onClick={handle}
+            >
               {loading ? "Running…" : "Run migrations"}
             </Button>
           </div>
@@ -193,12 +242,22 @@ export function DangerZoneTab() {
     );
   }
 
-  function MigrateDoneModal({ output, onClose }: { output: string; onClose: () => void }) {
+  function MigrateDoneModal({
+    output,
+    onClose,
+  }: {
+    output: string;
+    onClose: () => void;
+  }) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
         <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-lg shadow-xl p-5">
-          <h3 className="font-semibold text-slate-900 text-sm mb-3">Migrations completed</h3>
-          <pre className="max-h-64 overflow-auto text-xs bg-gray-50 p-3 rounded border">{output}</pre>
+          <h3 className="font-semibold text-slate-900 text-sm mb-3">
+            Migrations completed
+          </h3>
+          <pre className="max-h-64 overflow-auto text-xs bg-gray-50 p-3 rounded border">
+            {output}
+          </pre>
           <div className="mt-3">
             <Button fullWidth onClick={onClose}>
               Done
@@ -215,14 +274,21 @@ export function DangerZoneTab() {
         <SectionTitle>Danger zone</SectionTitle>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="max-w-md">
-            <p className="text-sm font-medium text-slate-900">Reset website data</p>
+            <p className="text-sm font-medium text-slate-900">
+              Reset website data
+            </p>
             <p className="text-xs text-slate-500 mt-1">
-              Permanently deletes every customer account, transaction, notification, and synced
-              affiliate customer/transaction record. Provider/gateway configuration, the product
-              catalog, pricing, site settings, and admin accounts are kept. This cannot be undone.
+              Permanently deletes every customer account, transaction,
+              notification, and synced affiliate customer/transaction record.
+              Provider/gateway configuration, the product catalog, pricing, site
+              settings, and admin accounts are kept. This cannot be undone.
             </p>
           </div>
-          <Button variant="danger" size="sm" onClick={() => setConfirming(true)}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setConfirming(true)}
+          >
             <Trash2 className="w-3.5 h-3.5" /> Reset website
           </Button>
         </div>
@@ -232,10 +298,19 @@ export function DangerZoneTab() {
         <SectionTitle>Migrations</SectionTitle>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="max-w-md">
-            <p className="text-sm font-medium text-slate-900">Run pending migrations</p>
-            <p className="text-xs text-slate-500 mt-1">Execute any pending framework or database migrations on the server.</p>
+            <p className="text-sm font-medium text-slate-900">
+              Run pending migrations
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Execute any pending framework or database migrations on the
+              server.
+            </p>
           </div>
-          <Button variant="danger" size="sm" onClick={() => setMigrateModalOpen(true)}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setMigrateModalOpen(true)}
+          >
             <Zap className="w-3.5 h-3.5" /> Run migrations
           </Button>
         </div>
@@ -251,7 +326,12 @@ export function DangerZoneTab() {
         />
       )}
 
-      {migrateOutput && <MigrateDoneModal output={migrateOutput} onClose={() => setMigrateOutput(null)} />}
+      {migrateOutput && (
+        <MigrateDoneModal
+          output={migrateOutput}
+          onClose={() => setMigrateOutput(null)}
+        />
+      )}
 
       {confirming && (
         <ResetConfirmModal
@@ -263,7 +343,12 @@ export function DangerZoneTab() {
         />
       )}
 
-      {doneCounts && <ResetDoneModal counts={doneCounts} onClose={() => setDoneCounts(null)} />}
+      {doneCounts && (
+        <ResetDoneModal
+          counts={doneCounts}
+          onClose={() => setDoneCounts(null)}
+        />
+      )}
     </>
   );
 }
