@@ -11,7 +11,13 @@ import {
   inputCls,
   selectCls,
 } from "../../../../user/components/shared-ui";
-import { networkService, networkTypeService, airtimePlanService, type Network, type AirtimePlan } from "./service";
+import {
+  networkService,
+  networkTypeService,
+  airtimePlanService,
+  type Network,
+  type AirtimePlan,
+} from "./service";
 import { providerService, type Provider } from "../../apis/providerService";
 
 const BACK = "/admin/products/airtime-data?tab=airtime";
@@ -27,8 +33,6 @@ type FormState = {
   active: boolean;
   useCustomProvider: boolean;
   provider_id: string;
-  server_id: string;
-  cost_price: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -58,7 +62,9 @@ function Field({
         <label className="block text-xs font-medium text-slate-600">
           {label}
         </label>
-        {hint && !error && <span className="text-xs text-slate-400">{hint}</span>}
+        {hint && !error && (
+          <span className="text-xs text-slate-400">{hint}</span>
+        )}
       </div>
       {children}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
@@ -142,8 +148,6 @@ const blankForm = (): FormState => ({
   active: true,
   useCustomProvider: false,
   provider_id: "",
-  server_id: "",
-  cost_price: "",
 });
 
 const toForm = (d: AirtimePlan): FormState => ({
@@ -153,19 +157,14 @@ const toForm = (d: AirtimePlan): FormState => ({
   min: d.min != null ? String(d.min) : "",
   max: d.max != null ? String(d.max) : "",
   active: d.active ?? true,
-  useCustomProvider: Boolean(d.use_provider_as_providerable ?? d.provider?.id != null),
-  provider_id: d.provider?.id != null ? String(d.provider.id) : d.provider_id != null ? String(d.provider_id) : "",
-  server_id:
-    d.provider?.pivot?.server_id != null
-      ? String(d.provider.pivot.server_id)
-      : d.server_id != null
-        ? String(d.server_id)
-        : "",
-  cost_price:
-    d.provider?.pivot?.cost_price != null
-      ? String(d.provider.pivot.cost_price)
-      : d.cost_price != null
-        ? String(d.cost_price)
+  useCustomProvider: Boolean(
+    d.use_provider_as_providerable ?? d.provider?.id != null,
+  ),
+  provider_id:
+    d.provider?.id != null
+      ? String(d.provider.id)
+      : d.provider_id != null
+        ? String(d.provider_id)
         : "",
 });
 
@@ -183,9 +182,6 @@ const toPayload = (form: FormState): Record<string, unknown> => {
   if (form.useCustomProvider) {
     payload.providerable = {
       provider_id: form.provider_id || null,
-      // providerables.server_id is an integer column — must be numeric or null.
-      server_id: form.server_id !== "" ? Number(form.server_id) : null,
-      cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
     };
   }
 
@@ -208,12 +204,12 @@ const planFormSchema = z
     active: z.boolean(),
     useCustomProvider: z.boolean(),
     provider_id: z.string(),
-    server_id: amountSchema,
-    cost_price: amountSchema,
   })
   .refine(
     (data) =>
-      data.min === "" || data.max === "" || Number(data.max) >= Number(data.min),
+      data.min === "" ||
+      data.max === "" ||
+      Number(data.max) >= Number(data.min),
     {
       message: "Maximum must be greater than or equal to minimum.",
       path: ["max"],
@@ -224,7 +220,7 @@ const planFormSchema = z
     path: ["provider_id"],
   });
 
-type FormErrors = Partial<Record<"name" | "min" | "max" | "provider_id" | "server_id" | "cost_price", string>>;
+type FormErrors = Partial<Record<"name" | "min" | "max" | "provider_id", string>>;
 
 function validateForm(form: FormState): FormErrors {
   const result = planFormSchema.safeParse(form);
@@ -245,8 +241,7 @@ export default function AirtimePlanFormPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const statePlan = (location.state as { plan?: AirtimePlan } | null)
-    ?.plan;
+  const statePlan = (location.state as { plan?: AirtimePlan } | null)?.plan;
 
   const [initial, setInitial] = useState<AirtimePlan | undefined>(statePlan);
   const [fetchingInitial, setFetchingInitial] = useState(
@@ -339,7 +334,10 @@ export default function AirtimePlanFormPage() {
           <div className="space-y-5">
             <Card className="p-5 space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-8 w-full bg-slate-100 rounded animate-pulse" />
+                <div
+                  key={i}
+                  className="h-8 w-full bg-slate-100 rounded animate-pulse"
+                />
               ))}
             </Card>
           </div>
