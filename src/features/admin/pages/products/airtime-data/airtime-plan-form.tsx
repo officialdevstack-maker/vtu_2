@@ -509,23 +509,6 @@ export default function AirtimePlanFormPage() {
                       ))}
                     </select>
                   </Field>
-
-                  <Field label="Plan ID" hint="optional" error={errors.server_id}>
-                    <NumberInput
-                      value={form.server_id}
-                      onChange={(v) => set("server_id", v)}
-                      placeholder="Provider's numeric plan/server ID"
-                    />
-                  </Field>
-
-                  <Field label="Cost price" hint="optional" error={errors.cost_price}>
-                    <NumberInput
-                      value={form.cost_price}
-                      onChange={(v) => set("cost_price", v)}
-                      placeholder="0"
-                      suffix="₦"
-                    />
-                  </Field>
                 </>
               )}
             </div>
