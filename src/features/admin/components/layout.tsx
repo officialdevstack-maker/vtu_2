@@ -185,6 +185,8 @@ const Layout = () => {
   };
 
   const isActive = (path: string) => {
+    if (!path) return false;
+
     if (path === "/admin") {
       return location.pathname === path;
     }
@@ -249,6 +251,7 @@ const Layout = () => {
                     <div className="flex items-center rounded-xl">
                       <NavLink
                         to={item.path}
+                        end={item.path === "/admin"}
                         onClick={() => setMobileSidebarOpen(false)}
                         onMouseEnter={
                           item.path === "/admin"
