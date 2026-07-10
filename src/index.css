@@ -40,6 +40,20 @@
     text-size-adjust: 100%;
   }
 
+  html,
+  body,
+  #root {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   body {
     font-family: var(--font-sans);
     font-weight: 450;
@@ -61,6 +75,18 @@
   select,
   textarea {
     font: inherit;
+    max-width: 100%;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  table {
+    max-width: 100%;
   }
 
   button,
@@ -92,6 +118,16 @@
 }
 
 @layer components {
+  .flex,
+  .grid {
+    min-width: 0;
+  }
+
+  .flex > *,
+  .grid > * {
+    min-width: 0;
+  }
+
   .brand-primary-button {
     background-color: var(--brand-primary);
     box-shadow: 0 1px 2px var(--brand-primary-shadow);
@@ -132,9 +168,14 @@
     color: var(--brand-primary-text);
   }
 
-  .admin-theme .overflow-x-auto {
+  .overflow-x-auto {
     max-width: 100%;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .overflow-x-auto > table {
+    width: max-content;
+    min-width: 100%;
   }
 
   .admin-theme .overflow-x-auto > table:not([class*="min-w-"]) {
@@ -148,6 +189,23 @@
 
   .admin-theme .overflow-x-auto > table td {
     vertical-align: middle;
+  }
+
+  @media (max-width: 480px) {
+    .grid.grid-cols-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.grid-cols-3 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 380px) {
+    .grid.grid-cols-4,
+    .grid.grid-cols-3 {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 

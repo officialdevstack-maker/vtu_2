@@ -710,7 +710,7 @@ export function NetworkPicker({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {networks.map((n) => (
         <button
           key={n.id}
@@ -745,7 +745,7 @@ export function QuickAmountGrid({
 }) {
   return (
     <div
-      className={`grid ${columns === 4 ? "grid-cols-4" : "grid-cols-3"} gap-2 mb-2.5`}
+      className={`grid ${columns === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3"} gap-2 mb-2.5`}
     >
       {amounts.map((a) => (
         <button
@@ -786,7 +786,7 @@ export function VerifyField({
   return (
     <div>
       <FieldLabel>{label}</FieldLabel>
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
           maxLength={maxLength}
@@ -911,7 +911,7 @@ export function ConfirmSummary({
         <h3 className="text-sm font-semibold text-slate-900 mb-1">{title}</h3>
       )}
       {rows.map((r) => (
-        <div key={r.label} className="flex justify-between text-sm">
+        <div key={r.label} className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm">
           <span className="text-slate-500">{r.label}</span>
           <span
             className={`font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}
@@ -921,7 +921,7 @@ export function ConfirmSummary({
         </div>
       ))}
       {totalRow && (
-        <div className="border-t border-gray-200 pt-3 flex justify-between text-sm font-semibold text-slate-900">
+        <div className="border-t border-gray-200 pt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm font-semibold text-slate-900">
           <span>{totalRow.label}</span>
           <span>{totalRow.value}</span>
         </div>
@@ -942,7 +942,7 @@ export function ConfirmActions({
   confirmLabel?: string;
 }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row">
       <Button variant="secondary" onClick={onBack} fullWidth className="py-3">
         Back
       </Button>
@@ -985,7 +985,7 @@ export function SuccessScreen({
         <h2 className="text-base font-semibold text-slate-900 mb-1">{title}</h2>
         <div className="text-slate-500 text-sm mb-5">{message}</div>
         {children}
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Button variant="secondary" onClick={onReset} fullWidth>
             {resetLabel}
           </Button>
