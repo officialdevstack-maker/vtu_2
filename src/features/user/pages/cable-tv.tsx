@@ -10,7 +10,7 @@ import {
   NetworkPicker, VerifyField, ContinueButton, ConfirmSummary,
   ConfirmActions, SuccessScreen, PinField, inputCls,
 } from "../components/shared-ui";
-import { customerService, generateTxRef, type CablePlan, type PurchaseResult } from "../services/customerService";
+import { customerService, generateTxRef, applyDiscount, type CablePlan, type PurchaseResult } from "../services/customerService";
 
 const NETWORK_COLORS: Record<string, string> = {
   dstv: "bg-blue-600",
@@ -94,6 +94,14 @@ export default function CableTVPage() {
   });
   const discountAmount = discountQuery.data?.discount_amount ?? 0;
   const payableAmount = discountAmount > 0 ? planPrice - discountAmount : planPrice;
+
+  // Live cable discount rule (network-agnostic — the purchase flow resolves
+  // cable discounts with no network), used to strike through package prices.
+  const cableDiscountQuery = useQuery({
+    queryKey: ["active-discount", "cable"],
+    queryFn: () => customerService.getActiveDiscount("cable"),
+  });
+  const cableDiscount = cableDiscountQuery.data ?? null;
 
   const handleVerify = async () => {
     if (iuc.length < 10 || !selectedNetwork) return;
@@ -249,7 +257,18 @@ export default function CableTVPage() {
                     className={`p-3 rounded-lg border transition-colors text-left ${selectedPlanId === p.id ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
                   >
                     <p className="font-medium text-slate-900 text-sm">{p.plan_name}</p>
-                    <p className="text-sm font-medium text-[#111827] mt-1">{fmt(Number(p.price ?? 0))}/mo</p>
+                    {(() => {
+                      const original = Number(p.price ?? 0);
+                      const discounted = applyDiscount(original, cableDiscount);
+                      return discounted < original ? (
+                        <p className="text-sm font-medium text-[#111827] mt-1">
+                          <span className="text-slate-400 line-through mr-1.5">{fmt(original)}</span>
+                          {fmt(discounted)}/mo
+                        </p>
+                      ) : (
+                        <p className="text-sm font-medium text-[#111827] mt-1">{fmt(original)}/mo</p>
+                      );
+                    })()}
                   </button>
                 ))}
               </div>

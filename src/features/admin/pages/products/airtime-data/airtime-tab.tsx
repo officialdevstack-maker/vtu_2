@@ -5,6 +5,7 @@ import {
   SlidersHorizontal,
   MoreVertical,
   Pencil,
+  Power,
   Trash2,
 } from "lucide-react";
 import {
@@ -37,6 +38,7 @@ export function AirtimeTab() {
   // bounding rect escapes the table's overflow context entirely.
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const toId = (value: string | number) => String(value);
 
@@ -60,6 +62,18 @@ export function AirtimeTab() {
       );
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleToggle = async (plan: AirtimePlan) => {
+    const id = toId(plan.id);
+    setTogglingId(id);
+    setOpenMenuId(null);
+    try {
+      const updated = await airtimePlanService.toggleStatus(plan);
+      setPlans((prev) => prev.map((p) => (toId(p.id) === id ? updated : p)));
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -201,6 +215,17 @@ export function AirtimeTab() {
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"
                               >
                                 <Pencil className="w-3.5 h-3.5" /> Edit
+                              </button>
+                              <button
+                                disabled={togglingId === currentId}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleToggle(plan);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                              >
+                                <Power className="w-3.5 h-3.5" />
+                                {isEnabled ? "Deactivate" : "Activate"}
                               </button>
                               <button
                                 disabled={deletingId === currentId}

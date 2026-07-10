@@ -10,7 +10,7 @@ import {
   NetworkPicker, ContinueButton, ConfirmSummary,
   ConfirmActions, SuccessScreen, PinField, inputCls, selectCls,
 } from "../components/shared-ui";
-import { customerService, generateTxRef, type DataPlan, type PurchaseResult } from "../services/customerService";
+import { customerService, generateTxRef, applyDiscount, type DataPlan, type PurchaseResult } from "../services/customerService";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -114,6 +114,15 @@ export default function BuyDataPage() {
   });
   const discountAmount = discountQuery.data?.discount_amount ?? 0;
   const payableAmount = discountAmount > 0 ? planPrice - discountAmount : planPrice;
+
+  // Live discount rule for the selected network — used to strike through and
+  // show the discounted price on every plan in the list below.
+  const dataDiscountQuery = useQuery({
+    queryKey: ["active-discount", "data", network],
+    queryFn: () => customerService.getActiveDiscount("data", network),
+    enabled: Boolean(network),
+  });
+  const dataDiscount = dataDiscountQuery.data ?? null;
 
   const isFormValid = Boolean(selectedNetwork) && Boolean(selectedPlan) && phone.length === 11;
   const isConfirmValid = pin.length === 4;
@@ -273,7 +282,18 @@ export default function BuyDataPage() {
                   >
                     <p className="font-medium text-slate-900 text-sm">{p.plan}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{p.validity}</p>
-                    <p className="text-sm font-medium text-[#111827] mt-1">{fmt(Number(p.price ?? 0))}</p>
+                    {(() => {
+                      const original = Number(p.price ?? 0);
+                      const discounted = applyDiscount(original, dataDiscount);
+                      return discounted < original ? (
+                        <p className="text-sm font-medium mt-1">
+                          <span className="text-slate-400 line-through mr-1.5">{fmt(original)}</span>
+                          <span className="text-[#111827]">{fmt(discounted)}</span>
+                        </p>
+                      ) : (
+                        <p className="text-sm font-medium text-[#111827] mt-1">{fmt(original)}</p>
+                      );
+                    })()}
                   </button>
                 ))}
               </div>

@@ -626,8 +626,12 @@ export default function AdminPage() {
             />
             <StatCard
               label="Data sold"
-              value={analytics ? fmtCompact(dataSold.revenue) : "—"}
-              meta={analytics ? `${dataSold.count.toLocaleString()} orders` : undefined}
+              value={
+                analytics
+                  ? `${(analytics.summary.data_gb ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 })} GB`
+                  : "—"
+              }
+              meta={analytics ? `${dataSold.count.toLocaleString()} orders · ${fmtCompact(dataSold.revenue)}` : undefined}
               icon={Wifi}
               tone="neutral"
             />

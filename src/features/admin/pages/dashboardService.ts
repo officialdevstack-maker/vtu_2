@@ -50,6 +50,8 @@ export type AnalyticsSummary = {
   // recorded cost — see AnalyticsController::buildSummary / VendorBase.
   total_cost: number;
   total_profit: number;
+  // Data volume sold in the range, in GB (recorded from plan size at purchase).
+  data_gb: number;
   total_transactions: number;
   successful_transactions: number;
   failed_transactions: number;
