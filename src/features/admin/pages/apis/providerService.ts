@@ -21,6 +21,8 @@ export type Provider = {
   connection?: boolean | null;
   username?: string | null;
   password?: string | null;
+  api_key?: string | null;
+  public_key?: string | null;
   sub_category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -43,8 +45,26 @@ export type ProviderPayload = {
   base_url?: string | null;
   username?: string | null;
   password?: string | null;
+  api_key?: string | null;
+  public_key?: string | null;
   sub_category?: string | null;
   connection?: boolean;
+};
+
+// One credential input a provider type needs (see VendorFactory::
+// availableProviders / CREDENTIAL_FIELDS on the backend).
+export type ProviderCredentialField = {
+  key: "username" | "password" | "api_key" | "public_key" | (string & {});
+  label: string;
+  secret: boolean;
+};
+
+// A supported provider integration and the exact fields it authenticates with.
+export type ProviderType = {
+  value: string;
+  label: string;
+  base_url: boolean;
+  credentials: ProviderCredentialField[];
 };
 
 export type AutoFundPayload = {
@@ -87,6 +107,13 @@ export const providerService = {
   getById: (id: string): Promise<Provider> =>
     apiClient
       .get<ApiEnvelope<Provider>>(`${BASE}/${id}`)
+      .then((r) => r.data.data),
+
+  // The supported integrations + their credential schemas, so the form lists
+  // every provider type and renders the right credential inputs per type.
+  getTypes: (): Promise<ProviderType[]> =>
+    apiClient
+      .get<ApiEnvelope<ProviderType[]>>("/admin/provider-types")
       .then((r) => r.data.data),
 
   // category is set explicitly (and defaulted by Vendor::creating on the

@@ -15,22 +15,14 @@ import {
   providerService,
   type Provider,
   type ProviderPayload,
+  type ProviderType,
 } from "./providerService";
 
 const BACK = "/admin/apis/provider";
 
-// Matches the DB's `providers.sub_category` enum — "misc" and "payment"
-// exist in the enum too, but this form only ever creates/edits VTU vending
-// providers (category="vendor"), never payment gateways or the catch-all
-// bucket, so those two aren't offered here.
-const SUB_CATEGORIES = ["adex", "spurs", "msorg", "simhost"] as const;
-
-// "simhost" is a grouping bucket, not a single engine — the specific vendor
-// (SME Plug, Ogdams, vtpass…) is picked by NAME within it, so there's no one
-// base URL a "simhost" sub_category implies the way there is for adex/spurs/
-// msorg. Per product decision, it's not editable through this
-// form for that sub_category at all.
-const isEngineType = (subCategory: string) => subCategory !== "simhost";
+// The credential columns a provider can hold; the visible set is driven by the
+// selected type's schema (VendorFactory::availableProviders on the backend).
+const CREDENTIAL_KEYS = ["username", "password", "api_key", "public_key"] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -99,6 +91,8 @@ const blankForm = (): FormState => ({
   base_url: "",
   username: "",
   password: "",
+  api_key: "",
+  public_key: "",
   sub_category: "",
 });
 
@@ -108,6 +102,8 @@ const toForm = (p: Provider): FormState => ({
   base_url: p.base_url ?? "",
   username: p.username ?? "",
   password: p.password ?? "",
+  api_key: p.api_key ?? "",
+  public_key: p.public_key ?? "",
   sub_category: p.sub_category ?? "",
 });
 
@@ -143,10 +139,15 @@ export default function ProviderFormPage() {
   const [form, setForm] = useState<FormState>(
     stateProvider ? toForm(stateProvider) : blankForm(),
   );
-  const [showPw, setShowPw] = useState(false);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [types, setTypes] = useState<ProviderType[]>([]);
+
+  useEffect(() => {
+    providerService.getTypes().then(setTypes).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (id && !stateProvider) {
@@ -165,8 +166,27 @@ export default function ProviderFormPage() {
     setErrors((e) => (e[k as keyof FormErrors] ? { ...e, [k]: undefined } : e));
   };
 
-  const showBaseUrl = isEngineType(form.sub_category ?? "");
+  const selectedType = types.find((t) => t.value === (form.sub_category ?? ""));
+  // Credential inputs to render come from the selected type's schema; fall back
+  // to username/password while types load or for an unknown legacy type.
+  const credentialFields: ProviderType["credentials"] = selectedType
+    ? selectedType.credentials
+    : [
+        { key: "username", label: "API username", secret: false },
+        { key: "password", label: "API password / secret", secret: true },
+      ];
+  const showBaseUrl = selectedType ? selectedType.base_url : true;
+  const typeIsKnown =
+    !form.sub_category || types.some((t) => t.value === form.sub_category);
   const valid = form.name.trim().length > 0;
+
+  const toggleReveal = (key: string) =>
+    setRevealed((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
 
   const handleSubmit = async () => {
     const formErrors = validateForm(form);
@@ -176,11 +196,18 @@ export default function ProviderFormPage() {
 
     setSaving(true);
     try {
-      // A sub_category flip to "simhost" hides the field but shouldn't
-      // silently keep stale data from before the switch.
+      const activeCreds = new Set(credentialFields.map((f) => f.key));
       const payload: ProviderPayload = {
-        ...form,
+        name: form.name,
+        code: form.code,
+        sub_category: form.sub_category,
         base_url: showBaseUrl ? form.base_url : null,
+        // Only persist the credentials this type uses; clear the rest so
+        // switching type never leaves a stale secret behind.
+        username: activeCreds.has("username") ? form.username : null,
+        password: activeCreds.has("password") ? form.password : null,
+        api_key: activeCreds.has("api_key") ? form.api_key : null,
+        public_key: activeCreds.has("public_key") ? form.public_key : null,
       };
       if (initial) {
         await providerService.update(String(initial.id), payload);
@@ -278,18 +305,23 @@ export default function ProviderFormPage() {
                 />
               </Field>
 
-              <Field label="Type">
+              <Field label="Type" hint="which integration powers this provider">
                 <select
                   value={form.sub_category ?? ""}
                   onChange={(e) => set("sub_category", e.target.value)}
                   className={selectCls}
                 >
                   <option value="">Select…</option>
-                  {SUB_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                  {types.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
                     </option>
                   ))}
+                  {!typeIsKnown && form.sub_category && (
+                    <option value={form.sub_category}>
+                      {form.sub_category} (legacy)
+                    </option>
+                  )}
                 </select>
               </Field>
 
@@ -312,35 +344,51 @@ export default function ProviderFormPage() {
         <div className="space-y-5">
           <Card className="p-5">
             <SectionTitle>Credentials</SectionTitle>
-            <div className="space-y-4">
-              <Field label="API username">
-                <input
-                  value={form.username ?? ""}
-                  onChange={(e) => set("username", e.target.value)}
-                  className={inputCls}
-                  autoComplete="off"
-                />
-              </Field>
-
-              <Field label="API password / secret">
-                <div className="relative">
-                  <input
-                    type={showPw ? "text" : "password"}
-                    value={form.password ?? ""}
-                    onChange={(e) => set("password", e.target.value)}
-                    className={`${inputCls} pr-10`}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </Field>
-            </div>
+            {!form.sub_category ? (
+              <p className="text-xs text-slate-400">
+                Select a provider type to configure its credentials.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {credentialFields.map((f) => {
+                  const key = f.key as (typeof CREDENTIAL_KEYS)[number];
+                  const value = (form[key] as string | null | undefined) ?? "";
+                  return (
+                    <Field key={f.key} label={f.label}>
+                      {f.secret ? (
+                        <div className="relative">
+                          <input
+                            type={revealed.has(f.key) ? "text" : "password"}
+                            value={value}
+                            onChange={(e) => set(key, e.target.value)}
+                            className={`${inputCls} pr-10`}
+                            autoComplete="new-password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => toggleReveal(f.key)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                          >
+                            {revealed.has(f.key) ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <input
+                          value={value}
+                          onChange={(e) => set(key, e.target.value)}
+                          className={inputCls}
+                          autoComplete="off"
+                        />
+                      )}
+                    </Field>
+                  );
+                })}
+              </div>
+            )}
           </Card>
         </div>
       </div>
