@@ -16,7 +16,9 @@ export type Gateway = {
   username?: string | null;
   password?: string | null;
   api_key?: string | null;
+  public_key?: string | null;
   secret_key?: string | null;
+  encryption_key?: string | null;
   // Secret used to VERIFY inbound webhooks — Flutterwave's verif-hash and
   // PaymentPoint's HMAC key both read this column. Distinct from the API
   // credentials above (which authenticate our OUTbound calls). Without it,
@@ -35,14 +37,24 @@ export type GatewayPayload = {
   username?: string | null;
   password?: string | null;
   api_key?: string | null;
+  public_key?: string | null;
   secret_key?: string | null;
+  encryption_key?: string | null;
   webhook_access?: string | null;
   connection?: boolean;
 };
 
 // One credential input a gateway needs (see PaymentFactory::availableGateways).
 export type GatewayCredentialField = {
-  key: "username" | "password" | "api_key" | "webhook_access" | (string & {});
+  key:
+    | "username"
+    | "password"
+    | "api_key"
+    | "public_key"
+    | "secret_key"
+    | "encryption_key"
+    | "webhook_access"
+    | (string & {});
   label: string;
   secret: boolean;
 };

@@ -23,7 +23,15 @@ const BACK = "/admin/apis/gateway";
 
 // Credential columns a gateway can hold; the visible set is driven by the
 // selected engine's schema (PaymentFactory::availableGateways on the backend).
-const CREDENTIAL_KEYS = ["username", "password", "api_key", "webhook_access"] as const;
+const CREDENTIAL_KEYS = [
+  "username",
+  "password",
+  "api_key",
+  "public_key",
+  "secret_key",
+  "encryption_key",
+  "webhook_access",
+] as const;
 
 type FormState = {
   name: string;
@@ -31,6 +39,9 @@ type FormState = {
   username: string;
   password: string;
   api_key: string;
+  public_key: string;
+  secret_key: string;
+  encryption_key: string;
   webhook_access: string;
   connection: boolean;
 };
@@ -41,6 +52,9 @@ const blankForm = (): FormState => ({
   username: "",
   password: "",
   api_key: "",
+  public_key: "",
+  secret_key: "",
+  encryption_key: "",
   webhook_access: "",
   connection: false,
 });
@@ -51,6 +65,9 @@ const toForm = (g: Gateway): FormState => ({
   username: g.username ?? "",
   password: g.password ?? "",
   api_key: g.api_key ?? "",
+  public_key: g.public_key ?? "",
+  secret_key: g.secret_key ?? "",
+  encryption_key: g.encryption_key ?? "",
   webhook_access: g.webhook_access ?? "",
   connection: g.connection ?? false,
 });
@@ -158,16 +175,21 @@ export default function GatewayFormPage() {
     if (Object.keys(formErrors).length > 0) return;
 
     const activeCreds = new Set(credentialFields.map((f) => f.key));
+    const credOrNull = (key: (typeof CREDENTIAL_KEYS)[number]) =>
+      activeCreds.has(key) ? form[key] || null : null;
     const payload: GatewayPayload = {
       name: form.name.trim(),
       code: form.code.trim() || null,
       connection: form.connection,
       // Only persist the credentials this gateway uses; clear the rest so
       // switching engine never leaves a stale secret behind.
-      username: activeCreds.has("username") ? form.username || null : null,
-      password: activeCreds.has("password") ? form.password || null : null,
-      api_key: activeCreds.has("api_key") ? form.api_key || null : null,
-      webhook_access: activeCreds.has("webhook_access") ? form.webhook_access || null : null,
+      username: credOrNull("username"),
+      password: credOrNull("password"),
+      api_key: credOrNull("api_key"),
+      public_key: credOrNull("public_key"),
+      secret_key: credOrNull("secret_key"),
+      encryption_key: credOrNull("encryption_key"),
+      webhook_access: credOrNull("webhook_access"),
     };
 
     setSaving(true);
