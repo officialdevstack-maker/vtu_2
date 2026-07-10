@@ -115,6 +115,7 @@
   --brand-primary-text: #111827;
   --brand-primary-ring: rgb(17 24 39 / 0.3);
   --brand-primary-shadow: rgb(17 24 39 / 0.1);
+  overflow-x: hidden;
 }
 
 @layer components {
@@ -180,6 +181,18 @@
 
   .admin-theme .overflow-x-auto > table:not([class*="min-w-"]) {
     min-width: 44rem;
+  }
+
+  .admin-theme main,
+  .admin-theme section,
+  .admin-theme article,
+  .admin-theme form,
+  .admin-theme [class*="grid-cols-"] {
+    min-width: 0;
+  }
+
+  .admin-theme .overflow-x-auto > table {
+    max-width: none;
   }
 
   .admin-theme .overflow-x-auto > table th,

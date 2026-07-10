@@ -74,7 +74,7 @@ export function Button({
     <button
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-colors disabled:cursor-not-allowed",
+        "inline-flex max-w-full items-center justify-center gap-1.5 rounded-xl text-center font-medium transition-colors disabled:cursor-not-allowed",
         buttonVariants[variant],
         buttonSizes[size],
         fullWidth && "w-full",
@@ -116,8 +116,8 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 flex-wrap">
-      <div>
+    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 flex-1">
         <h1 className="text-lg font-semibold text-slate-900 tracking-tight">
           {title}
         </h1>
@@ -126,7 +126,9 @@ export function PageHeader({
         )}
       </div>
       {actions && (
-        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
+          {actions}
+        </div>
       )}
     </div>
   );
@@ -521,7 +523,7 @@ export function Pagination({
       <p className="text-xs text-slate-400">
         Showing {firstRecord}-{lastRecord} of {totalItems} {label}
       </p>
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex max-w-full flex-wrap items-center gap-1 overflow-x-auto pb-1 sm:justify-end sm:overflow-visible sm:pb-0">
         <button
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
