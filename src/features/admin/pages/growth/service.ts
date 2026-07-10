@@ -198,6 +198,17 @@ export const cashbackRateService = {
       .get<ApiEnvelope<CashbackRate[]>>(CASHBACK_RATES)
       .then((r) => r.data.data),
 
+  // Rates are normally seeded (one per service, 0%), but a fresh/wiped DB has
+  // none — let the admin screen create a missing one on first save.
+  create: (payload: {
+    service_type: string;
+    percentage: number;
+    active?: boolean;
+  }): Promise<CashbackRate> =>
+    apiClient
+      .post<ApiEnvelope<CashbackRate>>(CASHBACK_RATES, payload)
+      .then((r) => r.data.data),
+
   getByServiceType: (serviceType: string): Promise<CashbackRate | undefined> =>
     cashbackRateService
       .getAll()

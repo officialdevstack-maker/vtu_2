@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Wallet } from "lucide-react";
 import axios from "axios";
 import {
   PageHeader,
@@ -11,13 +10,22 @@ import {
 } from "../../../user/components/shared-ui";
 import { cashbackRateService, type CashbackRate } from "./service";
 
-// service_type values match Transaction::transaction_type (see
-// TransactionService::creditCashback) — not the Discount model's "type".
+// The services a cashback rate can be set for. These strings must equal the
+// Transaction::transaction_type the backend credits against (see
+// TransactionService::creditCashback) — note "electric_bill", NOT
+// "electricity_bill", or electricity cashback silently never matches.
+const SERVICE_TYPES = [
+  "airtime_recharge",
+  "data_subscription",
+  "cable_subscription",
+  "electric_bill",
+] as const;
+
 const SERVICE_LABELS: Record<string, string> = {
   airtime_recharge: "Airtime",
   data_subscription: "Data",
   cable_subscription: "Cable TV",
-  electricity_bill: "Electricity",
+  electric_bill: "Electricity",
 };
 
 function extractErrorMessage(err: unknown): string {
@@ -45,10 +53,14 @@ function RateRow({ rate, onSaved }: { rate: CashbackRate; onSaved: (r: CashbackR
     setSaving(true);
     setError(null);
     try {
-      const updated = await cashbackRateService.update(rate.id, {
-        percentage: value === "" ? 0 : numeric,
-        active,
-      });
+      const payload = { percentage: value === "" ? 0 : numeric, active };
+      // No id yet → the rate row doesn't exist in a fresh/wiped DB; create it.
+      const updated = rate.id
+        ? await cashbackRateService.update(rate.id, payload)
+        : await cashbackRateService.create({
+            service_type: rate.service_type,
+            ...payload,
+          });
       onSaved(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -101,15 +113,32 @@ function RateRow({ rate, onSaved }: { rate: CashbackRate; onSaved: (r: CashbackR
 }
 
 export default function CashbackPage() {
-  const [rates, setRates] = useState<CashbackRate[]>([]);
+  const [byType, setByType] = useState<Record<string, CashbackRate>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     cashbackRateService
       .getAll()
-      .then(setRates)
+      .then((list) => {
+        const map: Record<string, CashbackRate> = {};
+        for (const r of list) map[r.service_type] = r;
+        setByType(map);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  // Always render one row per service — using the saved rate if present, or a
+  // blank (id 0, 0%) placeholder that "Save" creates. This means a fresh or
+  // wiped DB shows editable rows instead of an empty, dead-end screen.
+  const rows: CashbackRate[] = SERVICE_TYPES.map(
+    (type) =>
+      byType[type] ?? {
+        id: 0,
+        service_type: type,
+        percentage: 0,
+        active: true,
+      },
+  );
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -125,19 +154,17 @@ export default function CashbackPage() {
               <SkeletonLine key={i} className="h-10 w-full" />
             ))}
           </div>
-        ) : rates.length === 0 ? (
-          <div className="py-10 text-center">
-            <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">No cashback rates configured yet.</p>
-          </div>
         ) : (
           <div>
-            {rates.map((rate) => (
+            {rows.map((rate) => (
               <RateRow
-                key={rate.id}
+                key={rate.service_type}
                 rate={rate}
                 onSaved={(updated) =>
-                  setRates((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+                  setByType((prev) => ({
+                    ...prev,
+                    [updated.service_type]: updated,
+                  }))
                 }
               />
             ))}
