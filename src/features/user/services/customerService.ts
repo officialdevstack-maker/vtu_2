@@ -463,9 +463,23 @@ export const customerService = {
       .post<ApiEnvelope<WalletTransferResult>>("/customer/wallet-transfer", payload)
       .then((r) => r.data.data),
 
-  getWithdrawalBanks: (): Promise<{ available: boolean; banks: WalletBank[] }> =>
+  getWithdrawalBanks: (): Promise<{
+    available: boolean;
+    banks: WalletBank[];
+    // Payout gateway's withdrawal fee (added on top of the amount). type is
+    // "fiat" (flat ₦) or "percent". Absent/0 when the gateway charges none.
+    withdrawal_fee?: number;
+    withdrawal_fee_type?: "fiat" | "percent" | string;
+  }> =>
     apiClient
-      .get<ApiEnvelope<{ available: boolean; banks: WalletBank[] }>>("/customer/wallet-withdrawals/banks")
+      .get<
+        ApiEnvelope<{
+          available: boolean;
+          banks: WalletBank[];
+          withdrawal_fee?: number;
+          withdrawal_fee_type?: string;
+        }>
+      >("/customer/wallet-withdrawals/banks")
       .then((r) => r.data.data),
 
   getMyWalletWithdrawals: (): Promise<WalletWithdrawalItem[]> =>
