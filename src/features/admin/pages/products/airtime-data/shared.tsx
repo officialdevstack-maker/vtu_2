@@ -15,7 +15,7 @@ export function TableShell({
   emptyDescription: string;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="max-w-full overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100">
@@ -53,7 +53,7 @@ export function TableShell({
 
 export function Toolbar({ children }: { children: ReactNode }) {
   return (
-    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 flex-wrap">
+    <div className="flex min-w-0 flex-col gap-2 border-b border-gray-100 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center">
       {children}
     </div>
   );
@@ -84,7 +84,7 @@ export function SelectFilter({
   const controlled = value !== undefined && onChange !== undefined;
   return (
     <select
-      className={`${selectCls} py-2 w-full sm:w-44`}
+      className={`${selectCls} min-w-0 py-2 w-full sm:w-44`}
       {...(controlled
         ? { value, onChange: (e) => onChange(e.target.value) }
         : { defaultValue: "" })}

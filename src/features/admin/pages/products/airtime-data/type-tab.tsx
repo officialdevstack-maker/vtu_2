@@ -249,7 +249,7 @@ export function TypeTab() {
 
   return (
     <>
-      <Card className="overflow-hidden">
+      <Card className="min-w-0 overflow-hidden">
         <Toolbar>
           <SelectFilter
             placeholder="All services"

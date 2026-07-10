@@ -7,7 +7,7 @@ const STATUSES = ["Available", "Used", "Expired"];
 
 export function AirtimePinsTab() {
   return (
-    <Card className="overflow-hidden">
+    <Card className="min-w-0 overflow-hidden">
       <Toolbar>
         <SelectFilter placeholder="All networks" options={NETWORKS} />
         <SelectFilter placeholder="All statuses" options={STATUSES} />
