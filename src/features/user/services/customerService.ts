@@ -204,6 +204,29 @@ export type DiscountPreview = {
   final_amount?: number;
 };
 
+// A live discount rule for a service/network — enough to compute the
+// discounted price of any listed plan client-side (mirrors
+// Discount::getDiscountedAmount on the backend).
+export type ActiveDiscount = {
+  discount_type: "fixed" | "percentage";
+  value: number;
+};
+
+// Apply a discount rule to a price. Returns the price unchanged when there's
+// no discount. Mirrors Discount::getDiscountedAmount exactly (fixed is capped
+// at the price; percentage is value% off), rounded to 2dp.
+export const applyDiscount = (
+  price: number,
+  discount: ActiveDiscount | null | undefined,
+): number => {
+  if (!discount || price <= 0) return price;
+  const reduction =
+    discount.discount_type === "fixed"
+      ? Math.min(discount.value, price)
+      : price * (discount.value / 100);
+  return Math.max(0, Math.round((price - reduction) * 100) / 100);
+};
+
 // A purchasable account tier — a Role the admin has marked `upgradable`
 // (Customers > Roles & Permissions), with its `upgrade_cost` — see
 // CustomerController::upgrade()/upgradeTiers().
@@ -415,6 +438,20 @@ export const customerService = {
     apiClient
       .get<ApiEnvelope<DiscountPreview>>(`/vtu/${service}/discount`, { params: { amount, network, ...extra } })
       .then((r) => r.data.data),
+
+  // The active discount RULE for a service/network (or null) — lets the plan
+  // list strike through and discount every price in one call rather than
+  // previewing each amount. See VTUServicesController::activeDiscount.
+  getActiveDiscount: (
+    service: string,
+    network?: string,
+  ): Promise<ActiveDiscount | null> =>
+    apiClient
+      .get<ApiEnvelope<{ discount: ActiveDiscount | null }>>(
+        `/vtu/${service}/active-discount`,
+        { params: network ? { network } : {} },
+      )
+      .then((r) => r.data.data.discount),
 
   lookupWalletTransferRecipient: (identifier: string): Promise<WalletTransferRecipient> =>
     apiClient
