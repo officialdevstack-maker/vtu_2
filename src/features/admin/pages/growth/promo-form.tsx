@@ -20,8 +20,22 @@ import {
   type PromotionType,
   type PromotionPayload,
 } from "./service";
+import {
+  roleService,
+  networkService,
+  type Role,
+  type Network,
+} from "../products/airtime-data/service";
 
 const BACK = "/admin/growth/promos";
+
+// A readable, shareable promo code — omits ambiguous O/0/I/1.
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const generateCode = (len = 8) =>
+  Array.from(
+    { length: len },
+    () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)],
+  ).join("");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -106,7 +120,7 @@ const blankForm = (): FormState => ({
   name: "",
   applyMode: "code",
   code: "",
-  target: "customer",
+  target: "both",
   product: "airtime",
   provider: "",
   type: "percentage",
@@ -204,6 +218,13 @@ export default function PromoFormPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [networks, setNetworks] = useState<Network[]>([]);
+
+  useEffect(() => {
+    roleService.getAll().then(setRoles).catch(() => {});
+    networkService.getAll().then(setNetworks).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (id && !statePromotion) {
@@ -223,6 +244,22 @@ export default function PromoFormPage() {
   };
 
   const valid = form.name.trim().length > 0;
+
+  // Target audience = a Role (by slug/name); "both" means everyone. Keep any
+  // current value that isn't in the fetched list (e.g. a legacy "customer")
+  // selectable so editing an old promo doesn't silently drop it.
+  const targetOptions = roles.map((r) => ({
+    value: String(r.slug ?? r.name),
+    label: r.name,
+  }));
+  const targetIsKnown =
+    form.target === "both" || targetOptions.some((o) => o.value === form.target);
+
+  // Provider = a network, stored UPPERCASE to match PromotionService's
+  // strtoupper() comparison. "" means all networks.
+  const providerOptions = networks.map((n) => n.name.toUpperCase());
+  const providerIsKnown =
+    form.provider === "" || providerOptions.includes(form.provider);
 
   const handleSubmit = async () => {
     const formErrors = validateForm(form);
@@ -327,12 +364,22 @@ export default function PromoFormPage() {
 
               {form.applyMode === "code" && (
                 <Field label="Promo code" error={errors.code} hint="Case-insensitive">
-                  <input
-                    value={form.code}
-                    onChange={(e) => set("code", e.target.value.toUpperCase())}
-                    placeholder="e.g. NEWYEAR25"
-                    className={`${inputCls} font-mono`}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      value={form.code}
+                      onChange={(e) => set("code", e.target.value.toUpperCase())}
+                      placeholder="e.g. NEWYEAR25"
+                      className={`${inputCls} font-mono flex-1`}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => set("code", generateCode())}
+                    >
+                      Generate
+                    </Button>
+                  </div>
                 </Field>
               )}
 
@@ -345,15 +392,21 @@ export default function PromoFormPage() {
           <Card className="p-5">
             <SectionTitle>Eligibility</SectionTitle>
             <div className="space-y-4">
-              <Field label="Target audience">
+              <Field label="Target audience" hint="which role the promo applies to">
                 <select
                   value={form.target}
                   onChange={(e) => set("target", e.target.value as PromotionTarget)}
                   className={selectCls}
                 >
-                  <option value="customer">Customers</option>
-                  <option value="reseller">Resellers</option>
-                  <option value="both">Both</option>
+                  <option value="both">All users</option>
+                  {targetOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                  {!targetIsKnown && form.target && (
+                    <option value={form.target}>{form.target} (legacy)</option>
+                  )}
                 </select>
               </Field>
 
@@ -369,13 +422,22 @@ export default function PromoFormPage() {
                 </select>
               </Field>
 
-              <Field label="Provider" hint="optional — leave blank for all networks">
-                <input
+              <Field label="Provider" hint="optional — applies to all networks if unset">
+                <select
                   value={form.provider}
                   onChange={(e) => set("provider", e.target.value)}
-                  placeholder="e.g. MTN"
-                  className={inputCls}
-                />
+                  className={selectCls}
+                >
+                  <option value="">All networks</option>
+                  {providerOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                  {!providerIsKnown && form.provider && (
+                    <option value={form.provider}>{form.provider}</option>
+                  )}
+                </select>
               </Field>
             </div>
           </Card>

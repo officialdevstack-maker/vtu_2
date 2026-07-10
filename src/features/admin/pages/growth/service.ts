@@ -20,7 +20,10 @@ type ApiEnvelope<T> = {
 // window, usage limits, and eligibility rules. Uses /admin/promotions.
 
 export type PromotionApply = "auto" | "code";
-export type PromotionTarget = "customer" | "reseller" | "both";
+// "both" = everyone; otherwise a Role slug/name (see PromotionService::
+// isUserEligible). "customer"/"reseller" are legacy coarse audiences still
+// honored by the backend.
+export type PromotionTarget = string;
 export type PromotionProduct = "airtime" | "data" | "bundle";
 export type PromotionType = "percentage" | "fixed" | "bonus_data" | "cashback";
 
