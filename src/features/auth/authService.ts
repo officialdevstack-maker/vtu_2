@@ -28,6 +28,9 @@ export const authService = {
   forgotPassword: (email: string) =>
     apiClient.post<ApiEnvelope<null>>("/forgot-password", { email }).then((r) => r.data),
 
+  resendVerificationEmail: () =>
+    apiClient.post<ApiEnvelope<null>>("/email/verification-notification").then((r) => r.data),
+
   resetPassword: (payload: ResetPasswordPayload) =>
     apiClient.post<ApiEnvelope<null>>("/reset-password", payload).then((r) => r.data),
 };

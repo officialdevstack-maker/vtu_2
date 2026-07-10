@@ -53,7 +53,10 @@ export default function RegisterPage() {
         password_confirmation: data.confirmPassword,
         referral_code: referralCode,
       });
-      navigate("/create-transaction-pin", { replace: true });
+      navigate("/create-transaction-pin", {
+        replace: true,
+        state: { emailNotice: "Verification email sent. Check your inbox to confirm your account." },
+      });
     } catch (err) {
       setError("root", { message: extractErrorMessage(err) });
     }

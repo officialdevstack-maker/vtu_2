@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
       await authService.forgotPassword(data.email);
       setSuccess(true);
     } catch {
-      setError("root", { message: "Something went wrong. Please try again." });
+      setError("root", { message: "We could not send the email. Please try again." });
     }
   };
 
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
 
         {success && (
           <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
-            If an account exists for that email, a reset link is on its way.
+            Password reset link sent. Check your inbox for the secure reset link.
           </div>
         )}
 

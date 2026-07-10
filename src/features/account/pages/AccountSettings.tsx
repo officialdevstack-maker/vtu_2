@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Shield, Bell, ChevronRight, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Shield, Bell, ChevronRight, Pencil, CheckCircle2, Mail, XCircle } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Toggle, PageHeader, Card, Button } from "../../user/components/shared-ui";
 import { useAuth, AUTH_QUERY_KEY } from "@/shared/providers/auth";
 import { accountService } from "../services/accountService";
+import { authService } from "@/features/auth/authService";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -27,6 +28,9 @@ export default function AccountSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [emailNotice, setEmailNotice] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // UI-only preferences — no backend column exists for these yet.
   const [twoFA, setTwoFA] = useState(true);
@@ -65,6 +69,19 @@ export default function AccountSettingsPage() {
     },
   });
 
+  const resendVerificationMutation = useMutation({
+    mutationFn: authService.resendVerificationEmail,
+    onSuccess: (response) => {
+      setEmailError(null);
+      setEmailNotice(response.message || "Verification email sent.");
+      setResendCooldown(60);
+    },
+    onError: () => {
+      setEmailNotice(null);
+      setEmailError("We could not send the email. Please try again.");
+    },
+  });
+
   const startEditingProfile = () => {
     setFullname(user?.fullname ?? "");
     setPhone(user?.phone ?? "");
@@ -88,6 +105,12 @@ export default function AccountSettingsPage() {
     });
   };
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timeout = window.setTimeout(() => setResendCooldown((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearTimeout(timeout);
+  }, [resendCooldown]);
+
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       <PageHeader title="Settings" description="Manage your profile, security and preferences" />
@@ -100,6 +123,34 @@ export default function AccountSettingsPage() {
           <div className="flex-1 min-w-0">
             <h2 className="text-slate-900 font-semibold truncate">{user?.fullname ?? user?.username ?? "—"}</h2>
             <p className="text-slate-500 text-sm truncate">{user?.email}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+                  user?.email_verified_at
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-amber-50 text-amber-700"
+                }`}
+              >
+                {user?.email_verified_at ? (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5" />
+                )}
+                {user?.email_verified_at ? "Email verified" : "Email not verified"}
+              </span>
+              {!user?.email_verified_at && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => resendVerificationMutation.mutate()}
+                  loading={resendVerificationMutation.isPending}
+                  disabled={resendVerificationMutation.isPending || resendCooldown > 0}
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend email"}
+                </Button>
+              )}
+            </div>
           </div>
           {!editingProfile && (
             <Button variant="secondary" size="sm" onClick={startEditingProfile}>
@@ -107,6 +158,20 @@ export default function AccountSettingsPage() {
             </Button>
           )}
         </div>
+
+        {(emailNotice || emailError) && (
+          <div
+            className={`mt-4 rounded-xl border px-3.5 py-2.5 text-sm ${
+              emailError
+                ? "border-red-100 bg-red-50 text-red-700"
+                : "border-emerald-100 bg-emerald-50 text-emerald-700"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            {emailError ?? emailNotice}
+          </div>
+        )}
 
         {(user?.badges?.length ?? 0) > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
