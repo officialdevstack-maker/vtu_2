@@ -12,6 +12,9 @@ import {
   Server,
   Activity,
   Network,
+  Banknote,
+  Wifi,
+  ReceiptText,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -252,6 +255,14 @@ export default function AdminPage() {
         name: t.label,
         value: totalRevenue > 0 ? Math.round((t.revenue / totalRevenue) * 100) : 0,
       }));
+  }, [analytics]);
+
+  // Data revenue + order count for the "Data sold" card.
+  const dataSold = useMemo(() => {
+    const row = analytics?.by_service_type.find(
+      (t) => t.type === "data_subscription",
+    );
+    return { revenue: row?.revenue ?? 0, count: row?.count ?? 0 };
   }, [analytics]);
 
   const fundingVsSpend = analytics?.funding_vs_spend ?? null;
@@ -593,6 +604,42 @@ export default function AdminPage() {
             </div>
           )}
         </Card>
+      </div>
+
+      {/* Profit · Data sold · Average order value */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="p-4 rounded-xl border border-gray-200 space-y-2">
+              <SkeletonLine className="h-3 w-20" />
+              <SkeletonLine className="h-6 w-24" />
+            </div>
+          ))
+        ) : (
+          <>
+            <StatCard
+              label="Profit"
+              value={analytics ? fmtCompact(analytics.summary.total_profit) : "—"}
+              meta={`Revenue − cost · ${rangeLabel.toLowerCase()}`}
+              icon={Banknote}
+              tone="success"
+            />
+            <StatCard
+              label="Data sold"
+              value={analytics ? fmtCompact(dataSold.revenue) : "—"}
+              meta={analytics ? `${dataSold.count.toLocaleString()} orders` : undefined}
+              icon={Wifi}
+              tone="neutral"
+            />
+            <StatCard
+              label="Avg order value"
+              value={analytics ? fmt(analytics.summary.average_transaction_value) : "—"}
+              meta={rangeLabel}
+              icon={ReceiptText}
+              tone="neutral"
+            />
+          </>
+        )}
       </div>
 
       {/* Transaction volume trend + top customers / funding vs spend */}

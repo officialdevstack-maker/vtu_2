@@ -46,6 +46,10 @@ export const statsService = {
 
 export type AnalyticsSummary = {
   total_revenue: number;
+  // Vendor cost of goods and profit (revenue − cost) over sales that carry a
+  // recorded cost — see AnalyticsController::buildSummary / VendorBase.
+  total_cost: number;
+  total_profit: number;
   total_transactions: number;
   successful_transactions: number;
   failed_transactions: number;
