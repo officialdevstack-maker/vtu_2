@@ -306,9 +306,9 @@ export function NetworkTab() {
 
   return (
     <>
-      <Card className="overflow-hidden">
+      <Card className="min-w-0 overflow-hidden">
         <Toolbar>
-          <div className="relative flex-1 min-w-[180px]">
+          <div className="relative min-w-0 flex-1 sm:min-w-[180px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               value={search}

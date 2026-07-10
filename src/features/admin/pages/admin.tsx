@@ -506,7 +506,7 @@ export default function AdminPage() {
 
       {/* Revenue chart + service breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 p-4">
+        <Card className="min-w-0 p-4 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-900">
@@ -524,50 +524,52 @@ export default function AdminPage() {
               description={`Successful transactions in the ${rangeLabel.toLowerCase()} will show up here.`}
             />
           ) : (
-            <ResponsiveContainer width="100%" height={170}>
-              <AreaChart
-                data={revenueChartData}
-                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#F1F5F9"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "#94A3B8" }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval={tickInterval(revenueChartData.length)}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "#94A3B8" }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => fmtCompact(v)}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #E5E7EB",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                  formatter={(v) => [fmt(chartValue(v)), "Revenue"]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#111827"
-                  strokeWidth={2}
-                  fill="#111827"
-                  fillOpacity={0.1}
-                  dot={false}
-                  activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="h-[210px] min-w-0 sm:h-[170px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={revenueChartData}
+                  margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#F1F5F9"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={tickInterval(revenueChartData.length)}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => fmtCompact(v)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    formatter={(v) => [fmt(chartValue(v)), "Revenue"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#111827"
+                    strokeWidth={2}
+                    fill="#111827"
+                    fillOpacity={0.1}
+                    dot={false}
+                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </Card>
 
@@ -648,7 +650,7 @@ export default function AdminPage() {
 
       {/* Transaction volume trend + top customers / funding vs spend */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 p-4">
+        <Card className="min-w-0 p-4 lg:col-span-2">
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-slate-900">
               Transaction volume
@@ -664,71 +666,73 @@ export default function AdminPage() {
               description={`Transactions in the ${rangeLabel.toLowerCase()} will show up here.`}
             />
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart
-                data={txVolumeData}
-                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#F1F5F9"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "#94A3B8" }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval={tickInterval(txVolumeData.length)}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "#94A3B8" }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #E5E7EB",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                />
-                <Legend
-                  wrapperStyle={{ fontSize: 11 }}
-                  iconType="line"
-                  iconSize={14}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="success"
-                  name="Successful"
-                  stroke={STATUS_COLOR.success}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="pending"
-                  name="Pending"
-                  stroke={STATUS_COLOR.pending}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="fail"
-                  name="Failed"
-                  stroke={STATUS_COLOR.fail}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="h-[250px] min-w-0 sm:h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={txVolumeData}
+                  margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#F1F5F9"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={tickInterval(txVolumeData.length)}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{ fontSize: 11 }}
+                    iconType="line"
+                    iconSize={14}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="success"
+                    name="Successful"
+                    stroke={STATUS_COLOR.success}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="pending"
+                    name="Pending"
+                    stroke={STATUS_COLOR.pending}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="fail"
+                    name="Failed"
+                    stroke={STATUS_COLOR.fail}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </Card>
 

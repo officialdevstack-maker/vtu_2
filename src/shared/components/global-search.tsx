@@ -104,7 +104,7 @@ export default function GlobalSearch({
       </div>
 
       {showPanel && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+        <div className="absolute right-0 top-full z-30 mt-2 max-h-96 w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
           {loading && results.length === 0 ? (
             <div className="px-4 py-6 text-center text-xs text-slate-400">Searching…</div>
           ) : results.length === 0 ? (

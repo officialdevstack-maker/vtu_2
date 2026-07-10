@@ -148,7 +148,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     items: [
       {
         label: "Notifications",
-        path: "/admin/notifications",
+        path: "/admin/notifications/broadcast",
         icon: BellRing,
         children: [
           { label: "Broadcast", path: "/admin/notifications/broadcast" },
@@ -398,9 +398,9 @@ const Layout = () => {
           {renderSidebarContent()}
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 overflow-x-hidden">
           <header className="sticky top-0 z-20 h-14 border-b border-slate-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-            <div className="flex h-full items-center gap-2 px-3 sm:px-4 lg:px-6">
+            <div className="flex h-full min-w-0 items-center gap-2 px-3 sm:px-4 lg:px-6">
               <button
                 type="button"
                 onClick={() => setMobileSidebarOpen(true)}
@@ -510,7 +510,7 @@ const Layout = () => {
             </div>
           </header>
 
-          <div className="p-4 sm:p-6">
+          <div className="min-w-0 p-4 sm:p-6">
             <Outlet />
           </div>
         </main>

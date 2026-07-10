@@ -2,6 +2,22 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.35rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.45rem;
+  --text-base: 1.03125rem;
+  --text-base--line-height: 1.65rem;
+  --text-lg: 1.15625rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.3125rem;
+  --text-xl--line-height: 1.9rem;
+  --text-2xl: 1.625rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.35rem;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 2.85rem;
   --color-app-bg: #f7f7fa;
   --color-sidebar: #111827;
 }
@@ -18,9 +34,75 @@
     --brand-primary-shadow: rgb(17 24 39 / 0.1);
   }
 
+  html {
+    font-size: 101.5625%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  html,
+  body,
+  #root {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   body {
     font-family: var(--font-sans);
+    font-weight: 450;
     @apply bg-app-bg text-slate-900 antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    max-width: 100%;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  table {
+    max-width: 100%;
+  }
+
+  button,
+  label,
+  th {
+    font-weight: 600;
+  }
+
+  strong,
+  b {
+    font-weight: 700;
+  }
+
+  ::placeholder {
+    font-weight: 450;
+    opacity: 0.92;
   }
 }
 
@@ -33,9 +115,20 @@
   --brand-primary-text: #111827;
   --brand-primary-ring: rgb(17 24 39 / 0.3);
   --brand-primary-shadow: rgb(17 24 39 / 0.1);
+  overflow-x: hidden;
 }
 
 @layer components {
+  .flex,
+  .grid {
+    min-width: 0;
+  }
+
+  .flex > *,
+  .grid > * {
+    min-width: 0;
+  }
+
   .brand-primary-button {
     background-color: var(--brand-primary);
     box-shadow: 0 1px 2px var(--brand-primary-shadow);
@@ -76,13 +169,30 @@
     color: var(--brand-primary-text);
   }
 
-  .admin-theme .overflow-x-auto {
+  .overflow-x-auto {
     max-width: 100%;
     -webkit-overflow-scrolling: touch;
   }
 
+  .overflow-x-auto > table {
+    width: max-content;
+    min-width: 100%;
+  }
+
   .admin-theme .overflow-x-auto > table:not([class*="min-w-"]) {
     min-width: 44rem;
+  }
+
+  .admin-theme main,
+  .admin-theme section,
+  .admin-theme article,
+  .admin-theme form,
+  .admin-theme [class*="grid-cols-"] {
+    min-width: 0;
+  }
+
+  .admin-theme .overflow-x-auto > table {
+    max-width: none;
   }
 
   .admin-theme .overflow-x-auto > table th,
@@ -92,6 +202,23 @@
 
   .admin-theme .overflow-x-auto > table td {
     vertical-align: middle;
+  }
+
+  @media (max-width: 480px) {
+    .grid.grid-cols-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.grid-cols-3 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 380px) {
+    .grid.grid-cols-4,
+    .grid.grid-cols-3 {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 
@@ -132,6 +259,23 @@
 }
 
 @layer utilities {
+  .font-light,
+  .font-normal {
+    font-weight: 450;
+  }
+
+  .font-medium {
+    font-weight: 550;
+  }
+
+  .font-semibold {
+    font-weight: 650;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
   .animate-bounce-in {
     animation: bounce-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }

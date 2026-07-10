@@ -98,7 +98,7 @@ export function AirtimeTab() {
   });
 
   return (
-    <Card className="overflow-visible">
+    <Card className="min-w-0 overflow-hidden">
       <Toolbar>
         <SelectFilter
           placeholder="All networks"

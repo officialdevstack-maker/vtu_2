@@ -74,7 +74,7 @@ export function Button({
     <button
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-colors disabled:cursor-not-allowed",
+        "inline-flex max-w-full items-center justify-center gap-1.5 rounded-xl text-center font-medium transition-colors disabled:cursor-not-allowed",
         buttonVariants[variant],
         buttonSizes[size],
         fullWidth && "w-full",
@@ -116,8 +116,8 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 flex-wrap">
-      <div>
+    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 flex-1">
         <h1 className="text-lg font-semibold text-slate-900 tracking-tight">
           {title}
         </h1>
@@ -126,7 +126,9 @@ export function PageHeader({
         )}
       </div>
       {actions && (
-        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
+          {actions}
+        </div>
       )}
     </div>
   );
@@ -521,7 +523,7 @@ export function Pagination({
       <p className="text-xs text-slate-400">
         Showing {firstRecord}-{lastRecord} of {totalItems} {label}
       </p>
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex max-w-full flex-wrap items-center gap-1 overflow-x-auto pb-1 sm:justify-end sm:overflow-visible sm:pb-0">
         <button
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
@@ -710,7 +712,7 @@ export function NetworkPicker({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {networks.map((n) => (
         <button
           key={n.id}
@@ -745,7 +747,7 @@ export function QuickAmountGrid({
 }) {
   return (
     <div
-      className={`grid ${columns === 4 ? "grid-cols-4" : "grid-cols-3"} gap-2 mb-2.5`}
+      className={`grid ${columns === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3"} gap-2 mb-2.5`}
     >
       {amounts.map((a) => (
         <button
@@ -786,7 +788,7 @@ export function VerifyField({
   return (
     <div>
       <FieldLabel>{label}</FieldLabel>
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
           maxLength={maxLength}
@@ -911,7 +913,7 @@ export function ConfirmSummary({
         <h3 className="text-sm font-semibold text-slate-900 mb-1">{title}</h3>
       )}
       {rows.map((r) => (
-        <div key={r.label} className="flex justify-between text-sm">
+        <div key={r.label} className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm">
           <span className="text-slate-500">{r.label}</span>
           <span
             className={`font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}
@@ -921,7 +923,7 @@ export function ConfirmSummary({
         </div>
       ))}
       {totalRow && (
-        <div className="border-t border-gray-200 pt-3 flex justify-between text-sm font-semibold text-slate-900">
+        <div className="border-t border-gray-200 pt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm font-semibold text-slate-900">
           <span>{totalRow.label}</span>
           <span>{totalRow.value}</span>
         </div>
@@ -942,7 +944,7 @@ export function ConfirmActions({
   confirmLabel?: string;
 }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row">
       <Button variant="secondary" onClick={onBack} fullWidth className="py-3">
         Back
       </Button>
@@ -985,7 +987,7 @@ export function SuccessScreen({
         <h2 className="text-base font-semibold text-slate-900 mb-1">{title}</h2>
         <div className="text-slate-500 text-sm mb-5">{message}</div>
         {children}
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Button variant="secondary" onClick={onReset} fullWidth>
             {resetLabel}
           </Button>
