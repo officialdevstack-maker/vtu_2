@@ -32,12 +32,13 @@ const SettingsPage = () => {
         description="Configure platform-wide behavior — info, transactions, notifications, email, customers, and payouts."
       />
 
-      <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
+      <div className="max-w-full overflow-x-auto rounded-lg bg-gray-100 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max min-w-full gap-1.5">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
               t.id === "danger"
                 ? activeTab === t.id
                   ? "bg-white text-red-600 shadow-sm"
@@ -50,6 +51,7 @@ const SettingsPage = () => {
             {t.label}
           </button>
         ))}
+        </div>
       </div>
 
       {activeTab === "general" && <GeneralTab />}

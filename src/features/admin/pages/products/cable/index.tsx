@@ -22,12 +22,13 @@ const CablePage = () => {
         description="Cable TV networks and plans — a fixed subscription cost plus a per-role charge fee, not a full replacement price."
       />
 
-      <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
+      <div className="max-w-full overflow-x-auto rounded-lg bg-gray-100 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max min-w-full gap-1.5">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
               activeTab === t.id
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
@@ -36,6 +37,7 @@ const CablePage = () => {
             {t.label}
           </button>
         ))}
+        </div>
       </div>
 
       {activeTab === "network" && <CableNetworksTab />}

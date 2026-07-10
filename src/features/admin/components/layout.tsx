@@ -148,7 +148,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     items: [
       {
         label: "Notifications",
-        path: "/admin/notifications",
+        path: "/admin/notifications/broadcast",
         icon: BellRing,
         children: [
           { label: "Broadcast", path: "/admin/notifications/broadcast" },
