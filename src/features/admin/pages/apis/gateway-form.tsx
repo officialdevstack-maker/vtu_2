@@ -8,6 +8,7 @@ import {
   Button,
   Toggle,
   inputCls,
+  selectCls,
   SkeletonLine,
 } from "../../../user/components/shared-ui";
 import { SectionTitle, Field, ErrorBanner, extractErrorMessage } from "../settings/shared";
@@ -15,16 +16,21 @@ import {
   gatewayService,
   type Gateway,
   type GatewayPayload,
+  type GatewayType,
 } from "./gatewayService";
 
 const BACK = "/admin/apis/gateway";
 
-type FormState = Required<Pick<GatewayPayload, "name">> & {
+// Credential columns a gateway can hold; the visible set is driven by the
+// selected engine's schema (PaymentFactory::availableGateways on the backend).
+const CREDENTIAL_KEYS = ["username", "password", "api_key", "webhook_access"] as const;
+
+type FormState = {
+  name: string;
   code: string;
   username: string;
   password: string;
   api_key: string;
-  secret_key: string;
   webhook_access: string;
   connection: boolean;
 };
@@ -35,7 +41,6 @@ const blankForm = (): FormState => ({
   username: "",
   password: "",
   api_key: "",
-  secret_key: "",
   webhook_access: "",
   connection: false,
 });
@@ -46,7 +51,6 @@ const toForm = (g: Gateway): FormState => ({
   username: g.username ?? "",
   password: g.password ?? "",
   api_key: g.api_key ?? "",
-  secret_key: g.secret_key ?? "",
   webhook_access: g.webhook_access ?? "",
   connection: g.connection ?? false,
 });
@@ -115,6 +119,11 @@ export default function GatewayFormPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [types, setTypes] = useState<GatewayType[]>([]);
+
+  useEffect(() => {
+    gatewayService.getTypes().then(setTypes).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (id && !stateGateway) {
@@ -135,21 +144,30 @@ export default function GatewayFormPage() {
 
   const cancelTo = isEdit && id ? `${BACK}/${id}` : BACK;
 
+  const selectedGateway = types.find(
+    (t) => t.value.toLowerCase() === form.name.trim().toLowerCase(),
+  );
+  const credentialFields = selectedGateway?.credentials ?? [];
+  const nameIsKnown =
+    !form.name || types.some((t) => t.value.toLowerCase() === form.name.trim().toLowerCase());
+
   const handleSubmit = async () => {
     const formErrors = validateForm(form);
     setErrors(formErrors);
     setSubmitError(null);
     if (Object.keys(formErrors).length > 0) return;
 
+    const activeCreds = new Set(credentialFields.map((f) => f.key));
     const payload: GatewayPayload = {
       name: form.name.trim(),
       code: form.code.trim() || null,
-      username: form.username || null,
-      password: form.password || null,
-      api_key: form.api_key || null,
-      secret_key: form.secret_key || null,
-      webhook_access: form.webhook_access || null,
       connection: form.connection,
+      // Only persist the credentials this gateway uses; clear the rest so
+      // switching engine never leaves a stale secret behind.
+      username: activeCreds.has("username") ? form.username || null : null,
+      password: activeCreds.has("password") ? form.password || null : null,
+      api_key: activeCreds.has("api_key") ? form.api_key || null : null,
+      webhook_access: activeCreds.has("webhook_access") ? form.webhook_access || null : null,
     };
 
     setSaving(true);
@@ -251,13 +269,22 @@ export default function GatewayFormPage() {
           <Card className="p-5">
             <SectionTitle>General</SectionTitle>
             <div className="space-y-4">
-              <Field label="Gateway name" error={errors.name}>
-                <input
-                  value={form.name}
+              <Field label="Gateway" error={errors.name} hint="which payment engine">
+                <select
+                  value={selectedGateway?.value ?? (nameIsKnown ? "" : form.name)}
                   onChange={(e) => set("name", e.target.value)}
-                  placeholder="e.g. Flutterwave"
-                  className={inputCls}
-                />
+                  className={selectCls}
+                >
+                  <option value="">Select…</option>
+                  {types.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                  {!nameIsKnown && form.name && (
+                    <option value={form.name}>{form.name} (unknown)</option>
+                  )}
+                </select>
               </Field>
 
               <Field label="Code" hint="optional">
@@ -290,64 +317,32 @@ export default function GatewayFormPage() {
         <div className="space-y-5">
           <Card className="p-5">
             <SectionTitle>API credentials</SectionTitle>
-            <p className="text-xs text-slate-400 -mt-2 mb-4">
-              Not every field applies to every gateway — Flutterwave uses API key
-              only; Monnify uses API key + Secret key + Username; PaymentPoint
-              uses Password + API key.
-            </p>
-            <div className="space-y-4">
-              <Field label="API key">
-                <input
-                  value={form.api_key}
-                  onChange={(e) => set("api_key", e.target.value)}
-                  placeholder="Public/API key"
-                  className={`${inputCls} font-mono`}
-                  autoComplete="off"
-                />
-              </Field>
-
-              <Field label="Secret key">
-                <SecretInput
-                  value={form.secret_key}
-                  onChange={(v) => set("secret_key", v)}
-                  placeholder="Secret key"
-                />
-              </Field>
-
-              <Field label="Username / contract code">
-                <input
-                  value={form.username}
-                  onChange={(e) => set("username", e.target.value)}
-                  placeholder="Username or contract code"
-                  className={inputCls}
-                  autoComplete="off"
-                />
-              </Field>
-
-              <Field label="Password / token">
-                <SecretInput
-                  value={form.password}
-                  onChange={(v) => set("password", v)}
-                  placeholder="Password or token"
-                />
-              </Field>
-
-              <Field
-                label="Webhook secret"
-                hint="required for Flutterwave / PaymentPoint"
-              >
-                <SecretInput
-                  value={form.webhook_access}
-                  onChange={(v) => set("webhook_access", v)}
-                  placeholder="Verifies inbound funding webhooks"
-                />
-                <p className="mt-1.5 text-xs text-slate-400">
-                  Flutterwave's verif-hash and PaymentPoint's HMAC key are
-                  checked against this. Leave blank only for Monnify, which
-                  verifies against the Password above.
-                </p>
-              </Field>
-            </div>
+            {!selectedGateway ? (
+              <p className="text-xs text-slate-400">
+                Select a gateway to configure its credentials.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {credentialFields.map((f) => {
+                  const key = f.key as (typeof CREDENTIAL_KEYS)[number];
+                  const value = (form[key] as string) ?? "";
+                  return (
+                    <Field key={f.key} label={f.label}>
+                      {f.secret ? (
+                        <SecretInput value={value} onChange={(v) => set(key, v)} />
+                      ) : (
+                        <input
+                          value={value}
+                          onChange={(e) => set(key, e.target.value)}
+                          className={`${inputCls} font-mono`}
+                          autoComplete="off"
+                        />
+                      )}
+                    </Field>
+                  );
+                })}
+              </div>
+            )}
           </Card>
         </div>
       </div>

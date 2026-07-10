@@ -40,6 +40,20 @@ export type GatewayPayload = {
   connection?: boolean;
 };
 
+// One credential input a gateway needs (see PaymentFactory::availableGateways).
+export type GatewayCredentialField = {
+  key: "username" | "password" | "api_key" | "webhook_access" | (string & {});
+  label: string;
+  secret: boolean;
+};
+
+// A supported payment engine and the exact fields it authenticates with.
+export type GatewayType = {
+  value: string;
+  label: string;
+  credentials: GatewayCredentialField[];
+};
+
 const BASE = "/table/providers";
 
 // Known gateways that support outbound transfers (auto-fund payouts).
@@ -63,6 +77,13 @@ export const gatewayService = {
   getById: (id: string): Promise<Gateway> =>
     apiClient
       .get<ApiEnvelope<Gateway>>(`${BASE}/${id}`)
+      .then((r) => r.data.data),
+
+  // The supported payment engines + their credential schemas, so the form can
+  // offer a dropdown of gateways and render the right inputs per selection.
+  getTypes: (): Promise<GatewayType[]> =>
+    apiClient
+      .get<ApiEnvelope<GatewayType[]>>("/admin/gateway-types")
       .then((r) => r.data.data),
 
   // sub_category="payment" is what makes the webhook URL route to the
