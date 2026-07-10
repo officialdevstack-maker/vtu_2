@@ -33,6 +33,8 @@ const CREDENTIAL_KEYS = [
   "webhook_access",
 ] as const;
 
+type FeeType = "fiat" | "percent";
+
 type FormState = {
   name: string;
   code: string;
@@ -43,8 +45,15 @@ type FormState = {
   secret_key: string;
   encryption_key: string;
   webhook_access: string;
+  charge_fee: string;
+  charge_type: FeeType;
+  withdrawal_fee: string;
+  withdrawal_fee_type: FeeType;
   connection: boolean;
 };
+
+const asFeeType = (v: string | null | undefined): FeeType =>
+  v === "percent" ? "percent" : "fiat";
 
 const blankForm = (): FormState => ({
   name: "",
@@ -56,6 +65,10 @@ const blankForm = (): FormState => ({
   secret_key: "",
   encryption_key: "",
   webhook_access: "",
+  charge_fee: "",
+  charge_type: "fiat",
+  withdrawal_fee: "",
+  withdrawal_fee_type: "fiat",
   connection: false,
 });
 
@@ -69,6 +82,10 @@ const toForm = (g: Gateway): FormState => ({
   secret_key: g.secret_key ?? "",
   encryption_key: g.encryption_key ?? "",
   webhook_access: g.webhook_access ?? "",
+  charge_fee: g.charge_fee != null ? String(g.charge_fee) : "",
+  charge_type: asFeeType(g.charge_type),
+  withdrawal_fee: g.withdrawal_fee != null ? String(g.withdrawal_fee) : "",
+  withdrawal_fee_type: asFeeType(g.withdrawal_fee_type),
   connection: g.connection ?? false,
 });
 
@@ -190,6 +207,11 @@ export default function GatewayFormPage() {
       secret_key: credOrNull("secret_key"),
       encryption_key: credOrNull("encryption_key"),
       webhook_access: credOrNull("webhook_access"),
+      // Fees: deposit = charge_fee/charge_type, withdrawal = its own pair.
+      charge_fee: form.charge_fee === "" ? 0 : Number(form.charge_fee),
+      charge_type: form.charge_type,
+      withdrawal_fee: form.withdrawal_fee === "" ? 0 : Number(form.withdrawal_fee),
+      withdrawal_fee_type: form.withdrawal_fee_type,
     };
 
     setSaving(true);
@@ -331,6 +353,61 @@ export default function GatewayFormPage() {
                 </div>
                 <Toggle value={form.connection} onChange={(v) => set("connection", v)} />
               </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <SectionTitle>Fees</SectionTitle>
+            <p className="text-xs text-slate-400 -mt-2 mb-4">
+              Deposit fee is deducted from each wallet funding; withdrawal fee is
+              added on top of a payout. Percent is of the amount.
+            </p>
+            <div className="space-y-4">
+              <Field label="Deposit fee">
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.charge_fee}
+                    onChange={(e) => set("charge_fee", e.target.value)}
+                    placeholder="0"
+                    className={`${inputCls} flex-1`}
+                  />
+                  <select
+                    value={form.charge_type}
+                    onChange={(e) => set("charge_type", e.target.value as FeeType)}
+                    className={`${selectCls} w-32`}
+                  >
+                    <option value="fiat">Fixed (₦)</option>
+                    <option value="percent">Percent (%)</option>
+                  </select>
+                </div>
+              </Field>
+
+              <Field label="Withdrawal fee">
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.withdrawal_fee}
+                    onChange={(e) => set("withdrawal_fee", e.target.value)}
+                    placeholder="0"
+                    className={`${inputCls} flex-1`}
+                  />
+                  <select
+                    value={form.withdrawal_fee_type}
+                    onChange={(e) =>
+                      set("withdrawal_fee_type", e.target.value as FeeType)
+                    }
+                    className={`${selectCls} w-32`}
+                  >
+                    <option value="fiat">Fixed (₦)</option>
+                    <option value="percent">Percent (%)</option>
+                  </select>
+                </div>
+              </Field>
             </div>
           </Card>
         </div>

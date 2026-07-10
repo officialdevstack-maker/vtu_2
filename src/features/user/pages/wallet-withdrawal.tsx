@@ -39,12 +39,24 @@ export default function WalletWithdrawalPage() {
   const selectedBank = banks.find((b) => b.code === bankCode);
   const amountNumber = Number(amount);
 
+  // The gateway's withdrawal fee is charged on top of the amount, so the
+  // wallet is debited amount + fee. Mirrors PaymentBase::withdrawalFee.
+  const withdrawalFee = useMemo(() => {
+    const feeVal = Number(banksQuery.data?.withdrawal_fee ?? 0);
+    if (!feeVal || amountNumber <= 0) return 0;
+    const type = banksQuery.data?.withdrawal_fee_type ?? "fiat";
+    const raw = type === "percent" ? (amountNumber * feeVal) / 100 : feeVal;
+    return Math.round(raw * 100) / 100;
+  }, [banksQuery.data, amountNumber]);
+  const totalDebit = amountNumber + withdrawalFee;
+  const balance = Number(user?.wallet_balance ?? 0);
+
   const isFormValid =
     Boolean(selectedBank) &&
     accountNumber.trim().length >= 10 &&
     accountName.trim().length > 1 &&
     amountNumber > 0 &&
-    amountNumber <= Number(user?.wallet_balance ?? 0);
+    totalDebit <= balance;
   const isConfirmValid = pin.length === 4;
 
   const handleConfirm = async () => {
@@ -178,8 +190,22 @@ export default function WalletWithdrawalPage() {
                   placeholder="Enter amount"
                   className={inputCls}
                 />
-                {amount && amountNumber > Number(user?.wallet_balance ?? 0) && (
-                  <p className="text-xs text-red-500 mt-1">Amount exceeds your wallet balance.</p>
+                {withdrawalFee > 0 && amountNumber > 0 && (
+                  <div className="mt-2 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 space-y-1">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>Withdrawal fee</span>
+                      <span>{fmt(withdrawalFee)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-medium text-slate-700">
+                      <span>Total debited</span>
+                      <span>{fmt(totalDebit)}</span>
+                    </div>
+                  </div>
+                )}
+                {amount && totalDebit > balance && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Amount plus fee exceeds your wallet balance.
+                  </p>
                 )}
               </div>
 
@@ -196,7 +222,11 @@ export default function WalletWithdrawalPage() {
               { label: "Bank", value: selectedBank.name },
               { label: "Account number", value: accountNumber },
               { label: "Account name", value: accountName },
-              { label: "Amount", value: fmt(amountNumber), emphasize: "success" },
+              { label: "You receive", value: fmt(amountNumber) },
+              ...(withdrawalFee > 0
+                ? [{ label: "Withdrawal fee", value: fmt(withdrawalFee) }]
+                : []),
+              { label: "Total debited", value: fmt(totalDebit), emphasize: "success" as const },
             ]}
           />
 

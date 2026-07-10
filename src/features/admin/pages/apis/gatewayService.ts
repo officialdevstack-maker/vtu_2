@@ -24,6 +24,13 @@ export type Gateway = {
   // credentials above (which authenticate our OUTbound calls). Without it,
   // those two gateways reject every funding webhook, so wallets never credit.
   webhook_access?: string | null;
+  // Per-gateway fees. Deposit fee is charge_fee/charge_type (applied in
+  // PaymentBase::creditedAmount); withdrawal fee is its own pair. type is
+  // "fiat" (flat ₦) or "percent".
+  charge_fee?: string | number | null;
+  charge_type?: string | null;
+  withdrawal_fee?: string | number | null;
+  withdrawal_fee_type?: string | null;
   category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -41,6 +48,10 @@ export type GatewayPayload = {
   secret_key?: string | null;
   encryption_key?: string | null;
   webhook_access?: string | null;
+  charge_fee?: string | number | null;
+  charge_type?: string | null;
+  withdrawal_fee?: string | number | null;
+  withdrawal_fee_type?: string | null;
   connection?: boolean;
 };
 
