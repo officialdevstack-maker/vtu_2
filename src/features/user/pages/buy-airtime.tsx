@@ -6,11 +6,27 @@ import { fmt } from "../data/mock";
 import { extractApiErrorMessage, detectNetwork } from "@/shared/utils";
 import { useAuth } from "../../../shared/providers/auth";
 import {
-  PurchaseShell, ServiceHeader, WalletBalanceBanner, FieldLabel,
-  NetworkPicker, QuickAmountGrid, ContinueButton, ConfirmSummary,
-  ConfirmActions, SuccessScreen, PinField, inputCls, selectCls,
+  PurchaseShell,
+  ServiceHeader,
+  WalletBalanceBanner,
+  FieldLabel,
+  NetworkPicker,
+  OptionPicker,
+  QuickAmountGrid,
+  ContinueButton,
+  ConfirmSummary,
+  ConfirmActions,
+  SuccessScreen,
+  PinField,
+  inputCls,
+  selectCls,
 } from "../components/shared-ui";
-import { customerService, generateTxRef, type AirtimePlan, type PurchaseResult } from "../services/customerService";
+import {
+  customerService,
+  generateTxRef,
+  type AirtimePlan,
+  type PurchaseResult,
+} from "../services/customerService";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -24,7 +40,8 @@ const quickAmounts = [50, 100, 200, 500, 1000, 2000, 5000];
 // A plan with no category set (nullable in the DB) still needs a valid
 // enum value to submit as network_type — normalize it to "vtu", matching
 // ServiceRequest's own fallback server-side.
-const planCategory = (plan: AirtimePlan): string => (plan.category || "vtu").toLowerCase();
+const planCategory = (plan: AirtimePlan): string =>
+  (plan.category || "vtu").toLowerCase();
 
 export default function BuyAirtimePage() {
   const navigate = useNavigate();
@@ -56,7 +73,10 @@ export default function BuyAirtimePage() {
   }, [airtimePlansQuery.data]);
 
   const networks = useMemo(
-    () => (networksQuery.data ?? []).filter((n) => (plansByNetwork.get(n.name.toLowerCase())?.length ?? 0) > 0),
+    () =>
+      (networksQuery.data ?? []).filter(
+        (n) => (plansByNetwork.get(n.name.toLowerCase())?.length ?? 0) > 0,
+      ),
     [networksQuery.data, plansByNetwork],
   );
 
@@ -78,11 +98,13 @@ export default function BuyAirtimePage() {
 
   const discountQuery = useQuery({
     queryKey: ["discount-preview", "airtime", network, amountNumber],
-    queryFn: () => customerService.previewDiscount("airtime", network, amountNumber),
+    queryFn: () =>
+      customerService.previewDiscount("airtime", network, amountNumber),
     enabled: step === "confirm" && Boolean(network) && amountNumber > 0,
   });
   const discountAmount = discountQuery.data?.discount_amount ?? 0;
-  const payableAmount = discountAmount > 0 ? amountNumber - discountAmount : amountNumber;
+  const payableAmount =
+    discountAmount > 0 ? amountNumber - discountAmount : amountNumber;
 
   // Default to the first available network once networks load, and again
   // whenever the current selection stops being one of them.
@@ -94,9 +116,13 @@ export default function BuyAirtimePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [networks]);
 
-  const selectedNetwork = networks.find((n) => n.name.toLowerCase() === network);
+  const selectedNetwork = networks.find(
+    (n) => n.name.toLowerCase() === network,
+  );
   const availablePlans = plansByNetwork.get(network) ?? [];
-  const selectedPlan = availablePlans.find((p) => planCategory(p) === networkType) ?? availablePlans[0];
+  const selectedPlan =
+    availablePlans.find((p) => planCategory(p) === networkType) ??
+    availablePlans[0];
   const minAmount = Number(selectedPlan?.min ?? 50);
   const maxAmount = Number(selectedPlan?.max ?? 5000);
 
@@ -142,7 +168,12 @@ export default function BuyAirtimePage() {
       setStep("success");
       await refreshUser();
     } catch (err) {
-      setError(extractApiErrorMessage(err, "Could not complete this purchase. Please try again."));
+      setError(
+        extractApiErrorMessage(
+          err,
+          "Could not complete this purchase. Please try again.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -159,7 +190,8 @@ export default function BuyAirtimePage() {
   };
 
   if (step === "success" && result) {
-    const charged = result.discount_applied?.final_amount ?? Number(result.amount);
+    const charged =
+      result.discount_applied?.final_amount ?? Number(result.amount);
     return (
       <SuccessScreen
         title="Airtime sent"
@@ -168,8 +200,16 @@ export default function BuyAirtimePage() {
         onSecondary={() => navigate("/transactions")}
         message={
           <>
-            <p>{selectedNetwork?.name} airtime of <span className="font-medium text-slate-900">{fmt(charged)}</span></p>
-            <p>Delivered to <span className="font-mono font-medium text-slate-900">{result.account_or_phone ?? phone}</span></p>
+            <p>
+              {selectedNetwork?.name} airtime of{" "}
+              <span className="font-medium text-slate-900">{fmt(charged)}</span>
+            </p>
+            <p>
+              Delivered to{" "}
+              <span className="font-mono font-medium text-slate-900">
+                {result.account_or_phone ?? phone}
+              </span>
+            </p>
           </>
         }
       >
@@ -182,7 +222,13 @@ export default function BuyAirtimePage() {
 
   return (
     <PurchaseShell>
-      <ServiceHeader icon={Phone} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Buy airtime" subtitle="Top up any Nigerian network" />
+      <ServiceHeader
+        icon={Phone}
+        iconBg="bg-[#111827]/10"
+        iconColor="text-[#111827]"
+        title="Buy airtime"
+        subtitle="Top up any Nigerian network"
+      />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -193,7 +239,10 @@ export default function BuyAirtimePage() {
             {networksQuery.isPending || airtimePlansQuery.isPending ? (
               <div className="grid grid-cols-4 gap-2">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-[74px] rounded-lg bg-gray-100 animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-[74px] rounded-lg bg-gray-100 animate-pulse"
+                  />
                 ))}
               </div>
             ) : (
@@ -212,13 +261,24 @@ export default function BuyAirtimePage() {
           {availablePlans.length > 1 && (
             <div>
               <FieldLabel>Plan type</FieldLabel>
-              <select value={networkType} onChange={(e) => setNetworkType(e.target.value)} className={selectCls}>
-                {availablePlans.map((p) => (
-                  <option key={p.id} value={planCategory(p)}>
-                    {planCategory(p).toUpperCase()}
-                  </option>
-                ))}
-              </select>
+              <OptionPicker
+                options={Array.from(
+                  new Map(
+                    availablePlans.map((p) => [
+                      planCategory(p),
+                      {
+                        id: planCategory(p),
+                        label: planCategory(p).toUpperCase(),
+                        description: p.category
+                          ? p.category.toUpperCase()
+                          : undefined,
+                      },
+                    ]),
+                  ).values(),
+                )}
+                value={networkType}
+                onChange={setNetworkType}
+              />
             </div>
           )}
 
@@ -233,7 +293,10 @@ export default function BuyAirtimePage() {
                 setPhone(digits);
                 if (!ported && digits.length >= 4) {
                   const detected = detectNetwork(digits);
-                  if (detected && networks.some((n) => n.name.toLowerCase() === detected)) {
+                  if (
+                    detected &&
+                    networks.some((n) => n.name.toLowerCase() === detected)
+                  ) {
                     setNetwork(detected);
                   }
                 }
@@ -242,7 +305,9 @@ export default function BuyAirtimePage() {
               className={`${inputCls} font-mono`}
             />
             {phone && phone.length !== 11 && (
-              <p className="text-xs text-red-500 mt-1">Enter a valid 11-digit phone number</p>
+              <p className="text-xs text-red-500 mt-1">
+                Enter a valid 11-digit phone number
+              </p>
             )}
             <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
               <label className="flex min-w-0 items-center gap-2 cursor-pointer select-none">
@@ -266,7 +331,9 @@ export default function BuyAirtimePage() {
             </div>
             {showPortedHelp && (
               <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
-                Select this if your phone number has been moved from its original network to another network. It stops automatic network detection from changing your selected network.
+                Select this if your phone number has been moved from its
+                original network to another network. It stops automatic network
+                detection from changing your selected network.
               </div>
             )}
           </div>
@@ -274,7 +341,9 @@ export default function BuyAirtimePage() {
           <div>
             <FieldLabel>Amount</FieldLabel>
             <QuickAmountGrid
-              amounts={quickAmounts.filter((a) => a >= minAmount && a <= maxAmount)}
+              amounts={quickAmounts.filter(
+                (a) => a >= minAmount && a <= maxAmount,
+              )}
               value={amount}
               onChange={setAmount}
               columns={4}
@@ -286,14 +355,19 @@ export default function BuyAirtimePage() {
               placeholder={`Enter custom amount (${fmt(minAmount)} - ${fmt(maxAmount)})`}
               className={inputCls}
             />
-            {amount && (amountNumber < minAmount || amountNumber > maxAmount) && (
-              <p className="text-xs text-red-500 mt-1">
-                Amount must be between {fmt(minAmount)} and {fmt(maxAmount)} for {selectedNetwork?.name.toUpperCase()}
-              </p>
-            )}
+            {amount &&
+              (amountNumber < minAmount || amountNumber > maxAmount) && (
+                <p className="text-xs text-red-500 mt-1">
+                  Amount must be between {fmt(minAmount)} and {fmt(maxAmount)}{" "}
+                  for {selectedNetwork?.name.toUpperCase()}
+                </p>
+              )}
           </div>
 
-          <ContinueButton onClick={() => setStep("confirm")} disabled={!isFormValid} />
+          <ContinueButton
+            onClick={() => setStep("confirm")}
+            disabled={!isFormValid}
+          />
         </div>
       )}
 
@@ -306,8 +380,16 @@ export default function BuyAirtimePage() {
               { label: "Amount", value: fmt(amountNumber) },
               ...(discountAmount > 0
                 ? [
-                    { label: "Discount", value: `- ${fmt(discountAmount)}`, emphasize: "success" as const },
-                    { label: "You pay", value: fmt(payableAmount), emphasize: "success" as const },
+                    {
+                      label: "Discount",
+                      value: `- ${fmt(discountAmount)}`,
+                      emphasize: "success" as const,
+                    },
+                    {
+                      label: "You pay",
+                      value: fmt(payableAmount),
+                      emphasize: "success" as const,
+                    },
                   ]
                 : []),
             ]}

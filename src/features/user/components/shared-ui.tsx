@@ -750,6 +750,52 @@ export function NetworkPicker({
   );
 }
 
+export type OptionPickerOption = {
+  id: string;
+  label: string;
+  description?: string;
+};
+
+export function OptionPicker({
+  options,
+  value,
+  onChange,
+}: {
+  options: OptionPickerOption[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+      {options.map((option) => {
+        const active = value === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onChange(option.id)}
+            className={cn(
+              "rounded-2xl border p-3 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300",
+              active
+                ? "border-slate-900 bg-slate-100"
+                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+            )}
+          >
+            <div className="text-sm font-semibold text-slate-900">
+              {option.label}
+            </div>
+            {option.description && (
+              <div className="text-xs text-slate-500 mt-1">
+                {option.description}
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function QuickAmountGrid({
   amounts,
   value,
@@ -929,7 +975,10 @@ export function ConfirmSummary({
         <h3 className="text-sm font-semibold text-slate-900 mb-1">{title}</h3>
       )}
       {rows.map((r) => (
-        <div key={r.label} className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm">
+        <div
+          key={r.label}
+          className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm"
+        >
           <span className="text-slate-500">{r.label}</span>
           <span
             className={`font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}

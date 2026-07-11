@@ -6,11 +6,27 @@ import { fmt } from "../data/mock";
 import { extractApiErrorMessage, detectNetwork } from "@/shared/utils";
 import { useAuth } from "../../../shared/providers/auth";
 import {
-  PurchaseShell, ServiceHeader, WalletBalanceBanner, FieldLabel,
-  NetworkPicker, ContinueButton, ConfirmSummary,
-  ConfirmActions, SuccessScreen, PinField, inputCls, selectCls,
+  PurchaseShell,
+  ServiceHeader,
+  WalletBalanceBanner,
+  FieldLabel,
+  NetworkPicker,
+  OptionPicker,
+  ContinueButton,
+  ConfirmSummary,
+  ConfirmActions,
+  SuccessScreen,
+  PinField,
+  inputCls,
+  selectCls,
 } from "../components/shared-ui";
-import { customerService, generateTxRef, applyDiscount, type DataPlan, type PurchaseResult } from "../services/customerService";
+import {
+  customerService,
+  generateTxRef,
+  applyDiscount,
+  type DataPlan,
+  type PurchaseResult,
+} from "../services/customerService";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -52,7 +68,10 @@ export default function BuyDataPage() {
   }, [dataPlansQuery.data]);
 
   const networks = useMemo(
-    () => (networksQuery.data ?? []).filter((n) => (plansByNetwork.get(n.name.toLowerCase())?.length ?? 0) > 0),
+    () =>
+      (networksQuery.data ?? []).filter(
+        (n) => (plansByNetwork.get(n.name.toLowerCase())?.length ?? 0) > 0,
+      ),
     [networksQuery.data, plansByNetwork],
   );
 
@@ -78,7 +97,9 @@ export default function BuyDataPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [networks]);
 
-  const selectedNetwork = networks.find((n) => n.name.toLowerCase() === network);
+  const selectedNetwork = networks.find(
+    (n) => n.name.toLowerCase() === network,
+  );
   const availablePlans = plansByNetwork.get(network) ?? [];
 
   const planTypes = useMemo(
@@ -104,7 +125,8 @@ export default function BuyDataPage() {
     [availablePlans, planType],
   );
 
-  const selectedPlan = plansForType.find((p) => p.id === selectedPlanId) ?? null;
+  const selectedPlan =
+    plansForType.find((p) => p.id === selectedPlanId) ?? null;
   const planPrice = Number(selectedPlan?.price ?? 0);
 
   const discountQuery = useQuery({
@@ -113,7 +135,8 @@ export default function BuyDataPage() {
     enabled: step === "confirm" && Boolean(network) && planPrice > 0,
   });
   const discountAmount = discountQuery.data?.discount_amount ?? 0;
-  const payableAmount = discountAmount > 0 ? planPrice - discountAmount : planPrice;
+  const payableAmount =
+    discountAmount > 0 ? planPrice - discountAmount : planPrice;
 
   // Live discount rule for the selected network — used to strike through and
   // show the discounted price on every plan in the list below.
@@ -124,7 +147,8 @@ export default function BuyDataPage() {
   });
   const dataDiscount = dataDiscountQuery.data ?? null;
 
-  const isFormValid = Boolean(selectedNetwork) && Boolean(selectedPlan) && phone.length === 11;
+  const isFormValid =
+    Boolean(selectedNetwork) && Boolean(selectedPlan) && phone.length === 11;
   const isConfirmValid = pin.length === 4;
 
   const handleConfirm = async () => {
@@ -136,7 +160,7 @@ export default function BuyDataPage() {
     setLoading(true);
     setError(null);
     try {
-        const params = {
+      const params = {
         network,
         phone,
         amount: planPrice,
@@ -146,13 +170,18 @@ export default function BuyDataPage() {
         pin,
         code: code.trim() || undefined,
         tx_ref: generateTxRef("DT"),
-      }
+      };
       const purchase = await customerService.purchaseData(params);
       setResult(purchase);
       setStep("success");
       await refreshUser();
     } catch (err) {
-      setError(extractApiErrorMessage(err, "Could not complete this purchase. Please try again."));
+      setError(
+        extractApiErrorMessage(
+          err,
+          "Could not complete this purchase. Please try again.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -169,7 +198,8 @@ export default function BuyDataPage() {
   };
 
   if (step === "success" && result) {
-    const charged = result.discount_applied?.final_amount ?? Number(result.amount);
+    const charged =
+      result.discount_applied?.final_amount ?? Number(result.amount);
     return (
       <SuccessScreen
         title="Data activated"
@@ -178,8 +208,16 @@ export default function BuyDataPage() {
         onSecondary={() => navigate("/transactions")}
         message={
           <>
-            <p>{selectedNetwork?.name} {selectedPlan?.plan} of <span className="font-medium text-slate-900">{fmt(charged)}</span></p>
-            <p>Delivered to <span className="font-mono font-medium text-slate-900">{result.account_or_phone ?? phone}</span></p>
+            <p>
+              {selectedNetwork?.name} {selectedPlan?.plan} of{" "}
+              <span className="font-medium text-slate-900">{fmt(charged)}</span>
+            </p>
+            <p>
+              Delivered to{" "}
+              <span className="font-mono font-medium text-slate-900">
+                {result.account_or_phone ?? phone}
+              </span>
+            </p>
           </>
         }
       >
@@ -192,7 +230,13 @@ export default function BuyDataPage() {
 
   return (
     <PurchaseShell>
-      <ServiceHeader icon={Wifi} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Buy data" subtitle="Data bundles for every network" />
+      <ServiceHeader
+        icon={Wifi}
+        iconBg="bg-[#111827]/10"
+        iconColor="text-[#111827]"
+        title="Buy data"
+        subtitle="Data bundles for every network"
+      />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -203,7 +247,10 @@ export default function BuyDataPage() {
             {networksQuery.isPending || dataPlansQuery.isPending ? (
               <div className="grid grid-cols-4 gap-2">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-[74px] rounded-lg bg-gray-100 animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-[74px] rounded-lg bg-gray-100 animate-pulse"
+                  />
                 ))}
               </div>
             ) : (
@@ -225,20 +272,17 @@ export default function BuyDataPage() {
           {planTypes.length > 1 && (
             <div>
               <FieldLabel>Plan type</FieldLabel>
-              <select
+              <OptionPicker
+                options={planTypes.map((t) => ({
+                  id: t,
+                  label: PLAN_TYPE_LABELS[t] ?? t,
+                }))}
                 value={planType}
-                onChange={(e) => {
-                  setPlanType(e.target.value);
+                onChange={(value) => {
+                  setPlanType(value);
                   setSelectedPlanId(null);
                 }}
-                className={selectCls}
-              >
-                {planTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {PLAN_TYPE_LABELS[t] ?? t}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           )}
 
@@ -253,7 +297,10 @@ export default function BuyDataPage() {
                 setPhone(digits);
                 if (digits.length >= 4) {
                   const detected = detectNetwork(digits);
-                  if (detected && networks.some((n) => n.name.toLowerCase() === detected)) {
+                  if (
+                    detected &&
+                    networks.some((n) => n.name.toLowerCase() === detected)
+                  ) {
                     setNetwork(detected);
                     setSelectedPlanId(null);
                   }
@@ -263,14 +310,18 @@ export default function BuyDataPage() {
               className={`${inputCls} font-mono`}
             />
             {phone && phone.length !== 11 && (
-              <p className="text-xs text-red-500 mt-1">Enter a valid 11-digit phone number</p>
+              <p className="text-xs text-red-500 mt-1">
+                Enter a valid 11-digit phone number
+              </p>
             )}
           </div>
 
           <div>
             <FieldLabel>Select data plan</FieldLabel>
             {plansForType.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">No plans available for this network.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">
+                No plans available for this network.
+              </p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {plansForType.map((p) => (
@@ -280,18 +331,28 @@ export default function BuyDataPage() {
                     onClick={() => setSelectedPlanId(p.id)}
                     className={`relative p-3 rounded-lg border transition-colors text-left ${selectedPlanId === p.id ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
                   >
-                    <p className="font-medium text-slate-900 text-sm">{p.plan}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{p.validity}</p>
+                    <p className="font-medium text-slate-900 text-sm">
+                      {p.plan}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {p.validity}
+                    </p>
                     {(() => {
                       const original = Number(p.price ?? 0);
                       const discounted = applyDiscount(original, dataDiscount);
                       return discounted < original ? (
                         <p className="text-sm font-medium mt-1">
-                          <span className="text-slate-400 line-through mr-1.5">{fmt(original)}</span>
-                          <span className="text-[#111827]">{fmt(discounted)}</span>
+                          <span className="text-slate-400 line-through mr-1.5">
+                            {fmt(original)}
+                          </span>
+                          <span className="text-[#111827]">
+                            {fmt(discounted)}
+                          </span>
                         </p>
                       ) : (
-                        <p className="text-sm font-medium text-[#111827] mt-1">{fmt(original)}</p>
+                        <p className="text-sm font-medium text-[#111827] mt-1">
+                          {fmt(original)}
+                        </p>
                       );
                     })()}
                   </button>
@@ -300,7 +361,10 @@ export default function BuyDataPage() {
             )}
           </div>
 
-          <ContinueButton onClick={() => setStep("confirm")} disabled={!isFormValid} />
+          <ContinueButton
+            onClick={() => setStep("confirm")}
+            disabled={!isFormValid}
+          />
         </div>
       )}
 
@@ -309,13 +373,24 @@ export default function BuyDataPage() {
           <ConfirmSummary
             rows={[
               { label: "Network", value: selectedNetwork.name.toUpperCase() },
-              { label: "Plan", value: `${selectedPlan.plan} · ${selectedPlan.validity}` },
+              {
+                label: "Plan",
+                value: `${selectedPlan.plan} · ${selectedPlan.validity}`,
+              },
               { label: "Phone number", value: phone },
               { label: "Amount", value: fmt(planPrice) },
               ...(discountAmount > 0
                 ? [
-                    { label: "Discount", value: `- ${fmt(discountAmount)}`, emphasize: "success" as const },
-                    { label: "You pay", value: fmt(payableAmount), emphasize: "success" as const },
+                    {
+                      label: "Discount",
+                      value: `- ${fmt(discountAmount)}`,
+                      emphasize: "success" as const,
+                    },
+                    {
+                      label: "You pay",
+                      value: fmt(payableAmount),
+                      emphasize: "success" as const,
+                    },
                   ]
                 : []),
             ]}
