@@ -56,17 +56,21 @@
 
   body {
     font-family: var(--font-sans);
-    font-weight: 450;
+    font-weight: 400;
     @apply bg-app-bg text-slate-900 antialiased;
   }
 
   h1,
-  h2,
+  h2 {
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
   h3,
   h4,
   h5,
   h6 {
-    font-weight: 700;
+    font-weight: 600;
     text-wrap: balance;
   }
 
@@ -92,7 +96,7 @@
   button,
   label,
   th {
-    font-weight: 600;
+    font-weight: 500;
   }
 
   strong,
@@ -101,7 +105,7 @@
   }
 
   ::placeholder {
-    font-weight: 450;
+    font-weight: 400;
     opacity: 0.92;
   }
 }
@@ -259,23 +263,6 @@
 }
 
 @layer utilities {
-  .font-light,
-  .font-normal {
-    font-weight: 450;
-  }
-
-  .font-medium {
-    font-weight: 550;
-  }
-
-  .font-semibold {
-    font-weight: 650;
-  }
-
-  .font-bold {
-    font-weight: 700;
-  }
-
   .animate-bounce-in {
     animation: bounce-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
