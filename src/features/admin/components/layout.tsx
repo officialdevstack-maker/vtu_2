@@ -391,14 +391,14 @@ const Layout = () => {
   );
 
   return (
-    <div className="admin-theme min-h-screen bg-app-bg text-slate-900">
+    <div className="admin-theme h-screen overflow-hidden bg-app-bg text-slate-900">
       <TopLoadingBar active={navigation.state === "loading"} />
-      <div className="flex min-h-screen">
+      <div className="flex h-full min-h-0">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-100 bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex">
           {renderSidebarContent()}
         </aside>
 
-        <main className="min-w-0 flex-1 overflow-x-hidden lg:pl-64">
+        <main className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden lg:pl-64">
           <header className="sticky top-0 z-20 h-14 border-b border-slate-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
             <div className="flex h-full min-w-0 items-center gap-2 px-3 sm:px-4 lg:px-6">
               <button
