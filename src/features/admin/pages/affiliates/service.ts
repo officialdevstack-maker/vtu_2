@@ -299,6 +299,14 @@ export const childDirectiveService = {
     apiClient
       .post<ApiEnvelope<ChildDirective>>(`/admin/child-instances/${instanceId}/directives`, { type, payload })
       .then((r) => r.data.data),
+
+  // Deleting a still-pending directive IS the retraction — it vanishes from
+  // the child's pull feed before pickup. Acked directives delete as plain
+  // history cleanup.
+  remove: (instanceId: string | number, directiveId: string | number): Promise<{ retracted: boolean }> =>
+    apiClient
+      .delete<ApiEnvelope<{ retracted: boolean }>>(`/admin/child-instances/${instanceId}/directives/${directiveId}`)
+      .then((r) => r.data.data),
 };
 
 // ─── Remote controls ────────────────────────────────────────────────────────

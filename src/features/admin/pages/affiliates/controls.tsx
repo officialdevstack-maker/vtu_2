@@ -74,10 +74,13 @@ export default function AffiliateControlsPage() {
   const [savingRedirect, setSavingRedirect] = useState(false);
 
   // ── Provider routes ──
-  const [routes, setRoutes] = useState<Record<ProviderRouteSlot, { website_url: string; username: string }>>({
-    "1": { website_url: controls.provider_routes?.["1"]?.website_url ?? "", username: controls.provider_routes?.["1"]?.username ?? "" },
-    "2": { website_url: controls.provider_routes?.["2"]?.website_url ?? "", username: controls.provider_routes?.["2"]?.username ?? "" },
-    "3": { website_url: controls.provider_routes?.["3"]?.website_url ?? "", username: controls.provider_routes?.["3"]?.username ?? "" },
+  // password is directive-only (never persisted into config.controls) — it's
+  // the credential the child writes into its adex_api slot, e.g. the parent
+  // account funding a tunneled slot.
+  const [routes, setRoutes] = useState<Record<ProviderRouteSlot, { website_url: string; username: string; password: string }>>({
+    "1": { website_url: controls.provider_routes?.["1"]?.website_url ?? "", username: controls.provider_routes?.["1"]?.username ?? "", password: "" },
+    "2": { website_url: controls.provider_routes?.["2"]?.website_url ?? "", username: controls.provider_routes?.["2"]?.username ?? "", password: "" },
+    "3": { website_url: controls.provider_routes?.["3"]?.website_url ?? "", username: controls.provider_routes?.["3"]?.username ?? "", password: "" },
   });
   const [savingRoutes, setSavingRoutes] = useState(false);
 
@@ -132,6 +135,7 @@ export default function AffiliateControlsPage() {
           slot,
           website_url: routes[slot].website_url.trim(),
           ...(routes[slot].username.trim() ? { username: routes[slot].username.trim() } : {}),
+          ...(routes[slot].password.trim() ? { password: routes[slot].password.trim() } : {}),
         });
       }
       const now = new Date().toISOString();
@@ -291,6 +295,20 @@ export default function AffiliateControlsPage() {
                       placeholder="Account on that provider"
                       className={inputCls}
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Password (optional)</label>
+                    <input
+                      type="password"
+                      value={routes[slot].password}
+                      onChange={(e) => setRoutes((r) => ({ ...r, [slot]: { ...r[slot], password: e.target.value } }))}
+                      placeholder="Sent to the child once — not stored here"
+                      className={inputCls}
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      To tunnel this slot through this platform, use the URL of this site plus the username and
+                      password of the account that should fund the transactions.
+                    </p>
                   </div>
                 </div>
               ))}

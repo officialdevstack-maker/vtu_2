@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ListChecks, RefreshCw, Send, X } from "lucide-react";
+import { ListChecks, RefreshCw, Send, Trash2, X } from "lucide-react";
 import {
   Button,
   Card,
@@ -238,8 +238,21 @@ export default function AffiliateDirectivesPage() {
 
   const [directives, setDirectives] = useState<ChildDirective[] | null>(null);
   const [composing, setComposing] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   const load = () => childDirectiveService.getByInstance(id).then(setDirectives);
+
+  const handleDelete = async (d: ChildDirective) => {
+    const verb = d.status === "pending" ? "Retract" : "Delete";
+    if (!window.confirm(`${verb} this '${d.type}' directive?`)) return;
+    setDeletingId(d.id);
+    try {
+      await childDirectiveService.remove(id, d.id);
+      await load();
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     void load();
@@ -284,7 +297,7 @@ export default function AffiliateDirectivesPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Type", "Payload", "Status", "Result", "Created", "Acked"].map((h) => (
+                  {["Type", "Payload", "Status", "Result", "Created", "Acked", ""].map((h) => (
                     <th key={h} className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -307,6 +320,16 @@ export default function AffiliateDirectivesPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
                       {d.delivered_at ? new Date(d.delivered_at).toLocaleString() : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => void handleDelete(d)}
+                        disabled={deletingId === d.id}
+                        title={d.status === "pending" ? "Retract — the affiliate will never receive it" : "Delete from history"}
+                        className="p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-40 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 ))}
