@@ -83,8 +83,12 @@ function Field({
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5">
-        <label className="block text-xs font-medium text-slate-600">{label}</label>
-        {hint && !error && <span className="text-xs text-slate-400">{hint}</span>}
+        <label className="block text-xs font-medium text-slate-600">
+          {label}
+        </label>
+        {hint && !error && (
+          <span className="text-xs text-slate-400">{hint}</span>
+        )}
       </div>
       {children}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
@@ -104,8 +108,7 @@ function ErrorBanner({ message }: { message: string }) {
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as
-      | { message?: string; errors?: Record<string, string[]> }
-      | undefined;
+      { message?: string; errors?: Record<string, string[]> } | undefined;
     const validationErrors = data?.errors;
     if (validationErrors && Object.keys(validationErrors).length > 0) {
       return Object.values(validationErrors).flat().join(" ");
@@ -150,9 +153,12 @@ function toForm(promo: Promotion): FormState {
     active: promo.active,
     starts_at: promo.starts_at ?? "",
     ends_at: promo.ends_at ?? "",
-    usage_limit_total: promo.usage_limit_total != null ? String(promo.usage_limit_total) : "",
+    usage_limit_total:
+      promo.usage_limit_total != null ? String(promo.usage_limit_total) : "",
     usage_limit_per_customer:
-      promo.usage_limit_per_customer != null ? String(promo.usage_limit_per_customer) : "",
+      promo.usage_limit_per_customer != null
+        ? String(promo.usage_limit_per_customer)
+        : "",
     minAmount: minAmount ? String(minAmount.amount) : "",
     maxAmount: maxAmount ? String(maxAmount.amount) : "",
   };
@@ -179,9 +185,12 @@ function toPayload(form: FormState): PromotionPayload {
     active: form.active,
     starts_at: form.starts_at || null,
     ends_at: form.ends_at || null,
-    usage_limit_total: form.usage_limit_total !== "" ? Number(form.usage_limit_total) : null,
+    usage_limit_total:
+      form.usage_limit_total !== "" ? Number(form.usage_limit_total) : null,
     usage_limit_per_customer:
-      form.usage_limit_per_customer !== "" ? Number(form.usage_limit_per_customer) : null,
+      form.usage_limit_per_customer !== ""
+        ? Number(form.usage_limit_per_customer)
+        : null,
     conditions,
   };
 }
@@ -192,7 +201,11 @@ function validateForm(form: FormState): FormErrors {
   if (form.applyMode === "code" && !form.code.trim()) {
     errors.code = "A code is required when apply mode is 'Code'.";
   }
-  if (form.value === "" || Number.isNaN(Number(form.value)) || Number(form.value) < 0) {
+  if (
+    form.value === "" ||
+    Number.isNaN(Number(form.value)) ||
+    Number(form.value) < 0
+  ) {
     errors.value = "Enter a valid non-negative value.";
   }
   return errors;
@@ -208,10 +221,13 @@ export default function PromoFormPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const statePromotion = (location.state as { promotion?: Promotion } | null)?.promotion;
+  const statePromotion = (location.state as { promotion?: Promotion } | null)
+    ?.promotion;
 
   const [initial, setInitial] = useState<Promotion | undefined>(statePromotion);
-  const [fetchingInitial, setFetchingInitial] = useState(id != null && !statePromotion);
+  const [fetchingInitial, setFetchingInitial] = useState(
+    id != null && !statePromotion,
+  );
   const [form, setForm] = useState<FormState>(
     statePromotion ? toForm(statePromotion) : blankForm(),
   );
@@ -222,8 +238,14 @@ export default function PromoFormPage() {
   const [networks, setNetworks] = useState<Network[]>([]);
 
   useEffect(() => {
-    roleService.getAll().then(setRoles).catch(() => {});
-    networkService.getAll().then(setNetworks).catch(() => {});
+    roleService
+      .getAll()
+      .then(setRoles)
+      .catch(() => {});
+    networkService
+      .getAll()
+      .then(setNetworks)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -253,7 +275,8 @@ export default function PromoFormPage() {
     label: r.name,
   }));
   const targetIsKnown =
-    form.target === "both" || targetOptions.some((o) => o.value === form.target);
+    form.target === "both" ||
+    targetOptions.some((o) => o.value === form.target);
 
   // Provider = a network, stored UPPERCASE to match PromotionService's
   // strtoupper() comparison. "" means all networks.
@@ -324,10 +347,19 @@ export default function PromoFormPage() {
         }
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(BACK)}
+            >
               Cancel
             </Button>
-            <Button size="sm" disabled={!valid || saving} loading={saving} onClick={handleSubmit}>
+            <Button
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving}
+              onClick={handleSubmit}
+            >
               {initial ? "Save changes" : "Create promo"}
             </Button>
           </>
@@ -351,23 +383,38 @@ export default function PromoFormPage() {
                 />
               </Field>
 
-              <Field label="Apply mode" hint="Code = customer enters it; Auto = system-applied">
+              <Field
+                label="Apply mode"
+                hint="Code = customer enters it; Auto = system-applied"
+              >
                 <select
                   value={form.applyMode}
-                  onChange={(e) => set("applyMode", e.target.value as PromotionApply)}
+                  onChange={(e) =>
+                    set("applyMode", e.target.value as PromotionApply)
+                  }
                   className={selectCls}
                 >
-                  <option value="code">Code (customer enters it at checkout)</option>
-                  <option value="auto">Auto (applied automatically, no code)</option>
+                  <option value="code">
+                    Code (customer enters it at checkout)
+                  </option>
+                  <option value="auto">
+                    Auto (applied automatically, no code)
+                  </option>
                 </select>
               </Field>
 
               {form.applyMode === "code" && (
-                <Field label="Promo code" error={errors.code} hint="Case-insensitive">
+                <Field
+                  label="Promo code"
+                  error={errors.code}
+                  hint="Case-insensitive"
+                >
                   <div className="flex gap-2">
                     <input
                       value={form.code}
-                      onChange={(e) => set("code", e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        set("code", e.target.value.toUpperCase())
+                      }
                       placeholder="e.g. NEWYEAR25"
                       className={`${inputCls} font-mono flex-1`}
                     />
@@ -384,7 +431,10 @@ export default function PromoFormPage() {
               )}
 
               <Field label="Active">
-                <Toggle value={form.active} onChange={(v) => set("active", v)} />
+                <Toggle
+                  value={form.active}
+                  onChange={(v) => set("active", v)}
+                />
               </Field>
             </div>
           </Card>
@@ -392,10 +442,15 @@ export default function PromoFormPage() {
           <Card className="p-5">
             <SectionTitle>Eligibility</SectionTitle>
             <div className="space-y-4">
-              <Field label="Target audience" hint="which role the promo applies to">
+              <Field
+                label="Target audience"
+                hint="which role the promo applies to"
+              >
                 <select
                   value={form.target}
-                  onChange={(e) => set("target", e.target.value as PromotionTarget)}
+                  onChange={(e) =>
+                    set("target", e.target.value as PromotionTarget)
+                  }
                   className={selectCls}
                 >
                   <option value="both">All users</option>
@@ -413,7 +468,9 @@ export default function PromoFormPage() {
               <Field label="Product">
                 <select
                   value={form.product}
-                  onChange={(e) => set("product", e.target.value as PromotionProduct)}
+                  onChange={(e) =>
+                    set("product", e.target.value as PromotionProduct)
+                  }
                   className={selectCls}
                 >
                   <option value="airtime">Airtime</option>
@@ -422,7 +479,10 @@ export default function PromoFormPage() {
                 </select>
               </Field>
 
-              <Field label="Provider" hint="optional — applies to all networks if unset">
+              <Field
+                label="Provider"
+                hint="optional — applies to all networks if unset"
+              >
                 <select
                   value={form.provider}
                   onChange={(e) => set("provider", e.target.value)}
@@ -540,7 +600,9 @@ export default function PromoFormPage() {
                     type="number"
                     min={1}
                     value={form.usage_limit_per_customer}
-                    onChange={(e) => set("usage_limit_per_customer", e.target.value)}
+                    onChange={(e) =>
+                      set("usage_limit_per_customer", e.target.value)
+                    }
                     placeholder="Unlimited"
                     className={inputCls}
                   />
