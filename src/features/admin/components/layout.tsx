@@ -29,6 +29,7 @@ import {
   Route,
   Settings,
   SlidersHorizontal,
+  Smartphone,
   Sparkles,
   Users,
   Wallet2,
@@ -82,6 +83,9 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         icon: SlidersHorizontal,
       },
       { label: "Service Routing", path: "/admin/apis/routing", icon: Route },
+      // The platform's own SIM fleet — its own entry, deliberately not part
+      // of the Provider list (it isn't an external API).
+      { label: "SIM Vending", path: "/admin/apis/sim-vending", icon: Smartphone },
     ],
   },
   {

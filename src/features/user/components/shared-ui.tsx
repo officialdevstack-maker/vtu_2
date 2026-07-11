@@ -271,6 +271,22 @@ const statusMap: Record<string, { dot: string; text: string; label: string }> =
       text: "text-violet-700 bg-violet-50",
       label: "Draft",
     },
+    // SIM vending fleet states (see admin/pages/apis/sim-vending.tsx)
+    claimed: {
+      dot: "bg-blue-500",
+      text: "text-blue-700 bg-blue-50",
+      label: "Claimed",
+    },
+    paused: {
+      dot: "bg-amber-500",
+      text: "text-amber-700 bg-amber-50",
+      label: "Paused",
+    },
+    revoked: {
+      dot: "bg-red-500",
+      text: "text-red-700 bg-red-50",
+      label: "Revoked",
+    },
   };
 
 export function StatusBadge({ status }: { status: string }) {

@@ -223,6 +223,15 @@ export const adminRouter: RouteObject[] = [
           return { Component };
         },
       },
+      {
+        path: "apis/sim-vending",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/sim-vending"
+          );
+          return { Component };
+        },
+      },
       // Products
       {
         path: "products/airtime-data",
