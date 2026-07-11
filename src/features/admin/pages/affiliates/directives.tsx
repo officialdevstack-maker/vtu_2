@@ -12,6 +12,7 @@ import {
 import {
   childDirectiveService,
   type ChildDirective,
+  type ChildDirectiveStatus,
   type DirectiveType,
 } from "./service";
 import { useAffiliate } from "./affiliate-layout";
@@ -21,6 +22,26 @@ import { extractErrorMessage } from "./modals";
 // nothing enforces this list server-side (ChildDirective::type is a plain
 // string column). This UI just makes the most obvious guidance actions easy
 // to compose correctly, with an escape hatch for anything else.
+// The child acks each directive with the real outcome (see the parent's
+// ChildDirectiveController::ack): executed = applied, failed = could not be
+// applied (result note says why), skipped = the child doesn't support the
+// type, delivered = acked by an older child that doesn't report outcomes.
+const BADGE_FOR_STATUS: Record<ChildDirectiveStatus, string> = {
+  pending: "pending",
+  delivered: "success",
+  executed: "success",
+  failed: "failed",
+  skipped: "failed",
+};
+
+const STATUS_HELP: Record<string, string> = {
+  pending: "Waiting for the affiliate's next poll (~5 minutes).",
+  delivered: "Acknowledged by the affiliate (older child version — outcome not reported).",
+  executed: "The affiliate applied this directive.",
+  failed: "The affiliate could not apply this directive — see the result note.",
+  skipped: "The affiliate does not support this directive type.",
+};
+
 const DIRECTIVE_TYPE_OPTIONS: { value: DirectiveType; label: string; description: string }[] = [
   { value: "message", label: "Message", description: "A plain-text note for whoever operates this affiliate." },
   { value: "redirect_user", label: "Redirect user", description: "Ask the child to redirect a specific customer to the parent." },
@@ -263,7 +284,7 @@ export default function AffiliateDirectivesPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Type", "Payload", "Status", "Created", "Delivered"].map((h) => (
+                  {["Type", "Payload", "Status", "Result", "Created", "Acked"].map((h) => (
                     <th key={h} className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -275,8 +296,11 @@ export default function AffiliateDirectivesPage() {
                     <td className="px-4 py-3 font-mono text-slate-500 max-w-xs truncate" title={JSON.stringify(d.payload)}>
                       {JSON.stringify(d.payload)}
                     </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={d.status === "delivered" ? "success" : d.status === "failed" ? "failed" : "pending"} />
+                    <td className="px-4 py-3" title={STATUS_HELP[d.status] ?? d.status}>
+                      <StatusBadge status={BADGE_FOR_STATUS[d.status] ?? "pending"} />
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 max-w-xs truncate" title={d.result_note ?? undefined}>
+                      {d.result_note ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
                       {d.created_at ? new Date(d.created_at).toLocaleString() : "—"}

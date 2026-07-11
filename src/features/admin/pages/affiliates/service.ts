@@ -82,13 +82,20 @@ export type ChildTransaction = {
   updated_at?: string | null;
 };
 
+// "delivered" = acked by a legacy child that doesn't report outcomes;
+// "executed"/"failed"/"skipped" = the child's actual execution result
+// (skipped = the child doesn't support that directive type).
+export type ChildDirectiveStatus = "pending" | "delivered" | "executed" | "failed" | "skipped";
+
 export type ChildDirective = {
   id: string | number;
   child_instance_id: string | number;
   type: string;
   payload: Record<string, unknown> | null;
-  status: "pending" | "delivered" | "failed";
+  status: ChildDirectiveStatus;
   delivered_at: string | null;
+  executed_at?: string | null;
+  result_note?: string | null;
   created_at?: string | null;
 };
 
