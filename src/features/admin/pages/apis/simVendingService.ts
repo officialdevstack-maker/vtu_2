@@ -21,6 +21,10 @@ export type SimRow = {
   data_balance_mb: number | string;
   airtime_low_threshold: number | string;
   data_low_threshold_mb: number | string;
+  // Whether a transfer PIN is stored (the PIN itself is never sent to the
+  // UI — only the hub's signed config endpoint can read it).
+  has_pin: boolean;
+  balance_ussd: string | null;
   enabled: boolean;
   balance_reported_at: string | null;
   low: boolean;
@@ -78,9 +82,21 @@ export type SimUpdatePayload = Partial<{
   supports_data: boolean;
   airtime_low_threshold: number;
   data_low_threshold_mb: number;
+  transfer_pin: string | null;
+  balance_ussd: string | null;
   enabled: boolean;
   notes: string | null;
 }>;
+
+export type SimCreatePayload = {
+  slot_index: number;
+  network: string;
+  phone_number?: string | null;
+  transfer_pin?: string | null;
+  balance_ussd?: string | null;
+  supports_airtime?: boolean;
+  supports_data?: boolean;
+};
 
 const BASE = "/admin/sim-vending";
 
@@ -117,5 +133,13 @@ export const simVendingService = {
   updateSim: (deviceId: number, simId: number, payload: SimUpdatePayload): Promise<SimRow> =>
     apiClient
       .put<ApiEnvelope<SimRow>>(`${BASE}/devices/${deviceId}/sims/${simId}`, payload)
+      .then((r) => r.data.data),
+
+  // Vend config (network, transfer PIN, balance USSD) is defined HERE and
+  // pulled by the hub over its signed config endpoint — nothing is
+  // hand-edited on the hub's filesystem.
+  createSim: (deviceId: number, payload: SimCreatePayload): Promise<SimRow> =>
+    apiClient
+      .post<ApiEnvelope<SimRow>>(`${BASE}/devices/${deviceId}/sims`, payload)
       .then((r) => r.data.data),
 };

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -9,6 +10,7 @@ import {
   ListChecks,
   Loader2,
   PauseCircle,
+  Pencil,
   PlayCircle,
   Plus,
   RefreshCw,
@@ -224,6 +226,7 @@ function SecretModal({ secret, onClose }: { secret: string; onClose: () => void 
 
 function SimTable({ device }: { device: SimDevice }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const updateSim = useMutation({
     mutationFn: ({ sim, field }: { sim: SimRow; field: "enabled" | "supports_airtime" | "supports_data" }) =>
@@ -234,7 +237,7 @@ function SimTable({ device }: { device: SimDevice }) {
   if (!device.sims.length) {
     return (
       <p className="px-4 pb-4 text-xs text-slate-400">
-        No SIMs reported yet — they appear after the device's first heartbeat.
+        No SIMs configured — add one so the hub knows what this device vends.
       </p>
     );
   }
@@ -249,9 +252,11 @@ function SimTable({ device }: { device: SimDevice }) {
             <th className="py-1.5 pr-3 font-medium">Phone</th>
             <th className="py-1.5 pr-3 font-medium">Airtime ₦</th>
             <th className="py-1.5 pr-3 font-medium">Data MB</th>
+            <th className="py-1.5 pr-3 font-medium">PIN</th>
             <th className="py-1.5 pr-3 font-medium">Airtime</th>
             <th className="py-1.5 pr-3 font-medium">Data</th>
             <th className="py-1.5 pr-3 font-medium">Enabled</th>
+            <th className="py-1.5 pr-3 font-medium" />
           </tr>
         </thead>
         <tbody>
@@ -274,6 +279,18 @@ function SimTable({ device }: { device: SimDevice }) {
                 {Number(sim.data_balance_mb).toLocaleString()}
               </td>
               <td className="py-2 pr-3">
+                {sim.has_pin ? (
+                  <Check className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700"
+                    title="No transfer PIN set — vends from this SIM will fail"
+                  >
+                    <AlertTriangle className="h-3 w-3" /> none
+                  </span>
+                )}
+              </td>
+              <td className="py-2 pr-3">
                 <Toggle
                   value={sim.supports_airtime}
                   onChange={() => updateSim.mutate({ sim, field: "supports_airtime" })}
@@ -291,6 +308,17 @@ function SimTable({ device }: { device: SimDevice }) {
                   onChange={() => updateSim.mutate({ sim, field: "enabled" })}
                 />
               </td>
+              <td className="py-2 pr-3">
+                <button
+                  onClick={() =>
+                    navigate(`/admin/apis/sim-vending/devices/${device.id}/sims/${sim.id}/edit`)
+                  }
+                  className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700"
+                  title="Edit SIM (network, PIN, balance USSD)"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -307,6 +335,7 @@ function DeviceCard({
   onShowSecret: (secret: string) => void;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -358,6 +387,14 @@ function DeviceCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/admin/apis/sim-vending/devices/${device.id}/sims/new`)}
+            title="Add SIM"
+          >
+            <Plus className="h-4 w-4" /> SIM
+          </Button>
           <Button
             variant="ghost"
             size="sm"

@@ -232,6 +232,24 @@ export const adminRouter: RouteObject[] = [
           return { Component };
         },
       },
+      {
+        path: "apis/sim-vending/devices/:deviceId/sims/new",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/sim-form"
+          );
+          return { Component };
+        },
+      },
+      {
+        path: "apis/sim-vending/devices/:deviceId/sims/:simId/edit",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "./pages/apis/sim-form"
+          );
+          return { Component };
+        },
+      },
       // Products
       {
         path: "products/airtime-data",
