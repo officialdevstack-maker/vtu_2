@@ -477,7 +477,7 @@ export default function PromoFormPage() {
                 </div>
               </Field>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Min order amount" hint="optional">
                   <input
                     type="number"
@@ -505,7 +505,7 @@ export default function PromoFormPage() {
           <Card className="p-5">
             <SectionTitle>Window &amp; limits</SectionTitle>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Starts" hint="optional">
                   <input
                     type="date"
@@ -524,7 +524,7 @@ export default function PromoFormPage() {
                 </Field>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Total usage limit" hint="optional">
                   <input
                     type="number"
