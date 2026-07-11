@@ -19,7 +19,6 @@ import {
   SuccessScreen,
   PinField,
   inputCls,
-  selectCls,
 } from "../components/shared-ui";
 import {
   customerService,
