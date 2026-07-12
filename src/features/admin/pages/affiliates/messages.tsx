@@ -27,7 +27,9 @@ export default function AffiliateMessagesPage() {
   const id = String(instance.id);
 
   const [customers, setCustomers] = useState<ChildCustomer[]>([]);
-  const [messages, setMessages] = useState<ChildCustomerMessageWithCustomer[] | null>(null);
+  const [messages, setMessages] = useState<
+    ChildCustomerMessageWithCustomer[] | null
+  >(null);
 
   // Broadcast composer
   const [count, setCount] = useState<number | null>(null);
@@ -36,6 +38,12 @@ export default function AffiliateMessagesPage() {
   const [queryFilter, setQueryFilter] = useState("");
   const [walletMinFilter, setWalletMinFilter] = useState<string>("");
   const [walletMaxFilter, setWalletMaxFilter] = useState<string>("");
+  const [signedUpWithinDays, setSignedUpWithinDays] = useState<string>("");
+  const [txCountMin, setTxCountMin] = useState<string>("");
+  const [txCountMax, setTxCountMax] = useState<string>("");
+  const [txAmountMin, setTxAmountMin] = useState<string>("");
+  const [txAmountMax, setTxAmountMax] = useState<string>("");
+  const [referralCountMin, setReferralCountMin] = useState<string>("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -60,9 +68,20 @@ export default function AffiliateMessagesPage() {
     try {
       const filters: Record<string, unknown> = {};
       if (useFilters && queryFilter.trim()) filters.query = queryFilter.trim();
-      if (useFilters && walletMinFilter.trim()) filters.wallet_balance_min = Number(walletMinFilter);
-      if (useFilters && walletMaxFilter.trim()) filters.wallet_balance_max = Number(walletMaxFilter);
-      const c = await childBroadcastService.countEmailable(id, Object.keys(filters).length ? filters : undefined);
+      if (useFilters && walletMinFilter.trim())
+        filters.wallet_balance_min = Number(walletMinFilter);
+      if (useFilters && walletMaxFilter.trim())
+        filters.wallet_balance_max = Number(walletMaxFilter);
+      if (useFilters && signedUpWithinDays.trim()) filters.signed_up_within_days = Number(signedUpWithinDays);
+      if (useFilters && txCountMin.trim()) filters.transaction_count_min = Number(txCountMin);
+      if (useFilters && txCountMax.trim()) filters.transaction_count_max = Number(txCountMax);
+      if (useFilters && txAmountMin.trim()) filters.transaction_amount_min = Number(txAmountMin);
+      if (useFilters && txAmountMax.trim()) filters.transaction_amount_max = Number(txAmountMax);
+      if (useFilters && referralCountMin.trim()) filters.referral_count_min = Number(referralCountMin);
+      const c = await childBroadcastService.countEmailable(
+        id,
+        Object.keys(filters).length ? filters : undefined,
+      );
       setCount(c);
     } catch (e) {
       setCount(null);
@@ -92,15 +111,33 @@ export default function AffiliateMessagesPage() {
     try {
       const filters: Record<string, unknown> = {};
       if (filtersOpen && queryFilter.trim()) filters.query = queryFilter.trim();
-      if (filtersOpen && walletMinFilter.trim()) filters.wallet_balance_min = Number(walletMinFilter);
-      if (filtersOpen && walletMaxFilter.trim()) filters.wallet_balance_max = Number(walletMaxFilter);
-      const notified = await childBroadcastService.emailAll(id, subject.trim(), body.trim(), Object.keys(filters).length ? filters : undefined);
+      if (filtersOpen && walletMinFilter.trim())
+        filters.wallet_balance_min = Number(walletMinFilter);
+      if (filtersOpen && walletMaxFilter.trim())
+        filters.wallet_balance_max = Number(walletMaxFilter);
+      if (filtersOpen && signedUpWithinDays.trim()) filters.signed_up_within_days = Number(signedUpWithinDays);
+      if (filtersOpen && txCountMin.trim()) filters.transaction_count_min = Number(txCountMin);
+      if (filtersOpen && txCountMax.trim()) filters.transaction_count_max = Number(txCountMax);
+      if (filtersOpen && txAmountMin.trim()) filters.transaction_amount_min = Number(txAmountMin);
+      if (filtersOpen && txAmountMax.trim()) filters.transaction_amount_max = Number(txAmountMax);
+      if (filtersOpen && referralCountMin.trim()) filters.referral_count_min = Number(referralCountMin);
+      const notified = await childBroadcastService.emailAll(
+        id,
+        subject.trim(),
+        body.trim(),
+        Object.keys(filters).length ? filters : undefined,
+      );
       setSentCount(notified);
       setSubject("");
       setBody("");
       refreshMessages();
     } catch (err) {
-      setError(extractErrorMessage(err, "Could not send the broadcast. Please try again."));
+      setError(
+        extractErrorMessage(
+          err,
+          "Could not send the broadcast. Please try again.",
+        ),
+      );
     } finally {
       setSending(false);
     }
@@ -113,14 +150,16 @@ export default function AffiliateMessagesPage() {
         <Card>
           <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
             <Megaphone className="w-3.5 h-3.5 text-slate-400" />
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email all customers</h2>
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Email all customers
+            </h2>
           </div>
           <div className="p-5 space-y-3.5">
             {error && <p className="text-xs text-red-600">{error}</p>}
             {sentCount !== null && (
               <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
-                Sent to {sentCount} customer{sentCount === 1 ? "" : "s"} — it's also recorded in the
-                broadcast history.
+                Sent to {sentCount} customer{sentCount === 1 ? "" : "s"} — it's
+                also recorded in the broadcast history.
               </p>
             )}
             <p className="text-xs text-slate-500">
@@ -150,22 +189,90 @@ export default function AffiliateMessagesPage() {
               {filtersOpen && (
                 <div className="mt-3 space-y-2">
                   <div>
-                    <label className="block text-[11px] text-slate-600 mb-1">Search (username or email)</label>
-                    <input value={queryFilter} onChange={(e) => setQueryFilter(e.target.value)} className={inputCls} />
+                    <label className="block text-[11px] text-slate-600 mb-1">
+                      Search (username or email)
+                    </label>
+                    <input
+                      value={queryFilter}
+                      onChange={(e) => setQueryFilter(e.target.value)}
+                      className={inputCls}
+                    />
                   </div>
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <label className="block text-[11px] text-slate-600 mb-1">Wallet balance min</label>
-                      <input value={walletMinFilter} onChange={(e) => setWalletMinFilter(e.target.value)} className={inputCls} placeholder="0" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Wallet balance min
+                      </label>
+                      <input
+                        value={walletMinFilter}
+                        onChange={(e) => setWalletMinFilter(e.target.value)}
+                        className={inputCls}
+                        placeholder="0"
+                      />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-[11px] text-slate-600 mb-1">Wallet balance max</label>
-                      <input value={walletMaxFilter} onChange={(e) => setWalletMaxFilter(e.target.value)} className={inputCls} placeholder="" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Wallet balance max
+                      </label>
+                      <input
+                        value={walletMaxFilter}
+                        onChange={(e) => setWalletMaxFilter(e.target.value)}
+                        className={inputCls}
+                        placeholder=""
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] text-slate-600 mb-1">Signed up within (days)</label>
+                      <input value={signedUpWithinDays} onChange={(e) => setSignedUpWithinDays(e.target.value)} className={inputCls} placeholder="e.g. 30" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-slate-600 mb-1">Referral count min</label>
+                      <input value={referralCountMin} onChange={(e) => setReferralCountMin(e.target.value)} className={inputCls} placeholder="e.g. 1" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] text-slate-600 mb-1">Transaction count min</label>
+                      <input value={txCountMin} onChange={(e) => setTxCountMin(e.target.value)} className={inputCls} placeholder="e.g. 1" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-slate-600 mb-1">Transaction count max</label>
+                      <input value={txCountMax} onChange={(e) => setTxCountMax(e.target.value)} className={inputCls} placeholder="" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] text-slate-600 mb-1">Transaction amount min</label>
+                      <input value={txAmountMin} onChange={(e) => setTxAmountMin(e.target.value)} className={inputCls} placeholder="e.g. 1000" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-slate-600 mb-1">Transaction amount max</label>
+                      <input value={txAmountMax} onChange={(e) => setTxAmountMax(e.target.value)} className={inputCls} placeholder="" />
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="secondary" onClick={() => { setQueryFilter(""); setWalletMinFilter(""); setWalletMaxFilter(""); void fetchCount(false); }}>Reset</Button>
-                    <Button onClick={() => void fetchCount(true)}>Apply filters</Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setQueryFilter("");
+                        setWalletMinFilter("");
+                        setWalletMaxFilter("");
+                        setSignedUpWithinDays("");
+                        setTxCountMin("");
+                        setTxCountMax("");
+                        setTxAmountMin("");
+                        setTxAmountMax("");
+                        setReferralCountMin("");
+                        void fetchCount(false);
+                      }}
+                    >
+                      Reset
+                    </Button>
+                    <Button onClick={() => void fetchCount(true)}>
+                      Apply filters
+                    </Button>
                   </div>
                 </div>
               )}
@@ -182,12 +289,16 @@ export default function AffiliateMessagesPage() {
                 className={inputCls}
               />
               <p className="text-[11px] text-slate-400 mt-1">
-                Placeholders like <code className="font-mono">{"{{ user.username }}"}</code> are filled in per customer.
+                Placeholders like{" "}
+                <code className="font-mono">{"{{ user.username }}"}</code> are
+                filled in per customer.
               </p>
             </div>
             <Button
               fullWidth
-              disabled={!subject.trim() || !body.trim() || sending || count === 0}
+              disabled={
+                !subject.trim() || !body.trim() || sending || count === 0
+              }
               loading={sending}
               onClick={() => void handleBroadcast()}
             >
@@ -200,15 +311,19 @@ export default function AffiliateMessagesPage() {
         <Card>
           <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
             <Mail className="w-3.5 h-3.5 text-slate-400" />
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email one customer</h2>
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Email one customer
+            </h2>
           </div>
           <div className="p-5 space-y-3.5">
             <p className="text-xs text-slate-500">
-              Opens a per-customer thread with this affiliate customer's previous emails, so
-              repeated contact reads as a conversation.
+              Opens a per-customer thread with this affiliate customer's
+              previous emails, so repeated contact reads as a conversation.
             </p>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">Customer</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                Customer
+              </label>
               <select
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
@@ -231,7 +346,9 @@ export default function AffiliateMessagesPage() {
               variant="secondary"
               disabled={!selectedCustomerId}
               onClick={() => {
-                const target = emailableCustomers.find((c) => String(c.id) === selectedCustomerId);
+                const target = emailableCustomers.find(
+                  (c) => String(c.id) === selectedCustomerId,
+                );
                 if (target) setEmailTarget(target);
               }}
             >
@@ -250,7 +367,9 @@ export default function AffiliateMessagesPage() {
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
             Outbound history{" "}
             {messages && messages.length > 0 && (
-              <span className="text-slate-400 normal-case font-normal">— {messages.length} email{messages.length === 1 ? "" : "s"}</span>
+              <span className="text-slate-400 normal-case font-normal">
+                — {messages.length} email{messages.length === 1 ? "" : "s"}
+              </span>
             )}
           </h2>
         </div>
@@ -271,14 +390,25 @@ export default function AffiliateMessagesPage() {
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-xs text-slate-700 font-medium truncate">
                     {m.subject}
-                    <span className="text-slate-400 font-normal"> → {customerName(m)}</span>
+                    <span className="text-slate-400 font-normal">
+                      {" "}
+                      → {customerName(m)}
+                    </span>
                   </p>
                   <span className="text-[10px] text-slate-400 shrink-0">
-                    {m.created_at ? new Date(m.created_at).toLocaleString() : ""}
+                    {m.created_at
+                      ? new Date(m.created_at).toLocaleString()
+                      : ""}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 whitespace-pre-wrap break-words mt-1 line-clamp-3">{m.body}</p>
-                {m.sender && <p className="text-[10px] text-slate-400 mt-1">sent by {m.sender.username}</p>}
+                <p className="text-[11px] text-slate-500 whitespace-pre-wrap break-words mt-1 line-clamp-3">
+                  {m.body}
+                </p>
+                {m.sender && (
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    sent by {m.sender.username}
+                  </p>
+                )}
               </div>
             ))}
           </div>
