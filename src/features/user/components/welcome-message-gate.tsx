@@ -1,24 +1,27 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { WelcomeMessageModal } from "./welcome-message-modal";
 import { welcomeMessageService, type WelcomeMessage } from "@shared/welcome-message";
 
-// Mounted once in the customer-facing layout, so it runs right after login
-// routes the user to their dashboard. Asks the backend for the active
-// welcome message and whether THIS user has already seen the current
-// version; shows the modal once per version, then records that it was seen.
+// Mounted once in the customer-facing layout. Shows the active welcome
+// message EVERY time the user lands on the dashboard — initial login,
+// SPA navigation back to /dashboard, and hard refreshes — not once per
+// version (the per-user "seen" flag is deliberately ignored; the admin's
+// welcome message acts as a recurring announcement banner).
 export function WelcomeMessageGate() {
   const [message, setMessage] = useState<WelcomeMessage | null>(null);
   const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const onDashboard = pathname === "/dashboard" || pathname === "/dashboard/";
 
   useEffect(() => {
     let mounted = true;
 
     welcomeMessageService
       .getForUser()
-      .then(({ message, seen }) => {
-        if (mounted && message && message.active && !seen) {
+      .then(({ message }) => {
+        if (mounted && message && message.active) {
           setMessage(message);
-          setOpen(true);
         }
       })
       .catch(() => {
@@ -30,14 +33,15 @@ export function WelcomeMessageGate() {
     };
   }, []);
 
-  const handleClose = () => {
-    setOpen(false);
-    if (message) {
-      // Fire-and-forget: if this fails the modal just shows again next
-      // login, which is harmless.
-      void welcomeMessageService.markSeen(message.id).catch(() => {});
+  // Re-open on every visit to the dashboard (message may arrive after the
+  // first render, so this also depends on it being loaded).
+  useEffect(() => {
+    if (onDashboard && message) {
+      setOpen(true);
     }
-  };
+  }, [onDashboard, message]);
+
+  const handleClose = () => setOpen(false);
 
   if (!message) return null;
 
