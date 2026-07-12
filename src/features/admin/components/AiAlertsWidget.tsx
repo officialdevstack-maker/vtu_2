@@ -79,22 +79,41 @@ const AiAlertsWidget = () => {
             {alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="flex items-start gap-2.5 border-b border-slate-50 px-4 py-3"
+                className="border-b border-slate-50 px-4 py-3"
               >
-                <span
-                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity]}`}
-                />
-                <p className="min-w-0 flex-1 text-xs leading-relaxed text-slate-700">
-                  {alert.title}
-                </p>
+                <div className="flex items-start gap-2.5">
+                  <span
+                    className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[alert.severity]}`}
+                  />
+                  <p className="min-w-0 flex-1 text-xs leading-relaxed text-slate-700">
+                    {alert.title}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => ackMutation.mutate(alert.id)}
+                    disabled={ackMutation.isPending}
+                    className="rounded p-1 text-slate-300 transition-colors hover:bg-slate-50 hover:text-slate-500"
+                    aria-label="Dismiss alert"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
                 <button
                   type="button"
-                  onClick={() => ackMutation.mutate(alert.id)}
-                  disabled={ackMutation.isPending}
-                  className="rounded p-1 text-slate-300 transition-colors hover:bg-slate-50 hover:text-slate-500"
-                  aria-label="Dismiss alert"
+                  onClick={() => {
+                    setOpen(false);
+                    // Hands the alert to the assistant, which auto-sends it
+                    // (see the `ask` param handling in ai-manager.tsx) and
+                    // starts investigating/proposing the fix.
+                    navigate(
+                      `/admin/ai-manager?ask=${encodeURIComponent(
+                        `The monitor flagged this — investigate and help me fix it: ${alert.title}`,
+                      )}`,
+                    );
+                  }}
+                  className="ml-4.5 mt-1.5 text-[11px] font-semibold text-[#111827] underline-offset-2 hover:underline"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  Ask AI to fix →
                 </button>
               </div>
             ))}

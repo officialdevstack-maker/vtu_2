@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bot,
@@ -177,6 +178,20 @@ const AiManagerPage = () => {
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
   }, [active?.messages.length, sendMutation.isPending]);
+
+  // Arriving via "Ask AI to fix" on a monitoring alert (?ask=...): start a
+  // fresh conversation with that message immediately, then drop the param so
+  // refreshes/back-navigation don't re-send it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const ask = searchParams.get("ask");
+    if (ask && !sendMutation.isPending) {
+      setSearchParams({}, { replace: true });
+      setActiveId(null);
+      sendMutation.mutate(ask);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const pendingProposals = useMemo(
     () => (active?.proposals ?? []).filter((p) => p.status === "pending"),
