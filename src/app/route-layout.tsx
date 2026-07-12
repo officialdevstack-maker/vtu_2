@@ -14,19 +14,21 @@ function DocumentBranding() {
   return null;
 }
 
-// Site-wide WhatsApp support bubble — only shown once logged in (the
-// number itself is admin-configured, General::app_phone, and the endpoint
-// backing it requires auth).
+// Customer-facing WhatsApp support bubble — only shown to a logged-in,
+// non-admin user (the number itself is admin-configured, General::app_phone,
+// and the endpoint backing it requires auth). Admins have their own support
+// tooling and don't need this on the admin control panel.
 function WhatsAppSupportButton() {
   const { user } = useAuth();
+  const isCustomer = Boolean(user) && user?.user_type !== "admin";
   const generalQuery = useQuery({
     queryKey: ["general-settings"],
     queryFn: () => generalService.get(),
-    enabled: Boolean(user),
+    enabled: isCustomer,
     staleTime: Infinity,
   });
 
-  if (!user || !generalQuery.data?.app_phone) return null;
+  if (!isCustomer || !generalQuery.data?.app_phone) return null;
 
   return (
     <a

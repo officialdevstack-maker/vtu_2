@@ -28,6 +28,24 @@ import { dataPlanService, type DataPlan } from "./service";
 
 const MENU_WIDTH = 144; // w-36
 
+// Pull the useful bits out of an axios-style error so a failed bulk action
+// tells the admin *why* (HTTP status + server message) instead of a generic
+// "couldn't do it". A network timeout has no response, so say so explicitly.
+function describeError(err: unknown): string {
+  const e = err as {
+    response?: { status?: number; data?: { message?: string } };
+    code?: string;
+    message?: string;
+  };
+  if (e?.response) {
+    const status = e.response.status;
+    const serverMsg = e.response.data?.message;
+    return serverMsg ? `HTTP ${status}: ${serverMsg}` : `HTTP ${status}`;
+  }
+  if (e?.code === "ECONNABORTED") return "the request timed out";
+  return e?.message || "unknown error";
+}
+
 type SortKey = "id" | "plan" | "network" | "plan_type" | "validity" | "status";
 type SortState = { key: SortKey; direction: "asc" | "desc" };
 
@@ -182,12 +200,16 @@ export function DataPlansTab() {
     setPage(1);
   }, [search, networkFilter, typeFilter, statusFilter, sort, setPage]);
 
-  // "Select all" only ever acts on the current page — selection itself
-  // persists across page changes so a multi-page bulk action still works.
+  // The header checkbox only ever acts on the current page — selection
+  // itself persists across page changes. "Select all N matching plans"
+  // below extends a page selection to every row the current filters match,
+  // across all pages, without paging through them one at a time.
   const pageIds = useMemo(() => pageItems.map((p) => toId(p.id)), [pageItems]);
+  const filteredIds = useMemo(() => filtered.map((p) => toId(p.id)), [filtered]);
   const selectedCount = selectedIds.size;
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
   const somePageSelected = pageIds.some((id) => selectedIds.has(id));
+  const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -206,6 +228,8 @@ export function DataPlansTab() {
     });
   };
 
+  const selectAllFiltered = () => setSelectedIds(new Set(filteredIds));
+
   const toggleSelectOne = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -216,27 +240,45 @@ export function DataPlansTab() {
   };
 
   const handleBulkSetActive = async (active: boolean) => {
+    const ids = Array.from(selectedIds);
     setBulkBusy(true);
     try {
-      await dataPlanService.bulkSetActive(Array.from(selectedIds), active);
+      await dataPlanService.bulkSetActive(ids, active);
+      const idSet = new Set(ids);
       setPlans((prev) =>
-        prev.map((p) => (selectedIds.has(toId(p.id)) ? { ...p, active } : p)),
+        prev.map((p) => (idSet.has(toId(p.id)) ? { ...p, active } : p)),
       );
       setSelectedIds(new Set());
+    } catch (err) {
+      // A chunk may have partially succeeded before failing, so pull the
+      // real server state back instead of leaving the UI guessing.
+      window.alert(
+        `Could not ${active ? "activate" : "deactivate"} all ${ids.length} selected plan(s) — ${describeError(err)}.\n\nSome may have been updated; the list has been refreshed. Please retry.`,
+      );
+      console.error("Bulk set active failed", err);
+      load();
     } finally {
       setBulkBusy(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedCount} selected data plan(s)? This cannot be undone.`)) {
+    const ids = Array.from(selectedIds);
+    if (!window.confirm(`Delete ${ids.length} selected data plan(s)? This cannot be undone.`)) {
       return;
     }
     setBulkBusy(true);
     try {
-      await dataPlanService.bulkRemove(Array.from(selectedIds));
-      setPlans((prev) => prev.filter((p) => !selectedIds.has(toId(p.id))));
+      await dataPlanService.bulkRemove(ids);
+      const idSet = new Set(ids);
+      setPlans((prev) => prev.filter((p) => !idSet.has(toId(p.id))));
       setSelectedIds(new Set());
+    } catch (err) {
+      window.alert(
+        `Could not delete all ${ids.length} selected plan(s) — ${describeError(err)}.\n\nSome may have been deleted; the list has been refreshed. Please retry.`,
+      );
+      console.error("Bulk delete failed", err);
+      load();
     } finally {
       setBulkBusy(false);
     }
@@ -291,6 +333,20 @@ export function DataPlansTab() {
           <span className="text-xs font-medium text-slate-600">
             {selectedCount} selected
           </span>
+          {allPageSelected && !allFilteredSelected && filteredIds.length > pageIds.length && (
+            <button
+              type="button"
+              onClick={selectAllFiltered}
+              className="text-xs font-medium text-[#111827] underline underline-offset-2 hover:no-underline"
+            >
+              Select all {filteredIds.length} matching plans
+            </button>
+          )}
+          {allFilteredSelected && filteredIds.length > pageIds.length && (
+            <span className="text-xs text-slate-500">
+              All {filteredIds.length} matching plans selected.
+            </span>
+          )}
           <div className="flex-1" />
           <button
             type="button"

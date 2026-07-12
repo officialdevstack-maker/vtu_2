@@ -191,10 +191,11 @@ export default function ElectricityPage() {
   }
 
   return (
-    <PurchaseShell>
+    <div className="mx-auto w-full max-w-xl space-y-3">
       <ServiceTabs />
 
-      <ServiceHeader icon={Plug} iconBg="bg-amber-50" iconColor="text-amber-600" title="Electricity" subtitle="Prepaid & postpaid meter recharge" />
+      <PurchaseShell>
+        <ServiceHeader icon={Plug} iconBg="bg-amber-50" iconColor="text-amber-600" title="Electricity" subtitle="Prepaid & postpaid meter recharge" />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -344,6 +345,7 @@ export default function ElectricityPage() {
           />
         </div>
       )}
-    </PurchaseShell>
+      </PurchaseShell>
+    </div>
   );
 }

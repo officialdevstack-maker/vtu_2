@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
 import { WelcomeMessageGate } from "./welcome-message-gate";
+import { MobileServicesSheet } from "./mobile-services-sheet";
 import { ImpersonationBanner } from "@/shared/components/impersonation-banner";
 import { LayoutDashboard, Zap, Receipt, Wallet, Settings } from "lucide-react";
 import { useLocation } from "react-router-dom";
@@ -31,11 +32,13 @@ const UserLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1",
   );
+  const [servicesSheetOpen, setServicesSheetOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     setSidebarOpen(false);
+    setServicesSheetOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -79,13 +82,19 @@ const UserLayout = () => {
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden">
         {mobileNavItems.map((item) => {
-          const active =
-            location.pathname === item.path ||
-            (item.path === "/services" && servicePaths.has(location.pathname));
+          const isServices = item.path === "/services";
+          const active = isServices
+            ? servicesSheetOpen || servicePaths.has(location.pathname)
+            : location.pathname === item.path;
           return (
             <button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() =>
+                isServices
+                  ? setServicesSheetOpen((o) => !o)
+                  : navigate(item.path)
+              }
+              aria-expanded={isServices ? servicesSheetOpen : undefined}
               className={`flex flex-1 min-w-0 flex-col items-center gap-0.5 px-1 py-2.5 text-[11px] transition-colors ${
                 active
                   ? "font-medium text-[#111827]"
@@ -98,6 +107,11 @@ const UserLayout = () => {
           );
         })}
       </nav>
+
+      <MobileServicesSheet
+        open={servicesSheetOpen}
+        onClose={() => setServicesSheetOpen(false)}
+      />
 
       <WelcomeMessageGate />
     </div>
