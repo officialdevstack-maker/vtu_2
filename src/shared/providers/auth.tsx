@@ -6,15 +6,13 @@ import {
   useCallback,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient, setAuthToken } from "../api/apiClient";
+import { apiClient, getAuthToken, setAuthToken } from "../api/apiClient";
 import { clearImpersonation } from "../impersonation";
 import { config } from "../config";
 import type { RegisterPayload } from "@/features/auth/authService";
 
-// Shape returned by GET /user (AuthenticatedSessionController::index), which
-// loads the Eloquent User model — its $appends (transactions, banks, stats,
-// referrals, joined_at) ride along on every fetch, so the dashboard needs no
-// separate endpoints for wallet balance, recent transactions, or charts.
+// Shape returned by GET /user. The default auth check stays lightweight;
+// customer dashboard-only fields are fetched by the dashboard when needed.
 export type UserTransaction = {
   id: number;
   user_id: string;
@@ -163,6 +161,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { data: user = null, isLoading: isInitializing } = useQuery({
     queryKey: AUTH_QUERY_KEY,
     queryFn: fetchCurrentUser,
+    enabled: Boolean(getAuthToken()),
+    staleTime: 60_000,
   });
 
   const login = useCallback(
@@ -173,7 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await apiClient.get("/sanctum/csrf-cookie");
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", { login: loginValue, password });
         persistAuthToken(response.data.data);
-        const freshUser = (await fetchCurrentUser()) ?? response.data.data?.user ?? null;
+        const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
         return freshUser;
       } catch (error: any) {
@@ -194,7 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await apiClient.get("/sanctum/csrf-cookie");
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/register", payload);
         persistAuthToken(response.data.data);
-        const freshUser = (await fetchCurrentUser()) ?? response.data.data?.user ?? null;
+        const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
         return freshUser;
       } finally {

@@ -11,7 +11,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../data/mock";
 import { SkeletonCard, StatusBadge, StatCard, Card, Button, EmptyState } from "../components/shared-ui";
-import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
+import { apiClient } from "../../../shared/api/apiClient";
+import { useAuth, type User, type UserTransaction } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
 import { transactionTypeMeta, isCredit, toNumber, badgeStatus } from "../utils/transactionDisplay";
 
@@ -36,10 +37,21 @@ const dateLabel = (value: string) =>
   new Date(value).toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
 export default function DashboardPage() {
-  const { user, isInitializing, refreshUser } = useAuth();
+  const { user: authUser, isInitializing, refreshUser } = useAuth();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [converting, setConverting] = useState(false);
   const navigate = useNavigate();
+
+  const dashboardUserQuery = useQuery({
+    queryKey: ["auth", "user", "dashboard"],
+    queryFn: () =>
+      apiClient
+        .get<{ data: { user: User } }>("/user?include_dashboard=1")
+        .then((response) => response.data.data.user),
+    enabled: Boolean(authUser && authUser.user_type !== "admin" && !authUser.stats),
+    staleTime: 60_000,
+  });
+  const user = dashboardUserQuery.data ?? authUser;
 
   const networksQuery = useQuery({
     queryKey: ["networks"],
