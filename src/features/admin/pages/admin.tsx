@@ -186,6 +186,13 @@ export default function AdminPage() {
       tone: "neutral" as const,
     },
     {
+      label: "Online now",
+      value: stats ? (stats.online_users ?? 0).toLocaleString() : "—",
+      meta: "Active in the last 5 minutes",
+      icon: Activity,
+      tone: "success" as const,
+    },
+    {
       label: "Total wallet balance",
       value: stats ? fmtCompact(stats.total_user_balance) : "—",
       meta: "Combined across users",

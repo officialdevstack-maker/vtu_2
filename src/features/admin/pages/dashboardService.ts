@@ -28,6 +28,8 @@ export type AffiliateSummary = {
 
 export type Stats = {
   total_user: number;
+  // Users seen in the last 5 minutes (users.last_seen_at heartbeat).
+  online_users?: number;
   total_user_balance: number;
   api_balances: number;
   total_funding_today: number;
