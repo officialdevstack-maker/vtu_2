@@ -202,6 +202,21 @@ export const childCustomerService = {
       )
       .then((r) => r.data.data),
 
+  // Bulk migrate multiple child customers in a single request. Backend should
+  // accept { customer_ids: [...], target_url?: string } and return an array
+  // of MigrationResult objects in the same order.
+  bulkMigrate: (
+    instanceId: string | number,
+    customerIds: (string | number)[],
+    targetUrl?: string,
+  ): Promise<MigrationResult[]> =>
+    apiClient
+      .post<ApiEnvelope<MigrationResult[]>>(
+        `/admin/child-instances/${instanceId}/customers/bulk-migrate`,
+        { customer_ids: customerIds, target_url: targetUrl },
+      )
+      .then((r) => r.data.data),
+
   // One-off emails to this customer via the parent's own mail infra, with a
   // persisted outbound log (replies land in the admin's inbox, not here).
   // Subject/body support {{ user.username }}-style placeholders.

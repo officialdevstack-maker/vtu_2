@@ -371,20 +371,16 @@ export function BulkMigrateModal({
   const handleBulk = async () => {
     setBusy(true);
     setError(null);
-    const res: MigrationResult[] = [];
-    for (const c of customers) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        const r = await childCustomerService.migrate(instanceId, c.id, targetUrl.trim() || undefined);
-        res.push(r);
-      } catch (err) {
-        // Capture a minimal failure object to show the admin.
-        res.push({ user: { id: "", username: c.username ?? c.external_id, email: c.email ?? "" }, linked_existing: false, invite_sent: false, directive_id: -1, wallet_balance_at_migration: 0 });
-      }
+    try {
+      const ids = customers.map((c) => c.id);
+      const res = await childCustomerService.bulkMigrate(instanceId, ids, targetUrl.trim() || undefined);
+      setResults(res);
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not perform bulk migration. Please try again."));
+    } finally {
+      setBusy(false);
+      onDone?.();
     }
-    setResults(res);
-    setBusy(false);
-    onDone?.();
   };
 
   return (
