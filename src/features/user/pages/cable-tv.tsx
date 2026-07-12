@@ -11,6 +11,7 @@ import {
   ConfirmActions, SuccessScreen, PinField, inputCls,
 } from "../components/shared-ui";
 import { customerService, generateTxRef, applyDiscount, type CablePlan, type PurchaseResult } from "../services/customerService";
+import { ServiceTabs } from "../components/service-tabs";
 
 const NETWORK_COLORS: Record<string, string> = {
   dstv: "bg-blue-600",
@@ -190,6 +191,8 @@ export default function CableTVPage() {
 
   return (
     <PurchaseShell>
+      <ServiceTabs />
+
       <ServiceHeader icon={Tv} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Cable TV" subtitle="DStv, GOtv & Startimes subscriptions" />
 
       {step === "form" && (

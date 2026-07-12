@@ -26,6 +26,7 @@ import {
   type AirtimePlan,
   type PurchaseResult,
 } from "../services/customerService";
+import { ServiceTabs } from "../components/service-tabs";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -221,6 +222,8 @@ export default function BuyAirtimePage() {
 
   return (
     <PurchaseShell>
+      <ServiceTabs />
+
       <ServiceHeader
         icon={Phone}
         iconBg="bg-[#111827]/10"

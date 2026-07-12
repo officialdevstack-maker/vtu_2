@@ -4,6 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { services, mockUser, fmt } from "../data/mock";
 import { PageHeader, Card, Button, ConfirmSummary, inputCls, selectCls } from "../components/shared-ui";
 import { useBranding } from "@/shared/branding";
+import { ServiceTabs } from "../components/service-tabs";
+
+const serviceRoutes: Record<string, string> = {
+  airtime: "/buy-airtime",
+  data: "/buy-data",
+  cable: "/cable-tv",
+  electricity: "/electricity",
+  transfer: "/wallet?tab=send",
+  fund: "/wallet?tab=fund",
+};
 
 export default function ServicesPage() {
   const { app_name } = useBranding();
@@ -16,6 +26,12 @@ export default function ServicesPage() {
   const navigate = useNavigate();
 
   const openService = (id: string) => {
+    const route = serviceRoutes[id];
+    if (route) {
+      navigate(route);
+      return;
+    }
+
     setActiveService(id);
     setStep("form");
     setPhone("");
@@ -38,6 +54,7 @@ export default function ServicesPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       <PageHeader title="All services" description={`Everything you can pay for on ${app_name}`} />
+      <ServiceTabs />
 
       {cats.map((cat) => (
         <Card key={cat.label} className="p-4">
