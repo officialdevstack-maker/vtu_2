@@ -184,8 +184,8 @@ export default function AffiliateMessagesPage() {
               {countLoading
                 ? "Counting reachable customers…"
                 : count === null
-                ? "Could not determine reachable customers"
-                : `Reaches ${count} synced customer${count === 1 ? "" : "s"} with an email address.`}
+                  ? "Could not determine reachable customers"
+                  : `Reaches ${count} synced customer${count === 1 ? "" : "s"} with an email address.`}
             </p>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
@@ -333,7 +333,12 @@ export default function AffiliateMessagesPage() {
                     >
                       Reset
                     </Button>
-                    <Button onClick={async () => { await fetchCount(true); }} disabled={countLoading}>
+                    <Button
+                      onClick={async () => {
+                        await fetchCount(true);
+                      }}
+                      disabled={countLoading}
+                    >
                       Apply filters
                     </Button>
                   </div>
