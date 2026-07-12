@@ -236,9 +236,9 @@ export const transactionService = {
   // (see TransactionResource::toArray()'s whenLoaded('user')).
   getRecent: async (limit = 8): Promise<Transaction[]> => {
     const response = await apiClient.get<ApiEnvelope<any>>("/table/transactions", {
-      params: { sort: "created_at,desc", with: "user" },
+      params: { sort: "created_at,desc", with: "user", per_page: limit, page: 1 },
     });
-    return (digArray(response.data) as Transaction[]).slice(0, limit);
+    return digArray(response.data) as Transaction[];
   },
 };
 

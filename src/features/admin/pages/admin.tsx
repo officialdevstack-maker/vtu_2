@@ -17,7 +17,7 @@ import {
   ReceiptText,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { fmt, fmtCompact } from "../../user/data/mock";
 import {
@@ -103,18 +103,26 @@ export default function AdminPage() {
   const statsQuery = useQuery({
     queryKey: ["admin", "stats"],
     queryFn: () => statsService.get(),
+    staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
   });
   const analyticsQuery = useQuery({
     queryKey: ["admin", "analytics", rangeDays],
     queryFn: () => analyticsService.get(rangeParams(rangeDays)),
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
   const providersQuery = useQuery({
     queryKey: ["admin", "providers"],
     queryFn: () => providerService.getAll(),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
   const recentTxnsQuery = useQuery({
     queryKey: ["admin", "recent-transactions"],
     queryFn: () => transactionService.getRecent(8),
+    staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   const stats: Stats | null = statsQuery.data ?? null;
