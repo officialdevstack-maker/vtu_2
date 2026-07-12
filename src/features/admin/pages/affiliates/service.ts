@@ -248,11 +248,12 @@ export const childCustomerService = {
 // audience mode (email-only — child customers have no login here for in-app,
 // and SMS is reserved for our own users).
 export const childBroadcastService = {
-  countEmailable: (instanceId: string | number): Promise<number> =>
+  countEmailable: (instanceId: string | number, filters?: Record<string, unknown>): Promise<number> =>
     apiClient
       .post<ApiEnvelope<{ count: number }>>(`/admin/broadcast/audience-count`, {
         audience_mode: "child_customers",
         child_instance_id: instanceId,
+        ...(filters ?? {}),
       })
       .then((r) => r.data.data.count),
 
@@ -260,11 +261,13 @@ export const childBroadcastService = {
     instanceId: string | number,
     subject: string,
     body: string,
+    filters?: Record<string, unknown>,
   ): Promise<number> =>
     apiClient
       .post<ApiEnvelope<{ notified: number }>>(`/admin/broadcast`, {
         audience_mode: "child_customers",
         child_instance_id: instanceId,
+        ...(filters ?? {}),
         channels: ["Email"],
         emailSubject: subject,
         emailBody: body,

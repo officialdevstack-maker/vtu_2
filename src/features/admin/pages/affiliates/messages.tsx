@@ -31,6 +31,11 @@ export default function AffiliateMessagesPage() {
 
   // Broadcast composer
   const [count, setCount] = useState<number | null>(null);
+  // Filters for broadcast-like targeted emails
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [queryFilter, setQueryFilter] = useState("");
+  const [walletMinFilter, setWalletMinFilter] = useState<string>("");
+  const [walletMaxFilter, setWalletMaxFilter] = useState<string>("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -47,8 +52,26 @@ export default function AffiliateMessagesPage() {
 
   useEffect(() => {
     childCustomerService.getByInstance(id).then(setCustomers);
-    childBroadcastService.countEmailable(id).then(setCount).catch(() => setCount(null));
     refreshMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const fetchCount = async (useFilters = true) => {
+    try {
+      const filters: Record<string, unknown> = {};
+      if (useFilters && queryFilter.trim()) filters.query = queryFilter.trim();
+      if (useFilters && walletMinFilter.trim()) filters.wallet_balance_min = Number(walletMinFilter);
+      if (useFilters && walletMaxFilter.trim()) filters.wallet_balance_max = Number(walletMaxFilter);
+      const c = await childBroadcastService.countEmailable(id, Object.keys(filters).length ? filters : undefined);
+      setCount(c);
+    } catch (e) {
+      setCount(null);
+    }
+  };
+
+  useEffect(() => {
+    // initial count without filters
+    void fetchCount(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -67,7 +90,11 @@ export default function AffiliateMessagesPage() {
     setSending(true);
     setError(null);
     try {
-      const notified = await childBroadcastService.emailAll(id, subject.trim(), body.trim());
+      const filters: Record<string, unknown> = {};
+      if (filtersOpen && queryFilter.trim()) filters.query = queryFilter.trim();
+      if (filtersOpen && walletMinFilter.trim()) filters.wallet_balance_min = Number(walletMinFilter);
+      if (filtersOpen && walletMaxFilter.trim()) filters.wallet_balance_max = Number(walletMaxFilter);
+      const notified = await childBroadcastService.emailAll(id, subject.trim(), body.trim(), Object.keys(filters).length ? filters : undefined);
       setSentCount(notified);
       setSubject("");
       setBody("");
@@ -111,6 +138,37 @@ export default function AffiliateMessagesPage() {
                 placeholder="e.g. We're upgrading your service"
                 className={inputCls}
               />
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((s) => !s)}
+                className="text-xs text-slate-500 underline"
+              >
+                {filtersOpen ? "Hide filters" : "Show filters"}
+              </button>
+              {filtersOpen && (
+                <div className="mt-3 space-y-2">
+                  <div>
+                    <label className="block text-[11px] text-slate-600 mb-1">Search (username or email)</label>
+                    <input value={queryFilter} onChange={(e) => setQueryFilter(e.target.value)} className={inputCls} />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-[11px] text-slate-600 mb-1">Wallet balance min</label>
+                      <input value={walletMinFilter} onChange={(e) => setWalletMinFilter(e.target.value)} className={inputCls} placeholder="0" />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[11px] text-slate-600 mb-1">Wallet balance max</label>
+                      <input value={walletMaxFilter} onChange={(e) => setWalletMaxFilter(e.target.value)} className={inputCls} placeholder="" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={() => { setQueryFilter(""); setWalletMinFilter(""); setWalletMaxFilter(""); void fetchCount(false); }}>Reset</Button>
+                    <Button onClick={() => void fetchCount(true)}>Apply filters</Button>
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
