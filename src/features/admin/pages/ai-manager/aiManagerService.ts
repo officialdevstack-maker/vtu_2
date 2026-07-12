@@ -48,6 +48,14 @@ export type AiConversation = {
   proposals: AiProposal[];
 };
 
+export type AiAlert = {
+  id: number;
+  severity: "warning" | "critical";
+  title: string;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
 const BASE = "/admin/ai";
 
 export const aiManagerService = {
@@ -88,4 +96,20 @@ export const aiManagerService = {
     apiClient
       .post<ApiEnvelope<AiProposal>>(`${BASE}/actions/${id}/reject`)
       .then((r) => r.data.data),
+
+  // Proactive monitoring alerts written by the backend AiMonitor middleware.
+  listAlerts: (): Promise<AiAlert[]> =>
+    apiClient
+      .get<ApiEnvelope<AiAlert[]>>(`${BASE}/alerts`)
+      .then((r) => r.data.data),
+
+  acknowledgeAlert: (id: number): Promise<void> =>
+    apiClient
+      .post<ApiEnvelope<unknown>>(`${BASE}/alerts/${id}/acknowledge`)
+      .then(() => undefined),
+
+  acknowledgeAllAlerts: (): Promise<void> =>
+    apiClient
+      .post<ApiEnvelope<unknown>>(`${BASE}/alerts/acknowledge-all`)
+      .then(() => undefined),
 };

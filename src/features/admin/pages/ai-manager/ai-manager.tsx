@@ -30,6 +30,66 @@ const errorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+/**
+ * Markdown-lite renderer for assistant replies. The AI service answers with
+ * **bold**, "- " bullets, and "1. " numbered lines — a full markdown library
+ * is overkill for that, so this renders exactly those three constructs and
+ * leaves everything else as plain text.
+ */
+const renderInline = (text: string) =>
+  text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i} className="font-semibold">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      part
+    ),
+  );
+
+const Markdown = ({ text }: { text: string }) => {
+  const blocks: { list: boolean; lines: string[] }[] = [];
+  for (const line of text.split("\n")) {
+    const isItem = /^\s*(-|\d+\.)\s+/.test(line);
+    const last = blocks[blocks.length - 1];
+    if (last && last.list === isItem) last.lines.push(line);
+    else blocks.push({ list: isItem, lines: [line] });
+  }
+  return (
+    <div className="space-y-1.5">
+      {blocks.map((block, i) =>
+        block.list ? (
+          <ul key={i} className="space-y-1">
+            {block.lines.map((line, j) => {
+              const marker = line.match(/^\s*(-|\d+\.)\s+/)?.[1] ?? "-";
+              return (
+                <li
+                  key={j}
+                  className="flex gap-1.5"
+                  style={{ paddingLeft: `${(line.match(/^\s*/)?.[0].length ?? 0) * 0.4}rem` }}
+                >
+                  <span className="shrink-0 text-slate-400">
+                    {marker === "-" ? "•" : marker}
+                  </span>
+                  <span className="min-w-0">
+                    {renderInline(line.replace(/^\s*(-|\d+\.)\s+/, ""))}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          block.lines.join("\n").trim() && (
+            <p key={i} className="whitespace-pre-wrap">
+              {renderInline(block.lines.join("\n"))}
+            </p>
+          )
+        ),
+      )}
+    </div>
+  );
+};
+
 const STATUS_STYLES: Record<AiProposal["status"], string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",
   executed: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -38,10 +98,10 @@ const STATUS_STYLES: Record<AiProposal["status"], string> = {
 };
 
 const SUGGESTIONS = [
+  "Run a health check on the platform",
   "How is the site doing today?",
   "Show me the last 10 failed transactions",
-  "Which vendors are below their auto-fund threshold?",
-  "Find the customer with email jane@example.com",
+  "Investigate the customer jane@example.com",
 ];
 
 const AiManagerPage = () => {
@@ -365,13 +425,13 @@ const MessageBubble = ({
         )}
       </div>
       <div
-        className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
+        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
           isUser
-            ? "bg-[#111827] text-white"
+            ? "whitespace-pre-wrap bg-[#111827] text-white"
             : "bg-slate-50 text-slate-800"
         }`}
       >
-        {message.content}
+        {isUser ? message.content : <Markdown text={message.content ?? ""} />}
       </div>
     </div>
   );

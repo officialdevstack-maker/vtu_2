@@ -40,6 +40,7 @@ import { useAuth } from "../../../shared/providers/auth";
 import { useBranding } from "@/shared/branding";
 import { TopLoadingBar } from "../../user/components/shared-ui";
 import DefaultCredentialsModal from "./DefaultCredentialsModal";
+import AiAlertsWidget, { useAiAlerts } from "./AiAlertsWidget";
 import { prefetchAdminDashboard } from "../pages/dashboardService";
 import GlobalSearch from "@/shared/components/global-search";
 
@@ -185,6 +186,11 @@ const Layout = () => {
     enabled: Boolean(user),
     refetchInterval: 60000,
   });
+
+  // Same query the floating widget uses (shared key = one request); here it
+  // just decides whether the topbar AI avatar shows its attention dot.
+  const aiAlertsQuery = useAiAlerts(Boolean(user));
+  const aiAlertCount = aiAlertsQuery.data?.length ?? 0;
 
   const displayName = user?.username ?? "Admin";
   const displayRole = user?.role?.name ?? "Admin";
@@ -435,6 +441,22 @@ const Layout = () => {
 
               <div className="ml-auto flex items-center gap-1 sm:gap-2">
                 <button
+                  onClick={() => navigate("/admin/ai-manager")}
+                  className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#111827] to-slate-600 text-white transition-transform hover:scale-105"
+                  aria-label={
+                    aiAlertCount > 0
+                      ? `AI Manager — ${aiAlertCount} alert${aiAlertCount === 1 ? "" : "s"}`
+                      : "AI Manager"
+                  }
+                  title="AI Manager"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {aiAlertCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full bg-red-500 ring-2 ring-white" />
+                  )}
+                </button>
+
+                <button
                   onClick={() => navigate("/admin/notifications/inbox")}
                   className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
                 >
@@ -519,6 +541,9 @@ const Layout = () => {
           </div>
         </main>
       </div>
+
+      {/* Proactive AI monitor — floats only while there are open alerts. */}
+      <AiAlertsWidget />
 
       {mobileSidebarOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
