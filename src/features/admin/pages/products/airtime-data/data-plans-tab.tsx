@@ -182,12 +182,16 @@ export function DataPlansTab() {
     setPage(1);
   }, [search, networkFilter, typeFilter, statusFilter, sort, setPage]);
 
-  // "Select all" only ever acts on the current page — selection itself
-  // persists across page changes so a multi-page bulk action still works.
+  // The header checkbox only ever acts on the current page — selection
+  // itself persists across page changes. "Select all N matching plans"
+  // below extends a page selection to every row the current filters match,
+  // across all pages, without paging through them one at a time.
   const pageIds = useMemo(() => pageItems.map((p) => toId(p.id)), [pageItems]);
+  const filteredIds = useMemo(() => filtered.map((p) => toId(p.id)), [filtered]);
   const selectedCount = selectedIds.size;
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
   const somePageSelected = pageIds.some((id) => selectedIds.has(id));
+  const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -205,6 +209,8 @@ export function DataPlansTab() {
       return new Set([...prev, ...pageIds]);
     });
   };
+
+  const selectAllFiltered = () => setSelectedIds(new Set(filteredIds));
 
   const toggleSelectOne = (id: string) => {
     setSelectedIds((prev) => {
@@ -291,6 +297,20 @@ export function DataPlansTab() {
           <span className="text-xs font-medium text-slate-600">
             {selectedCount} selected
           </span>
+          {allPageSelected && !allFilteredSelected && filteredIds.length > pageIds.length && (
+            <button
+              type="button"
+              onClick={selectAllFiltered}
+              className="text-xs font-medium text-[#111827] underline underline-offset-2 hover:no-underline"
+            >
+              Select all {filteredIds.length} matching plans
+            </button>
+          )}
+          {allFilteredSelected && filteredIds.length > pageIds.length && (
+            <span className="text-xs text-slate-500">
+              All {filteredIds.length} matching plans selected.
+            </span>
+          )}
           <div className="flex-1" />
           <button
             type="button"
