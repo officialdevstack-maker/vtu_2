@@ -350,3 +350,158 @@ export function EmailCustomerModal({
     </div>
   );
 }
+
+// Bulk migrate many child customers sequentially with progress reporting.
+export function BulkMigrateModal({
+  instanceId,
+  customers,
+  onClose,
+  onDone,
+}: {
+  instanceId: string;
+  customers: ChildCustomer[];
+  onClose: () => void;
+  onDone?: () => void;
+}) {
+  const [targetUrl, setTargetUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<MigrationResult[]>([] as MigrationResult[]);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleBulk = async () => {
+    setBusy(true);
+    setError(null);
+    const res: MigrationResult[] = [];
+    for (const c of customers) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const r = await childCustomerService.migrate(instanceId, c.id, targetUrl.trim() || undefined);
+        res.push(r);
+      } catch (err) {
+        // Capture a minimal failure object to show the admin.
+        res.push({ user: { id: "", username: c.username ?? c.external_id, email: c.email ?? "" }, linked_existing: false, invite_sent: false, directive_id: -1, wallet_balance_at_migration: 0 });
+      }
+    }
+    setResults(res);
+    setBusy(false);
+    onDone?.();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-lg shadow-xl">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900 text-sm">Migrate selected customers</h3>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <p className="text-sm text-slate-700">This will create parent accounts (or link existing ones) for the selected customers and queue a redirect directive for each.</p>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Redirect URL (optional)</label>
+            <input value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} placeholder="Defaults to this platform's site URL" className={inputCls} />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs text-slate-400">Selected customers</p>
+            <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 p-2">{customers.map((c) => (<div key={c.id} className="text-sm text-slate-700">{c.username ?? c.external_id} · {c.email ?? c.phone ?? '—'}</div>))}</div>
+          </div>
+
+          <div>
+            <div className="flex gap-3 pt-1">
+              <Button variant="secondary" fullWidth onClick={onClose} disabled={busy}>Cancel</Button>
+              <Button fullWidth loading={busy} disabled={busy} onClick={handleBulk}><ArrowRightLeft className="w-3.5 h-3.5" /> Migrate {customers.length}</Button>
+            </div>
+          </div>
+
+          {results.length > 0 && (
+            <div className="pt-2">
+              <p className="text-xs font-medium text-slate-600">Results</p>
+              <div className="space-y-2 mt-2">
+                {results.map((r, i) => (
+                  <div key={i} className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-slate-700">
+                    <div className="flex items-center justify-between">
+                      <div>{r.user.username} ({r.user.email})</div>
+                      <div className="text-[11px] text-slate-400">Directive #{r.directive_id}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Bulk email composer for selected affiliate customers. Uses the broadcast
+// engine to notify a specific list of child_customer_ids for the affiliate.
+export function BulkEmailModal({
+  instanceId,
+  customerIds,
+  onClose,
+  onSent,
+}: {
+  instanceId: string;
+  customerIds: (string | number)[];
+  onClose: () => void;
+  onSent?: (notified: number) => void;
+}) {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSend = async () => {
+    if (!subject.trim() || !body.trim()) return;
+    setSending(true);
+    setError(null);
+    try {
+      const notified = await childBroadcastService.emailSelected(instanceId, customerIds, subject.trim(), body.trim());
+      onSent?.(notified);
+      onClose();
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not send the broadcast. Please try again."));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-md shadow-xl">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-slate-900 text-sm">Email selected customers</h3>
+            <p className="text-[11px] text-slate-400 truncate">{customerIds.length} recipient{customerIds.length === 1 ? '' : 's'}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"><X className="w-4 h-4" /></button>
+        </div>
+
+        <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Subject <span className="text-red-400">*</span></label>
+            <input value={subject} onChange={(e) => setSubject(e.target.value)} className={inputCls} />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Message <span className="text-red-400">*</span></label>
+            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} className={inputCls} />
+            <p className="text-[11px] text-slate-400 mt-1">Placeholders like <code className="font-mono">{{"{{ user.username }}"}}</code> are filled per recipient.</p>
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <Button variant="secondary" fullWidth onClick={onClose} disabled={sending}>Cancel</Button>
+            <Button fullWidth loading={sending} disabled={sending} onClick={handleSend}><Send className="w-3.5 h-3.5" /> Send</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

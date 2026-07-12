@@ -26,7 +26,13 @@ import {
   type PaginatedMeta,
 } from "./service";
 import { useAffiliate } from "./affiliate-layout";
-import { EmailCustomerModal, MigrateCustomerModal, fmt } from "./modals";
+import {
+  EmailCustomerModal,
+  MigrateCustomerModal,
+  BulkEmailModal,
+  BulkMigrateModal,
+  fmt,
+} from "./modals";
 
 type CustomerSortKey =
   "external_id" | "username" | "email" | "phone" | "wallet_balance" | "status";
@@ -60,6 +66,9 @@ export default function AffiliateCustomersPage() {
     null,
   );
   const [emailTarget, setEmailTarget] = useState<ChildCustomer | null>(null);
+  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
+  const [bulkMigrateOpen, setBulkMigrateOpen] = useState(false);
+  const [bulkEmailOpen, setBulkEmailOpen] = useState(false);
 
   const toggleSort = (key: CustomerSortKey) => {
     setSort((prev) =>
@@ -185,6 +194,21 @@ export default function AffiliateCustomersPage() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all"
+                        checked={
+                          pageItems.length > 0 &&
+                          selectedIds.length === pageItems.length
+                        }
+                        onChange={(e) => {
+                          if (e.target.checked)
+                            setSelectedIds(pageItems.map((c) => c.id));
+                          else setSelectedIds([]);
+                        }}
+                      />
+                    </th>
+                    <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
                       <button
                         type="button"
                         className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
@@ -285,6 +309,20 @@ export default function AffiliateCustomersPage() {
                       key={c.id}
                       className="hover:bg-gray-50 transition-colors"
                     >
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(c.id)}
+                          onChange={(e) => {
+                            if (e.target.checked)
+                              setSelectedIds((s) => [...s, c.id]);
+                            else
+                              setSelectedIds((s) =>
+                                s.filter((id) => id !== c.id),
+                              );
+                          }}
+                        />
+                      </td>
                       <td className="px-4 py-3 font-mono text-slate-500">
                         {c.external_id}
                       </td>
@@ -341,6 +379,38 @@ export default function AffiliateCustomersPage() {
                 </tbody>
               </table>
             </div>
+            {selectedIds.length > 0 && (
+              <div className="p-3 border-t border-gray-100 flex items-center gap-3">
+                <div className="text-sm text-slate-700">
+                  {selectedIds.length} selected
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBulkEmailOpen(true)}
+                    className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Mail className="w-3.5 h-3.5 inline-block mr-1" /> Email
+                    selected
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkMigrateOpen(true)}
+                    className="rounded-xl border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5 inline-block mr-1" />{" "}
+                    Migrate selected
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds([])}
+                    className="text-xs text-slate-400 hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -367,6 +437,31 @@ export default function AffiliateCustomersPage() {
           instanceId={id}
           customer={emailTarget}
           onClose={() => setEmailTarget(null)}
+        />
+      )}
+
+      {bulkMigrateOpen && (
+        <BulkMigrateModal
+          instanceId={id}
+          customers={customers.filter((c) => selectedIds.includes(c.id))}
+          onClose={() => setBulkMigrateOpen(false)}
+          onDone={() => {
+            setSelectedIds([]);
+            setBulkMigrateOpen(false);
+            refresh();
+          }}
+        />
+      )}
+
+      {bulkEmailOpen && (
+        <BulkEmailModal
+          instanceId={id}
+          customerIds={selectedIds}
+          onClose={() => setBulkEmailOpen(false)}
+          onSent={() => {
+            setSelectedIds([]);
+            setBulkEmailOpen(false);
+          }}
         />
       )}
     </div>

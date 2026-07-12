@@ -257,6 +257,28 @@ export const childBroadcastService = {
         priorityHigh: false,
       })
       .then((r) => r.data.data.notified),
+
+  // Send an email broadcast to a specific list of child customer ids for
+  // this affiliate. Falls back to the same broadcast engine but targets
+  // the provided child_customer_ids list.
+  emailSelected: (
+    instanceId: string | number,
+    childCustomerIds: (string | number)[],
+    subject: string,
+    body: string,
+  ): Promise<number> =>
+    apiClient
+      .post<ApiEnvelope<{ notified: number }>>(`/admin/broadcast`, {
+        audience_mode: "child_customers",
+        child_instance_id: instanceId,
+        child_customer_ids: childCustomerIds,
+        channels: ["Email"],
+        emailSubject: subject,
+        emailBody: body,
+        sendNow: true,
+        priorityHigh: false,
+      })
+      .then((r) => r.data.data.notified),
 };
 
 export const childTransactionService = {
