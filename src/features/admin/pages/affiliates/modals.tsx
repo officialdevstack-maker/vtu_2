@@ -9,6 +9,7 @@ import {
 } from "../../../user/components/shared-ui";
 import {
   childCustomerService,
+  childBroadcastService,
   type ChildCustomer,
   type ChildCustomerMessage,
   type MigrationResult,
@@ -365,7 +366,9 @@ export function BulkMigrateModal({
 }) {
   const [targetUrl, setTargetUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const [results, setResults] = useState<MigrationResult[]>([] as MigrationResult[]);
+  const [results, setResults] = useState<MigrationResult[]>(
+    [] as MigrationResult[],
+  );
   const [error, setError] = useState<string | null>(null);
 
   const handleBulk = async () => {
@@ -373,10 +376,19 @@ export function BulkMigrateModal({
     setError(null);
     try {
       const ids = customers.map((c) => c.id);
-      const res = await childCustomerService.bulkMigrate(instanceId, ids, targetUrl.trim() || undefined);
+      const res = await childCustomerService.bulkMigrate(
+        instanceId,
+        ids,
+        targetUrl.trim() || undefined,
+      );
       setResults(res);
     } catch (err) {
-      setError(extractErrorMessage(err, "Could not perform bulk migration. Please try again."));
+      setError(
+        extractErrorMessage(
+          err,
+          "Could not perform bulk migration. Please try again.",
+        ),
+      );
     } finally {
       setBusy(false);
       onDone?.();
@@ -387,29 +399,65 @@ export function BulkMigrateModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-lg shadow-xl">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 text-sm">Migrate selected customers</h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400">
+          <h3 className="font-semibold text-slate-900 text-sm">
+            Migrate selected customers
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
           {error && <p className="text-xs text-red-600">{error}</p>}
-          <p className="text-sm text-slate-700">This will create parent accounts (or link existing ones) for the selected customers and queue a redirect directive for each.</p>
+          <p className="text-sm text-slate-700">
+            This will create parent accounts (or link existing ones) for the
+            selected customers and queue a redirect directive for each.
+          </p>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Redirect URL (optional)</label>
-            <input value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} placeholder="Defaults to this platform's site URL" className={inputCls} />
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Redirect URL (optional)
+            </label>
+            <input
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
+              placeholder="Defaults to this platform's site URL"
+              className={inputCls}
+            />
           </div>
 
           <div className="space-y-2">
             <p className="text-xs text-slate-400">Selected customers</p>
-            <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 p-2">{customers.map((c) => (<div key={c.id} className="text-sm text-slate-700">{c.username ?? c.external_id} · {c.email ?? c.phone ?? '—'}</div>))}</div>
+            <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 p-2">
+              {customers.map((c) => (
+                <div key={c.id} className="text-sm text-slate-700">
+                  {c.username ?? c.external_id} · {c.email ?? c.phone ?? "—"}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div>
             <div className="flex gap-3 pt-1">
-              <Button variant="secondary" fullWidth onClick={onClose} disabled={busy}>Cancel</Button>
-              <Button fullWidth loading={busy} disabled={busy} onClick={handleBulk}><ArrowRightLeft className="w-3.5 h-3.5" /> Migrate {customers.length}</Button>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={onClose}
+                disabled={busy}
+              >
+                Cancel
+              </Button>
+              <Button
+                fullWidth
+                loading={busy}
+                disabled={busy}
+                onClick={handleBulk}
+              >
+                <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate{" "}
+                {customers.length}
+              </Button>
             </div>
           </div>
 
@@ -418,10 +466,17 @@ export function BulkMigrateModal({
               <p className="text-xs font-medium text-slate-600">Results</p>
               <div className="space-y-2 mt-2">
                 {results.map((r, i) => (
-                  <div key={i} className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-slate-700">
+                  <div
+                    key={i}
+                    className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-slate-700"
+                  >
                     <div className="flex items-center justify-between">
-                      <div>{r.user.username} ({r.user.email})</div>
-                      <div className="text-[11px] text-slate-400">Directive #{r.directive_id}</div>
+                      <div>
+                        {r.user.username} ({r.user.email})
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        Directive #{r.directive_id}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -457,11 +512,21 @@ export function BulkEmailModal({
     setSending(true);
     setError(null);
     try {
-      const notified = await childBroadcastService.emailSelected(instanceId, customerIds, subject.trim(), body.trim());
+      const notified = await childBroadcastService.emailSelected(
+        instanceId,
+        customerIds,
+        subject.trim(),
+        body.trim(),
+      );
       onSent?.(notified);
       onClose();
     } catch (err) {
-      setError(extractErrorMessage(err, "Could not send the broadcast. Please try again."));
+      setError(
+        extractErrorMessage(
+          err,
+          "Could not send the broadcast. Please try again.",
+        ),
+      );
     } finally {
       setSending(false);
     }
@@ -472,29 +537,70 @@ export function BulkEmailModal({
       <div className="bg-white rounded-2xl border border-slate-200/70 w-full max-w-md shadow-xl">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="min-w-0">
-            <h3 className="font-semibold text-slate-900 text-sm">Email selected customers</h3>
-            <p className="text-[11px] text-slate-400 truncate">{customerIds.length} recipient{customerIds.length === 1 ? '' : 's'}</p>
+            <h3 className="font-semibold text-slate-900 text-sm">
+              Email selected customers
+            </h3>
+            <p className="text-[11px] text-slate-400 truncate">
+              {customerIds.length} recipient
+              {customerIds.length === 1 ? "" : "s"}
+            </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"><X className="w-4 h-4" /></button>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
           {error && <p className="text-xs text-red-600">{error}</p>}
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Subject <span className="text-red-400">*</span></label>
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} className={inputCls} />
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Subject <span className="text-red-400">*</span>
+            </label>
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className={inputCls}
+            />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Message <span className="text-red-400">*</span></label>
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} className={inputCls} />
-            <p className="text-[11px] text-slate-400 mt-1">Placeholders like <code className="font-mono">{"{{ user.username }}"}</code> are filled per recipient.</p>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Message <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={6}
+              className={inputCls}
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Placeholders like{" "}
+              <code className="font-mono">{"{{ user.username }}"}</code> are
+              filled per recipient.
+            </p>
           </div>
 
           <div className="flex gap-3 pt-1">
-            <Button variant="secondary" fullWidth onClick={onClose} disabled={sending}>Cancel</Button>
-            <Button fullWidth loading={sending} disabled={sending} onClick={handleSend}><Send className="w-3.5 h-3.5" /> Send</Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={onClose}
+              disabled={sending}
+            >
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              loading={sending}
+              disabled={sending}
+              onClick={handleSend}
+            >
+              <Send className="w-3.5 h-3.5" /> Send
+            </Button>
           </div>
         </div>
       </div>
