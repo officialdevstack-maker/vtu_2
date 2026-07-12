@@ -33,6 +33,7 @@ export default function AffiliateMessagesPage() {
 
   // Broadcast composer
   const [count, setCount] = useState<number | null>(null);
+  const [countLoading, setCountLoading] = useState(false);
   // Filters for broadcast-like targeted emails
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [queryFilter, setQueryFilter] = useState("");
@@ -65,6 +66,7 @@ export default function AffiliateMessagesPage() {
   }, [id]);
 
   const fetchCount = async (useFilters = true) => {
+    setCountLoading(true);
     try {
       const filters: Record<string, unknown> = {};
       if (useFilters && queryFilter.trim()) filters.query = queryFilter.trim();
@@ -89,8 +91,12 @@ export default function AffiliateMessagesPage() {
         Object.keys(filters).length ? filters : undefined,
       );
       setCount(c);
+      return c;
     } catch (e) {
       setCount(null);
+      return null;
+    } finally {
+      setCountLoading(false);
     }
   };
 
@@ -175,8 +181,10 @@ export default function AffiliateMessagesPage() {
               </p>
             )}
             <p className="text-xs text-slate-500">
-              {count === null
+              {countLoading
                 ? "Counting reachable customers…"
+                : count === null
+                ? "Could not determine reachable customers"
                 : `Reaches ${count} synced customer${count === 1 ? "" : "s"} with an email address.`}
             </p>
             <div>
@@ -309,7 +317,7 @@ export default function AffiliateMessagesPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="secondary"
-                      onClick={() => {
+                      onClick={async () => {
                         setQueryFilter("");
                         setWalletMinFilter("");
                         setWalletMaxFilter("");
@@ -319,12 +327,13 @@ export default function AffiliateMessagesPage() {
                         setTxAmountMin("");
                         setTxAmountMax("");
                         setReferralCountMin("");
-                        void fetchCount(false);
+                        await fetchCount(false);
                       }}
+                      disabled={countLoading}
                     >
                       Reset
                     </Button>
-                    <Button onClick={() => void fetchCount(true)}>
+                    <Button onClick={async () => { await fetchCount(true); }} disabled={countLoading}>
                       Apply filters
                     </Button>
                   </div>
