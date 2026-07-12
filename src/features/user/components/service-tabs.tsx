@@ -1,12 +1,61 @@
 import { NavLink } from "react-router-dom";
-import { Phone, Wifi, Tv, Plug, Banknote } from "lucide-react";
+import { Phone, Wifi, Tv, Plug, Banknote, type LucideIcon } from "lucide-react";
 
-const serviceTabs = [
-  { path: "/buy-airtime", label: "Airtime", icon: Phone },
-  { path: "/buy-data", label: "Data", icon: Wifi },
-  { path: "/cable-tv", label: "Cable", icon: Tv },
-  { path: "/electricity", label: "Electricity", icon: Plug },
-  { path: "/airtime-to-cash", label: "Airtime cash", icon: Banknote },
+export type ServiceTab = {
+  path: string;
+  label: string;
+  // Compact label for the horizontal tab strip, where space is tight.
+  short: string;
+  icon: LucideIcon;
+  description: string;
+  // Tailwind classes for the icon chip (bg + text colour).
+  accent: string;
+};
+
+// Single source of truth for the services under the "Services" section —
+// consumed by the horizontal ServiceTabs strip, the /services hub grid, and
+// the mobile services bottom sheet, so they never drift out of sync.
+export const serviceTabs: ServiceTab[] = [
+  {
+    path: "/buy-airtime",
+    label: "Airtime",
+    short: "Airtime",
+    icon: Phone,
+    description: "Top up any network",
+    accent: "bg-blue-50 text-blue-600",
+  },
+  {
+    path: "/buy-data",
+    label: "Data",
+    short: "Data",
+    icon: Wifi,
+    description: "Bundles for all networks",
+    accent: "bg-indigo-50 text-indigo-600",
+  },
+  {
+    path: "/cable-tv",
+    label: "Cable TV",
+    short: "Cable",
+    icon: Tv,
+    description: "DSTV, GOtv, Startimes",
+    accent: "bg-violet-50 text-violet-600",
+  },
+  {
+    path: "/electricity",
+    label: "Electricity",
+    short: "Power",
+    icon: Plug,
+    description: "All DISCOs supported",
+    accent: "bg-amber-50 text-amber-600",
+  },
+  {
+    path: "/airtime-to-cash",
+    label: "Airtime to Cash",
+    short: "Airtime cash",
+    icon: Banknote,
+    description: "Convert airtime to naira",
+    accent: "bg-emerald-50 text-emerald-600",
+  },
 ];
 
 export function ServiceTabs() {
@@ -26,7 +75,7 @@ export function ServiceTabs() {
             }
           >
             <tab.icon className="h-3.5 w-3.5" />
-            {tab.label}
+            {tab.short}
           </NavLink>
         ))}
       </div>
