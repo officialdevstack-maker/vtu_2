@@ -72,12 +72,18 @@ export default function AffiliateMessagesPage() {
         filters.wallet_balance_min = Number(walletMinFilter);
       if (useFilters && walletMaxFilter.trim())
         filters.wallet_balance_max = Number(walletMaxFilter);
-      if (useFilters && signedUpWithinDays.trim()) filters.signed_up_within_days = Number(signedUpWithinDays);
-      if (useFilters && txCountMin.trim()) filters.transaction_count_min = Number(txCountMin);
-      if (useFilters && txCountMax.trim()) filters.transaction_count_max = Number(txCountMax);
-      if (useFilters && txAmountMin.trim()) filters.transaction_amount_min = Number(txAmountMin);
-      if (useFilters && txAmountMax.trim()) filters.transaction_amount_max = Number(txAmountMax);
-      if (useFilters && referralCountMin.trim()) filters.referral_count_min = Number(referralCountMin);
+      if (useFilters && signedUpWithinDays.trim())
+        filters.signed_up_within_days = Number(signedUpWithinDays);
+      if (useFilters && txCountMin.trim())
+        filters.transaction_count_min = Number(txCountMin);
+      if (useFilters && txCountMax.trim())
+        filters.transaction_count_max = Number(txCountMax);
+      if (useFilters && txAmountMin.trim())
+        filters.transaction_amount_min = Number(txAmountMin);
+      if (useFilters && txAmountMax.trim())
+        filters.transaction_amount_max = Number(txAmountMax);
+      if (useFilters && referralCountMin.trim())
+        filters.referral_count_min = Number(referralCountMin);
       const c = await childBroadcastService.countEmailable(
         id,
         Object.keys(filters).length ? filters : undefined,
@@ -115,12 +121,18 @@ export default function AffiliateMessagesPage() {
         filters.wallet_balance_min = Number(walletMinFilter);
       if (filtersOpen && walletMaxFilter.trim())
         filters.wallet_balance_max = Number(walletMaxFilter);
-      if (filtersOpen && signedUpWithinDays.trim()) filters.signed_up_within_days = Number(signedUpWithinDays);
-      if (filtersOpen && txCountMin.trim()) filters.transaction_count_min = Number(txCountMin);
-      if (filtersOpen && txCountMax.trim()) filters.transaction_count_max = Number(txCountMax);
-      if (filtersOpen && txAmountMin.trim()) filters.transaction_amount_min = Number(txAmountMin);
-      if (filtersOpen && txAmountMax.trim()) filters.transaction_amount_max = Number(txAmountMax);
-      if (filtersOpen && referralCountMin.trim()) filters.referral_count_min = Number(referralCountMin);
+      if (filtersOpen && signedUpWithinDays.trim())
+        filters.signed_up_within_days = Number(signedUpWithinDays);
+      if (filtersOpen && txCountMin.trim())
+        filters.transaction_count_min = Number(txCountMin);
+      if (filtersOpen && txCountMax.trim())
+        filters.transaction_count_max = Number(txCountMax);
+      if (filtersOpen && txAmountMin.trim())
+        filters.transaction_amount_min = Number(txAmountMin);
+      if (filtersOpen && txAmountMax.trim())
+        filters.transaction_amount_max = Number(txAmountMax);
+      if (filtersOpen && referralCountMin.trim())
+        filters.referral_count_min = Number(referralCountMin);
       const notified = await childBroadcastService.emailAll(
         id,
         subject.trim(),
@@ -224,32 +236,74 @@ export default function AffiliateMessagesPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] text-slate-600 mb-1">Signed up within (days)</label>
-                      <input value={signedUpWithinDays} onChange={(e) => setSignedUpWithinDays(e.target.value)} className={inputCls} placeholder="e.g. 30" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Signed up within (days)
+                      </label>
+                      <input
+                        value={signedUpWithinDays}
+                        onChange={(e) => setSignedUpWithinDays(e.target.value)}
+                        className={inputCls}
+                        placeholder="e.g. 30"
+                      />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-slate-600 mb-1">Referral count min</label>
-                      <input value={referralCountMin} onChange={(e) => setReferralCountMin(e.target.value)} className={inputCls} placeholder="e.g. 1" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Referral count min
+                      </label>
+                      <input
+                        value={referralCountMin}
+                        onChange={(e) => setReferralCountMin(e.target.value)}
+                        className={inputCls}
+                        placeholder="e.g. 1"
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] text-slate-600 mb-1">Transaction count min</label>
-                      <input value={txCountMin} onChange={(e) => setTxCountMin(e.target.value)} className={inputCls} placeholder="e.g. 1" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Transaction count min
+                      </label>
+                      <input
+                        value={txCountMin}
+                        onChange={(e) => setTxCountMin(e.target.value)}
+                        className={inputCls}
+                        placeholder="e.g. 1"
+                      />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-slate-600 mb-1">Transaction count max</label>
-                      <input value={txCountMax} onChange={(e) => setTxCountMax(e.target.value)} className={inputCls} placeholder="" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Transaction count max
+                      </label>
+                      <input
+                        value={txCountMax}
+                        onChange={(e) => setTxCountMax(e.target.value)}
+                        className={inputCls}
+                        placeholder=""
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] text-slate-600 mb-1">Transaction amount min</label>
-                      <input value={txAmountMin} onChange={(e) => setTxAmountMin(e.target.value)} className={inputCls} placeholder="e.g. 1000" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Transaction amount min
+                      </label>
+                      <input
+                        value={txAmountMin}
+                        onChange={(e) => setTxAmountMin(e.target.value)}
+                        className={inputCls}
+                        placeholder="e.g. 1000"
+                      />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-slate-600 mb-1">Transaction amount max</label>
-                      <input value={txAmountMax} onChange={(e) => setTxAmountMax(e.target.value)} className={inputCls} placeholder="" />
+                      <label className="block text-[11px] text-slate-600 mb-1">
+                        Transaction amount max
+                      </label>
+                      <input
+                        value={txAmountMax}
+                        onChange={(e) => setTxAmountMax(e.target.value)}
+                        className={inputCls}
+                        placeholder=""
+                      />
                     </div>
                   </div>
                   <div className="flex gap-2">
