@@ -489,7 +489,7 @@ export function BulkEmailModal({
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Message <span className="text-red-400">*</span></label>
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={6} className={inputCls} />
-            <p className="text-[11px] text-slate-400 mt-1">Placeholders like <code className="font-mono">{{"{{ user.username }}"}}</code> are filled per recipient.</p>
+            <p className="text-[11px] text-slate-400 mt-1">Placeholders like <code className="font-mono">{"{{ user.username }}"}</code> are filled per recipient.</p>
           </div>
 
           <div className="flex gap-3 pt-1">
