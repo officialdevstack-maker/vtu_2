@@ -502,6 +502,15 @@ const MessageBubble = ({
         }`}
       >
         {isUser ? message.content : <Markdown text={message.content ?? ""} />}
+        {message.created_at && (
+          <div
+            className={`mt-1 text-[11px] ${
+              isUser ? "text-slate-200 text-right" : "text-slate-400 text-left"
+            }`}
+          >
+            {new Date(message.created_at).toLocaleString()}
+          </div>
+        )}
       </div>
     </div>
   );
