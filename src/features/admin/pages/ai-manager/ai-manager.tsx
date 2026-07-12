@@ -67,7 +67,9 @@ const Markdown = ({ text }: { text: string }) => {
                 <li
                   key={j}
                   className="flex gap-1.5"
-                  style={{ paddingLeft: `${(line.match(/^\s*/)?.[0].length ?? 0) * 0.4}rem` }}
+                  style={{
+                    paddingLeft: `${(line.match(/^\s*/)?.[0].length ?? 0) * 0.4}rem`,
+                  }}
                 >
                   <span className="shrink-0 text-slate-400">
                     {marker === "-" ? "•" : marker}
@@ -273,7 +275,9 @@ const AiManagerPage = () => {
               <div
                 key={c.id}
                 className={`group mb-1 flex items-center rounded-xl border border-slate-100 bg-white shadow-sm transition-colors ${
-                  activeId === c.id ? "border-[#111827]/30 bg-[#111827]/5" : "hover:border-slate-200"
+                  activeId === c.id
+                    ? "border-[#111827]/30 bg-[#111827]/5"
+                    : "hover:border-slate-200"
                 }`}
               >
                 <button
@@ -418,8 +422,8 @@ const AiManagerPage = () => {
             </button>
           </form>
           <p className="mt-2 px-1 text-[11px] text-slate-400">
-            Actions that change data need approval. Reply "approve",
-            "approve #ID", or use the buttons to run one.
+            Actions that change data need approval. Reply "approve", "approve
+            #ID", or use the buttons to run one.
           </p>
         </div>
       </section>
@@ -585,9 +589,7 @@ const ArgList = ({ args }: { args: Record<string, unknown> }) => {
         <div key={key} className="contents">
           <dt className="text-slate-400">{key}</dt>
           <dd className="truncate text-slate-600">
-            {typeof value === "object"
-              ? JSON.stringify(value)
-              : String(value)}
+            {typeof value === "object" ? JSON.stringify(value) : String(value)}
           </dd>
         </div>
       ))}
