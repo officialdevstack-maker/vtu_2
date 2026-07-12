@@ -26,6 +26,7 @@ import {
   type DataPlan,
   type PurchaseResult,
 } from "../services/customerService";
+import { ServiceTabs } from "../components/service-tabs";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -229,6 +230,8 @@ export default function BuyDataPage() {
 
   return (
     <PurchaseShell>
+      <ServiceTabs />
+
       <ServiceHeader
         icon={Wifi}
         iconBg="bg-[#111827]/10"

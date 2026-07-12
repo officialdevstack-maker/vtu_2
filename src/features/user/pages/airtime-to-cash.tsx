@@ -11,6 +11,7 @@ import {
 import {
   customerService, type AirtimeToCashRequestItem,
 } from "../services/customerService";
+import { ServiceTabs } from "../components/service-tabs";
 
 const quickAmounts = [500, 1000, 2000, 5000, 10000];
 
@@ -170,6 +171,8 @@ export default function AirtimeToCashPage() {
 
   return (
     <div className="space-y-5">
+      <ServiceTabs />
+
       <PurchaseShell>
         <ServiceHeader
           icon={Banknote}

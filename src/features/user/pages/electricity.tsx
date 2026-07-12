@@ -11,6 +11,7 @@ import {
   ConfirmActions, PinField, Card, Button, inputCls, selectCls,
 } from "../components/shared-ui";
 import { customerService, generateTxRef, type PurchaseResult } from "../services/customerService";
+import { ServiceTabs } from "../components/service-tabs";
 
 const quickAmounts = [1000, 2000, 3000, 5000, 10000, 20000];
 
@@ -191,6 +192,8 @@ export default function ElectricityPage() {
 
   return (
     <PurchaseShell>
+      <ServiceTabs />
+
       <ServiceHeader icon={Plug} iconBg="bg-amber-50" iconColor="text-amber-600" title="Electricity" subtitle="Prepaid & postpaid meter recharge" />
 
       {step === "form" && (

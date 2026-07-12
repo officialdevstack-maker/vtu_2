@@ -9,11 +9,20 @@ import { useLocation } from "react-router-dom";
 
 const mobileNavItems = [
   { path: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { path: "/buy-airtime", icon: Zap, label: "Services" },
+  { path: "/services", icon: Zap, label: "Services" },
   { path: "/transactions", icon: Receipt, label: "History" },
   { path: "/wallet", icon: Wallet, label: "Wallet" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
+
+const servicePaths = new Set([
+  "/services",
+  "/buy-airtime",
+  "/buy-data",
+  "/cable-tv",
+  "/electricity",
+  "/airtime-to-cash",
+]);
 
 const SIDEBAR_COLLAPSED_KEY = "vendify-sidebar-collapsed";
 
@@ -70,7 +79,9 @@ const UserLayout = () => {
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden">
         {mobileNavItems.map((item) => {
-          const active = location.pathname === item.path;
+          const active =
+            location.pathname === item.path ||
+            (item.path === "/services" && servicePaths.has(location.pathname));
           return (
             <button
               key={item.path}
