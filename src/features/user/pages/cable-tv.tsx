@@ -190,10 +190,11 @@ export default function CableTVPage() {
   }
 
   return (
-    <PurchaseShell>
+    <div className="mx-auto w-full max-w-xl space-y-3">
       <ServiceTabs />
 
-      <ServiceHeader icon={Tv} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Cable TV" subtitle="DStv, GOtv & Startimes subscriptions" />
+      <PurchaseShell>
+        <ServiceHeader icon={Tv} iconBg="bg-[#111827]/10" iconColor="text-[#111827]" title="Cable TV" subtitle="DStv, GOtv & Startimes subscriptions" />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -333,6 +334,7 @@ export default function CableTVPage() {
           />
         </div>
       )}
-    </PurchaseShell>
+      </PurchaseShell>
+    </div>
   );
 }

@@ -221,16 +221,17 @@ export default function BuyAirtimePage() {
   }
 
   return (
-    <PurchaseShell>
+    <div className="mx-auto w-full max-w-xl space-y-3">
       <ServiceTabs />
 
-      <ServiceHeader
-        icon={Phone}
-        iconBg="bg-[#111827]/10"
-        iconColor="text-[#111827]"
-        title="Buy airtime"
-        subtitle="Top up any Nigerian network"
-      />
+      <PurchaseShell>
+        <ServiceHeader
+          icon={Phone}
+          iconBg="bg-[#111827]/10"
+          iconColor="text-[#111827]"
+          title="Buy airtime"
+          subtitle="Top up any Nigerian network"
+        />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -429,6 +430,7 @@ export default function BuyAirtimePage() {
           />
         </div>
       )}
-    </PurchaseShell>
+      </PurchaseShell>
+    </div>
   );
 }

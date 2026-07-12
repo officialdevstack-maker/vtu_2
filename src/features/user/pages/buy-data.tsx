@@ -229,16 +229,17 @@ export default function BuyDataPage() {
   }
 
   return (
-    <PurchaseShell>
+    <div className="mx-auto w-full max-w-xl space-y-3">
       <ServiceTabs />
 
-      <ServiceHeader
-        icon={Wifi}
-        iconBg="bg-[#111827]/10"
-        iconColor="text-[#111827]"
-        title="Buy data"
-        subtitle="Data bundles for every network"
-      />
+      <PurchaseShell>
+        <ServiceHeader
+          icon={Wifi}
+          iconBg="bg-[#111827]/10"
+          iconColor="text-[#111827]"
+          title="Buy data"
+          subtitle="Data bundles for every network"
+        />
 
       {step === "form" && (
         <div className="p-5 space-y-4">
@@ -430,6 +431,7 @@ export default function BuyDataPage() {
           />
         </div>
       )}
-    </PurchaseShell>
+      </PurchaseShell>
+    </div>
   );
 }
