@@ -313,6 +313,21 @@ export type DataPlanPayload = {
 
 const DATA_PLAN = "/table/data_plans";
 
+// The bulk endpoint processes every item inside a single DB transaction, so
+// a few hundred rows in one request can hit request/gateway timeouts — and
+// because it's all-or-nothing, a timeout means nothing changes at all. Send
+// large selections in sequential chunks instead so each request stays small
+// and progress is committed batch by batch.
+const BULK_CHUNK_SIZE = 100;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
 export const dataPlanService = {
   getAll: (): Promise<DataPlan[]> =>
     apiClient.get<ApiEnvelope<DataPlan[]>>(DATA_PLAN).then((r) => r.data.data),
@@ -343,16 +358,35 @@ export const dataPlanService = {
       .then((r) => r.data.data),
 
   // AdminController::universalBulkDelete expects { ids: [...] }.
-  bulkRemove: (ids: (string | number)[]): Promise<{ deleted: number }> =>
-    apiClient
-      .delete<ApiEnvelope<{ deleted: number }>>(DATA_PLAN, { data: { ids } })
-      .then((r) => r.data.data),
+  // Chunked so a large selection doesn't hit a timeout on the single-
+  // transaction endpoint.
+  bulkRemove: async (ids: (string | number)[]): Promise<{ deleted: number }> => {
+    let deleted = 0;
+    for (const batch of chunk(ids, BULK_CHUNK_SIZE)) {
+      const r = await apiClient.delete<ApiEnvelope<{ deleted: number }>>(
+        DATA_PLAN,
+        { data: { ids: batch } },
+      );
+      deleted += r.data.data?.deleted ?? batch.length;
+    }
+    return { deleted };
+  },
 
   // AdminController::universalBulkCreateOrUpdate expects { items: [{id, ...changes}] }.
-  bulkSetActive: (ids: (string | number)[], active: boolean): Promise<DataPlan[]> =>
-    apiClient
-      .put<ApiEnvelope<DataPlan[]>>(`${DATA_PLAN}/bulk`, {
-        items: ids.map((id) => ({ id, active })),
-      })
-      .then((r) => r.data.data),
+  // Chunked so activating/deactivating hundreds of plans is committed in
+  // batches rather than one all-or-nothing request that can time out.
+  bulkSetActive: async (
+    ids: (string | number)[],
+    active: boolean,
+  ): Promise<DataPlan[]> => {
+    const updated: DataPlan[] = [];
+    for (const batch of chunk(ids, BULK_CHUNK_SIZE)) {
+      const r = await apiClient.put<ApiEnvelope<DataPlan[]>>(
+        `${DATA_PLAN}/bulk`,
+        { items: batch.map((id) => ({ id, active })) },
+      );
+      if (Array.isArray(r.data.data)) updated.push(...r.data.data);
+    }
+    return updated;
+  },
 };

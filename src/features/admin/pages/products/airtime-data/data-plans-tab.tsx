@@ -222,27 +222,45 @@ export function DataPlansTab() {
   };
 
   const handleBulkSetActive = async (active: boolean) => {
+    const ids = Array.from(selectedIds);
     setBulkBusy(true);
     try {
-      await dataPlanService.bulkSetActive(Array.from(selectedIds), active);
+      await dataPlanService.bulkSetActive(ids, active);
+      const idSet = new Set(ids);
       setPlans((prev) =>
-        prev.map((p) => (selectedIds.has(toId(p.id)) ? { ...p, active } : p)),
+        prev.map((p) => (idSet.has(toId(p.id)) ? { ...p, active } : p)),
       );
       setSelectedIds(new Set());
+    } catch (err) {
+      // A chunk may have partially succeeded before failing, so pull the
+      // real server state back instead of leaving the UI guessing.
+      window.alert(
+        `Could not ${active ? "activate" : "deactivate"} all ${ids.length} selected plan(s). Some may have been updated — the list has been refreshed. Please retry.`,
+      );
+      console.error("Bulk set active failed", err);
+      load();
     } finally {
       setBulkBusy(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedCount} selected data plan(s)? This cannot be undone.`)) {
+    const ids = Array.from(selectedIds);
+    if (!window.confirm(`Delete ${ids.length} selected data plan(s)? This cannot be undone.`)) {
       return;
     }
     setBulkBusy(true);
     try {
-      await dataPlanService.bulkRemove(Array.from(selectedIds));
-      setPlans((prev) => prev.filter((p) => !selectedIds.has(toId(p.id))));
+      await dataPlanService.bulkRemove(ids);
+      const idSet = new Set(ids);
+      setPlans((prev) => prev.filter((p) => !idSet.has(toId(p.id))));
       setSelectedIds(new Set());
+    } catch (err) {
+      window.alert(
+        `Could not delete all ${ids.length} selected plan(s). Some may have been deleted — the list has been refreshed. Please retry.`,
+      );
+      console.error("Bulk delete failed", err);
+      load();
     } finally {
       setBulkBusy(false);
     }
