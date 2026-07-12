@@ -93,6 +93,7 @@ const Markdown = ({ text }: { text: string }) => {
 
 const STATUS_STYLES: Record<AiProposal["status"], string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",
+  executing: "bg-blue-50 text-blue-700 border-blue-200",
   executed: "bg-emerald-50 text-emerald-700 border-emerald-200",
   failed: "bg-red-50 text-red-700 border-red-200",
   rejected: "bg-slate-100 text-slate-500 border-slate-200",
@@ -216,7 +217,7 @@ const AiManagerPage = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] gap-4">
+    <div className="flex h-[calc(100vh-7.5rem)] min-h-[34rem] gap-4">
       {/* Conversation list */}
       <aside className="hidden w-64 shrink-0 flex-col rounded-2xl border border-slate-100 bg-white md:flex">
         <div className="border-b border-slate-100 p-3">
@@ -278,6 +279,13 @@ const AiManagerPage = () => {
               Monitors the site &amp; proposes admin actions for your approval
             </p>
           </div>
+          <button
+            type="button"
+            onClick={startNewChat}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 md:hidden"
+          >
+            <Plus className="h-3.5 w-3.5" /> New
+          </button>
         </header>
 
         <div

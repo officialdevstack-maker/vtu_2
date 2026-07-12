@@ -14,6 +14,7 @@ export type AiMessage = {
 
 export type AiProposalStatus =
   | "pending"
+  | "executing"
   | "executed"
   | "failed"
   | "rejected";
