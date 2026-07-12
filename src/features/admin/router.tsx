@@ -16,70 +16,86 @@ export const adminRouter: RouteObject[] = [
       {
         path: "help",
         lazy: async () => {
-          const { default: Component } = await import("./pages/help/getting-started");
+          const { default: Component } =
+            await import("./pages/help/getting-started");
           return { Component };
         },
       },
       {
         path: "ai-manager",
-        lazy: async () => {
-          const { default: Component } = await import("./pages/ai-manager/ai-manager");
-          return { Component };
-        },
+        children: [
+          {
+            index: true,
+            lazy: async () => {
+              const { default: Component } =
+                await import("./pages/ai-manager/ai-manager");
+              return { Component };
+            },
+          },
+          {
+            path: "chat/:conversationId",
+            lazy: async () => {
+              const { default: Component } =
+                await import("./pages/ai-manager/ai-manager");
+              return { Component };
+            },
+          },
+        ],
       },
       // APIs
       {
         path: "customers/users",
         lazy: async () => {
-          const { default: Component } = await import("./pages/customers/users");
+          const { default: Component } =
+            await import("./pages/customers/users");
           return { Component };
         },
       },
       {
         path: "customers/users/new",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/customers/customer-form"
-          );
+          const { default: Component } =
+            await import("./pages/customers/customer-form");
           return { Component };
         },
       },
       {
         path: "customers/users/:id",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/customers/customer-detail"
-          );
+          const { default: Component } =
+            await import("./pages/customers/customer-detail");
           return { Component };
         },
       },
       {
         path: "customers/users/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/customers/customer-form"
-          );
+          const { default: Component } =
+            await import("./pages/customers/customer-form");
           return { Component };
         },
       },
       {
         path: "customers/roles",
         lazy: async () => {
-          const { default: Component } = await import("./pages/customers/roles");
+          const { default: Component } =
+            await import("./pages/customers/roles");
           return { Component };
         },
       },
       {
         path: "customers/roles/new",
         lazy: async () => {
-          const { default: Component } = await import("./pages/customers/role-form");
+          const { default: Component } =
+            await import("./pages/customers/role-form");
           return { Component };
         },
       },
       {
         path: "customers/roles/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/customers/role-form");
+          const { default: Component } =
+            await import("./pages/customers/role-form");
           return { Component };
         },
       },
@@ -93,30 +109,32 @@ export const adminRouter: RouteObject[] = [
       {
         path: "apis/provider/new",
         lazy: async () => {
-          const { default: Component } = await import("./pages/apis/provider-form");
+          const { default: Component } =
+            await import("./pages/apis/provider-form");
           return { Component };
         },
       },
       {
         path: "apis/provider/:id",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/provider-detail"
-          );
+          const { default: Component } =
+            await import("./pages/apis/provider-detail");
           return { Component };
         },
       },
       {
         path: "apis/provider/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/apis/provider-form");
+          const { default: Component } =
+            await import("./pages/apis/provider-form");
           return { Component };
         },
       },
       {
         path: "affiliates",
         lazy: async () => {
-          const { default: Component } = await import("./pages/affiliates/affiliate");
+          const { default: Component } =
+            await import("./pages/affiliates/affiliate");
           return { Component };
         },
       },
@@ -125,49 +143,56 @@ export const adminRouter: RouteObject[] = [
         // nav + instance context) with each concern as a nested page.
         path: "affiliates/:id",
         lazy: async () => {
-          const { default: Component } = await import("./pages/affiliates/affiliate-layout");
+          const { default: Component } =
+            await import("./pages/affiliates/affiliate-layout");
           return { Component };
         },
         children: [
           {
             index: true,
             lazy: async () => {
-              const { default: Component } = await import("./pages/affiliates/overview");
+              const { default: Component } =
+                await import("./pages/affiliates/overview");
               return { Component };
             },
           },
           {
             path: "customers",
             lazy: async () => {
-              const { default: Component } = await import("./pages/affiliates/customers");
+              const { default: Component } =
+                await import("./pages/affiliates/customers");
               return { Component };
             },
           },
           {
             path: "transactions",
             lazy: async () => {
-              const { default: Component } = await import("./pages/affiliates/transactions");
+              const { default: Component } =
+                await import("./pages/affiliates/transactions");
               return { Component };
             },
           },
           {
             path: "messages",
             lazy: async () => {
-              const { default: Component } = await import("./pages/affiliates/messages");
+              const { default: Component } =
+                await import("./pages/affiliates/messages");
               return { Component };
             },
           },
           {
             path: "controls",
             lazy: async () => {
-              const { default: Component } = await import("./pages/affiliates/controls");
+              const { default: Component } =
+                await import("./pages/affiliates/controls");
               return { Component };
             },
           },
           {
             path: "directives",
             lazy: async () => {
-              const { default: Component } = await import("./pages/affiliates/directives");
+              const { default: Component } =
+                await import("./pages/affiliates/directives");
               return { Component };
             },
           },
@@ -176,7 +201,8 @@ export const adminRouter: RouteObject[] = [
       {
         path: "affiliates/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/affiliates/affiliate-form");
+          const { default: Component } =
+            await import("./pages/affiliates/affiliate-form");
           return { Component };
         },
       },
@@ -190,63 +216,54 @@ export const adminRouter: RouteObject[] = [
       {
         path: "apis/gateway/new",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/gateway-form"
-          );
+          const { default: Component } =
+            await import("./pages/apis/gateway-form");
           return { Component };
         },
       },
       {
         path: "apis/gateway/:id",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/gateway-detail"
-          );
+          const { default: Component } =
+            await import("./pages/apis/gateway-detail");
           return { Component };
         },
       },
       {
         path: "apis/gateway/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/gateway-form"
-          );
+          const { default: Component } =
+            await import("./pages/apis/gateway-form");
           return { Component };
         },
       },
       {
         path: "apis/routing",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/service-routing"
-          );
+          const { default: Component } =
+            await import("./pages/apis/service-routing");
           return { Component };
         },
       },
       {
         path: "apis/sim-vending",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/sim-vending"
-          );
+          const { default: Component } =
+            await import("./pages/apis/sim-vending");
           return { Component };
         },
       },
       {
         path: "apis/sim-vending/devices/:deviceId/sims/new",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/sim-form"
-          );
+          const { default: Component } = await import("./pages/apis/sim-form");
           return { Component };
         },
       },
       {
         path: "apis/sim-vending/devices/:deviceId/sims/:simId/edit",
         lazy: async () => {
-          const { default: Component } = await import(
-            "./pages/apis/sim-form"
-          );
+          const { default: Component } = await import("./pages/apis/sim-form");
           return { Component };
         },
       },
@@ -302,21 +319,24 @@ export const adminRouter: RouteObject[] = [
       {
         path: "products/cable",
         lazy: async () => {
-          const { default: Component } = await import("./pages/products/cable/index");
+          const { default: Component } =
+            await import("./pages/products/cable/index");
           return { Component };
         },
       },
       {
         path: "products/cable/new",
         lazy: async () => {
-          const { default: Component } = await import("./pages/products/cable/cable-plan-form");
+          const { default: Component } =
+            await import("./pages/products/cable/cable-plan-form");
           return { Component };
         },
       },
       {
         path: "products/cable/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/products/cable/cable-plan-form");
+          const { default: Component } =
+            await import("./pages/products/cable/cable-plan-form");
           return { Component };
         },
       },
@@ -330,14 +350,16 @@ export const adminRouter: RouteObject[] = [
       {
         path: "products/bill/new",
         lazy: async () => {
-          const { default: Component } = await import("./pages/products/bill-plan-form");
+          const { default: Component } =
+            await import("./pages/products/bill-plan-form");
           return { Component };
         },
       },
       {
         path: "products/bill/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/products/bill-plan-form");
+          const { default: Component } =
+            await import("./pages/products/bill-plan-form");
           return { Component };
         },
       },
@@ -351,7 +373,8 @@ export const adminRouter: RouteObject[] = [
       {
         path: "airtime-to-cash",
         lazy: async () => {
-          const { default: Component } = await import("./pages/airtime-to-cash/index");
+          const { default: Component } =
+            await import("./pages/airtime-to-cash/index");
           return { Component };
         },
       },
@@ -359,7 +382,8 @@ export const adminRouter: RouteObject[] = [
       {
         path: "wallet-withdrawals",
         lazy: async () => {
-          const { default: Component } = await import("./pages/wallet-withdrawals/index");
+          const { default: Component } =
+            await import("./pages/wallet-withdrawals/index");
           return { Component };
         },
       },
@@ -374,28 +398,32 @@ export const adminRouter: RouteObject[] = [
       {
         path: "growth/discounts",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/discounts");
+          const { default: Component } =
+            await import("./pages/growth/discounts");
           return { Component };
         },
       },
       {
         path: "growth/discounts/new",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/discount-form");
+          const { default: Component } =
+            await import("./pages/growth/discount-form");
           return { Component };
         },
       },
       {
         path: "growth/discounts/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/discount-form");
+          const { default: Component } =
+            await import("./pages/growth/discount-form");
           return { Component };
         },
       },
       {
         path: "growth/cashback",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/cashback");
+          const { default: Component } =
+            await import("./pages/growth/cashback");
           return { Component };
         },
       },
@@ -409,14 +437,16 @@ export const adminRouter: RouteObject[] = [
       {
         path: "growth/events/new",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/event-form");
+          const { default: Component } =
+            await import("./pages/growth/event-form");
           return { Component };
         },
       },
       {
         path: "growth/events/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/event-form");
+          const { default: Component } =
+            await import("./pages/growth/event-form");
           return { Component };
         },
       },
@@ -430,14 +460,16 @@ export const adminRouter: RouteObject[] = [
       {
         path: "growth/promos/new",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/promo-form");
+          const { default: Component } =
+            await import("./pages/growth/promo-form");
           return { Component };
         },
       },
       {
         path: "growth/promos/:id/edit",
         lazy: async () => {
-          const { default: Component } = await import("./pages/growth/promo-form");
+          const { default: Component } =
+            await import("./pages/growth/promo-form");
           return { Component };
         },
       },
@@ -492,9 +524,8 @@ export const adminRouter: RouteObject[] = [
       {
         path: "account",
         lazy: async () => {
-          const { default: Component } = await import(
-            "../account/pages/AccountSettings"
-          );
+          const { default: Component } =
+            await import("../account/pages/AccountSettings");
           return { Component };
         },
       },

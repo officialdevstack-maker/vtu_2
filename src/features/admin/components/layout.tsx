@@ -70,7 +70,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     title: "Core",
     items: [
       { label: "Dashboard", path: "/admin", icon: LayoutGrid },
-      { label: "AI Manager", path: "/admin/ai-manager", icon: Bot },
+      { label: "AI Manager", path: "/admin/ai-manager/chat/new", icon: Bot },
       { label: "How it works", path: "/admin/help", icon: HelpCircle },
     ],
   },
@@ -441,7 +441,7 @@ const Layout = () => {
 
               <div className="ml-auto flex items-center gap-1 sm:gap-2">
                 <button
-                  onClick={() => navigate("/admin/ai-manager")}
+                  onClick={() => navigate("/admin/ai-manager/chat/new")}
                   className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#111827] to-slate-600 text-white transition-transform hover:scale-105"
                   aria-label={
                     aiAlertCount > 0

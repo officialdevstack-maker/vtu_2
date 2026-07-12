@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bot,
@@ -108,8 +108,11 @@ const SUGGESTIONS = [
 
 const AiManagerPage = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { conversationId } = useParams<{ conversationId?: string }>();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
 
   const conversationsQuery = useQuery({
@@ -132,14 +135,23 @@ const AiManagerPage = () => {
 
   const sendMutation = useMutation({
     mutationFn: async (message: string) => {
+      const content = message.trim();
       if (activeId === null) {
-        return aiManagerService.createConversation(message);
+        return aiManagerService.createConversation(
+          content.length > 0 ? content : undefined,
+        );
       }
-      return aiManagerService.sendMessage(activeId, message);
+      return aiManagerService.sendMessage(activeId, content);
     },
     onSuccess: (data) => {
       setActiveId(data.id);
       refreshConversation(data);
+      if (conversationId === "new") {
+        navigate(`/admin/ai-manager/chat/${data.id}`, { replace: true });
+      }
+    },
+    onSettled: () => {
+      setIsCreating(false);
     },
   });
 
@@ -180,6 +192,31 @@ const AiManagerPage = () => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
   }, [active?.messages.length, sendMutation.isPending]);
 
+  useEffect(() => {
+    if (window.location.pathname === "/admin/ai-manager") {
+      navigate("/admin/ai-manager/chat/new", { replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!conversationId || conversationId === "new") {
+      setActiveId(null);
+      return;
+    }
+
+    const id = Number(conversationId);
+    if (!Number.isNaN(id)) {
+      setActiveId(id);
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (conversationId === "new" && !isCreating && !sendMutation.isPending) {
+      setIsCreating(true);
+      sendMutation.mutate("");
+    }
+  }, [conversationId, isCreating, sendMutation]);
+
   // Arriving via "Ask AI to fix" on a monitoring alert (?ask=...): start a
   // fresh conversation with that message immediately, then drop the param so
   // refreshes/back-navigation don't re-send it.
@@ -214,6 +251,7 @@ const AiManagerPage = () => {
     setActiveId(null);
     setDraft("");
     sendMutation.reset();
+    navigate("/admin/ai-manager/chat/new");
   };
 
   return (
@@ -234,17 +272,22 @@ const AiManagerPage = () => {
             conversationsQuery.data.map((c) => (
               <div
                 key={c.id}
-                className={`group mb-1 flex items-center rounded-xl transition-colors ${
-                  activeId === c.id ? "bg-[#111827]/10" : "hover:bg-slate-50"
+                className={`group mb-1 flex items-center rounded-xl border border-slate-100 bg-white shadow-sm transition-colors ${
+                  activeId === c.id ? "border-[#111827]/30 bg-[#111827]/5" : "hover:border-slate-200"
                 }`}
               >
                 <button
                   type="button"
-                  onClick={() => setActiveId(c.id)}
-                  className="min-w-0 flex-1 px-3 py-2.5 text-left"
+                  onClick={() => navigate(`/admin/ai-manager/chat/${c.id}`)}
+                  className="min-w-0 flex-1 px-3 py-3 text-left"
                 >
-                  <p className="truncate text-sm font-medium text-slate-700">
+                  <p className="truncate text-sm font-semibold text-slate-800">
                     {c.title ?? "Untitled"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {c.last_activity_at
+                      ? new Date(c.last_activity_at).toLocaleString()
+                      : "No activity yet"}
                   </p>
                 </button>
                 <button

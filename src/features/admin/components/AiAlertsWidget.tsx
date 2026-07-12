@@ -106,7 +106,7 @@ const AiAlertsWidget = () => {
                     // (see the `ask` param handling in ai-manager.tsx) and
                     // starts investigating/proposing the fix.
                     navigate(
-                      `/admin/ai-manager?ask=${encodeURIComponent(
+                      `/admin/ai-manager/chat/new?ask=${encodeURIComponent(
                         `The monitor flagged this — investigate and help me fix it: ${alert.title}`,
                       )}`,
                     );
