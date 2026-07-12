@@ -375,8 +375,8 @@ const AiManagerPage = () => {
             </button>
           </form>
           <p className="mt-2 px-1 text-[11px] text-slate-400">
-            Actions that change data are never executed automatically — the
-            assistant proposes them and you approve each one.
+            Actions that change data need approval. Reply "approve",
+            "approve #ID", or use the buttons to run one.
           </p>
         </div>
       </section>
