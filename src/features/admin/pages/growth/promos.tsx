@@ -60,13 +60,15 @@ export default function PromosPage() {
   };
 
   const productOptions = useMemo(
-    () => Array.from(new Set(promotions.map((p) => p.product))),
+    () => Array.from(new Set(promotions.flatMap((p) => p.products ?? (p.product ? [p.product] : [])))),
     [promotions],
   );
 
-  const filtered = promotions.filter(
-    (p) => !productFilter || p.product === productFilter,
-  );
+  const filtered = promotions.filter((p) => {
+    if (!productFilter) return true;
+    const products = p.products ?? (p.product ? [p.product] : []);
+    return products.includes(productFilter as Promotion["product"]);
+  });
 
   return (
     <div className="space-y-4">
@@ -143,7 +145,7 @@ export default function PromosPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 capitalize">
-                      {promo.target} / {promo.product}
+                      {promo.target} / {(promo.products ?? (promo.product ? [promo.product] : [])).join(", ")}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">
                       {formatValue(promo)}

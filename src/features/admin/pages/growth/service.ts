@@ -25,6 +25,7 @@ export type PromotionApply = "auto" | "code";
 // honored by the backend.
 export type PromotionTarget = string;
 export type PromotionProduct = "airtime" | "data" | "bundle";
+export type PromotionProductSelection = PromotionProduct[];
 export type PromotionType = "percentage" | "fixed" | "bonus_data" | "cashback";
 
 export type PromotionCondition =
@@ -37,7 +38,8 @@ export type Promotion = {
   code: string | null;
   apply: PromotionApply;
   target: PromotionTarget;
-  product: PromotionProduct;
+  product: PromotionProduct | null;
+  products: PromotionProductSelection | null;
   provider: string | null;
   type: PromotionType;
   value: string | number;
@@ -57,7 +59,8 @@ export type PromotionPayload = {
   code?: string | null;
   apply: PromotionApply;
   target: PromotionTarget;
-  product: PromotionProduct;
+  product?: PromotionProduct | null;
+  products?: PromotionProductSelection | null;
   provider?: string | null;
   type: PromotionType;
   value: number;

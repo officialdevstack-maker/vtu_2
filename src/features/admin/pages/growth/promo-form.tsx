@@ -44,7 +44,7 @@ type FormState = {
   applyMode: PromotionApply;
   code: string;
   target: PromotionTarget;
-  product: PromotionProduct;
+  products: PromotionProduct[];
   provider: string;
   type: PromotionType;
   value: string;
@@ -124,7 +124,7 @@ const blankForm = (): FormState => ({
   applyMode: "code",
   code: "",
   target: "both",
-  product: "airtime",
+  products: ["airtime"],
   provider: "",
   type: "percentage",
   value: "",
@@ -146,7 +146,11 @@ function toForm(promo: Promotion): FormState {
     applyMode: promo.apply,
     code: promo.code ?? "",
     target: promo.target,
-    product: promo.product,
+    products: Array.isArray((promo as Promotion & { products?: PromotionProduct[] }).products)
+      ? ((promo as Promotion & { products?: PromotionProduct[] }).products as PromotionProduct[])
+      : promo.product
+        ? [promo.product]
+        : ["airtime"],
     provider: promo.provider ?? "",
     type: promo.type,
     value: String(promo.value ?? ""),
@@ -178,7 +182,8 @@ function toPayload(form: FormState): PromotionPayload {
     apply: form.applyMode,
     code: form.applyMode === "code" ? form.code.trim() : null,
     target: form.target,
-    product: form.product,
+    product: form.products[0] ?? null,
+    products: form.products,
     provider: form.provider.trim() || null,
     type: form.type,
     value: Number(form.value),
@@ -465,18 +470,38 @@ export default function PromoFormPage() {
                 </select>
               </Field>
 
-              <Field label="Product">
-                <select
-                  value={form.product}
-                  onChange={(e) =>
-                    set("product", e.target.value as PromotionProduct)
-                  }
-                  className={selectCls}
-                >
-                  <option value="airtime">Airtime</option>
-                  <option value="data">Data</option>
-                  <option value="bundle">Bundle</option>
-                </select>
+              <Field label="Products">
+                <div className="flex flex-wrap gap-2">
+                  {(["airtime", "data", "bundle"] as PromotionProduct[]).map((product) => {
+                    const checked = form.products.includes(product);
+                    return (
+                      <label
+                        key={product}
+                        className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                          checked
+                            ? "border-[#111827] bg-[#111827] text-white"
+                            : "border-slate-200 bg-white text-slate-600"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            const next = checked
+                              ? form.products.filter((value) => value !== product)
+                              : [...form.products, product];
+                            set("products", next);
+                          }}
+                          className="h-3.5 w-3.5 rounded border-slate-300"
+                        />
+                        <span className="capitalize">{product}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-slate-400">
+                  One promo code can now apply to multiple products.
+                </p>
               </Field>
 
               <Field
