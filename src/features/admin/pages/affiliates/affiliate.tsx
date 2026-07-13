@@ -416,7 +416,7 @@ export default function AffiliatePage() {
           title="Affiliates"
           description="Connected child platforms — view their synced customers/transactions and manage the connection."
           actions={
-            <Button size="sm" onClick={() => setShowGenerateModal(true)}>
+            <Button size="sm" className="w-full sm:w-auto" onClick={() => setShowGenerateModal(true)}>
               <Plus className="w-3.5 h-3.5" />
               Add affiliate
             </Button>
@@ -457,7 +457,7 @@ export default function AffiliatePage() {
               }
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overscroll-x-contain">
               {selected.size > 0 && (
                 <BulkActionBar
                   count={selected.size}
@@ -466,7 +466,7 @@ export default function AffiliatePage() {
                   onClear={() => setSelected(new Set())}
                 />
               )}
-              <table className="w-full text-sm">
+              <table className="min-w-[760px] w-full table-fixed text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="w-10 px-4 py-2.5">
@@ -483,7 +483,7 @@ export default function AffiliatePage() {
                         key={h}
                         className={`px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap ${
                           i === 4 ? "text-center" : "text-left"
-                        }`}
+                        } ${i === 0 ? "w-[24%]" : i === 1 ? "w-[22%]" : i === 4 ? "w-24" : ""}`}
                       >
                         {h}
                       </th>
@@ -506,9 +506,13 @@ export default function AffiliatePage() {
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <span className="font-medium text-slate-900 text-xs">{instance.name}</span>
+                          <span className="block truncate text-xs font-medium text-slate-900" title={instance.name}>
+                            {instance.name}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-500 font-mono">{instance.slug}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                          <span className="block truncate" title={instance.slug}>{instance.slug}</span>
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
                             <StatusBadge

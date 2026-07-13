@@ -262,14 +262,14 @@ export default function AffiliateDirectivesPage() {
   return (
     <>
       <Card>
-        <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-          <div>
+        <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3.5 sm:px-5 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Directives</h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Instructions this affiliate picks up on its next poll (~5 minutes).
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Button variant="secondary" size="sm" onClick={() => void load()}>
               <RefreshCw className="w-3.5 h-3.5" /> Refresh
             </Button>
@@ -293,12 +293,19 @@ export default function AffiliateDirectivesPage() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="overflow-x-auto overscroll-x-contain">
+            <table className="min-w-[860px] w-full table-fixed text-xs">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Type", "Payload", "Status", "Result", "Created", "Acked", ""].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">{h}</th>
+                  {["Type", "Payload", "Status", "Result", "Created", "Acked", ""].map((h, index) => (
+                    <th
+                      key={h}
+                      className={`px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap ${
+                        index === 1 || index === 3 ? "w-48" : index === 6 ? "w-14" : "w-28"
+                      }`}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>

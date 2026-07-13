@@ -509,6 +509,10 @@ export function BulkEmailModal({
 
   const handleSend = async () => {
     if (!subject.trim() || !body.trim()) return;
+    if (customerIds.length === 0) {
+      setError("Select at least one customer before sending.");
+      return;
+    }
     setSending(true);
     setError(null);
     try {
@@ -596,7 +600,7 @@ export function BulkEmailModal({
             <Button
               fullWidth
               loading={sending}
-              disabled={sending}
+              disabled={sending || customerIds.length === 0}
               onClick={handleSend}
             >
               <Send className="w-3.5 h-3.5" /> Send

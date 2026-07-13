@@ -112,7 +112,8 @@ export default function AffiliateTransactionsPage() {
 
   return (
     <Card>
-      <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3 flex-wrap">
+      <div className="border-b border-gray-100 px-4 py-3.5 sm:px-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           Transactions{" "}
           {totalItems > 0 && (
@@ -122,7 +123,7 @@ export default function AffiliateTransactionsPage() {
             </span>
           )}
         </h2>
-        <div className="ml-auto flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -166,6 +167,7 @@ export default function AffiliateTransactionsPage() {
             ))}
           </select>
         </div>
+        </div>
       </div>
 
       {loading ? (
@@ -188,11 +190,11 @@ export default function AffiliateTransactionsPage() {
         />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+          <div className="overflow-x-auto overscroll-x-contain">
+            <table className="min-w-[720px] w-full table-fixed text-xs">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                  <th className="w-36 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
@@ -207,7 +209,7 @@ export default function AffiliateTransactionsPage() {
                         ))}
                     </button>
                   </th>
-                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                  <th className="w-40 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
@@ -222,7 +224,7 @@ export default function AffiliateTransactionsPage() {
                         ))}
                     </button>
                   </th>
-                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                  <th className="w-32 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
@@ -237,7 +239,7 @@ export default function AffiliateTransactionsPage() {
                         ))}
                     </button>
                   </th>
-                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                  <th className="w-32 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
@@ -252,7 +254,7 @@ export default function AffiliateTransactionsPage() {
                         ))}
                     </button>
                   </th>
-                  <th className="px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                  <th className="w-44 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-600"
@@ -272,10 +274,10 @@ export default function AffiliateTransactionsPage() {
               <tbody className="divide-y divide-gray-50">
                 {pageItems.map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-slate-500">
+                    <td className="truncate px-4 py-3 font-mono text-slate-500">
                       {t.external_id}
                     </td>
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="truncate px-4 py-3 text-slate-700">
                       {t.transaction_type ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-slate-700 tabular-nums">
