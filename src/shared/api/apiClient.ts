@@ -43,17 +43,26 @@ export const AUTH_TOKEN_KEY = 'kora-auth-token';
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+
+  const token = window.sessionStorage.getItem(AUTH_TOKEN_KEY);
+
+  // Older builds stored bearer tokens in localStorage. Remove that persistent
+  // copy so browser/tab close really ends the remembered client session.
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+
+  return token;
 };
 
 export const setAuthToken = (token: string | null) => {
   if (typeof window === 'undefined') return;
 
   if (token) {
-    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+    window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
     return;
   }
 
+  window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
   window.localStorage.removeItem(AUTH_TOKEN_KEY);
 };
 

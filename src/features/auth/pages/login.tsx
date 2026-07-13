@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -21,12 +21,28 @@ function resolveDestination(user: User | null, from?: string) {
   return from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
 }
 
+function loginErrorMessage(error: unknown) {
+  const response = (error as {
+    response?: { data?: { message?: string; errors?: Record<string, string[]> } };
+  })?.response;
+  const loginError = response?.data?.errors?.login?.[0];
+
+  return loginError ?? response?.data?.message ?? "Invalid credentials. Please try again.";
+}
+
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
   const { app_name } = useBranding();
+  const from = (location.state as { from?: Location } | null)?.from?.pathname;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(resolveDestination(user, from), { replace: true });
+    }
+  }, [from, isAuthenticated, navigate, user]);
 
   const {
     register,
@@ -40,10 +56,9 @@ const LoginForm = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       const user = await login(data.login, data.password);
-      const from = (location.state as { from?: Location } | null)?.from?.pathname;
       navigate(resolveDestination(user, from), { replace: true });
-    } catch {
-      setError("root", { message: "Invalid credentials. Please try again." });
+    } catch (error) {
+      setError("root", { message: loginErrorMessage(error) });
     }
   };
 
