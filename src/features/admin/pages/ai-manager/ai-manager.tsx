@@ -376,7 +376,7 @@ const AiManagerPage = () => {
           </div>
 
           {/* Chat panel */}
-          <section className="flex min-w-0 flex-col bg-white">
+          <section className="flex min-h-0 min-w-0 flex-col bg-white">
             <header className="border-b border-slate-100 px-4 py-3.5 sm:px-5">
               <div className="flex min-w-0 flex-wrap items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827]/10 text-[#111827]">
@@ -387,7 +387,8 @@ const AiManagerPage = () => {
                     {active?.title ?? "New AI workspace"}
                   </h2>
                   <p className="truncate text-xs text-slate-400">
-                    Read-only tools run immediately. Mutating tools become approval cards.
+                    Read-only tools run immediately. Mutating tools become
+                    approval cards.
                   </p>
                 </div>
                 <div className="ml-auto hidden items-center gap-2 sm:flex">
@@ -398,98 +399,102 @@ const AiManagerPage = () => {
               </div>
             </header>
 
-        <div
-          ref={threadRef}
-          className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/60 px-3 py-4 sm:px-5"
-        >
-          {!active || active.messages.length === 0 ? (
-            <EmptyState onPick={submit} disabled={sendMutation.isPending} />
-          ) : (
-            active.messages.map((m) => <MessageBubble key={m.id} message={m} />)
-          )}
-
-          {sendMutation.isPending && (
-            <div className="flex items-center gap-2 text-sm text-slate-400">
-              <Bot className="h-4 w-4" />
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
-            </div>
-          )}
-
-          {sendMutation.isError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {errorMessage(
-                sendMutation.error,
-                "Something went wrong talking to the assistant.",
+            <div
+              ref={threadRef}
+              className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/60 px-3 py-4 sm:px-5"
+            >
+              {!active || active.messages.length === 0 ? (
+                <EmptyState onPick={submit} disabled={sendMutation.isPending} />
+              ) : (
+                active.messages.map((m) => (
+                  <MessageBubble key={m.id} message={m} />
+                ))
               )}
+
+              {sendMutation.isPending && (
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Bot className="h-4 w-4" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
+                </div>
+              )}
+
+              {sendMutation.isError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {errorMessage(
+                    sendMutation.error,
+                    "Something went wrong talking to the assistant.",
+                  )}
+                </div>
+              )}
+
+              {/* Pending actions awaiting approval */}
+              {pendingProposals.map((p) => (
+                <ProposalCard
+                  key={p.id}
+                  proposal={p}
+                  onApprove={() => approveMutation.mutate(p.id)}
+                  onReject={() => rejectMutation.mutate(p.id)}
+                  busy={
+                    (approveMutation.isPending &&
+                      approveMutation.variables === p.id) ||
+                    (rejectMutation.isPending &&
+                      rejectMutation.variables === p.id)
+                  }
+                  error={
+                    approveMutation.isError &&
+                    approveMutation.variables === p.id
+                      ? errorMessage(approveMutation.error, "Action failed.")
+                      : null
+                  }
+                />
+              ))}
+
+              {decidedProposals.map((p) => (
+                <DecidedProposal key={p.id} proposal={p} />
+              ))}
             </div>
-          )}
 
-          {/* Pending actions awaiting approval */}
-          {pendingProposals.map((p) => (
-            <ProposalCard
-              key={p.id}
-              proposal={p}
-              onApprove={() => approveMutation.mutate(p.id)}
-              onReject={() => rejectMutation.mutate(p.id)}
-              busy={
-                (approveMutation.isPending &&
-                  approveMutation.variables === p.id) ||
-                (rejectMutation.isPending && rejectMutation.variables === p.id)
-              }
-              error={
-                approveMutation.isError && approveMutation.variables === p.id
-                  ? errorMessage(approveMutation.error, "Action failed.")
-                  : null
-              }
-            />
-          ))}
-
-          {decidedProposals.map((p) => (
-            <DecidedProposal key={p.id} proposal={p} />
-          ))}
-        </div>
-
-        {/* Composer */}
-        <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit(draft);
-            }}
-            className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 transition-colors focus-within:border-[#111827]/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-[#111827]/10"
-          >
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+            {/* Composer */}
+            <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
+              <form
+                onSubmit={(e) => {
                   e.preventDefault();
                   submit(draft);
-                }
-              }}
-              rows={1}
-              placeholder="Ask about transactions, users, vendors — or request an action…"
-              className="max-h-40 min-h-[2.75rem] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
-            />
-            <button
-              type="submit"
-              disabled={!draft.trim() || sendMutation.isPending}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-white transition-colors hover:bg-[#111827]/90 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Send"
-            >
-              {sendMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </button>
-          </form>
-          <p className="mt-2 px-1 text-[11px] text-slate-400">
-            Actions that change data need approval. Reply "approve", "approve
-            #ID", or use the buttons to run one.
-          </p>
-        </div>
-      </section>
+                }}
+                className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 transition-colors focus-within:border-[#111827]/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-[#111827]/10"
+              >
+                <textarea
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      submit(draft);
+                    }
+                  }}
+                  rows={1}
+                  placeholder="Ask about transactions, users, vendors — or request an action…"
+                  className="max-h-40 min-h-[2.75rem] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                />
+                <button
+                  type="submit"
+                  disabled={!draft.trim() || sendMutation.isPending}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-white transition-colors hover:bg-[#111827]/90 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Send"
+                >
+                  {sendMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </button>
+              </form>
+              <p className="mt-2 px-1 text-[11px] text-slate-400">
+                Actions that change data need approval. Reply "approve",
+                "approve #ID", or use the buttons to run one.
+              </p>
+            </div>
+          </section>
         </div>
       </Card>
     </div>
@@ -558,9 +563,7 @@ const ConversationSidebar = ({
           <p className="text-xs uppercase tracking-wide text-white/35">
             AI threads
           </p>
-          <h3 className="truncate text-sm text-white">
-            Conversation history
-          </h3>
+          <h3 className="truncate text-sm text-white">Conversation history</h3>
         </div>
         {onClose && (
           <button
@@ -636,9 +639,7 @@ const ConversationSidebar = ({
       ) : (
         <div className="rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-8 text-center">
           <MessageSquareText className="mx-auto h-5 w-5 text-white/25" />
-          <p className="mt-2 text-xs text-white/50">
-            No conversations yet.
-          </p>
+          <p className="mt-2 text-xs text-white/50">No conversations yet.</p>
         </div>
       )}
     </div>
@@ -660,7 +661,9 @@ const EmptyState = ({
       Manage operations with live context
     </h2>
     <p className="mt-1 max-w-xl text-sm text-slate-500">
-      Ask for health checks, customer investigations, transaction reviews, or draft actions. Any change to platform data stays pending until you approve it.
+      Ask for health checks, customer investigations, transaction reviews, or
+      draft actions. Any change to platform data stays pending until you approve
+      it.
     </p>
     <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
       {SUGGESTIONS.map((s) => (
