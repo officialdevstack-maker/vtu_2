@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Upload } from "lucide-react";
 import { z } from "zod";
 import { Card, Button, SkeletonLine, inputCls } from "../../../user/components/shared-ui";
@@ -8,6 +9,7 @@ import {
   type GeneralSettingsPayload,
 } from "../generalService";
 import { SectionTitle, Field, ErrorBanner, extractErrorMessage, ReadOnlyField } from "./shared";
+import { BRANDING_STORAGE_KEY } from "../../../shared/branding";
 
 const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2MB — matches GeneralController::uploadLogo's rule
 const LOGO_ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
@@ -134,6 +136,7 @@ export function GeneralTab() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     generalService
@@ -149,6 +152,15 @@ export function GeneralTab() {
   const set = (key: keyof FormState, value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
     setSaved(false);
+  };
+
+  const refreshBrandingCache = () => {
+    queryClient.invalidateQueries({ queryKey: ["branding"] });
+    try {
+      window.localStorage.removeItem(BRANDING_STORAGE_KEY);
+    } catch {
+      // Ignore storage failures; this is only a cache-busting hint.
+    }
   };
 
   const handleLogoFileSelected = async (file: File | undefined) => {
@@ -169,6 +181,7 @@ export function GeneralTab() {
       const { logo } = await generalService.uploadLogo(file);
       setForm((f) => ({ ...f, logo }));
       setGeneral((g) => (g ? { ...g, logo } : g));
+      refreshBrandingCache();
     } catch (err) {
       setLogoError(extractErrorMessage(err));
     } finally {
@@ -188,6 +201,7 @@ export function GeneralTab() {
       const updated = await generalService.update(toPayload(form));
       setGeneral(updated);
       setForm(toForm(updated));
+      refreshBrandingCache();
       setSaved(true);
       window.setTimeout(() => setSaved(false), 3000);
     } catch (err) {
