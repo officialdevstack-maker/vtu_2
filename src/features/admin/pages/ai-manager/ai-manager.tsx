@@ -317,7 +317,7 @@ const AiManagerPage = () => {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MiniStat
           icon={History}
           label="Conversations"
@@ -346,7 +346,7 @@ const AiManagerPage = () => {
 
       {historyOpen && (
         <div className="fixed inset-0 z-40 bg-slate-950/30 p-3 backdrop-blur-sm lg:hidden">
-          <div className="h-full max-w-sm">
+          <div className="mx-auto h-full w-full max-w-sm">
             <ConversationSidebar
               activeId={activeId}
               conversations={conversations}
@@ -362,7 +362,7 @@ const AiManagerPage = () => {
       )}
 
       <Card className="overflow-hidden">
-        <div className="grid h-[calc(100vh-17rem)] min-h-[42rem] lg:grid-cols-[20rem_minmax(0,1fr)]">
+        <div className="grid h-[70vh] min-h-[30rem] sm:h-[75vh] sm:min-h-[34rem] lg:h-[calc(100vh-17rem)] lg:min-h-[42rem] lg:grid-cols-[20rem_minmax(0,1fr)]">
           <div className="hidden min-h-0 border-r border-slate-100 lg:block">
             <ConversationSidebar
               activeId={activeId}
@@ -378,7 +378,7 @@ const AiManagerPage = () => {
           {/* Chat panel */}
           <section className="flex min-w-0 flex-col bg-white">
             <header className="border-b border-slate-100 px-4 py-3.5 sm:px-5">
-              <div className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827]/10 text-[#111827]">
                   <Sparkles className="h-5 w-5" />
                 </div>
@@ -723,7 +723,7 @@ const MessageBubble = ({
         )}
       </div>
       <div
-        className={`max-w-[min(44rem,85%)] overflow-hidden rounded-2xl px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] ${
+        className={`max-w-[min(44rem,100%)] overflow-hidden rounded-2xl px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:max-w-[min(44rem,85%)] ${
           isUser
             ? "whitespace-pre-wrap bg-[#111827] text-white"
             : "border border-slate-200 bg-white text-slate-800"
