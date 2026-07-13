@@ -140,8 +140,10 @@ export function EmailTab() {
       <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3.5 py-2.5 text-xs text-green-800">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <span>
-          <strong>Database is primary, .env is fallback:</strong> Settings saved here take priority and override server .env values on every email sent.
-          Leave a field blank to use the server's .env configuration. This allows you to change email settings without redeploying.
+          <strong>Database is primary, .env is fallback:</strong> Settings saved
+          here take priority and override server .env values on every email
+          sent. Leave a field blank to use the server's .env configuration. This
+          allows you to change email settings without redeploying.
         </span>
       </div>
 
