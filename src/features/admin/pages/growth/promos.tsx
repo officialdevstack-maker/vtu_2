@@ -60,7 +60,14 @@ export default function PromosPage() {
   };
 
   const productOptions = useMemo(
-    () => Array.from(new Set(promotions.flatMap((p) => p.products ?? (p.product ? [p.product] : [])))),
+    () =>
+      Array.from(
+        new Set(
+          promotions.flatMap(
+            (p) => p.products ?? (p.product ? [p.product] : []),
+          ),
+        ),
+      ),
     [promotions],
   );
 
@@ -76,7 +83,10 @@ export default function PromosPage() {
         title="Promo codes"
         description="Opt-in codes and admin-triggered offers — separate from per-network Discounts, which apply automatically with no code."
         actions={
-          <Button size="sm" onClick={() => navigate("/admin/growth/promos/new")}>
+          <Button
+            size="sm"
+            onClick={() => navigate("/admin/growth/promos/new")}
+          >
             <Plus className="w-3.5 h-3.5" /> New promo
           </Button>
         }
@@ -107,7 +117,11 @@ export default function PromosPage() {
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Percent}
-            title={productFilter ? "No promos for this product" : "No promo codes yet"}
+            title={
+              productFilter
+                ? "No promos for this product"
+                : "No promo codes yet"
+            }
             description={
               productFilter
                 ? "Try a different product filter."
@@ -119,21 +133,30 @@ export default function PromosPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
-                  {["Name", "Code", "Target / Product", "Value", "Usage", "Status", "Actions"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap text-left"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Name",
+                    "Code",
+                    "Target / Product",
+                    "Value",
+                    "Usage",
+                    "Status",
+                    "Actions",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-4 py-2.5 text-xs font-medium text-slate-500 whitespace-nowrap text-left"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((promo) => (
-                  <tr key={promo.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={promo.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-4 py-3 text-xs font-medium text-slate-900">
                       {promo.name}
                     </td>
@@ -145,18 +168,25 @@ export default function PromosPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 capitalize">
-                      {promo.target} / {(promo.products ?? (promo.product ? [promo.product] : [])).join(", ")}
+                      {promo.target} /{" "}
+                      {(
+                        promo.products ?? (promo.product ? [promo.product] : [])
+                      ).join(", ")}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">
                       {formatValue(promo)}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">
                       {promo.used}
-                      {promo.usage_limit_total ? ` / ${promo.usage_limit_total}` : ""}
+                      {promo.usage_limit_total
+                        ? ` / ${promo.usage_limit_total}`
+                        : ""}
                     </td>
                     <td className="px-4 py-3">
                       <button onClick={() => handleToggleActive(promo)}>
-                        <StatusBadge status={promo.active ? "active" : "inactive"} />
+                        <StatusBadge
+                          status={promo.active ? "active" : "inactive"}
+                        />
                       </button>
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -164,7 +194,9 @@ export default function PromosPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenMenuId(openMenuId === promo.id ? null : promo.id);
+                            setOpenMenuId(
+                              openMenuId === promo.id ? null : promo.id,
+                            );
                           }}
                           className="p-1.5 rounded-md hover:bg-gray-100 text-slate-400 transition-colors"
                         >
@@ -181,9 +213,12 @@ export default function PromosPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/admin/growth/promos/${promo.id}/edit`, {
-                                    state: { promotion: promo },
-                                  });
+                                  navigate(
+                                    `/admin/growth/promos/${promo.id}/edit`,
+                                    {
+                                      state: { promotion: promo },
+                                    },
+                                  );
                                   setOpenMenuId(null);
                                 }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors"

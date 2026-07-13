@@ -146,8 +146,11 @@ function toForm(promo: Promotion): FormState {
     applyMode: promo.apply,
     code: promo.code ?? "",
     target: promo.target,
-    products: Array.isArray((promo as Promotion & { products?: PromotionProduct[] }).products)
-      ? ((promo as Promotion & { products?: PromotionProduct[] }).products as PromotionProduct[])
+    products: Array.isArray(
+      (promo as Promotion & { products?: PromotionProduct[] }).products,
+    )
+      ? ((promo as Promotion & { products?: PromotionProduct[] })
+          .products as PromotionProduct[])
       : promo.product
         ? [promo.product]
         : ["airtime"],
@@ -472,32 +475,36 @@ export default function PromoFormPage() {
 
               <Field label="Products">
                 <div className="flex flex-wrap gap-2">
-                  {(["airtime", "data", "bundle"] as PromotionProduct[]).map((product) => {
-                    const checked = form.products.includes(product);
-                    return (
-                      <label
-                        key={product}
-                        className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                          checked
-                            ? "border-[#111827] bg-[#111827] text-white"
-                            : "border-slate-200 bg-white text-slate-600"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => {
-                            const next = checked
-                              ? form.products.filter((value) => value !== product)
-                              : [...form.products, product];
-                            set("products", next);
-                          }}
-                          className="h-3.5 w-3.5 rounded border-slate-300"
-                        />
-                        <span className="capitalize">{product}</span>
-                      </label>
-                    );
-                  })}
+                  {(["airtime", "data", "bundle"] as PromotionProduct[]).map(
+                    (product) => {
+                      const checked = form.products.includes(product);
+                      return (
+                        <label
+                          key={product}
+                          className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                            checked
+                              ? "border-[#111827] bg-[#111827] text-white"
+                              : "border-slate-200 bg-white text-slate-600"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              const next = checked
+                                ? form.products.filter(
+                                    (value) => value !== product,
+                                  )
+                                : [...form.products, product];
+                              set("products", next);
+                            }}
+                            className="h-3.5 w-3.5 rounded border-slate-300"
+                          />
+                          <span className="capitalize">{product}</span>
+                        </label>
+                      );
+                    },
+                  )}
                 </div>
                 <p className="mt-2 text-xs text-slate-400">
                   One promo code can now apply to multiple products.
