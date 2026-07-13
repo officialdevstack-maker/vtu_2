@@ -58,6 +58,22 @@ export default function AffiliateCustomersPage() {
     `affiliate:${id}:customers:statusFilter`,
     "all",
   );
+  const [walletMin, setWalletMin] = useLocalStorageState<string>(
+    `affiliate:${id}:customers:walletMin`,
+    "",
+  );
+  const [walletMax, setWalletMax] = useLocalStorageState<string>(
+    `affiliate:${id}:customers:walletMax`,
+    "",
+  );
+  const [signedUpAfter, setSignedUpAfter] = useLocalStorageState<string>(
+    `affiliate:${id}:customers:signedUpAfter`,
+    "",
+  );
+  const [signedUpBefore, setSignedUpBefore] = useLocalStorageState<string>(
+    `affiliate:${id}:customers:signedUpBefore`,
+    "",
+  );
   const [page, setPage] = useLocalStorageState<number>(
     `affiliate:${id}:customers:page`,
     1,
@@ -87,6 +103,10 @@ export default function AffiliateCustomersPage() {
         page,
         per_page: DEFAULT_PAGE_SIZE,
         status: statusFilter === "all" ? undefined : statusFilter,
+        wallet_balance_min: walletMin.trim() || undefined,
+        wallet_balance_max: walletMax.trim() || undefined,
+        created_at_after: signedUpAfter || undefined,
+        created_at_before: signedUpBefore || undefined,
       })
       .then(({ data, meta: nextMeta }) => {
         setCustomers(data);
@@ -103,13 +123,17 @@ export default function AffiliateCustomersPage() {
         page,
         per_page: DEFAULT_PAGE_SIZE,
         status: statusFilter === "all" ? undefined : statusFilter,
+        wallet_balance_min: walletMin.trim() || undefined,
+        wallet_balance_max: walletMax.trim() || undefined,
+        created_at_after: signedUpAfter || undefined,
+        created_at_before: signedUpBefore || undefined,
       })
       .then(({ data, meta: nextMeta }) => {
         setCustomers(data);
         setMeta(nextMeta);
       })
       .finally(() => setLoading(false));
-  }, [id, query, sort, statusFilter, page]);
+  }, [id, query, sort, statusFilter, walletMin, walletMax, signedUpAfter, signedUpBefore, page]);
 
   const statuses = useMemo(
     () =>
@@ -166,6 +190,52 @@ export default function AffiliateCustomersPage() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 mt-3">
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                min="0"
+                value={walletMin}
+                onChange={(e) => {
+                  setWalletMin(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Min balance"
+                className={inputCls}
+              />
+              <input
+                type="number"
+                min="0"
+                value={walletMax}
+                onChange={(e) => {
+                  setWalletMax(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Max balance"
+                className={inputCls}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="date"
+                value={signedUpAfter}
+                onChange={(e) => {
+                  setSignedUpAfter(e.target.value);
+                  setPage(1);
+                }}
+                className={inputCls}
+              />
+              <input
+                type="date"
+                value={signedUpBefore}
+                onChange={(e) => {
+                  setSignedUpBefore(e.target.value);
+                  setPage(1);
+                }}
+                className={inputCls}
+              />
+            </div>
           </div>
         </div>
 
