@@ -38,7 +38,8 @@ import {
 // Ogdams, vtpass… — is picked by NAME within it), not a single engine, so
 // there's no one base URL it implies the way there is for adex/spurs/msorg.
 // Per product decision, it's not shown here at all for that sub_category.
-const isEngineType = (subCategory: string | null | undefined) => (subCategory ?? "") !== "simhost";
+const isEngineType = (subCategory: string | null | undefined) =>
+  (subCategory ?? "") !== "simhost";
 
 // Only vendor classes that implement syncPlans() (currently Ogdams, grouped
 // under sub_category "simhost") support this — adex/msorg both resolve to
@@ -64,8 +65,7 @@ const toAutoFundForm = (p: Provider) => ({
     p.auto_fund_threshold != null ? String(p.auto_fund_threshold) : "",
   auto_fund_amount:
     p.auto_fund_amount != null ? String(p.auto_fund_amount) : "",
-  manual_balance:
-    p.manual_balance != null ? String(p.manual_balance) : "",
+  manual_balance: p.manual_balance != null ? String(p.manual_balance) : "",
   account_number: p.account_number ?? "",
   account_name: p.account_name ?? "",
   bank_code: p.bank_code ?? "",
@@ -185,7 +185,10 @@ const ProviderDetailPage = () => {
   // (currently Ogdams) actually do anything; others surface the backend's
   // "not supported" message via the same banner.
   const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [syncMessage, setSyncMessage] = useState<{
+    ok: boolean;
+    text: string;
+  } | null>(null);
 
   const back = () => navigate("/admin/apis/provider");
 
@@ -393,7 +396,9 @@ const ProviderDetailPage = () => {
       <span className="text-xs text-slate-400 w-28 shrink-0 pt-0.5">
         {label}
       </span>
-      <span className="text-xs text-slate-800 flex-1 min-w-0">{value ?? "—"}</span>
+      <span className="text-xs text-slate-800 flex-1 min-w-0">
+        {value ?? "—"}
+      </span>
     </div>
   );
 
@@ -406,7 +411,9 @@ const ProviderDetailPage = () => {
         <PageHeader
           title={provider.name}
           description={
-            isEngineType(provider.sub_category) ? (provider.base_url ?? undefined) : undefined
+            isEngineType(provider.sub_category)
+              ? (provider.base_url ?? undefined)
+              : undefined
           }
           actions={
             <div className="flex items-center gap-2 flex-wrap">
@@ -421,14 +428,18 @@ const ProviderDetailPage = () => {
                   loading={syncing}
                   onClick={() => void handleSyncPlans()}
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`}
+                  />
                   Sync plans
                 </Button>
               )}
               <Button
                 size="sm"
                 onClick={() =>
-                  navigate(`/admin/apis/provider/${id}/edit`, { state: { provider } })
+                  navigate(`/admin/apis/provider/${id}/edit`, {
+                    state: { provider },
+                  })
                 }
               >
                 <Pencil className="w-3.5 h-3.5" /> Edit
@@ -480,10 +491,16 @@ const ProviderDetailPage = () => {
                     "Base URL",
                     provider.base_url ? (
                       <span className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono truncate flex-1 min-w-0" title={provider.base_url}>
+                        <span
+                          className="font-mono truncate flex-1 min-w-0"
+                          title={provider.base_url}
+                        >
                           {provider.base_url}
                         </span>
-                        <CopyButton value={provider.base_url} label="base URL" />
+                        <CopyButton
+                          value={provider.base_url}
+                          label="base URL"
+                        />
                       </span>
                     ) : null,
                   )}
@@ -523,10 +540,16 @@ const ProviderDetailPage = () => {
                   "Webhook URL",
                   provider.webhook ? (
                     <span className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono truncate flex-1 min-w-0" title={provider.webhook}>
+                      <span
+                        className="font-mono truncate flex-1 min-w-0"
+                        title={provider.webhook}
+                      >
                         {provider.webhook}
                       </span>
-                      <CopyButton value={provider.webhook} label="webhook URL" />
+                      <CopyButton
+                        value={provider.webhook}
+                        label="webhook URL"
+                      />
                       <button
                         type="button"
                         onClick={() => void handleRefreshToken()}

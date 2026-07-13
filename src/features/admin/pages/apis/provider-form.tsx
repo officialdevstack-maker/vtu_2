@@ -22,7 +22,12 @@ const BACK = "/admin/apis/provider";
 
 // The credential columns a provider can hold; the visible set is driven by the
 // selected type's schema (VendorFactory::availableProviders on the backend).
-const CREDENTIAL_KEYS = ["username", "password", "api_key", "public_key"] as const;
+const CREDENTIAL_KEYS = [
+  "username",
+  "password",
+  "api_key",
+  "public_key",
+] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -48,8 +53,12 @@ function Field({
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5">
-        <label className="block text-xs font-medium text-slate-600">{label}</label>
-        {hint && !error && <span className="text-xs text-slate-400">{hint}</span>}
+        <label className="block text-xs font-medium text-slate-600">
+          {label}
+        </label>
+        {hint && !error && (
+          <span className="text-xs text-slate-400">{hint}</span>
+        )}
       </div>
       {children}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
@@ -69,8 +78,7 @@ function ErrorBanner({ message }: { message: string }) {
 function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as
-      | { message?: string; errors?: Record<string, string[]> }
-      | undefined;
+      { message?: string; errors?: Record<string, string[]> } | undefined;
     const validationErrors = data?.errors;
     if (validationErrors && Object.keys(validationErrors).length > 0) {
       return Object.values(validationErrors).flat().join(" ");
@@ -134,10 +142,13 @@ export default function ProviderFormPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const stateProvider = (location.state as { provider?: Provider } | null)?.provider;
+  const stateProvider = (location.state as { provider?: Provider } | null)
+    ?.provider;
 
   const [initial, setInitial] = useState<Provider | undefined>(stateProvider);
-  const [fetchingInitial, setFetchingInitial] = useState(id != null && !stateProvider);
+  const [fetchingInitial, setFetchingInitial] = useState(
+    id != null && !stateProvider,
+  );
   const [form, setForm] = useState<FormState>(
     stateProvider ? toForm(stateProvider) : blankForm(),
   );
@@ -148,7 +159,10 @@ export default function ProviderFormPage() {
   const [types, setTypes] = useState<ProviderType[]>([]);
 
   useEffect(() => {
-    providerService.getTypes().then(setTypes).catch(() => {});
+    providerService
+      .getTypes()
+      .then(setTypes)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -204,7 +218,9 @@ export default function ProviderFormPage() {
         code: form.code,
         sub_category: form.sub_category,
         base_url: showBaseUrl ? form.base_url : null,
-        manual_balance: form.manual_balance ? Number(form.manual_balance) : null,
+        manual_balance: form.manual_balance
+          ? Number(form.manual_balance)
+          : null,
         // Only persist the credentials this type uses; clear the rest so
         // switching type never leaves a stale secret behind.
         username: activeCreds.has("username") ? form.username : null,
@@ -274,7 +290,12 @@ export default function ProviderFormPage() {
             >
               Cancel
             </Button>
-            <Button size="sm" disabled={!valid || saving} loading={saving} onClick={handleSubmit}>
+            <Button
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving}
+              onClick={handleSubmit}
+            >
               {initial ? "Save changes" : "Add provider"}
             </Button>
           </>
