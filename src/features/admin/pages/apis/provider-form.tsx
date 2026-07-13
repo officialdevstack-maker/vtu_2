@@ -89,6 +89,7 @@ const blankForm = (): FormState => ({
   name: "",
   code: "",
   base_url: "",
+  manual_balance: "",
   username: "",
   password: "",
   api_key: "",
@@ -100,6 +101,7 @@ const toForm = (p: Provider): FormState => ({
   name: p.name ?? "",
   code: p.code ?? "",
   base_url: p.base_url ?? "",
+  manual_balance: p.manual_balance != null ? String(p.manual_balance) : "",
   username: p.username ?? "",
   password: p.password ?? "",
   api_key: p.api_key ?? "",
@@ -202,6 +204,7 @@ export default function ProviderFormPage() {
         code: form.code,
         sub_category: form.sub_category,
         base_url: showBaseUrl ? form.base_url : null,
+        manual_balance: form.manual_balance ? Number(form.manual_balance) : null,
         // Only persist the credentials this type uses; clear the rest so
         // switching type never leaves a stale secret behind.
         username: activeCreds.has("username") ? form.username : null,
@@ -336,6 +339,17 @@ export default function ProviderFormPage() {
                   />
                 </Field>
               )}
+
+              <Field label="Manual balance override" hint="optional">
+                <input
+                  value={form.manual_balance ?? ""}
+                  onChange={(e) => set("manual_balance", e.target.value)}
+                  placeholder="e.g. 25000"
+                  type="number"
+                  min={0}
+                  className={inputCls}
+                />
+              </Field>
             </div>
           </Card>
         </div>

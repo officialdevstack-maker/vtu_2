@@ -64,6 +64,8 @@ const toAutoFundForm = (p: Provider) => ({
     p.auto_fund_threshold != null ? String(p.auto_fund_threshold) : "",
   auto_fund_amount:
     p.auto_fund_amount != null ? String(p.auto_fund_amount) : "",
+  manual_balance:
+    p.manual_balance != null ? String(p.manual_balance) : "",
   account_number: p.account_number ?? "",
   account_name: p.account_name ?? "",
   bank_code: p.bank_code ?? "",
@@ -159,6 +161,7 @@ const ProviderDetailPage = () => {
     auto_fund_enabled: false,
     auto_fund_threshold: "",
     auto_fund_amount: "",
+    manual_balance: "",
     account_number: "",
     account_name: "",
     bank_code: "",
@@ -283,6 +286,9 @@ const ProviderDetailPage = () => {
           : null,
         auto_fund_amount: autoFundForm.auto_fund_amount
           ? Number(autoFundForm.auto_fund_amount)
+          : null,
+        manual_balance: autoFundForm.manual_balance
+          ? Number(autoFundForm.manual_balance)
           : null,
         account_number: autoFundForm.account_number || null,
         account_name: autoFundForm.account_name || null,
@@ -700,6 +706,23 @@ const ProviderDetailPage = () => {
                 <div
                   className={`space-y-3 transition-opacity ${enabled ? "opacity-100" : "opacity-40 pointer-events-none"}`}
                 >
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                      Manual balance override (₦)
+                      <span className="ml-1 font-normal text-slate-400">
+                        — overrides live balance checks when set
+                      </span>
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={autoFundForm.manual_balance}
+                      onChange={(e) => setAF("manual_balance", e.target.value)}
+                      placeholder="e.g. 25000"
+                      className={inputCls}
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       Threshold (₦)

@@ -18,6 +18,7 @@ export type Provider = {
   code?: string | null;
   base_url?: string | null;
   balance?: string | number | null;
+  manual_balance?: string | number | null;
   connection?: boolean | null;
   username?: string | null;
   password?: string | null;
@@ -43,6 +44,7 @@ export type ProviderPayload = {
   name: string;
   code?: string | null;
   base_url?: string | null;
+  manual_balance?: string | number | null;
   username?: string | null;
   password?: string | null;
   api_key?: string | null;
@@ -71,6 +73,7 @@ export type AutoFundPayload = {
   auto_fund_enabled: boolean;
   auto_fund_threshold?: number | null;
   auto_fund_amount?: number | null;
+  manual_balance?: number | null;
   account_number?: string | null;
   account_name?: string | null;
   bank_code?: string | null;
