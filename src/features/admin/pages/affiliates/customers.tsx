@@ -82,7 +82,7 @@ export default function AffiliateCustomersPage() {
     null,
   );
   const [emailTarget, setEmailTarget] = useState<ChildCustomer | null>(null);
-  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkMigrateOpen, setBulkMigrateOpen] = useState(false);
   const [bulkEmailOpen, setBulkEmailOpen] = useState(false);
 
@@ -156,6 +156,11 @@ export default function AffiliateCustomersPage() {
   );
 
   const pageItems = customers;
+  const pageItemIds = pageItems.map((c) => String(c.id));
+  const selectedSet = new Set(selectedIds);
+  const pageSelectedCount = pageItemIds.filter((id) => selectedSet.has(id)).length;
+  const allPageSelected = pageItemIds.length > 0 && pageSelectedCount === pageItemIds.length;
+  const somePageSelected = pageSelectedCount > 0 && !allPageSelected;
   const currentPage = meta?.current_page ?? page;
   const totalPages = meta?.last_page ?? 1;
   const totalItems = meta?.total ?? customers.length;
@@ -277,14 +282,21 @@ export default function AffiliateCustomersPage() {
                       <input
                         type="checkbox"
                         aria-label="Select all"
-                        checked={
-                          pageItems.length > 0 &&
-                          selectedIds.length === pageItems.length
-                        }
+                        checked={allPageSelected}
+                        ref={(input) => {
+                          if (input) input.indeterminate = somePageSelected;
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => {
-                          if (e.target.checked)
-                            setSelectedIds(pageItems.map((c) => c.id));
-                          else setSelectedIds([]);
+                          const pageIds = new Set(pageItemIds);
+                          if (e.target.checked) {
+                            setSelectedIds((current) => [
+                              ...current,
+                              ...pageItemIds.filter((id) => !current.includes(id)),
+                            ]);
+                          } else {
+                            setSelectedIds((current) => current.filter((id) => !pageIds.has(id)));
+                          }
                         }}
                       />
                     </th>
@@ -392,13 +404,15 @@ export default function AffiliateCustomersPage() {
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
-                          checked={selectedIds.includes(c.id)}
+                          checked={selectedSet.has(String(c.id))}
+                          onClick={(e) => e.stopPropagation()}
                           onChange={(e) => {
+                            const id = String(c.id);
                             if (e.target.checked)
-                              setSelectedIds((s) => [...s, c.id]);
+                              setSelectedIds((s) => (s.includes(id) ? s : [...s, id]));
                             else
                               setSelectedIds((s) =>
-                                s.filter((id) => id !== c.id),
+                                s.filter((selectedId) => selectedId !== id),
                               );
                           }}
                         />
@@ -523,7 +537,7 @@ export default function AffiliateCustomersPage() {
       {bulkMigrateOpen && (
         <BulkMigrateModal
           instanceId={id}
-          customers={customers.filter((c) => selectedIds.includes(c.id))}
+          customers={customers.filter((c) => selectedSet.has(String(c.id)))}
           onClose={() => setBulkMigrateOpen(false)}
           onDone={() => {
             setSelectedIds([]);
