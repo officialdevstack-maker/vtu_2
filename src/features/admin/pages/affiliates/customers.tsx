@@ -133,7 +133,17 @@ export default function AffiliateCustomersPage() {
         setMeta(nextMeta);
       })
       .finally(() => setLoading(false));
-  }, [id, query, sort, statusFilter, walletMin, walletMax, signedUpAfter, signedUpBefore, page]);
+  }, [
+    id,
+    query,
+    sort,
+    statusFilter,
+    walletMin,
+    walletMax,
+    signedUpAfter,
+    signedUpBefore,
+    page,
+  ]);
 
   const statuses = useMemo(
     () =>

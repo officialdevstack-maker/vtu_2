@@ -114,9 +114,7 @@ const AiManagerPage = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
-
   const conversationsQuery = useQuery({
     queryKey: ["ai", "conversations"],
     queryFn: () => aiManagerService.listConversations(),
@@ -151,9 +149,6 @@ const AiManagerPage = () => {
       if (conversationId === "new") {
         navigate(`/admin/ai-manager/chat/${data.id}`, { replace: true });
       }
-    },
-    onSettled: () => {
-      setIsCreating(false);
     },
   });
 
@@ -211,13 +206,6 @@ const AiManagerPage = () => {
       setActiveId(id);
     }
   }, [conversationId]);
-
-  useEffect(() => {
-    if (conversationId === "new" && !isCreating && !sendMutation.isPending) {
-      setIsCreating(true);
-      sendMutation.mutate("");
-    }
-  }, [conversationId, isCreating, sendMutation]);
 
   // Arriving via "Ask AI to fix" on a monitoring alert (?ask=...): start a
   // fresh conversation with that message immediately, then drop the param so
