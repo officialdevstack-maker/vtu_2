@@ -1,8 +1,23 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Info } from "lucide-react";
-import { Card, Button, SkeletonLine, inputCls, selectCls } from "../../../user/components/shared-ui";
-import { siteSettingsService, type SiteSettings, type SiteSettingsPayload } from "./service";
-import { SectionTitle, Field, ErrorBanner, extractErrorMessage } from "./shared";
+import {
+  Card,
+  Button,
+  SkeletonLine,
+  inputCls,
+  selectCls,
+} from "../../../user/components/shared-ui";
+import {
+  siteSettingsService,
+  type SiteSettings,
+  type SiteSettingsPayload,
+} from "./service";
+import {
+  SectionTitle,
+  Field,
+  ErrorBanner,
+  extractErrorMessage,
+} from "./shared";
 
 type FormState = {
   mail_mailer: string;
@@ -105,7 +120,11 @@ export function EmailTab() {
   return (
     <div className="space-y-5">
       <div className="flex justify-end">
-        <Button onClick={() => void handleSave()} loading={saving} disabled={saving}>
+        <Button
+          onClick={() => void handleSave()}
+          loading={saving}
+          disabled={saving}
+        >
           {saved ? (
             <>
               <CheckCircle2 className="w-4 h-4" /> Saved
@@ -118,12 +137,11 @@ export function EmailTab() {
 
       {saveError && <ErrorBanner message={saveError} />}
 
-      <div className="flex items-start gap-2 rounded-lg border border-[#111827]/15 bg-[#111827]/10 px-3.5 py-2.5 text-xs text-[#111827]">
+      <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3.5 py-2.5 text-xs text-green-800">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <span>
-          The server is configured with default mail settings through .env. Values saved
-          here override those server defaults on each request. Leave a field blank
-          to keep using the server configuration. Supports Gmail, Amazon SES, or any SMTP provider.
+          <strong>Database is primary, .env is fallback:</strong> Settings saved here take priority and override server .env values on every email sent.
+          Leave a field blank to use the server's .env configuration. This allows you to change email settings without redeploying.
         </span>
       </div>
 
@@ -161,11 +179,38 @@ export function EmailTab() {
               <div>
                 <p className="font-semibold mb-1">Gmail Setup:</p>
                 <ul className="list-disc list-inside space-y-0.5">
-                  <li>Host: <code className="font-mono bg-white px-1 rounded">smtp.gmail.com</code></li>
-                  <li>Port: <code className="font-mono bg-white px-1 rounded">587</code></li>
-                  <li>Encryption: <code className="font-mono bg-white px-1 rounded">TLS</code></li>
-                  <li>Username: Your Gmail address (e.g., your-email@gmail.com)</li>
-                  <li>Password: <code className="font-mono bg-white px-1 rounded">16-char app password</code> from <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="underline">Google Account</a></li>
+                  <li>
+                    Host:{" "}
+                    <code className="font-mono bg-white px-1 rounded">
+                      smtp.gmail.com
+                    </code>
+                  </li>
+                  <li>
+                    Port:{" "}
+                    <code className="font-mono bg-white px-1 rounded">587</code>
+                  </li>
+                  <li>
+                    Encryption:{" "}
+                    <code className="font-mono bg-white px-1 rounded">TLS</code>
+                  </li>
+                  <li>
+                    Username: Your Gmail address (e.g., your-email@gmail.com)
+                  </li>
+                  <li>
+                    Password:{" "}
+                    <code className="font-mono bg-white px-1 rounded">
+                      16-char app password
+                    </code>{" "}
+                    from{" "}
+                    <a
+                      href="https://myaccount.google.com/apppasswords"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Google Account
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -177,9 +222,11 @@ export function EmailTab() {
                 SES ships mail using the server's own AWS credentials — set{" "}
                 <code className="font-mono">AWS_ACCESS_KEY_ID</code>,{" "}
                 <code className="font-mono">AWS_SECRET_ACCESS_KEY</code>, and{" "}
-                <code className="font-mono">AWS_DEFAULT_REGION</code> in the server's <code className="font-mono">.env</code>{" "}
-                (not here — these are infrastructure secrets, kept out of the database on purpose). The From address below must
-                be a verified identity in that SES account/region.
+                <code className="font-mono">AWS_DEFAULT_REGION</code> in the
+                server's <code className="font-mono">.env</code> (not here —
+                these are infrastructure secrets, kept out of the database on
+                purpose). The From address below must be a verified identity in
+                that SES account/region.
               </span>
             </div>
           ) : (
