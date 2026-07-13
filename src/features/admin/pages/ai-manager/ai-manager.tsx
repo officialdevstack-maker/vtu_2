@@ -148,6 +148,8 @@ const AiManagerPage = () => {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
+  const historyDialogRef = useRef<HTMLDivElement>(null);
+  const historyTriggerRef = useRef<HTMLButtonElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const conversationsQuery = useQuery({
     queryKey: ["ai", "conversations"],
@@ -288,8 +290,33 @@ const AiManagerPage = () => {
   const messageCount = active?.messages.length ?? 0;
   const totalProposals = active?.proposals.length ?? 0;
 
+  useEffect(() => {
+    if (!historyOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const dialog = historyDialogRef.current;
+    const items = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])') ?? []);
+    items()[0]?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setHistoryOpen(false);
+      if (event.key !== "Tab") return;
+      const focusables = items();
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      historyTriggerRef.current?.focus();
+    };
+  }, [historyOpen]);
+
   return (
-    <div className="space-y-4">
+    <div className="admin-ai-page flex min-h-0 min-w-0 flex-col gap-3 sm:gap-4">
       <PageHeader
         title={
           <span className="inline-flex min-w-0 flex-wrap items-center gap-2">
@@ -306,7 +333,10 @@ const AiManagerPage = () => {
               variant="secondary"
               size="sm"
               className="lg:hidden"
-              onClick={() => setHistoryOpen(true)}
+              onClick={(event) => {
+                historyTriggerRef.current = event.currentTarget;
+                setHistoryOpen(true);
+              }}
             >
               <Menu className="h-3.5 w-3.5" /> History
             </Button>
@@ -317,7 +347,7 @@ const AiManagerPage = () => {
         }
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="admin-stat-grid">
         <MiniStat
           icon={History}
           label="Conversations"
@@ -345,8 +375,8 @@ const AiManagerPage = () => {
       </div>
 
       {historyOpen && (
-        <div className="fixed inset-0 z-40 bg-slate-950/30 p-3 backdrop-blur-sm lg:hidden">
-          <div className="mx-auto h-full w-full max-w-sm">
+        <div className="fixed inset-0 z-40 bg-slate-950/30 p-2 safe-modal-inset backdrop-blur-sm lg:hidden" onMouseDown={(event) => event.target === event.currentTarget && setHistoryOpen(false)}>
+          <div ref={historyDialogRef} className="mx-auto h-full max-h-[calc(100dvh-1rem)] w-full max-w-md">
             <ConversationSidebar
               activeId={activeId}
               conversations={conversations}
@@ -361,8 +391,8 @@ const AiManagerPage = () => {
         </div>
       )}
 
-      <Card className="overflow-hidden">
-        <div className="grid h-[70vh] min-h-[30rem] sm:h-[75vh] sm:min-h-[34rem] lg:h-[calc(100vh-17rem)] lg:min-h-[42rem] lg:grid-cols-[20rem_minmax(0,1fr)]">
+      <Card className="admin-chat-card min-h-0 flex-1 overflow-hidden">
+        <div className="grid h-full min-h-0 lg:grid-cols-[20rem_minmax(0,1fr)]">
           <div className="hidden min-h-0 border-r border-slate-100 lg:block">
             <ConversationSidebar
               activeId={activeId}
@@ -383,10 +413,10 @@ const AiManagerPage = () => {
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="truncate text-sm font-semibold text-slate-900">
+                  <h2 className="overflow-wrap-anywhere text-sm font-semibold text-slate-900">
                     {active?.title ?? "New AI workspace"}
                   </h2>
-                  <p className="truncate text-xs text-slate-400">
+                  <p className="overflow-wrap-anywhere text-xs text-slate-400">
                     Read-only tools run immediately. Mutating tools become
                     approval cards.
                   </p>
@@ -455,7 +485,7 @@ const AiManagerPage = () => {
             </div>
 
             {/* Composer */}
-            <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
+            <div className="admin-ai-composer shrink-0 border-t border-slate-100 bg-white p-2.5 sm:p-4">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -474,7 +504,7 @@ const AiManagerPage = () => {
                   }}
                   rows={1}
                   placeholder="Ask about transactions, users, vendors — or request an action…"
-                  className="max-h-40 min-h-[2.75rem] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                  className="max-h-32 min-h-[2.75rem] min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:max-h-40"
                 />
                 <button
                   type="submit"
@@ -520,10 +550,10 @@ const MiniStat = ({
   value: string;
   tone: MiniStatTone;
 }) => (
-  <Card className="p-3.5">
+  <Card className="flex h-full min-w-0 flex-col p-3 sm:p-3.5">
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="truncate text-xs font-medium text-slate-500">{label}</p>
+        <p className="overflow-wrap-anywhere text-xs font-medium leading-snug text-slate-500">{label}</p>
         <p className="mt-1 text-xl font-semibold tabular-nums text-slate-900">
           {value}
         </p>
@@ -556,7 +586,7 @@ const ConversationSidebar = ({
   onDelete: (id: number) => void;
   deletingId?: number;
 }) => (
-  <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111827] font-normal text-white shadow-xl lg:rounded-none lg:border-0 lg:shadow-none">
+  <aside className="flex h-full min-h-0 max-w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111827] font-normal text-white shadow-xl lg:rounded-none lg:border-0 lg:shadow-none">
     <div className="border-b border-white/10 p-3.5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
@@ -612,7 +642,7 @@ const ConversationSidebar = ({
                 onClick={() => onOpen(c.id)}
                 className="min-w-0 flex-1 px-3 py-3 text-left"
               >
-                <p className="truncate text-sm text-white">
+                <p className="line-clamp-2 overflow-wrap-anywhere text-sm leading-snug text-white">
                   {c.title ?? "Untitled conversation"}
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-white/40">
@@ -653,11 +683,11 @@ const EmptyState = ({
   onPick: (text: string) => void;
   disabled: boolean;
 }) => (
-  <div className="mx-auto flex max-w-3xl flex-col items-center py-6 text-center sm:py-10">
-    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827] text-white shadow-lg shadow-[#111827]/20">
-      <Sparkles className="h-7 w-7" />
+  <div className="mx-auto flex max-w-3xl flex-col items-center py-2 text-center sm:py-5">
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] text-white shadow-md shadow-[#111827]/15 sm:h-12 sm:w-12">
+      <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
     </div>
-    <h2 className="mt-4 text-lg font-semibold tracking-tight text-slate-900">
+    <h2 className="mt-2.5 text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
       Manage operations with live context
     </h2>
     <p className="mt-1 max-w-xl text-sm text-slate-500">
@@ -665,7 +695,7 @@ const EmptyState = ({
       draft actions. Any change to platform data stays pending until you approve
       it.
     </p>
-    <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
+    <div className="mt-3 grid w-full grid-cols-1 gap-2 min-[390px]:grid-cols-2 sm:mt-5 sm:gap-3">
       {SUGGESTIONS.map((s) => (
         <button
           key={s.prompt}

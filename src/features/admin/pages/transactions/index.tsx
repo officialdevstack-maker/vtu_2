@@ -492,7 +492,7 @@ export default function TransactionsPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="admin-stat-grid admin-stat-grid-five">
         {loading ? (
           <SkeletonStatGrid count={5} className="contents" />
         ) : (
