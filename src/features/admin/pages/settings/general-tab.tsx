@@ -2,17 +2,33 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Upload } from "lucide-react";
 import { z } from "zod";
-import { Card, Button, SkeletonLine, inputCls } from "../../../user/components/shared-ui";
+import {
+  Card,
+  Button,
+  SkeletonLine,
+  inputCls,
+} from "../../../user/components/shared-ui";
 import {
   generalService,
   type GeneralSettings,
   type GeneralSettingsPayload,
 } from "../generalService";
-import { SectionTitle, Field, ErrorBanner, extractErrorMessage, ReadOnlyField } from "./shared";
-import { BRANDING_STORAGE_KEY } from "../../../shared/branding";
+import {
+  SectionTitle,
+  Field,
+  ErrorBanner,
+  extractErrorMessage,
+  ReadOnlyField,
+} from "./shared";
+import { BRANDING_STORAGE_KEY } from "../../../../shared/branding";
 
 const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2MB — matches GeneralController::uploadLogo's rule
-const LOGO_ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+const LOGO_ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+];
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -87,11 +103,9 @@ const settingsFormSchema = z.object({
     }),
   app_phone: z.string(),
   app_address: z.string(),
-  logo: z
-    .string()
-    .refine((v) => v === "" || /^https?:\/\//.test(v), {
-      message: "Enter a full URL (starting with http:// or https://).",
-    }),
+  logo: z.string().refine((v) => v === "" || /^https?:\/\//.test(v), {
+    message: "Enter a full URL (starting with http:// or https://).",
+  }),
   bankName: z.string(),
   accountName: z.string(),
   accountNumber: z
@@ -235,7 +249,11 @@ export function GeneralTab() {
   return (
     <div className="space-y-5">
       <div className="flex justify-end">
-        <Button onClick={() => void handleSave()} loading={saving} disabled={saving}>
+        <Button
+          onClick={() => void handleSave()}
+          loading={saving}
+          disabled={saving}
+        >
           {saved ? (
             <>
               <CheckCircle2 className="w-4 h-4" /> Saved
@@ -290,7 +308,9 @@ export function GeneralTab() {
           </div>
 
           <div className="mt-4">
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Logo</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Logo
+            </label>
             <div className="flex items-center gap-3.5">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white">
                 <img
@@ -305,7 +325,9 @@ export function GeneralTab() {
                   type="file"
                   accept={LOGO_ACCEPTED_TYPES.join(",")}
                   className="hidden"
-                  onChange={(e) => void handleLogoFileSelected(e.target.files?.[0])}
+                  onChange={(e) =>
+                    void handleLogoFileSelected(e.target.files?.[0])
+                  }
                 />
                 <Button
                   type="button"
@@ -315,16 +337,21 @@ export function GeneralTab() {
                   loading={uploadingLogo}
                   disabled={uploadingLogo}
                 >
-                  {uploadingLogo ? "Uploading..." : (
+                  {uploadingLogo ? (
+                    "Uploading..."
+                  ) : (
                     <>
                       <Upload className="w-3.5 h-3.5" /> Upload new logo
                     </>
                   )}
                 </Button>
                 <p className="text-xs text-slate-400 mt-1.5">
-                  JPG, PNG, WebP or SVG — up to 2MB. Saved immediately, shown across the platform.
+                  JPG, PNG, WebP or SVG — up to 2MB. Saved immediately, shown
+                  across the platform.
                 </p>
-                {logoError && <p className="text-xs text-red-600 mt-1">{logoError}</p>}
+                {logoError && (
+                  <p className="text-xs text-red-600 mt-1">{logoError}</p>
+                )}
               </div>
             </div>
           </div>
@@ -334,20 +361,26 @@ export function GeneralTab() {
       <Card className="p-5">
         <SectionTitle>Browser tab &amp; SEO</SectionTitle>
         <p className="mb-4 -mt-2 text-xs text-slate-500">
-          Shown in the browser tab and search/social previews across every
-          page. Falls back to the platform name above if left blank.
+          Shown in the browser tab and search/social previews across every page.
+          Falls back to the platform name above if left blank.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Page title" error={errors.meta_title} hint="optional">
             <input
               value={form.meta_title}
               onChange={(e) => set("meta_title", e.target.value)}
-              placeholder={form.app_name || "e.g. Vendify — Airtime, Data & Bills"}
+              placeholder={
+                form.app_name || "e.g. Vendify — Airtime, Data & Bills"
+              }
               className={inputCls}
             />
           </Field>
           <div className="sm:col-span-2">
-            <Field label="Meta description" error={errors.meta_description} hint="optional, ~160 characters">
+            <Field
+              label="Meta description"
+              error={errors.meta_description}
+              hint="optional, ~160 characters"
+            >
               <textarea
                 rows={2}
                 value={form.meta_description}
@@ -363,9 +396,9 @@ export function GeneralTab() {
       <Card className="p-5">
         <SectionTitle>Payout bank details</SectionTitle>
         <p className="mb-4 -mt-2 text-xs text-slate-500">
-          The account platform funds are reconciled against. Double-check
-          these carefully — an incorrect account number here can misroute
-          funding confirmations.
+          The account platform funds are reconciled against. Double-check these
+          carefully — an incorrect account number here can misroute funding
+          confirmations.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Bank name" error={errors.bankName}>
@@ -384,7 +417,11 @@ export function GeneralTab() {
               className={inputCls}
             />
           </Field>
-          <Field label="Account number" error={errors.accountNumber} hint="10 digits">
+          <Field
+            label="Account number"
+            error={errors.accountNumber}
+            hint="10 digits"
+          >
             <input
               value={form.accountNumber}
               onChange={(e) => set("accountNumber", e.target.value)}
@@ -414,7 +451,10 @@ export function GeneralTab() {
         <div className="grid gap-3 sm:grid-cols-3">
           <ReadOnlyField label="App type" value={general.app_type || "—"} />
           <ReadOnlyField label="App URL" value={general.app_url} />
-          <ReadOnlyField label="App logo (server default)" value={general.app_logo} />
+          <ReadOnlyField
+            label="App logo (server default)"
+            value={general.app_logo}
+          />
         </div>
       </Card>
     </div>
