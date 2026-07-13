@@ -37,6 +37,8 @@ const UserLayout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Route changes are the external event that dismisses transient mobile UI.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false);
     setServicesSheetOpen(false);
   }, [location.pathname]);
@@ -61,7 +63,7 @@ const UserLayout = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-app-bg">
+    <div className="user-app flex h-dvh min-h-0 max-w-full overflow-hidden bg-app-bg">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -72,15 +74,15 @@ const UserLayout = () => {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <ImpersonationBanner />
         <Topbar onToggleSidebar={() => setSidebarOpen((o) => !o)} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto flex w-full max-w-7xl flex-col px-3 py-3 pb-24 sm:px-4 sm:py-4 lg:px-6 lg:py-6 lg:pb-6">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="user-page-container">
             <Outlet />
           </div>
         </main>
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden">
+      <nav className="user-bottom-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden">
         {mobileNavItems.map((item) => {
           const isServices = item.path === "/services";
           const active = isServices
@@ -95,14 +97,14 @@ const UserLayout = () => {
                   : navigate(item.path)
               }
               aria-expanded={isServices ? servicesSheetOpen : undefined}
-              className={`flex flex-1 min-w-0 flex-col items-center gap-0.5 px-1 py-2.5 text-[11px] transition-colors ${
+              className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-[10px] transition-colors min-[360px]:text-[11px] ${
                 active
                   ? "font-medium text-[#111827]"
                   : "text-slate-400 hover:text-slate-600"
               }`}
             >
               <item.icon className="h-5 w-5" />
-              <span className="truncate">{item.label}</span>
+              <span className="max-w-full leading-tight">{item.label}</span>
             </button>
           );
         })}

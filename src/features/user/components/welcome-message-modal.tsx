@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { PartyPopper, X } from "lucide-react";
 
 export function WelcomeMessageModal({
@@ -9,11 +10,23 @@ export function WelcomeMessageModal({
   message: string;
   onClose: () => void;
 }) {
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50">
-      <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6 text-center animate-bounce-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-3 safe-modal-inset sm:p-4" role="dialog" aria-modal="true" aria-label="Welcome message">
+      <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-4 text-center shadow-2xl animate-bounce-in sm:p-6">
         <button
           onClick={onClose}
           className="absolute right-3 top-3 p-1.5 rounded-md text-slate-400 hover:bg-gray-100 transition-colors"
