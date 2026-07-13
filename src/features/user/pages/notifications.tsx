@@ -1,22 +1,47 @@
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
-import { PageHeader, Card, EmptyState, SkeletonLine } from "../components/shared-ui";
-import { notificationService, type AppNotification } from "@/shared/notificationService";
-import { notificationIcon, toneStyles, dateLabel } from "@/shared/notificationDisplay";
+import {
+  PageHeader,
+  Card,
+  EmptyState,
+  Pagination,
+  SkeletonLine,
+} from "../components/shared-ui";
+import {
+  notificationService,
+  type AppNotification,
+} from "@/shared/notificationService";
+import {
+  notificationIcon,
+  toneStyles,
+  dateLabel,
+} from "@/shared/notificationDisplay";
+
+const PAGE_SIZE = 10;
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
 
   const notifsQuery = useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => notificationService.getAll(),
+    queryKey: ["notifications", page],
+    queryFn: () => notificationService.getAll(page, PAGE_SIZE),
   });
-  const notifs = notifsQuery.data ?? [];
+
+  const notifs = notifsQuery.data?.data ?? [];
+  const meta = notifsQuery.data?.meta;
   const unreadCount = notifs.filter((n) => !n.read_at).length;
+  const unreadLabel =
+    unreadCount === 1
+      ? "1 unread on this page"
+      : `${unreadCount} unread on this page`;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+    queryClient.invalidateQueries({
+      queryKey: ["notifications", "unread-count"],
+    });
   };
 
   const handleMarkRead = async (n: AppNotification) => {
@@ -34,7 +59,7 @@ export default function NotificationsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Notifications"
-        description={notifsQuery.isPending ? "Loading…" : `${unreadCount} unread`}
+        description={notifsQuery.isPending ? "Loading..." : unreadLabel}
         actions={
           unreadCount > 0 ? (
             <button
@@ -60,31 +85,56 @@ export default function NotificationsPage() {
             description="Purchase updates, transfers, and account alerts will show up here."
           />
         ) : (
-          <div className="divide-y divide-gray-100">
-            {notifs.map((n) => {
-              const { icon: Icon, tone } = notificationIcon(n.data.type);
-              const unread = !n.read_at;
-              return (
-                <div
-                  key={n.id}
-                  onClick={() => void handleMarkRead(n)}
-                  className={`flex gap-3.5 p-4 hover:bg-gray-50 transition-colors cursor-pointer ${unread ? "bg-[#111827]/5" : ""}`}
-                >
-                  <div className={`w-8 h-8 rounded-full ${toneStyles[tone]} flex items-center justify-center shrink-0 mt-0.5`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-slate-900 text-sm font-medium">{n.data.title}</p>
-                      {unread && <span className="w-1.5 h-1.5 bg-[#111827] rounded-full shrink-0" />}
+          <>
+            <div className="divide-y divide-gray-100">
+              {notifs.map((n) => {
+                const { icon: Icon, tone } = notificationIcon(n.data.type);
+                const unread = !n.read_at;
+
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => void handleMarkRead(n)}
+                    className={`flex gap-3.5 p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                      unread ? "bg-[#111827]/5" : ""
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full ${toneStyles[tone]} flex items-center justify-center shrink-0 mt-0.5`}
+                    >
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-slate-500 text-xs leading-relaxed">{n.data.body}</p>
-                    <p className="text-slate-400 text-xs mt-1.5">{dateLabel(n.created_at)}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-slate-900 text-sm font-medium">
+                          {n.data.title}
+                        </p>
+                        {unread && (
+                          <span className="w-1.5 h-1.5 bg-[#111827] rounded-full shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-slate-500 text-xs leading-relaxed">
+                        {n.data.body}
+                      </p>
+                      <p className="text-slate-400 text-xs mt-1.5">
+                        {dateLabel(n.created_at)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            {meta && meta.total > meta.per_page && (
+              <Pagination
+                currentPage={meta.current_page}
+                totalPages={meta.last_page}
+                totalItems={meta.total}
+                pageSize={meta.per_page}
+                onPageChange={setPage}
+                label="notifications"
+              />
+            )}
+          </>
         )}
       </Card>
     </div>

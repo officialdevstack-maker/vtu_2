@@ -117,6 +117,7 @@ export type BroadcastHistoryItem = {
   title: string | null;
   message: string | null;
   channels: BroadcastChannel[];
+  payload?: Partial<BroadcastPayload> | null;
   audience_label: string | null;
   recipient_count: number;
   scheduled_at: string | null;

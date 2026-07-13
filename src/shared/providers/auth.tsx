@@ -4,6 +4,7 @@ import {
   useState,
   type ReactNode,
   useCallback,
+  useEffect,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getAuthToken, setAuthToken } from "../api/apiClient";
@@ -132,11 +133,27 @@ type AuthPayload = {
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const AUTH_CHANNEL_NAME = "vendify-auth-session";
+const canUseAuthChannel = () =>
+  typeof window !== "undefined" && "BroadcastChannel" in window;
+
+type AuthChannelMessage =
+  | { type: "request-token" }
+  | { type: "token-response"; token: string }
+  | { type: "logout" };
 
 // One shared cache key for the current user everywhere in the app — the
 // dashboard, transaction pages, and the account-switcher dropdown all read
 // from this same cached entry instead of each holding their own copy.
 export const AUTH_QUERY_KEY = ["auth", "user"] as const;
+
+const postAuthMessage = (message: AuthChannelMessage) => {
+  if (!canUseAuthChannel()) return;
+
+  const channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
+  channel.postMessage(message);
+  channel.close();
+};
 
 const fetchCurrentUser = async (): Promise<User | null> => {
   try {
@@ -157,13 +174,70 @@ const persistAuthToken = (payload?: AuthPayload | null) => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasToken, setHasToken] = useState(() => Boolean(getAuthToken()));
+  const [isSyncingToken, setIsSyncingToken] = useState(
+    () => !getAuthToken() && canUseAuthChannel(),
+  );
 
-  const { data: user = null, isLoading: isInitializing } = useQuery({
+  const { data: user = null, isLoading: isLoadingUser } = useQuery({
     queryKey: AUTH_QUERY_KEY,
     queryFn: fetchCurrentUser,
-    enabled: Boolean(getAuthToken()),
+    enabled: hasToken,
     staleTime: 60_000,
   });
+
+  useEffect(() => {
+    if (!canUseAuthChannel()) {
+      setIsSyncingToken(false);
+      return;
+    }
+
+    const channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
+    const fallbackTimer = window.setTimeout(() => {
+      setIsSyncingToken(false);
+    }, 700);
+
+    channel.onmessage = (event: MessageEvent<AuthChannelMessage>) => {
+      const message = event.data;
+
+      if (message.type === "request-token") {
+        const token = getAuthToken();
+        if (token) {
+          channel.postMessage({ type: "token-response", token });
+        }
+        return;
+      }
+
+      if (message.type === "token-response") {
+        if (!getAuthToken() && message.token) {
+          setAuthToken(message.token);
+          setHasToken(true);
+          setIsSyncingToken(false);
+          void queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+        }
+        return;
+      }
+
+      if (message.type === "logout") {
+        queryClient.clear();
+        setAuthToken(null);
+        setHasToken(false);
+        setIsSyncingToken(false);
+        clearImpersonation();
+      }
+    };
+
+    if (!getAuthToken()) {
+      channel.postMessage({ type: "request-token" });
+    }
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      channel.close();
+    };
+  }, [queryClient]);
+
+  const isInitializing = isSyncingToken || isLoadingUser;
 
   const login = useCallback(
     async (loginValue: string, password: string) => {
@@ -173,6 +247,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await apiClient.get("/sanctum/csrf-cookie");
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", { login: loginValue, password });
         persistAuthToken(response.data.data);
+        if (response.data.data?.token || response.data.data?.access_token) {
+          setHasToken(true);
+          postAuthMessage({
+            type: "token-response",
+            token: response.data.data.token ?? response.data.data.access_token ?? "",
+          });
+        }
         const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
         return freshUser;
@@ -194,6 +275,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await apiClient.get("/sanctum/csrf-cookie");
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/register", payload);
         persistAuthToken(response.data.data);
+        if (response.data.data?.token || response.data.data?.access_token) {
+          setHasToken(true);
+          postAuthMessage({
+            type: "token-response",
+            token: response.data.data.token ?? response.data.data.access_token ?? "",
+          });
+        }
         const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
         return freshUser;
@@ -216,6 +304,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // this device (e.g. a shared computer, or switching accounts).
       queryClient.clear();
       setAuthToken(null);
+      setHasToken(false);
+      postAuthMessage({ type: "logout" });
       // A plain logout during an impersonation session must also drop the
       // parked admin token, or the next login would show the banner again.
       clearImpersonation();

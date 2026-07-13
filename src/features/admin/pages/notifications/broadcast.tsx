@@ -165,6 +165,8 @@ export default function BroadcastPage() {
 
   const [history, setHistory] = useState<BroadcastHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [detailBroadcast, setDetailBroadcast] =
+    useState<BroadcastHistoryItem | null>(null);
 
   const loadHistory = () => {
     setHistoryLoading(true);
@@ -721,10 +723,20 @@ export default function BroadcastPage() {
             ) : (
               <div className="divide-y divide-gray-100 max-h-[420px] overflow-y-auto">
                 {history.map((b) => (
-                  <div key={b.id} className="p-4">
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setDetailBroadcast(b)}
+                    className="block w-full p-4 text-left transition-colors hover:bg-slate-50"
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium text-slate-900 truncate">{b.name || b.title || "Untitled"}</p>
-                      <StatusBadge status={b.sent ? "success" : "pending"} />
+                      <div className="flex shrink-0 items-center gap-2">
+                        <StatusBadge status={b.sent ? "success" : "pending"} />
+                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white hover:text-[#111827]" title="View broadcast details">
+                          <Eye className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
                     </div>
                     <p className="text-xs text-slate-500 truncate mt-0.5">{b.message}</p>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
@@ -744,7 +756,7 @@ export default function BroadcastPage() {
                         })}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -784,6 +796,114 @@ export default function BroadcastPage() {
                   {sending ? "" : scheduleMode === "now" ? "Send now" : "Schedule"}
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {detailBroadcast && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-lg">
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 p-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Broadcast details
+                </p>
+                <h3 className="truncate text-sm font-semibold text-slate-900">
+                  {detailBroadcast.name || detailBroadcast.title || "Untitled"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDetailBroadcast(null)}
+                className="rounded-md p-1.5 text-slate-400 hover:bg-gray-100"
+                aria-label="Close broadcast details"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="max-h-[calc(85vh-73px)] space-y-4 overflow-y-auto p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Status</p>
+                  <div className="mt-1">
+                    <StatusBadge status={detailBroadcast.sent ? "success" : "pending"} />
+                  </div>
+                </div>
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Recipients</p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    {detailBroadcast.recipient_count}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Audience</p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {detailBroadcast.audience_label || "Not specified"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Date</p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {detailBroadcast.scheduled_at && !detailBroadcast.sent
+                      ? `Scheduled ${new Date(detailBroadcast.scheduled_at).toLocaleString()}`
+                      : new Date(detailBroadcast.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-gray-100 p-3">
+                <p className="text-[11px] uppercase tracking-wide text-slate-400">Channels</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {detailBroadcast.channels.map((channel) => {
+                    const Icon = channelIcons[channel] ?? Bell;
+                    return (
+                      <span
+                        key={channel}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600"
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        {channelOptions.find((option) => option.value === channel)?.label ?? channel}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {detailBroadcast.title && (
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Title / subject</p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">{detailBroadcast.title}</p>
+                </div>
+              )}
+
+              {detailBroadcast.message && (
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Message</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                    {detailBroadcast.message}
+                  </p>
+                </div>
+              )}
+
+              {detailBroadcast.payload?.emailBody && (
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Email body</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                    {detailBroadcast.payload.emailBody}
+                  </p>
+                </div>
+              )}
+
+              {detailBroadcast.payload?.smsMessage && (
+                <div className="rounded-lg border border-gray-100 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">SMS message</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                    {detailBroadcast.payload.smsMessage}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
