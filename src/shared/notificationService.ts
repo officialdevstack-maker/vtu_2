@@ -1,6 +1,13 @@
 import { apiClient } from "@shared/api/apiClient";
 
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
+export type PaginatedMeta = {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+};
+type PaginatedApiEnvelope<T> = ApiEnvelope<T> & { meta: PaginatedMeta };
 
 // A Laravel database notification row (Illuminate\Notifications\Notifiable +
 // the `notifications` table already shipped with this app) — `id` is a
@@ -16,8 +23,12 @@ export type AppNotification = {
 };
 
 export const notificationService = {
-  getAll: (): Promise<AppNotification[]> =>
-    apiClient.get<ApiEnvelope<AppNotification[]>>("/notifications").then((r) => r.data.data),
+  getAll: (page = 1, perPage = 10): Promise<{ data: AppNotification[]; meta: PaginatedMeta }> =>
+    apiClient
+      .get<PaginatedApiEnvelope<AppNotification[]>>("/notifications", {
+        params: { page, per_page: perPage },
+      })
+      .then((r) => ({ data: r.data.data, meta: r.data.meta })),
 
   getUnreadCount: (): Promise<number> =>
     apiClient
