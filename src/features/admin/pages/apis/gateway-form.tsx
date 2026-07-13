@@ -46,6 +46,7 @@ type FormState = {
   encryption_key: string;
   webhook_access: string;
   charge_fee: string;
+  charge_fee_cap: string;
   charge_type: FeeType;
   withdrawal_fee: string;
   withdrawal_fee_type: FeeType;
@@ -66,6 +67,7 @@ const blankForm = (): FormState => ({
   encryption_key: "",
   webhook_access: "",
   charge_fee: "",
+  charge_fee_cap: "",
   charge_type: "fiat",
   withdrawal_fee: "",
   withdrawal_fee_type: "fiat",
@@ -83,6 +85,7 @@ const toForm = (g: Gateway): FormState => ({
   encryption_key: g.encryption_key ?? "",
   webhook_access: g.webhook_access ?? "",
   charge_fee: g.charge_fee != null ? String(g.charge_fee) : "",
+  charge_fee_cap: g.charge_fee_cap != null ? String(g.charge_fee_cap) : "",
   charge_type: asFeeType(g.charge_type),
   withdrawal_fee: g.withdrawal_fee != null ? String(g.withdrawal_fee) : "",
   withdrawal_fee_type: asFeeType(g.withdrawal_fee_type),
@@ -209,6 +212,7 @@ export default function GatewayFormPage() {
       webhook_access: credOrNull("webhook_access"),
       // Fees: deposit = charge_fee/charge_type, withdrawal = its own pair.
       charge_fee: form.charge_fee === "" ? 0 : Number(form.charge_fee),
+      charge_fee_cap: form.charge_fee_cap === "" ? null : Number(form.charge_fee_cap),
       charge_type: form.charge_type,
       withdrawal_fee: form.withdrawal_fee === "" ? 0 : Number(form.withdrawal_fee),
       withdrawal_fee_type: form.withdrawal_fee_type,
@@ -383,6 +387,18 @@ export default function GatewayFormPage() {
                     <option value="percent">Percent (%)</option>
                   </select>
                 </div>
+              </Field>
+
+              <Field label="Fee cap (optional)">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.charge_fee_cap}
+                  onChange={(e) => set("charge_fee_cap", e.target.value)}
+                  placeholder="Leave blank for no cap"
+                  className={`${inputCls}`}
+                />
               </Field>
 
               <Field label="Withdrawal fee">

@@ -28,6 +28,7 @@ export type Gateway = {
   // PaymentBase::creditedAmount); withdrawal fee is its own pair. type is
   // "fiat" (flat ₦) or "percent".
   charge_fee?: string | number | null;
+  charge_fee_cap?: string | number | null;
   charge_type?: string | null;
   withdrawal_fee?: string | number | null;
   withdrawal_fee_type?: string | null;
@@ -49,6 +50,7 @@ export type GatewayPayload = {
   encryption_key?: string | null;
   webhook_access?: string | null;
   charge_fee?: string | number | null;
+  charge_fee_cap?: string | number | null;
   charge_type?: string | null;
   withdrawal_fee?: string | number | null;
   withdrawal_fee_type?: string | null;
