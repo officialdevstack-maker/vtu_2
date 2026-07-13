@@ -41,12 +41,13 @@ import {
 const isEngineType = (subCategory: string | null | undefined) =>
   (subCategory ?? "") !== "simhost";
 
-// Only vendor classes that implement syncPlans() (currently Ogdams, grouped
-// under sub_category "simhost") support this — adex/msorg both resolve to
-// the Adex provider class, which doesn't, so the button is hidden rather
-// than shown-then-erroring.
-const supportsSyncPlans = (subCategory: string | null | undefined) =>
-  subCategory !== "adex" && subCategory !== "msorg";
+// ADEX and the legacy provider aliases that map to the Adex class can sync
+// remote data plans. Other vendors will still surface the backend's 422 if
+// they do not implement syncPlans().
+const supportsSyncPlans = (subCategory: string | null | undefined) => {
+  const normalized = (subCategory ?? "").toLowerCase();
+  return ["adex", "spurs", "msorg", "simhost"].includes(normalized);
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -332,7 +333,7 @@ const ProviderDetailPage = () => {
       const summary = await providerService.syncPlans(id);
       setSyncMessage({
         ok: true,
-        text: `Synced: ${summary.created} new (as drafts), ${summary.updated} updated, ${summary.skipped} skipped.`,
+        text: `${summary.message ?? "Plans synced."} Synced: ${summary.created} new (as drafts), ${summary.updated} updated, ${summary.skipped} skipped.`,
       });
     } catch (err) {
       const text = axios.isAxiosError(err)
