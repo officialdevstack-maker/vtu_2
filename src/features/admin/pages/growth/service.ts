@@ -24,6 +24,7 @@ export type PromotionApply = "auto" | "code";
 // isUserEligible). "customer"/"reseller" are legacy coarse audiences still
 // honored by the backend.
 export type PromotionTarget = string;
+export type PromotionTargetSelection = string[];
 export type PromotionProduct = "airtime" | "data" | "bundle";
 export type PromotionProductSelection = PromotionProduct[];
 export type PromotionType = "percentage" | "fixed" | "bonus_data" | "cashback";
@@ -37,7 +38,8 @@ export type Promotion = {
   name: string;
   code: string | null;
   apply: PromotionApply;
-  target: PromotionTarget;
+  target: PromotionTarget | null;
+  targets: PromotionTargetSelection | null;
   product: PromotionProduct | null;
   products: PromotionProductSelection | null;
   provider: string | null;
@@ -58,7 +60,8 @@ export type PromotionPayload = {
   name: string;
   code?: string | null;
   apply: PromotionApply;
-  target: PromotionTarget;
+  target?: PromotionTarget | null;
+  targets?: PromotionTargetSelection | null;
   product?: PromotionProduct | null;
   products?: PromotionProductSelection | null;
   provider?: string | null;
