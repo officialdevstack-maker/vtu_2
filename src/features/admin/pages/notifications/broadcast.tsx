@@ -254,6 +254,8 @@ export default function BroadcastPage() {
   if (hasEmail && !(emailSubject.trim() && emailBody.trim())) missing.push("fill in the email subject & body");
   if (hasSms && !smsMessage.trim()) missing.push("fill in the SMS message");
   if (scheduleMode === "later" && !scheduleDate) missing.push("pick a schedule date/time");
+  if (countLoading || audienceCount === null) missing.push("wait for the audience count");
+  if (!countLoading && audienceCount === 0) missing.push("choose an audience with at least one recipient");
 
   const isValid = missing.length === 0;
 
@@ -279,6 +281,12 @@ export default function BroadcastPage() {
   }, [hasDatabase, hasEmail, hasSms, notifTitle, notifMessage, emailSubject, emailBody, smsMessage, user]);
 
   const doSend = async () => {
+    if (audienceCount === null || audienceCount < 1) {
+      setSendError("Choose an audience with at least one recipient before sending.");
+      setConfirmOpen(false);
+      return;
+    }
+
     setSending(true);
     setSendError(null);
     setResult(null);
