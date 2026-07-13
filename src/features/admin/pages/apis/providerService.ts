@@ -173,10 +173,15 @@ export const providerService = {
   // support this — the backend returns a 422 for the rest.
   syncPlans: (
     id: string | number,
-  ): Promise<{ created: number; updated: number; skipped: number }> =>
+  ): Promise<{ created: number; updated: number; skipped: number; message?: string }> =>
     apiClient
       .post<
-        ApiEnvelope<{ created: number; updated: number; skipped: number }>
+        ApiEnvelope<{
+          created: number;
+          updated: number;
+          skipped: number;
+          message?: string;
+        }>
       >(`/admin/vendor/${id}/sync-plans`)
       .then((r) => r.data.data),
 
