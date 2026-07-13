@@ -43,7 +43,7 @@ type FormState = {
   name: string;
   applyMode: PromotionApply;
   code: string;
-  target: PromotionTarget;
+  targets: PromotionTarget[];
   products: PromotionProduct[];
   provider: string;
   type: PromotionType;
@@ -123,7 +123,7 @@ const blankForm = (): FormState => ({
   name: "",
   applyMode: "code",
   code: "",
-  target: "both",
+  targets: ["both"],
   products: ["airtime"],
   provider: "",
   type: "percentage",
@@ -145,7 +145,14 @@ function toForm(promo: Promotion): FormState {
     name: promo.name,
     applyMode: promo.apply,
     code: promo.code ?? "",
-    target: promo.target,
+    targets: Array.isArray(
+      (promo as Promotion & { targets?: PromotionTarget[] }).targets,
+    )
+      ? ((promo as Promotion & { targets?: PromotionTarget[] })
+          .targets as PromotionTarget[])
+      : promo.target
+        ? [promo.target]
+        : ["both"],
     products: Array.isArray(
       (promo as Promotion & { products?: PromotionProduct[] }).products,
     )
@@ -184,7 +191,8 @@ function toPayload(form: FormState): PromotionPayload {
     name: form.name.trim(),
     apply: form.applyMode,
     code: form.applyMode === "code" ? form.code.trim() : null,
-    target: form.target,
+    target: form.targets[0] ?? null,
+    targets: form.targets,
     product: form.products[0] ?? null,
     products: form.products,
     provider: form.provider.trim() || null,
@@ -282,10 +290,6 @@ export default function PromoFormPage() {
     value: String(r.slug ?? r.name),
     label: r.name,
   }));
-  const targetIsKnown =
-    form.target === "both" ||
-    targetOptions.some((o) => o.value === form.target);
-
   // Provider = a network, stored UPPERCASE to match PromotionService's
   // strtoupper() comparison. "" means all networks.
   const providerOptions = networks.map((n) => n.name.toUpperCase());
@@ -450,27 +454,60 @@ export default function PromoFormPage() {
           <Card className="p-5">
             <SectionTitle>Eligibility</SectionTitle>
             <div className="space-y-4">
-              <Field
-                label="Target audience"
-                hint="which role the promo applies to"
-              >
-                <select
-                  value={form.target}
-                  onChange={(e) =>
-                    set("target", e.target.value as PromotionTarget)
-                  }
-                  className={selectCls}
-                >
-                  <option value="both">All users</option>
-                  {targetOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                  {!targetIsKnown && form.target && (
-                    <option value={form.target}>{form.target} (legacy)</option>
-                  )}
-                </select>
+              <Field label="Target audience" hint="choose one or more roles">
+                <div className="flex flex-wrap gap-2">
+                  <label
+                    className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                      form.targets.includes("both")
+                        ? "border-[#111827] bg-[#111827] text-white"
+                        : "border-slate-200 bg-white text-slate-600"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.targets.includes("both")}
+                      onChange={() => {
+                        const next = form.targets.includes("both")
+                          ? form.targets.filter((value) => value !== "both")
+                          : [...new Set([...form.targets, "both"])];
+                        set("targets", next);
+                      }}
+                      className="h-3.5 w-3.5 rounded border-slate-300"
+                    />
+                    <span>All users</span>
+                  </label>
+                  {targetOptions.map((option) => {
+                    const checked = form.targets.includes(option.value);
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                          checked
+                            ? "border-[#111827] bg-[#111827] text-white"
+                            : "border-slate-200 bg-white text-slate-600"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            const next = checked
+                              ? form.targets.filter(
+                                  (value) => value !== option.value,
+                                )
+                              : [...new Set([...form.targets, option.value])];
+                            set("targets", next);
+                          }}
+                          className="h-3.5 w-3.5 rounded border-slate-300"
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-slate-400">
+                  One promo can now be shared across multiple roles.
+                </p>
               </Field>
 
               <Field label="Products">
