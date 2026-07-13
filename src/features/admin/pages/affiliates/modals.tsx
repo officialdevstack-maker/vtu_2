@@ -10,6 +10,7 @@ import {
 import {
   childCustomerService,
   childBroadcastService,
+  type BulkMigrationResult,
   type ChildCustomer,
   type ChildCustomerMessage,
   type MigrationResult,
@@ -355,19 +356,21 @@ export function EmailCustomerModal({
 // Bulk migrate many child customers sequentially with progress reporting.
 export function BulkMigrateModal({
   instanceId,
+  customerIds,
   customers,
   onClose,
   onDone,
 }: {
   instanceId: string;
+  customerIds: (string | number)[];
   customers: ChildCustomer[];
   onClose: () => void;
   onDone?: () => void;
 }) {
   const [targetUrl, setTargetUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const [results, setResults] = useState<MigrationResult[]>(
-    [] as MigrationResult[],
+  const [results, setResults] = useState<BulkMigrationResult[]>(
+    [] as BulkMigrationResult[],
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -375,10 +378,9 @@ export function BulkMigrateModal({
     setBusy(true);
     setError(null);
     try {
-      const ids = customers.map((c) => c.id);
       const res = await childCustomerService.bulkMigrate(
         instanceId,
-        ids,
+        customerIds,
         targetUrl.trim() || undefined,
       );
       setResults(res);
@@ -429,7 +431,9 @@ export function BulkMigrateModal({
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs text-slate-400">Selected customers</p>
+            <p className="text-xs text-slate-400">
+              Selected customers ({customerIds.length})
+            </p>
             <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 p-2">
               {customers.map((c) => (
                 <div key={c.id} className="text-sm text-slate-700">
@@ -456,7 +460,7 @@ export function BulkMigrateModal({
                 onClick={handleBulk}
               >
                 <ArrowRightLeft className="w-3.5 h-3.5" /> Migrate{" "}
-                {customers.length}
+                {customerIds.length}
               </Button>
             </div>
           </div>
@@ -468,14 +472,22 @@ export function BulkMigrateModal({
                 {results.map((r, i) => (
                   <div
                     key={i}
-                    className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-slate-700"
+                    className={`rounded-lg px-3 py-2 text-sm ${
+                      r.success
+                        ? "bg-emerald-50 text-emerald-800"
+                        : "bg-red-50 text-red-700"
+                    }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        {r.user.username} ({r.user.email})
+                        {r.success && r.data
+                          ? `${r.data.user.username} (${r.data.user.email})`
+                          : `Customer #${r.customer_id}`}
                       </div>
-                      <div className="text-[11px] text-slate-400">
-                        Directive #{r.directive_id}
+                      <div className="text-[11px] opacity-70">
+                        {r.success && r.data
+                          ? `Directive #${r.data.directive_id}`
+                          : r.message}
                       </div>
                     </div>
                   </div>

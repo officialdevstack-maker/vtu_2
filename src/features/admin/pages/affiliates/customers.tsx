@@ -537,6 +537,7 @@ export default function AffiliateCustomersPage() {
       {bulkMigrateOpen && (
         <BulkMigrateModal
           instanceId={id}
+          customerIds={selectedIds}
           customers={customers.filter((c) => selectedSet.has(String(c.id)))}
           onClose={() => setBulkMigrateOpen(false)}
           onDone={() => {
