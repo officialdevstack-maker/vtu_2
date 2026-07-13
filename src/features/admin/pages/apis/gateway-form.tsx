@@ -11,7 +11,12 @@ import {
   selectCls,
   SkeletonLine,
 } from "../../../user/components/shared-ui";
-import { SectionTitle, Field, ErrorBanner, extractErrorMessage } from "../settings/shared";
+import {
+  SectionTitle,
+  Field,
+  ErrorBanner,
+  extractErrorMessage,
+} from "../settings/shared";
 import {
   gatewayService,
   type Gateway,
@@ -145,11 +150,14 @@ export default function GatewayFormPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const stateGateway = (location.state as { gateway?: Gateway } | null)?.gateway;
+  const stateGateway = (location.state as { gateway?: Gateway } | null)
+    ?.gateway;
   const isEdit = id != null;
 
   const [initial, setInitial] = useState<Gateway | undefined>(stateGateway);
-  const [fetchingInitial, setFetchingInitial] = useState(isEdit && !stateGateway);
+  const [fetchingInitial, setFetchingInitial] = useState(
+    isEdit && !stateGateway,
+  );
   const [form, setForm] = useState<FormState>(
     stateGateway ? toForm(stateGateway) : blankForm(),
   );
@@ -159,7 +167,10 @@ export default function GatewayFormPage() {
   const [types, setTypes] = useState<GatewayType[]>([]);
 
   useEffect(() => {
-    gatewayService.getTypes().then(setTypes).catch(() => {});
+    gatewayService
+      .getTypes()
+      .then(setTypes)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -186,7 +197,8 @@ export default function GatewayFormPage() {
   );
   const credentialFields = selectedGateway?.credentials ?? [];
   const nameIsKnown =
-    !form.name || types.some((t) => t.value.toLowerCase() === form.name.trim().toLowerCase());
+    !form.name ||
+    types.some((t) => t.value.toLowerCase() === form.name.trim().toLowerCase());
 
   const handleSubmit = async () => {
     const formErrors = validateForm(form);
@@ -212,9 +224,11 @@ export default function GatewayFormPage() {
       webhook_access: credOrNull("webhook_access"),
       // Fees: deposit = charge_fee/charge_type, withdrawal = its own pair.
       charge_fee: form.charge_fee === "" ? 0 : Number(form.charge_fee),
-      charge_fee_cap: form.charge_fee_cap === "" ? null : Number(form.charge_fee_cap),
+      charge_fee_cap:
+        form.charge_fee_cap === "" ? null : Number(form.charge_fee_cap),
       charge_type: form.charge_type,
-      withdrawal_fee: form.withdrawal_fee === "" ? 0 : Number(form.withdrawal_fee),
+      withdrawal_fee:
+        form.withdrawal_fee === "" ? 0 : Number(form.withdrawal_fee),
       withdrawal_fee_type: form.withdrawal_fee_type,
     };
 
@@ -263,7 +277,11 @@ export default function GatewayFormPage() {
         <PageHeader
           title="Edit gateway"
           actions={
-            <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(BACK)}
+            >
               <ChevronLeft className="w-3.5 h-3.5" /> Back
             </Button>
           }
@@ -299,10 +317,19 @@ export default function GatewayFormPage() {
         }
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => navigate(cancelTo)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(cancelTo)}
+            >
               Cancel
             </Button>
-            <Button size="sm" disabled={saving} loading={saving} onClick={handleSubmit}>
+            <Button
+              size="sm"
+              disabled={saving}
+              loading={saving}
+              onClick={handleSubmit}
+            >
               {isEdit ? "Save changes" : "Add gateway"}
             </Button>
           </>
@@ -317,9 +344,15 @@ export default function GatewayFormPage() {
           <Card className="p-5">
             <SectionTitle>General</SectionTitle>
             <div className="space-y-4">
-              <Field label="Gateway" error={errors.name} hint="which payment engine">
+              <Field
+                label="Gateway"
+                error={errors.name}
+                hint="which payment engine"
+              >
                 <select
-                  value={selectedGateway?.value ?? (nameIsKnown ? "" : form.name)}
+                  value={
+                    selectedGateway?.value ?? (nameIsKnown ? "" : form.name)
+                  }
                   onChange={(e) => set("name", e.target.value)}
                   className={selectCls}
                 >
@@ -349,13 +382,18 @@ export default function GatewayFormPage() {
                 <div className="flex items-center gap-2.5">
                   <Power className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-xs font-medium text-slate-700">Connection</p>
+                    <p className="text-xs font-medium text-slate-700">
+                      Connection
+                    </p>
                     <p className="text-xs text-slate-400">
                       Only connected gateways are offered for funding.
                     </p>
                   </div>
                 </div>
-                <Toggle value={form.connection} onChange={(v) => set("connection", v)} />
+                <Toggle
+                  value={form.connection}
+                  onChange={(v) => set("connection", v)}
+                />
               </div>
             </div>
           </Card>
@@ -363,8 +401,8 @@ export default function GatewayFormPage() {
           <Card className="p-5">
             <SectionTitle>Fees</SectionTitle>
             <p className="text-xs text-slate-400 -mt-2 mb-4">
-              Deposit fee is deducted from each wallet funding; withdrawal fee is
-              added on top of a payout. Percent is of the amount.
+              Deposit fee is deducted from each wallet funding; withdrawal fee
+              is added on top of a payout. Percent is of the amount.
             </p>
             <div className="space-y-4">
               <Field label="Deposit fee">
@@ -380,7 +418,9 @@ export default function GatewayFormPage() {
                   />
                   <select
                     value={form.charge_type}
-                    onChange={(e) => set("charge_type", e.target.value as FeeType)}
+                    onChange={(e) =>
+                      set("charge_type", e.target.value as FeeType)
+                    }
                     className={`${selectCls} w-32`}
                   >
                     <option value="fiat">Fixed (₦)</option>
@@ -444,7 +484,10 @@ export default function GatewayFormPage() {
                   return (
                     <Field key={f.key} label={f.label}>
                       {f.secret ? (
-                        <SecretInput value={value} onChange={(v) => set(key, v)} />
+                        <SecretInput
+                          value={value}
+                          onChange={(v) => set(key, v)}
+                        />
                       ) : (
                         <input
                           value={value}
