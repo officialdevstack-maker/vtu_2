@@ -218,8 +218,8 @@ export default function AffiliateMessagesPage() {
                       className={inputCls}
                     />
                   </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div>
                       <label className="block text-[11px] text-slate-600 mb-1">
                         Wallet balance min
                       </label>
@@ -230,7 +230,7 @@ export default function AffiliateMessagesPage() {
                         placeholder="0"
                       />
                     </div>
-                    <div className="flex-1">
+                    <div>
                       <label className="block text-[11px] text-slate-600 mb-1">
                         Wallet balance max
                       </label>
@@ -242,7 +242,7 @@ export default function AffiliateMessagesPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div>
                       <label className="block text-[11px] text-slate-600 mb-1">
                         Signed up within (days)
@@ -266,7 +266,7 @@ export default function AffiliateMessagesPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div>
                       <label className="block text-[11px] text-slate-600 mb-1">
                         Transaction count min
@@ -290,7 +290,7 @@ export default function AffiliateMessagesPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <div>
                       <label className="block text-[11px] text-slate-600 mb-1">
                         Transaction amount min

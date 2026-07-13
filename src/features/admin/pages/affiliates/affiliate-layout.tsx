@@ -114,7 +114,7 @@ export default function AffiliateLayout() {
     <div className="space-y-5">
       <PageHeader
         title={
-          <span className="inline-flex items-center gap-2.5">
+          <span className="inline-flex min-w-0 flex-wrap items-center gap-2.5">
             {instance.name}
             <StatusBadge
               status={
@@ -131,7 +131,7 @@ export default function AffiliateLayout() {
         }
         description={instance.base_url ?? "No base URL set"}
         actions={
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Button variant="secondary" size="sm" onClick={() => navigate("/admin/affiliates")}>
               <ArrowLeft className="w-3.5 h-3.5" /> All affiliates
             </Button>
@@ -145,22 +145,24 @@ export default function AffiliateLayout() {
         }
       />
 
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={label}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg transition-colors ${
-                isActive ? "bg-[#111827] text-white" : "text-slate-500 hover:bg-gray-100"
-              }`
-            }
-          >
-            <Icon className="w-3.5 h-3.5" />
-            {label}
-          </NavLink>
-        ))}
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="flex min-w-max items-center gap-1.5">
+          {NAV.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={label}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-colors ${
+                  isActive ? "bg-[#111827] text-white" : "text-slate-500 hover:bg-gray-100"
+                }`
+              }
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </NavLink>
+          ))}
+        </div>
       </div>
 
       <Outlet context={{ instance, setInstance, refreshInstance } satisfies AffiliateContext} />
