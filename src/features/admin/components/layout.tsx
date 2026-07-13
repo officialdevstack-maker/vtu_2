@@ -243,9 +243,9 @@ const Layout = () => {
 
   const renderSidebarContent = () => (
     <>
-      <div className="border-b border-slate-100 px-5 py-5">
+      <div className="border-b border-white/10 px-5 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-[#111827] shadow-sm shadow-[#111827]/20">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 shadow-sm shadow-black/20">
             {logo ? (
               <img
                 src={logo}
@@ -257,10 +257,10 @@ const Layout = () => {
             )}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900">
+            <p className="truncate text-sm text-white">
               {app_name}
             </p>
-            <p className="text-xs text-slate-400">Admin Center</p>
+            <p className="text-xs text-white/40">Admin Center</p>
           </div>
         </div>
       </div>
@@ -268,7 +268,7 @@ const Layout = () => {
       <nav className="flex-1 overflow-y-auto px-3 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {navGroups.map((group) => (
           <div key={group.title} className="mb-4">
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">
+            <p className="mb-2 px-3 text-[11px] uppercase tracking-[0.25em] text-white/35">
               {group.title}
             </p>
             <div className="space-y-1">
@@ -294,8 +294,8 @@ const Layout = () => {
                         className={({ isActive: linkActive }) =>
                           `flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                             linkActive || active
-                              ? "bg-[#111827]/10 text-[#111827] font-medium"
-                              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                              ? "bg-white/10 text-white"
+                              : "text-white/60 hover:bg-white/5 hover:text-white/90"
                           }`
                         }
                       >
@@ -307,7 +307,7 @@ const Layout = () => {
                         <button
                           type="button"
                           onClick={() => toggleExpanded(item.path)}
-                          className="rounded-r-xl px-2 py-2.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700"
+                          className="rounded-r-xl px-2 py-2.5 text-white/35 transition-colors hover:bg-white/5 hover:text-white/75"
                           aria-label={`Toggle ${item.label}`}
                         >
                           <ChevronRight
@@ -320,7 +320,7 @@ const Layout = () => {
                     </div>
 
                     {item.children && isExpanded ? (
-                      <div className="ml-7 mt-1 space-y-1 border-l border-slate-100 pl-3">
+                      <div className="ml-7 mt-1 space-y-1 border-l border-white/10 pl-3">
                         {item.children.map((child) => (
                           <NavLink
                             key={child.path}
@@ -329,8 +329,8 @@ const Layout = () => {
                             className={({ isActive: childActive }) =>
                               `flex items-center rounded-lg px-2 py-1.5 text-sm transition-colors ${
                                 childActive
-                                  ? "text-[#111827] font-medium"
-                                  : "text-slate-400 hover:text-slate-700"
+                                  ? "text-white"
+                                  : "text-white/45 hover:text-white/80"
                               }`
                             }
                           >
@@ -347,20 +347,20 @@ const Layout = () => {
         ))}
       </nav>
 
-      <div className="relative border-t border-slate-100 px-3 py-3">
+      <div className="relative border-t border-white/10 px-3 py-3">
         <button
           type="button"
           onClick={() => setSidebarMenuOpen((o) => !o)}
-          className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:bg-slate-100"
+          className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-left transition-colors hover:bg-white/10"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827]/15 text-sm font-semibold text-[#111827]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
             {initialsOf(displayName)}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-slate-900">
+            <p className="truncate text-sm text-white">
               {displayName}
             </p>
-            <p className="truncate text-xs text-slate-400">{displayRole}</p>
+            <p className="truncate text-xs text-white/40">{displayRole}</p>
           </div>
         </button>
 
@@ -370,11 +370,11 @@ const Layout = () => {
               className="fixed inset-0 z-10"
               onClick={() => setSidebarMenuOpen(false)}
             />
-            <div className="absolute bottom-full left-3 right-3 z-20 mb-2 rounded-xl border border-slate-200/70 bg-white py-1 shadow-lg">
+            <div className="absolute bottom-full left-3 right-3 z-20 mb-2 rounded-xl border border-white/10 bg-[#111827] py-1 shadow-lg shadow-black/20">
               <button
                 type="button"
                 onClick={handleGoToAccountSettings}
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
               >
                 <Settings className="h-3.5 w-3.5" /> Settings
               </button>
@@ -382,7 +382,7 @@ const Layout = () => {
                 <button
                   type="button"
                   onClick={handleSwitchToUserView}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-600 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/5 hover:text-white"
                 >
                   <ArrowLeftRight className="h-3.5 w-3.5" /> Switch to user view
                 </button>
@@ -393,7 +393,7 @@ const Layout = () => {
                   setSidebarMenuOpen(false);
                   setShowLogoutModal(true);
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-600 transition-colors hover:bg-red-50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-red-200 transition-colors hover:bg-red-500/10 hover:text-red-100"
               >
                 <LogOut className="h-3.5 w-3.5" /> Log out
               </button>
@@ -408,7 +408,7 @@ const Layout = () => {
     <div className="admin-theme h-screen overflow-hidden bg-app-bg text-slate-900">
       <TopLoadingBar active={navigation.state === "loading"} />
       <div className="flex h-full min-h-0">
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-100 bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#111827] lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex">
           {renderSidebarContent()}
         </aside>
 
@@ -555,11 +555,11 @@ const Layout = () => {
             className="absolute inset-0 bg-black/50"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <aside className="relative flex h-full w-[min(20rem,86vw)] flex-col border-r border-slate-100 bg-white shadow-xl">
+          <aside className="relative flex h-full w-[min(20rem,86vw)] flex-col border-r border-white/10 bg-[#111827] shadow-xl">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute right-3 top-3 z-10 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="absolute right-3 top-3 z-10 rounded-lg p-2 text-white/45 transition-colors hover:bg-white/5 hover:text-white"
               aria-label="Close admin navigation"
             >
               <X className="h-4 w-4" />

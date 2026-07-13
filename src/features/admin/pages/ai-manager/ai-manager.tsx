@@ -551,14 +551,14 @@ const ConversationSidebar = ({
   onDelete: (id: number) => void;
   deletingId?: number;
 }) => (
-  <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111827] text-white shadow-xl lg:rounded-none lg:border-0 lg:shadow-none">
+  <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111827] font-normal text-white shadow-xl lg:rounded-none lg:border-0 lg:shadow-none">
     <div className="border-b border-white/10 p-3.5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-white/35">
+          <p className="text-xs uppercase tracking-wide text-white/35">
             AI threads
           </p>
-          <h3 className="truncate text-sm font-semibold text-white">
+          <h3 className="truncate text-sm text-white">
             Conversation history
           </h3>
         </div>
@@ -576,7 +576,7 @@ const ConversationSidebar = ({
       <button
         type="button"
         onClick={onNew}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-[#111827] transition-colors hover:bg-white/90"
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs text-[#111827] transition-colors hover:bg-white/90"
       >
         <Plus className="h-3.5 w-3.5" /> New chat
       </button>
@@ -609,7 +609,7 @@ const ConversationSidebar = ({
                 onClick={() => onOpen(c.id)}
                 className="min-w-0 flex-1 px-3 py-3 text-left"
               >
-                <p className="truncate text-sm font-semibold text-white">
+                <p className="truncate text-sm text-white">
                   {c.title ?? "Untitled conversation"}
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-white/40">
@@ -636,7 +636,7 @@ const ConversationSidebar = ({
       ) : (
         <div className="rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-8 text-center">
           <MessageSquareText className="mx-auto h-5 w-5 text-white/25" />
-          <p className="mt-2 text-xs font-medium text-white/50">
+          <p className="mt-2 text-xs text-white/50">
             No conversations yet.
           </p>
         </div>
