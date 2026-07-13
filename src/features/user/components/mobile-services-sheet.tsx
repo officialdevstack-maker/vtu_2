@@ -23,9 +23,14 @@ export function MobileServicesSheet({
 
   useEffect(() => {
     if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open, onClose]);
 
   const go = (path: string) => {
@@ -49,7 +54,7 @@ export function MobileServicesSheet({
         role="dialog"
         aria-modal="true"
         aria-label="Services"
-        className={`fixed inset-x-0 bottom-0 z-40 rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-40 max-h-[min(88dvh,42rem)] overflow-y-auto rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
           open ? "translate-y-0" : "pointer-events-none translate-y-full"
         }`}
       >

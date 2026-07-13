@@ -50,10 +50,10 @@ function FundTab() {
   return (
     <div className="space-y-4">
       {/* Balance banner */}
-      <Card className="p-5 bg-slate-900 border-slate-900">
+      <Card className="bg-slate-900 p-4 border-slate-900 sm:p-5">
         <p className="text-slate-400 text-xs mb-1.5">Available balance</p>
-        <div className="flex items-center gap-3">
-          <span className="text-white text-2xl font-semibold tabular-nums">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="min-w-0 break-words text-xl font-semibold text-white tabular-nums sm:text-2xl">
             {balanceVisible ? fmt(toNumber(user?.wallet_balance)) : "₦ ••••••"}
           </span>
           <button onClick={() => setBalanceVisible((v) => !v)} className="text-slate-400 hover:text-white transition-colors">
@@ -167,12 +167,12 @@ export default function WalletPage() {
     <div className="mx-auto w-full max-w-xl space-y-5">
       <PageHeader title="Wallet" description="Fund, send, and withdraw your wallet balance" />
 
-      <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg w-fit flex-wrap">
+      <div className="grid w-full grid-cols-1 gap-1.5 rounded-lg bg-gray-100 p-1 min-[340px]:grid-cols-3 sm:w-fit">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+            className={`min-h-11 min-w-0 rounded-md px-2 py-1.5 text-xs font-medium leading-tight transition-colors ${
               activeTab === t.id
                 ? "bg-white text-slate-900 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"

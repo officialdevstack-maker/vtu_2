@@ -96,7 +96,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-white border border-slate-200/70 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "min-w-0 max-w-full bg-white border border-slate-200/70 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         className,
       )}
       {...props}
@@ -157,16 +157,16 @@ export function StatCard({
   meta?: string;
 }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-2.5">
-        <p className="text-xs font-medium text-slate-500">{label}</p>
+    <Card className="flex h-full min-w-0 flex-col p-3 min-[360px]:p-3.5 sm:p-4">
+      <div className="mb-2 flex min-w-0 items-start justify-between gap-2 sm:mb-2.5">
+        <p className="min-w-0 overflow-wrap-anywhere text-xs font-medium leading-snug text-slate-500">{label}</p>
         <div
           className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${toneStyles[tone]}`}
         >
           <Icon className="w-4 h-4" />
         </div>
       </div>
-      <p className="text-xl font-semibold text-slate-900 tabular-nums">
+      <p className="min-w-0 break-words text-lg font-semibold text-slate-900 tabular-nums sm:text-xl">
         {value}
       </p>
       {meta && <p className="text-xs text-slate-400 mt-1">{meta}</p>}
@@ -647,7 +647,7 @@ export function PurchaseShell({
   maxWidth?: string;
 }) {
   return (
-    <div className={cn("mx-auto w-full", maxWidth)}>
+    <div className={cn("mx-auto w-full min-w-0 max-w-full", maxWidth)}>
       <Card className="overflow-hidden">{children}</Card>
     </div>
   );
@@ -667,16 +667,16 @@ export function ServiceHeader({
   subtitle: string;
 }) {
   return (
-    <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+    <div className="border-b border-gray-100 px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
       <div className="flex items-center gap-3">
         <div
           className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconBg}`}
         >
           <Icon className={`w-4.5 h-4.5 ${iconColor}`} />
         </div>
-        <div>
+        <div className="min-w-0">
           <h2 className="font-semibold text-slate-900 text-sm">{title}</h2>
-          <p className="text-xs text-slate-400">{subtitle}</p>
+          <p className="overflow-wrap-anywhere text-xs text-slate-400">{subtitle}</p>
         </div>
       </div>
     </div>
@@ -981,7 +981,7 @@ export function ConfirmSummary({
         >
           <span className="text-slate-500">{r.label}</span>
           <span
-            className={`font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}
+          className={`min-w-0 overflow-wrap-anywhere text-right font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}
           >
             {r.value}
           </span>

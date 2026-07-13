@@ -117,7 +117,7 @@ export default function DashboardPage() {
   if (isInitializing) {
     return (
       <div className="max-w-7xl mx-auto space-y-5">
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="dashboard-stat-grid">
           {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       </div>
@@ -150,12 +150,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Balance banner */}
-      <Card className="p-5 bg-slate-900 border-slate-900">
+      <Card className="bg-slate-900 p-4 border-slate-900 sm:p-5">
         <div className="flex items-start justify-between flex-wrap gap-5">
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-slate-400 text-xs mb-1.5">Available balance</p>
             <div className="flex items-center gap-3">
-              <span className="text-white text-3xl font-semibold tabular-nums">
+              <span className="min-w-0 break-words text-2xl font-semibold text-white tabular-nums sm:text-3xl">
                 {balanceVisible ? fmt(toNumber(user.wallet_balance)) : "₦ ••••••"}
               </span>
               <button onClick={() => setBalanceVisible((v) => !v)} className="text-slate-400 hover:text-white transition-colors">
@@ -178,7 +178,7 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="flex gap-2.5 shrink-0">
+          <div className="grid w-full grid-cols-2 gap-2.5 sm:flex sm:w-auto sm:shrink-0">
             <Button onClick={() => navigate("/wallet")} className="bg-white text-slate-900 hover:bg-gray-100">
               <Plus className="w-4 h-4" /> Fund wallet
             </Button>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="dashboard-stat-grid">
         <StatCard label="Deposits this month" value={fmt(derived.totalDeposits)} icon={ArrowDownLeft} tone="success" meta="This month" />
         <StatCard label="Purchases this month" value={fmt(derived.totalPurchases)} icon={ShoppingBag} tone="neutral" meta="This month" />
         <StatCard label="Successful" value={String(monthlySuccessful)} icon={CheckCircle2} tone="success" meta="This month" />
@@ -202,17 +202,17 @@ export default function DashboardPage() {
       {/* Quick actions */}
       <Card className="p-4">
         <h3 className="text-sm font-semibold text-slate-900 mb-3">Quick actions</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
           {quickActions.map((a) => (
             <button
               key={a.label}
               onClick={() => navigate(a.path)}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-[#111827]/30 hover:bg-[#111827]/5 transition-colors"
+              className="flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 p-2.5 transition-colors hover:border-[#111827]/30 hover:bg-[#111827]/5 sm:p-3"
             >
               <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-lg flex items-center justify-center">
                 <a.icon className="w-4 h-4" />
               </div>
-              <span className="text-xs font-medium text-slate-700 text-center">{a.label}</span>
+              <span className="overflow-wrap-anywhere text-center text-xs font-medium leading-snug text-slate-700">{a.label}</span>
             </button>
           ))}
         </div>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
 
       {/* Chart + Network Status */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <Card className="lg:col-span-3 p-4">
+        <Card className="min-w-0 overflow-hidden p-3 sm:p-4 lg:col-span-3">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-900">Spending overview</h3>
