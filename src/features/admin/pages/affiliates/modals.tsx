@@ -9,7 +9,6 @@ import {
 } from "../../../user/components/shared-ui";
 import {
   childCustomerService,
-  childBroadcastService,
   type BulkMigrationResult,
   type ChildCustomer,
   type ChildCustomerMessage,
@@ -512,12 +511,14 @@ export function BulkEmailModal({
   instanceId: string;
   customerIds: (string | number)[];
   onClose: () => void;
-  onSent?: (notified: number) => void;
+  onSent?: (processed: number) => void;
 }) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [targetUrl, setTargetUrl] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<BulkMigrationResult[]>([]);
 
   const handleSend = async () => {
     if (!subject.trim() || !body.trim()) return;
@@ -528,19 +529,20 @@ export function BulkEmailModal({
     setSending(true);
     setError(null);
     try {
-      const notified = await childBroadcastService.emailSelected(
+      const nextResults = await childCustomerService.emailAndMigrate(
         instanceId,
         customerIds,
         subject.trim(),
         body.trim(),
+        targetUrl.trim() || undefined,
       );
-      onSent?.(notified);
-      onClose();
+      setResults(nextResults);
+      onSent?.(nextResults.filter((result) => result.success).length);
     } catch (err) {
       setError(
         extractErrorMessage(
           err,
-          "Could not send the broadcast. Please try again.",
+          "Could not send and migrate the selected customers. Please try again.",
         ),
       );
     } finally {
@@ -554,7 +556,7 @@ export function BulkEmailModal({
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="min-w-0">
             <h3 className="font-semibold text-slate-900 text-sm">
-              Email selected customers
+              Email and migrate selected customers
             </h3>
             <p className="text-[11px] text-slate-400 truncate">
               {customerIds.length} recipient
@@ -571,6 +573,10 @@ export function BulkEmailModal({
 
         <div className="p-4 space-y-3.5 max-h-[70vh] overflow-y-auto">
           {error && <p className="text-xs text-red-600">{error}</p>}
+          <p className="text-sm text-slate-700">
+            Each selected customer will receive this email first. If the email
+            sends successfully, their account will be migrated immediately.
+          </p>
 
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">
@@ -600,6 +606,18 @@ export function BulkEmailModal({
             </p>
           </div>
 
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+              Redirect URL after migration (optional)
+            </label>
+            <input
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
+              placeholder="Defaults to this platform's site URL"
+              className={inputCls}
+            />
+          </div>
+
           <div className="flex gap-3 pt-1">
             <Button
               variant="secondary"
@@ -615,9 +633,40 @@ export function BulkEmailModal({
               disabled={sending || customerIds.length === 0}
               onClick={handleSend}
             >
-              <Send className="w-3.5 h-3.5" /> Send
+              <Send className="w-3.5 h-3.5" /> Send & migrate
             </Button>
           </div>
+
+          {results.length > 0 && (
+            <div className="pt-2">
+              <p className="text-xs font-medium text-slate-600">Results</p>
+              <div className="space-y-2 mt-2">
+                {results.map((r, i) => (
+                  <div
+                    key={`${r.customer_id}-${i}`}
+                    className={`rounded-lg px-3 py-2 text-sm ${
+                      r.success
+                        ? "bg-emerald-50 text-emerald-800"
+                        : "bg-red-50 text-red-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0 truncate">
+                        {r.success && r.data
+                          ? `${r.data.user.username} (${r.data.user.email})`
+                          : `Customer #${r.customer_id}`}
+                      </div>
+                      <div className="shrink-0 text-[11px] opacity-70">
+                        {r.success && r.data
+                          ? `Email sent · Directive #${r.data.directive_id}`
+                          : r.message}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

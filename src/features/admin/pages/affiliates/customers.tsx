@@ -486,7 +486,7 @@ export default function AffiliateCustomersPage() {
                     onClick={() => setBulkEmailOpen(true)}
                     className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 sm:w-auto"
                   >
-                    <Mail className="h-3.5 w-3.5" /> Email selected
+                    <Mail className="h-3.5 w-3.5" /> Email & migrate
                   </button>
                   <button
                     type="button"
@@ -554,8 +554,7 @@ export default function AffiliateCustomersPage() {
           customerIds={selectedIds}
           onClose={() => setBulkEmailOpen(false)}
           onSent={() => {
-            setSelectedIds([]);
-            setBulkEmailOpen(false);
+            refresh();
           }}
         />
       )}

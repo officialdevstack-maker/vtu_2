@@ -164,6 +164,7 @@ export type BulkMigrationResult = {
   customer_id: string | number;
   success: boolean;
   message: string;
+  email_sent?: boolean;
   data?: MigrationResult;
   errors?: unknown;
 };
@@ -222,6 +223,25 @@ export const childCustomerService = {
       .post<ApiEnvelope<BulkMigrationResult[]>>(
         `/admin/child-instances/${instanceId}/customers/bulk-migrate`,
         { customer_ids: customerIds, target_url: targetUrl },
+      )
+      .then((r) => r.data.data),
+
+  emailAndMigrate: (
+    instanceId: string | number,
+    customerIds: (string | number)[],
+    subject: string,
+    body: string,
+    targetUrl?: string,
+  ): Promise<BulkMigrationResult[]> =>
+    apiClient
+      .post<ApiEnvelope<BulkMigrationResult[]>>(
+        `/admin/child-instances/${instanceId}/customers/email-and-migrate`,
+        {
+          customer_ids: customerIds,
+          subject,
+          body,
+          target_url: targetUrl,
+        },
       )
       .then((r) => r.data.data),
 
