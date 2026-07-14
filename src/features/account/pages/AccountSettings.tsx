@@ -5,6 +5,7 @@ import { Toggle, PageHeader, Card, Button } from "../../user/components/shared-u
 import { useAuth, AUTH_QUERY_KEY } from "@/shared/providers/auth";
 import { accountService } from "../services/accountService";
 import { authService } from "@/features/auth/authService";
+import { extractApiErrorMessage } from "@/shared/utils";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -76,9 +77,14 @@ export default function AccountSettingsPage() {
       setEmailNotice(response.message || "Verification email sent.");
       setResendCooldown(60);
     },
-    onError: () => {
+    onError: (error) => {
       setEmailNotice(null);
-      setEmailError("We could not send the email. Please try again.");
+      setEmailError(
+        extractApiErrorMessage(
+          error,
+          "We could not send the email. Please try again.",
+        ),
+      );
     },
   });
 

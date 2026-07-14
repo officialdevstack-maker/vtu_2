@@ -44,7 +44,7 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await registerAccount({
+      const registration = await registerAccount({
         fullname: data.fullname,
         username: data.username,
         email: data.email,
@@ -55,7 +55,9 @@ export default function RegisterPage() {
       });
       navigate("/create-transaction-pin", {
         replace: true,
-        state: { emailNotice: "Verification email sent. Check your inbox to confirm your account." },
+        state: registration.verificationEmailSent
+          ? { emailNotice: "Verification email sent. Check your inbox to confirm your account." }
+          : { emailError: "Your account was created, but the verification email could not be sent. Please try again below." },
       });
     } catch (err) {
       setError("root", { message: extractErrorMessage(err) });
