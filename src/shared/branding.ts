@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@shared/api/apiClient";
+import { apiClient, brandingLogoUrl } from "@shared/api/apiClient";
 
 // Public, unauthenticated subset of General settings (see
 // BrandingController::show on the backend) — safe to call from pages
@@ -23,7 +23,7 @@ export type Branding = {
 
 const FALLBACK: Branding = {
   app_name: "Vendify",
-  logo: null,
+  logo: brandingLogoUrl,
   meta_title: "Vendify",
   meta_description: null,
   app_email: null,
@@ -61,8 +61,12 @@ export function useBranding(): Branding & { isLoading: boolean } {
     queryKey: ["branding"],
     queryFn: () =>
       apiClient.get<ApiEnvelope<Branding>>("/branding").then((r) => {
-        writeCache(r.data.data);
-        return r.data.data;
+        // Build the asset URL from the same API base as the request. This
+        // avoids stale APP_URL values and cross-origin frontend deployments
+        // producing broken logo images.
+        const branding = { ...r.data.data, logo: brandingLogoUrl };
+        writeCache(branding);
+        return branding;
       }),
     // Branding rarely changes — 30 minutes keeps repeat pings rare within a
     // session without going all the way to Infinity, which (combined with
