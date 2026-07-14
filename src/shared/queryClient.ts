@@ -21,10 +21,10 @@ export const CATALOG_QUERY_KEYS = [
   "wallet-withdrawal-banks",
 ] as const;
 
-const CATALOG_STALE_TIME = 30 * 60 * 1000;
+const CATALOG_STALE_TIME = 3 * 60 * 1000;
 // gcTime must outlive staleTime, and must be >= the persister maxAge so a
 // restored-from-localStorage entry isn't immediately garbage-collected.
-const CATALOG_GC_TIME = 24 * 60 * 60 * 1000;
+const CATALOG_GC_TIME = 10 * 60 * 1000;
 
 // One shared client for the whole app. Defaults tuned for an admin/customer
 // dashboard, not a live feed: data is treated as fresh for a minute (no
@@ -36,8 +36,8 @@ const CATALOG_GC_TIME = 24 * 60 * 60 * 1000;
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
-      gcTime: 5 * 60 * 1000,
+      staleTime: 3 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
