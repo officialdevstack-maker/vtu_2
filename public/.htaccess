@@ -6,3 +6,19 @@
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /index.html [L]
 </IfModule>
+
+<IfModule mod_headers.c>
+  # The HTML document contains the current hashed JavaScript filenames and
+  # must be revalidated after every deployment.
+  <Files "index.html">
+    Header always set Cache-Control "no-cache, no-store, must-revalidate"
+    Header always set Pragma "no-cache"
+    Header always set Expires "0"
+  </Files>
+
+  # Vite fingerprints JS/CSS assets, so these files are safe to cache for a
+  # long time without making a later deployment reference stale chunks.
+  <FilesMatch "\.(js|css)$">
+    Header always set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>

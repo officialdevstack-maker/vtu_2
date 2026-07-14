@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@shared/api/apiClient";
+import primaryLogoUrl from "@/assets/vendify-logo.png";
 
 // Public, unauthenticated subset of General settings (see
 // BrandingController::show on the backend) — safe to call from pages
@@ -21,7 +22,7 @@ export type Branding = {
   app_phone?: string | null;
 };
 
-const PRIMARY_LOGO_URL = "/favicon.png?v=3";
+const PRIMARY_LOGO_URL = primaryLogoUrl;
 
 const FALLBACK: Branding = {
   app_name: "Vendify",
