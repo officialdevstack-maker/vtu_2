@@ -74,6 +74,14 @@ const AiManagerPage = () => {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Live SSE turn in progress: the optimistic user text plus the assistant
+  // reply and tool activity assembled from the stream. Null when idle.
+  const [streaming, setStreaming] = useState<{
+    userText: string;
+    content: string;
+    tools: string[];
+  } | null>(null);
+  const [turnError, setTurnError] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -155,7 +163,13 @@ const AiManagerPage = () => {
       top: threadRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [active?.messages.length, active?.proposals.length, sendMutation.isPending]);
+  }, [
+    active?.messages.length,
+    active?.proposals.length,
+    sendMutation.isPending,
+    streaming?.content,
+    streaming?.tools.length,
+  ]);
 
   // Grow the composer with its content, up to a cap.
   useLayoutEffect(() => {
@@ -175,12 +189,59 @@ const AiManagerPage = () => {
   );
 
   const limitReached = Boolean(usage && !usage.unlimited && usage.remaining <= 0);
+  const busy = sendMutation.isPending || streaming !== null;
 
-  const submit = (message: string) => {
+  const submit = async (message: string) => {
     const text = message.trim();
-    if (!text || sendMutation.isPending || limitReached) return;
+    if (!text || busy || limitReached) return;
     setDraft("");
-    sendMutation.mutate(text);
+    setTurnError(null);
+
+    // Ensure a conversation exists (streaming targets an existing id), then
+    // stream the reply. Any streaming failure falls back to the plain,
+    // already-verified non-streaming send so the turn still completes.
+    let convId = activeId;
+    try {
+      if (convId === null) {
+        const created = await aiManagerService.createConversation();
+        convId = created.id;
+        setActiveId(convId);
+        queryClient.setQueryData(["ai", "conversation", convId], created);
+        queryClient.invalidateQueries({ queryKey: ["ai", "conversations"] });
+      }
+
+      setStreaming({ userText: text, content: "", tools: [] });
+
+      await aiManagerService.streamMessage(convId, text, {
+        onToken: (t) =>
+          setStreaming((s) => (s ? { ...s, content: s.content + t } : s)),
+        onTools: (names) =>
+          setStreaming((s) =>
+            s ? { ...s, tools: [...s.tools, ...names] } : s,
+          ),
+        onError: (msg) => {
+          setStreaming(null);
+          setTurnError(msg);
+        },
+        onComplete: (conv) => {
+          refreshConversation(conv);
+          setStreaming(null);
+          queryClient.invalidateQueries({ queryKey: ["ai", "usage"] });
+        },
+      });
+    } catch {
+      // Streaming unavailable (proxy buffering, network) — non-stream fallback.
+      setStreaming(null);
+      if (convId !== null) {
+        try {
+          const conv = await aiManagerService.sendMessage(convId, text);
+          refreshConversation(conv);
+          queryClient.invalidateQueries({ queryKey: ["ai", "usage"] });
+        } catch (err) {
+          setTurnError(errorMessage(err, "Something went wrong."));
+        }
+      }
+    }
   };
 
   const startNewChat = useCallback(() => {
@@ -294,20 +355,46 @@ const AiManagerPage = () => {
           ref={threadRef}
           className="flex-1 space-y-4 overflow-y-auto px-3 py-5 sm:px-6 [scrollbar-width:thin]"
         >
-          {!active || active.messages.length === 0 ? (
-            <EmptyState onPick={submit} disabled={sendMutation.isPending} />
+          {(!active || active.messages.length === 0) && !streaming ? (
+            <EmptyState onPick={submit} disabled={busy} />
           ) : (
-            active.messages.map((m) => <MessageBubble key={m.id} message={m} />)
+            active?.messages.map((m) => <MessageBubble key={m.id} message={m} />)
           )}
 
-          {sendMutation.isPending && <TypingIndicator />}
-
-          {sendMutation.isError && (
-            <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {errorMessage(
-                sendMutation.error,
-                "Something went wrong talking to the assistant.",
+          {/* Live streaming turn: optimistic user message + assistant reply. */}
+          {streaming && (
+            <>
+              <MessageBubble
+                message={{
+                  id: -1,
+                  role: "user",
+                  content: streaming.userText,
+                  created_at: null,
+                }}
+              />
+              {streaming.tools.length > 0 && (
+                <ToolActivity tools={streaming.tools} />
               )}
+              {streaming.content ? (
+                <MessageBubble
+                  message={{
+                    id: -2,
+                    role: "assistant",
+                    content: streaming.content,
+                    created_at: null,
+                  }}
+                />
+              ) : (
+                <TypingIndicator />
+              )}
+            </>
+          )}
+
+          {sendMutation.isPending && !streaming && <TypingIndicator />}
+
+          {turnError && (
+            <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {turnError}
             </div>
           )}
 
@@ -365,11 +452,11 @@ const AiManagerPage = () => {
             />
             <button
               type="submit"
-              disabled={!draft.trim() || sendMutation.isPending || limitReached}
+              disabled={!draft.trim() || busy || limitReached}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-white transition-all hover:bg-[#111827]/90 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="Send"
             >
-              {sendMutation.isPending ? (
+              {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
