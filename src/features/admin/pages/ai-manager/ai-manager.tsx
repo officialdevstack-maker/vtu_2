@@ -54,14 +54,6 @@ const relativeTime = (iso: string | null) => {
   });
 };
 
-const STATUS_STYLES: Record<AiProposal["status"], string> = {
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
-  executing: "bg-blue-50 text-blue-700 border-blue-200",
-  executed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  failed: "bg-red-50 text-red-700 border-red-200",
-  rejected: "bg-slate-100 text-slate-500 border-slate-200",
-};
-
 const SUGGESTIONS = [
   "How is the site doing today?",
   "Show me the last 10 failed transactions",
@@ -181,10 +173,6 @@ const AiManagerPage = () => {
 
   const pendingProposals = useMemo(
     () => (active?.proposals ?? []).filter((p) => p.status === "pending"),
-    [active?.proposals],
-  );
-  const decidedProposals = useMemo(
-    () => (active?.proposals ?? []).filter((p) => p.status !== "pending"),
     [active?.proposals],
   );
 
@@ -415,10 +403,6 @@ const AiManagerPage = () => {
                   : null
               }
             />
-          ))}
-
-          {decidedProposals.map((p) => (
-            <DecidedProposal key={p.id} proposal={p} />
           ))}
         </div>
 
@@ -840,22 +824,6 @@ const ProposalCard = ({
         </button>
       </div>
     </div>
-  </div>
-);
-
-const DecidedProposal = ({ proposal }: { proposal: AiProposal }) => (
-  <div className="mx-auto flex max-w-3xl items-center gap-2 pl-1 text-xs">
-    <span
-      className={`shrink-0 rounded-full border px-2 py-0.5 font-medium capitalize ${STATUS_STYLES[proposal.status]}`}
-    >
-      {proposal.status}
-    </span>
-    <span className="min-w-0 truncate text-slate-500">
-      {proposal.summary ?? proposal.tool}
-      {proposal.status === "failed" && proposal.error
-        ? ` — ${proposal.error}`
-        : ""}
-    </span>
   </div>
 );
 
