@@ -349,8 +349,10 @@
     .admin-page-container { padding: 1.5rem; }
     .admin-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .admin-stat-grid-five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    .admin-ai-page { min-height: calc(100dvh - 6.5rem); height: auto; }
-    .admin-chat-card { height: max(42rem, calc(100dvh - 17rem)); flex: none; }
+    /* Keep the AI workspace inside the visible admin canvas. The previous
+       42rem minimum made the chat card dominate shorter laptop screens. */
+    .admin-ai-page { height: calc(100dvh - 6.5rem); }
+    .admin-chat-card { min-height: 0; height: auto; flex: 1 1 auto; }
   }
 
   .admin-theme .overflow-x-auto > table td {

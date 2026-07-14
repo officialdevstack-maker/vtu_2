@@ -6,21 +6,21 @@ import { useBranding } from "@/shared/branding";
 import { Button } from "./ui";
 
 const navLinks = [
-  { label: "Features", href: "#services" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#why-vendify" },
-  { label: "Support", href: "#faq" },
+  { label: "Features", href: "/#services" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "About", href: "/#why-vendify" },
+  { label: "Support", href: "/#faq" },
 ];
 
 function BrandMark() {
   const { app_name, logo } = useBranding();
   return (
     <Link to="/" className="flex shrink-0 items-center gap-2">
-      <div className="brand-primary-bg flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl shadow-premium-sm">
+      <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-white shadow-premium-sm ring-1 ring-slate-200/70">
         {logo ? (
           <img src={logo} alt={app_name} className="h-full w-full object-contain" />
         ) : (
-          <Zap className="h-4 w-4 text-white" />
+          <Zap className="h-4 w-4 text-[#111827]" />
         )}
       </div>
       <span className="text-[15px] font-semibold tracking-tight text-slate-900">{app_name}</span>

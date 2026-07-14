@@ -148,20 +148,20 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   const { app_name, logo } = useBranding();
 
   return (
-    <div className="flex min-h-screen w-full bg-white">
-      <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:px-10 md:w-[62%] md:px-12 lg:w-[46%] lg:px-20">
+    <div className="flex min-h-dvh w-full overflow-x-hidden bg-white">
+      <div className="flex w-full flex-col items-center justify-center px-4 py-8 sm:px-10 sm:py-12 md:w-[62%] md:px-12 lg:w-[46%] lg:px-20">
         <div className="w-full max-w-md animate-auth-fade-in">
-          <RouterLink to="/" className="mb-10 flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#111827] overflow-hidden shrink-0">
+          <RouterLink to="/" className="mb-8 flex min-w-0 items-center gap-2.5 sm:mb-10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white overflow-hidden shrink-0 ring-1 ring-slate-200/70">
               {logo ? (
                 <img src={logo} alt={app_name} className="h-full w-full object-contain" />
               ) : (
-                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-[#111827]">
                   <path d="M13 2 3 14h7l-1 8 11-14h-8l1-6z" />
                 </svg>
               )}
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">{app_name}</span>
+            <span className="min-w-0 truncate text-xl font-bold tracking-tight text-slate-900">{app_name}</span>
           </RouterLink>
 
           {children}

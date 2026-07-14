@@ -43,11 +43,11 @@ export default function RouteErrorPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-app-bg px-4 text-center">
-      <div className="w-14 h-14 rounded-2xl brand-primary-bg flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden mb-6">
+      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden mb-6 ring-1 ring-slate-200/70">
         {logo ? (
           <img src={logo} alt={app_name} className="w-full h-full object-contain" />
         ) : (
-          <Zap className="w-7 h-7 text-white" />
+          <Zap className="w-7 h-7 text-[#111827]" />
         )}
       </div>
 
