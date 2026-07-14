@@ -432,7 +432,7 @@ export function SessionPreloader({
     <div className="min-h-screen flex flex-col items-center justify-center bg-app-bg px-4">
       <div className="relative w-16 h-16 mb-5 flex items-center justify-center">
         <span className="absolute inset-0 rounded-2xl brand-primary-bg opacity-20 animate-ping" />
-        <div className="relative w-14 h-14 rounded-2xl brand-primary-bg flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden">
+        <div className="relative w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden ring-1 ring-slate-200/70">
           {logo ? (
             <img
               src={logo}
@@ -440,7 +440,7 @@ export function SessionPreloader({
               className="w-full h-full object-contain"
             />
           ) : (
-            <Zap className="w-7 h-7 text-white" />
+            <Zap className="w-7 h-7 text-[#111827]" />
           )}
         </div>
       </div>

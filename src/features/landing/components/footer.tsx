@@ -40,11 +40,11 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
           <div className="col-span-2 sm:col-span-1">
             <Link to="/" className="flex items-center gap-2">
-              <div className="brand-primary-bg flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl shadow-premium-sm">
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-white shadow-premium-sm ring-1 ring-slate-200/70">
                 {logo ? (
                   <img src={logo} alt={app_name} className="h-full w-full object-contain" />
                 ) : (
-                  <Zap className="h-4 w-4 text-white" />
+                  <Zap className="h-4 w-4 text-[#111827]" />
                 )}
               </div>
               <span className="text-sm font-semibold text-slate-900">{app_name}</span>

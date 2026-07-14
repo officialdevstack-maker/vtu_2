@@ -284,7 +284,7 @@ const Layout = () => {
     <>
       <div className="border-b border-white/10 px-5 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 shadow-sm shadow-black/20">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm shadow-black/20">
             {logo ? (
               <img
                 src={logo}
@@ -292,7 +292,7 @@ const Layout = () => {
                 className="h-full w-full object-contain"
               />
             ) : (
-              <LayoutGrid className="h-5 w-5 text-white" />
+              <LayoutGrid className="h-5 w-5 text-[#111827]" />
             )}
           </div>
           <div className="min-w-0">
