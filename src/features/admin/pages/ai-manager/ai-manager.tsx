@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { isAxiosError } from "axios";
-import { Button, Card, PageHeader } from "../../../user/components/shared-ui";
+import { Button, Card } from "../../../user/components/shared-ui";
 import {
   aiManagerService,
   type AiConversation,
@@ -317,18 +317,19 @@ const AiManagerPage = () => {
 
   return (
     <div className="admin-ai-page flex w-full min-h-0 min-w-0 max-w-full flex-col gap-3 sm:gap-4">
-      <PageHeader
-        title={
-          <span className="inline-flex min-w-0 flex-wrap items-center gap-2">
-            AI Manager
-            <span className="rounded-full border border-[#111827]/15 bg-[#111827]/10 px-2 py-0.5 text-xs font-medium text-[#111827]">
+      <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <div className="hidden min-w-0 flex-wrap items-center gap-2 sm:flex">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 lg:text-2xl">AI Manager</h1>
+            <span className="rounded-full border border-[#111827]/15 bg-[#111827]/10 px-2 py-0.5 text-[11px] font-medium text-[#111827]">
               Approval-safe
             </span>
-          </span>
-        }
-        description="Monitor the platform, investigate live data, and queue admin actions for approval."
-        actions={
-          <>
+          </div>
+          <p className="text-xs leading-5 text-slate-500 sm:mt-0.5 sm:text-sm">
+            Monitor live data and queue approval-safe actions.
+          </p>
+        </div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:justify-end">
             <Button
               variant="secondary"
               size="sm"
@@ -343,9 +344,8 @@ const AiManagerPage = () => {
             <Button className="min-h-11 flex-1 sm:min-h-0 sm:flex-none" size="sm" onClick={startNewChat}>
               <Plus className="h-3.5 w-3.5" /> New chat
             </Button>
-          </>
-        }
-      />
+        </div>
+      </div>
 
       <div className="admin-stat-grid">
         <MiniStat
@@ -356,19 +356,19 @@ const AiManagerPage = () => {
         />
         <MiniStat
           icon={MessageSquareText}
-          label="Thread messages"
+          label="Messages"
           value={String(messageCount)}
           tone="neutral"
         />
         <MiniStat
           icon={ShieldAlert}
-          label="Pending approvals"
+          label="Approvals"
           value={String(pendingProposals.length)}
           tone={pendingProposals.length > 0 ? "warning" : "success"}
         />
         <MiniStat
           icon={FileCheck2}
-          label="Action records"
+          label="Actions"
           value={String(totalProposals)}
           tone="success"
         />
@@ -392,7 +392,7 @@ const AiManagerPage = () => {
       )}
 
       <Card className="admin-chat-card min-h-0 w-full min-w-0 max-w-full flex-1 overflow-hidden">
-        <div className="grid h-full min-h-0 lg:grid-cols-[20rem_minmax(0,1fr)]">
+        <div className="grid h-full min-h-0 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
           <div className="hidden min-h-0 border-r border-slate-100 lg:block">
             <ConversationSidebar
               activeId={activeId}
@@ -550,16 +550,16 @@ const MiniStat = ({
   value: string;
   tone: MiniStatTone;
 }) => (
-  <Card className="flex h-full min-w-0 flex-col p-3 sm:p-3.5">
+  <Card className="flex h-full min-w-0 flex-col rounded-xl p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)] sm:p-3.5">
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="overflow-wrap-anywhere text-xs font-medium leading-snug text-slate-500">{label}</p>
-        <p className="mt-1 text-xl font-semibold tabular-nums text-slate-900">
+        <p className="mt-1 text-lg font-semibold tabular-nums text-slate-900 sm:text-xl">
           {value}
         </p>
       </div>
       <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${MINI_STAT_TONES[tone]}`}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl ${MINI_STAT_TONES[tone]}`}
       >
         <Icon className="h-4.5 w-4.5" />
       </div>
@@ -586,7 +586,7 @@ const ConversationSidebar = ({
   onDelete: (id: number) => void;
   deletingId?: number;
 }) => (
-  <aside className="flex h-full min-h-0 max-w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#111827] font-normal text-white shadow-xl lg:rounded-none lg:border-0 lg:shadow-none">
+  <aside className="flex h-full min-h-0 max-w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b1220] font-normal text-white shadow-xl lg:rounded-none lg:border-0 lg:shadow-none">
     <div className="border-b border-white/10 p-3.5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
@@ -633,7 +633,7 @@ const ConversationSidebar = ({
               key={c.id}
               className={`group mb-1.5 flex items-center rounded-xl border transition-colors ${
                 isActive
-                  ? "border-white/10 bg-white/10"
+                  ? "border-white/10 bg-slate-700/70"
                   : "border-transparent hover:border-white/10 hover:bg-white/5"
               }`}
             >
@@ -743,9 +743,9 @@ const MessageBubble = ({
   return (
     <div className={`flex min-w-0 max-w-full gap-2 sm:gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
           isUser
-            ? "bg-[#111827] text-white"
+            ? "hidden bg-[#111827] text-white sm:flex"
             : "border border-slate-200 bg-white text-[#111827]"
         }`}
       >

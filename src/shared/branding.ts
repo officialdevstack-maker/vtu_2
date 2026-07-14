@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@shared/api/apiClient";
+import primaryLogoUrl from "@/assets/vendify-logo.png";
 
 // Public, unauthenticated subset of General settings (see
 // BrandingController::show on the backend) — safe to call from pages
@@ -21,9 +22,11 @@ export type Branding = {
   app_phone?: string | null;
 };
 
+const PRIMARY_LOGO_URL = primaryLogoUrl;
+
 const FALLBACK: Branding = {
   app_name: "Vendify",
-  logo: null,
+  logo: PRIMARY_LOGO_URL,
   meta_title: "Vendify",
   meta_description: null,
   app_email: null,
@@ -35,7 +38,7 @@ const FALLBACK: Branding = {
 // index.html's inline bootstrap script reads this exact same key to set
 // document.title before React (or even the JS bundle) has loaded, and this
 // hook reads it again as `initialData` so there's no loading flash either.
-export const BRANDING_STORAGE_KEY = "vendify-branding-cache-v1";
+export const BRANDING_STORAGE_KEY = "vendify-branding-cache-v2";
 
 function readCache(): { data: Branding; updatedAt: number } | null {
   try {
@@ -61,17 +64,23 @@ export function useBranding(): Branding & { isLoading: boolean } {
     queryKey: ["branding"],
     queryFn: () =>
       apiClient.get<ApiEnvelope<Branding>>("/branding").then((r) => {
-        writeCache(r.data.data);
-        return r.data.data;
+        // The primary Vendify mark ships with the frontend so auth screens,
+        // loaders and navigation never depend on a separate image request to
+        // the API host (which may be deployed on another origin).
+        const branding = { ...r.data.data, logo: PRIMARY_LOGO_URL };
+        writeCache(branding);
+        return branding;
       }),
-    // Branding rarely changes, but the UI should stay in sync within a minute
-    // so admin edits are reflected quickly after refresh or navigation.
-    staleTime: 60 * 1000,
+    // Branding rarely changes — 30 minutes keeps repeat pings rare within a
+    // session without going all the way to Infinity, which (combined with
+    // the localStorage cache surviving page reloads) could otherwise show a
+    // days-stale brand name forever after just one admin edit.
+    staleTime: 30 * 60 * 1000,
     initialData: cached?.data,
     initialDataUpdatedAt: cached?.updatedAt,
   });
 
-  return { ...FALLBACK, ...data, isLoading };
+  return { ...FALLBACK, ...data, logo: PRIMARY_LOGO_URL, isLoading };
 }
 
 // Keeps the browser tab title, meta description and favicon tallied with
