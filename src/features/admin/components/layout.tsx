@@ -237,6 +237,7 @@ const Layout = () => {
   const displayName = user?.username ?? "Admin";
   const displayRole = user?.role?.name ?? "Admin";
   const canSwitchAccount = hasPermission("switch_account");
+  const isAiManager = location.pathname.startsWith("/admin/ai-manager");
 
   const handleSwitchToUserView = () => {
     setSidebarMenuOpen(false);
@@ -466,11 +467,11 @@ const Layout = () => {
 
               <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#111827]">
+                  <p className={`text-[11px] font-semibold uppercase tracking-[0.3em] text-[#111827] ${isAiManager ? "hidden sm:block" : ""}`}>
                     Management
                   </p>
-                  <h1 className="truncate text-sm font-semibold text-slate-900">
-                    Admin control panel
+                  <h1 className={`truncate font-semibold text-slate-900 ${isAiManager ? "text-base sm:text-sm" : "text-sm"}`}>
+                    {isAiManager ? "AI Manager" : "Admin control panel"}
                   </h1>
                 </div>
 
