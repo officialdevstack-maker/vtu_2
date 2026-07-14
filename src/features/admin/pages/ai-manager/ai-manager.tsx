@@ -1,28 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
-  Activity,
   Bot,
   Check,
   Clock3,
-  FileCheck2,
-  History,
   Loader2,
-  MessageSquareText,
-  Menu,
-  Plus,
+  MessageSquarePlus,
+  PanelLeft,
   Send,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   Trash2,
   User as UserIcon,
   X,
 } from "lucide-react";
 import { isAxiosError } from "axios";
-import { Button, Card } from "../../../user/components/shared-ui";
 import {
   aiManagerService,
   type AiConversation,
@@ -41,116 +33,45 @@ const errorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-/**
- * Markdown-lite renderer for assistant replies. The AI service answers with
- * **bold**, "- " bullets, and "1. " numbered lines — a full markdown library
- * is overkill for that, so this renders exactly those three constructs and
- * leaves everything else as plain text.
- */
-const renderInline = (text: string) =>
-  text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") ? (
-      <strong key={i} className="font-semibold">
-        {part.slice(2, -2)}
-      </strong>
-    ) : (
-      part
-    ),
-  );
-
-const Markdown = ({ text }: { text: string }) => {
-  const blocks: { list: boolean; lines: string[] }[] = [];
-  for (const line of text.split("\n")) {
-    const isItem = /^\s*(-|\d+\.)\s+/.test(line);
-    const last = blocks[blocks.length - 1];
-    if (last && last.list === isItem) last.lines.push(line);
-    else blocks.push({ list: isItem, lines: [line] });
-  }
-  return (
-    <div className="space-y-1.5">
-      {blocks.map((block, i) =>
-        block.list ? (
-          <ul key={i} className="space-y-1">
-            {block.lines.map((line, j) => {
-              const marker = line.match(/^\s*(-|\d+\.)\s+/)?.[1] ?? "-";
-              return (
-                <li
-                  key={j}
-                  className="flex gap-1.5"
-                  style={{
-                    paddingLeft: `${(line.match(/^\s*/)?.[0].length ?? 0) * 0.4}rem`,
-                  }}
-                >
-                  <span className="shrink-0 text-slate-400">
-                    {marker === "-" ? "•" : marker}
-                  </span>
-                  <span className="min-w-0">
-                    {renderInline(line.replace(/^\s*(-|\d+\.)\s+/, ""))}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          block.lines.join("\n").trim() && (
-            <p key={i} className="whitespace-pre-wrap">
-              {renderInline(block.lines.join("\n"))}
-            </p>
-          )
-        ),
-      )}
-    </div>
-  );
+const relativeTime = (iso: string | null) => {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const diffMin = Math.floor((Date.now() - then) / 60000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 };
 
 const STATUS_STYLES: Record<AiProposal["status"], string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",
-  executing: "bg-blue-50 text-blue-700 border-blue-200",
   executed: "bg-emerald-50 text-emerald-700 border-emerald-200",
   failed: "bg-red-50 text-red-700 border-red-200",
   rejected: "bg-slate-100 text-slate-500 border-slate-200",
 };
 
 const SUGGESTIONS = [
-  {
-    title: "Health check",
-    prompt: "Run a health check on the platform",
-    description: "Find vendor, transaction, SIM, and affiliate issues.",
-    icon: Activity,
-  },
-  {
-    title: "Today overview",
-    prompt: "How is the site doing today?",
-    description: "Summarise operations with exact figures.",
-    icon: Sparkles,
-  },
-  {
-    title: "Failed transactions",
-    prompt: "Show me the last 10 failed transactions",
-    description: "Inspect recent failures and likely causes.",
-    icon: AlertTriangle,
-  },
-  {
-    title: "Customer lookup",
-    prompt: "Investigate the customer jane@example.com",
-    description: "Pull customer profile, wallet, and transaction context.",
-    icon: UserIcon,
-  },
+  "How is the site doing today?",
+  "Show me the last 10 failed transactions",
+  "Which vendors are below their auto-fund threshold?",
+  "Find the customer with email jane@example.com",
 ];
-
-const formatDateTime = (value: string | null | undefined) =>
-  value ? new Date(value).toLocaleString() : "No activity yet";
 
 const AiManagerPage = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { conversationId } = useParams<{ conversationId?: string }>();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const historyDialogRef = useRef<HTMLDivElement>(null);
-  const historyTriggerRef = useRef<HTMLButtonElement>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const conversationsQuery = useQuery({
     queryKey: ["ai", "conversations"],
     queryFn: () => aiManagerService.listConversations(),
@@ -163,7 +84,6 @@ const AiManagerPage = () => {
   });
 
   const active = conversationQuery.data;
-  const conversations = conversationsQuery.data ?? [];
 
   const refreshConversation = (data: AiConversation) => {
     queryClient.setQueryData(["ai", "conversation", data.id], data);
@@ -172,20 +92,14 @@ const AiManagerPage = () => {
 
   const sendMutation = useMutation({
     mutationFn: async (message: string) => {
-      const content = message.trim();
       if (activeId === null) {
-        return aiManagerService.createConversation(
-          content.length > 0 ? content : undefined,
-        );
+        return aiManagerService.createConversation(message);
       }
-      return aiManagerService.sendMessage(activeId, content);
+      return aiManagerService.sendMessage(activeId, message);
     },
     onSuccess: (data) => {
       setActiveId(data.id);
       refreshConversation(data);
-      if (conversationId === "new") {
-        navigate(`/admin/ai-manager/chat/${data.id}`, { replace: true });
-      }
     },
   });
 
@@ -221,42 +135,21 @@ const AiManagerPage = () => {
     },
   });
 
-  // Keep the thread scrolled to the latest turn.
+  // Keep the thread pinned to the latest turn.
   useEffect(() => {
-    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
-  }, [active?.messages.length, sendMutation.isPending]);
+    threadRef.current?.scrollTo({
+      top: threadRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [active?.messages.length, active?.proposals.length, sendMutation.isPending]);
 
-  useEffect(() => {
-    if (window.location.pathname === "/admin/ai-manager") {
-      navigate("/admin/ai-manager/chat/new", { replace: true });
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    if (!conversationId || conversationId === "new") {
-      setActiveId(null);
-      return;
-    }
-
-    const id = Number(conversationId);
-    if (!Number.isNaN(id)) {
-      setActiveId(id);
-    }
-  }, [conversationId]);
-
-  // Arriving via "Ask AI to fix" on a monitoring alert (?ask=...): start a
-  // fresh conversation with that message immediately, then drop the param so
-  // refreshes/back-navigation don't re-send it.
-  const [searchParams, setSearchParams] = useSearchParams();
-  useEffect(() => {
-    const ask = searchParams.get("ask");
-    if (ask && !sendMutation.isPending) {
-      setSearchParams({}, { replace: true });
-      setActiveId(null);
-      sendMutation.mutate(ask);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  // Grow the composer with its content, up to a cap.
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [draft]);
 
   const pendingProposals = useMemo(
     () => (active?.proposals ?? []).filter((p) => p.status === "pending"),
@@ -274,407 +167,314 @@ const AiManagerPage = () => {
     sendMutation.mutate(text);
   };
 
-  const startNewChat = () => {
+  const startNewChat = useCallback(() => {
     setActiveId(null);
     setDraft("");
-    setHistoryOpen(false);
+    setDrawerOpen(false);
     sendMutation.reset();
-    navigate("/admin/ai-manager/chat/new");
-  };
+    textareaRef.current?.focus();
+  }, [sendMutation]);
 
-  const openConversation = (id: number) => {
-    setHistoryOpen(false);
-    navigate(`/admin/ai-manager/chat/${id}`);
-  };
+  const openConversation = useCallback((id: number) => {
+    setActiveId(id);
+    setDrawerOpen(false);
+  }, []);
 
-  const messageCount = active?.messages.length ?? 0;
-  const totalProposals = active?.proposals.length ?? 0;
+  const conversations = conversationsQuery.data ?? [];
 
-  useEffect(() => {
-    if (!historyOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const dialog = historyDialogRef.current;
-    const items = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])') ?? []);
-    items()[0]?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setHistoryOpen(false);
-      if (event.key !== "Tab") return;
-      const focusables = items();
-      if (!focusables.length) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-      historyTriggerRef.current?.focus();
-    };
-  }, [historyOpen]);
+  const list = (
+    <ConversationList
+      conversations={conversations}
+      activeId={activeId}
+      loading={conversationsQuery.isLoading}
+      onSelect={openConversation}
+      onNewChat={startNewChat}
+      onDelete={(id) => deleteMutation.mutate(id)}
+      deletingId={
+        deleteMutation.isPending ? (deleteMutation.variables ?? null) : null
+      }
+    />
+  );
 
   return (
-    <div className="admin-ai-page flex w-full min-h-0 min-w-0 max-w-full flex-col gap-3 sm:gap-4">
-      <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <div className="hidden min-w-0 flex-wrap items-center gap-2 sm:flex">
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 lg:text-2xl">AI Manager</h1>
-            <span className="rounded-full border border-[#111827]/15 bg-[#111827]/10 px-2 py-0.5 text-[11px] font-medium text-[#111827]">
-              Approval-safe
-            </span>
-          </div>
-          <p className="text-xs leading-5 text-slate-500 sm:mt-0.5 sm:text-sm">
-            Monitor live data and queue approval-safe actions.
-          </p>
-        </div>
-        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:justify-end">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="min-h-11 flex-1 sm:min-h-0 sm:flex-none lg:hidden"
-              onClick={(event) => {
-                historyTriggerRef.current = event.currentTarget;
-                setHistoryOpen(true);
-              }}
+    <div className="flex h-[calc(100dvh-88px)] gap-4 sm:h-[calc(100dvh-104px)]">
+      {/* Desktop conversation list */}
+      <aside className="hidden w-72 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-white lg:flex">
+        {list}
+      </aside>
+
+      {/* Mobile conversation drawer */}
+      {drawerOpen ? (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <aside className="relative flex h-full w-[min(20rem,86vw)] flex-col bg-white shadow-xl">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(false)}
+              className="absolute right-3 top-3.5 z-10 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Close conversations"
             >
-              <Menu className="h-3.5 w-3.5" /> History
-            </Button>
-            <Button className="min-h-11 flex-1 sm:min-h-0 sm:flex-none" size="sm" onClick={startNewChat}>
-              <Plus className="h-3.5 w-3.5" /> New chat
-            </Button>
+              <X className="h-4 w-4" />
+            </button>
+            {list}
+          </aside>
         </div>
-      </div>
+      ) : null}
 
-      <div className="admin-stat-grid">
-        <MiniStat
-          icon={History}
-          label="Conversations"
-          value={String(conversations.length)}
-          tone="neutral"
-        />
-        <MiniStat
-          icon={MessageSquareText}
-          label="Messages"
-          value={String(messageCount)}
-          tone="neutral"
-        />
-        <MiniStat
-          icon={ShieldAlert}
-          label="Approvals"
-          value={String(pendingProposals.length)}
-          tone={pendingProposals.length > 0 ? "warning" : "success"}
-        />
-        <MiniStat
-          icon={FileCheck2}
-          label="Actions"
-          value={String(totalProposals)}
-          tone="success"
-        />
-      </div>
+      {/* Chat panel */}
+      <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white">
+        <header className="flex items-center gap-2 border-b border-slate-100 px-3 py-3 sm:px-5">
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 lg:hidden"
+            aria-label="Open conversations"
+          >
+            <PanelLeft className="h-5 w-5" />
+          </button>
 
-      {historyOpen && (
-        <div className="fixed inset-0 z-40 bg-slate-950/30 p-2 safe-modal-inset backdrop-blur-sm lg:hidden" onMouseDown={(event) => event.target === event.currentTarget && setHistoryOpen(false)}>
-          <div ref={historyDialogRef} className="mx-auto h-full max-h-[calc(100dvh-1rem)] w-full max-w-md">
-            <ConversationSidebar
-              activeId={activeId}
-              conversations={conversations}
-              loading={conversationsQuery.isPending}
-              onClose={() => setHistoryOpen(false)}
-              onNew={startNewChat}
-              onOpen={openConversation}
-              onDelete={(id) => deleteMutation.mutate(id)}
-              deletingId={deleteMutation.variables}
-            />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#111827]/10 text-[#111827]">
+            <Sparkles className="h-4.5 w-4.5" />
           </div>
-        </div>
-      )}
-
-      <Card className="admin-chat-card min-h-0 w-full min-w-0 max-w-full flex-1 overflow-hidden">
-        <div className="grid h-full min-h-0 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]">
-          <div className="hidden min-h-0 border-r border-slate-100 lg:block">
-            <ConversationSidebar
-              activeId={activeId}
-              conversations={conversations}
-              loading={conversationsQuery.isPending}
-              onNew={startNewChat}
-              onOpen={openConversation}
-              onDelete={(id) => deleteMutation.mutate(id)}
-              deletingId={deleteMutation.variables}
-            />
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-sm font-semibold text-slate-900">
+              {active?.title ?? "AI Manager"}
+            </h1>
+            <p className="hidden truncate text-xs text-slate-400 sm:block">
+              Monitors the site &amp; proposes admin actions for your approval
+            </p>
           </div>
 
-          {/* Chat panel */}
-          <section className="flex min-h-0 min-w-0 flex-col bg-white">
-            <header className="shrink-0 border-b border-slate-100 px-3 py-2.5 sm:px-5 sm:py-3.5">
-              <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#111827]/10 text-[#111827] sm:h-10 sm:w-10">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="overflow-wrap-anywhere text-sm font-semibold text-slate-900">
-                    {active?.title ?? "New AI workspace"}
-                  </h2>
-                  <p className="overflow-wrap-anywhere text-xs text-slate-400">
-                    Read-only tools run immediately. Mutating tools become
-                    approval cards.
-                  </p>
-                </div>
-                <div className="ml-auto hidden items-center gap-2 sm:flex">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Guarded actions
-                  </span>
-                </div>
-              </div>
-            </header>
+          <button
+            type="button"
+            onClick={startNewChat}
+            className="flex h-9 items-center gap-1.5 rounded-xl bg-[#111827] px-3 text-xs font-medium text-white transition-colors hover:bg-[#111827]/90"
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+            <span className="hidden sm:inline">New chat</span>
+          </button>
+        </header>
 
-            <div
-              ref={threadRef}
-              className="min-h-0 min-w-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-slate-50/60 px-2.5 py-3 sm:space-y-4 sm:px-5 sm:py-4"
-            >
-              {!active || active.messages.length === 0 ? (
-                <EmptyState onPick={submit} disabled={sendMutation.isPending} />
-              ) : (
-                active.messages.map((m) => (
-                  <MessageBubble key={m.id} message={m} />
-                ))
+        <div
+          ref={threadRef}
+          className="flex-1 space-y-4 overflow-y-auto px-3 py-5 sm:px-6 [scrollbar-width:thin]"
+        >
+          {!active || active.messages.length === 0 ? (
+            <EmptyState onPick={submit} disabled={sendMutation.isPending} />
+          ) : (
+            active.messages.map((m) => <MessageBubble key={m.id} message={m} />)
+          )}
+
+          {sendMutation.isPending && <TypingIndicator />}
+
+          {sendMutation.isError && (
+            <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errorMessage(
+                sendMutation.error,
+                "Something went wrong talking to the assistant.",
               )}
-
-              {sendMutation.isPending && (
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  <Bot className="h-4 w-4" />
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking…
-                </div>
-              )}
-
-              {sendMutation.isError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {errorMessage(
-                    sendMutation.error,
-                    "Something went wrong talking to the assistant.",
-                  )}
-                </div>
-              )}
-
-              {/* Pending actions awaiting approval */}
-              {pendingProposals.map((p) => (
-                <ProposalCard
-                  key={p.id}
-                  proposal={p}
-                  onApprove={() => approveMutation.mutate(p.id)}
-                  onReject={() => rejectMutation.mutate(p.id)}
-                  busy={
-                    (approveMutation.isPending &&
-                      approveMutation.variables === p.id) ||
-                    (rejectMutation.isPending &&
-                      rejectMutation.variables === p.id)
-                  }
-                  error={
-                    approveMutation.isError &&
-                    approveMutation.variables === p.id
-                      ? errorMessage(approveMutation.error, "Action failed.")
-                      : null
-                  }
-                />
-              ))}
-
-              {decidedProposals.map((p) => (
-                <DecidedProposal key={p.id} proposal={p} />
-              ))}
             </div>
+          )}
 
-            {/* Composer */}
-            <div className="admin-ai-composer shrink-0 border-t border-slate-100 bg-white p-2.5 sm:p-4">
-              <form
-                onSubmit={(e) => {
+          {pendingProposals.map((p) => (
+            <ProposalCard
+              key={p.id}
+              proposal={p}
+              onApprove={() => approveMutation.mutate(p.id)}
+              onReject={() => rejectMutation.mutate(p.id)}
+              busy={
+                (approveMutation.isPending &&
+                  approveMutation.variables === p.id) ||
+                (rejectMutation.isPending && rejectMutation.variables === p.id)
+              }
+              error={
+                approveMutation.isError && approveMutation.variables === p.id
+                  ? errorMessage(approveMutation.error, "Action failed.")
+                  : null
+              }
+            />
+          ))}
+
+          {decidedProposals.map((p) => (
+            <DecidedProposal key={p.id} proposal={p} />
+          ))}
+        </div>
+
+        {/* Composer */}
+        <div className="border-t border-slate-100 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit(draft);
+            }}
+            className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 transition-colors focus-within:border-[#111827]/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-[#111827]/10"
+          >
+            <textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   submit(draft);
-                }}
-                className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 transition-colors focus-within:border-[#111827]/30 focus-within:bg-white focus-within:ring-4 focus-within:ring-[#111827]/10"
-              >
-                <textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      submit(draft);
-                    }
-                  }}
-                  rows={1}
-                  placeholder="Ask about transactions, users, vendors — or request an action…"
-                  className="max-h-32 min-h-[2.75rem] min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:max-h-40"
-                />
-                <button
-                  type="submit"
-                  disabled={!draft.trim() || sendMutation.isPending}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-white transition-colors hover:bg-[#111827]/90 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Send"
-                >
-                  {sendMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </button>
-              </form>
-              <p className="mt-1.5 hidden px-1 text-[11px] text-slate-400 min-[390px]:block">
-                Actions that change data need approval. Reply "approve",
-                "approve #ID", or use the buttons to run one.
-              </p>
-            </div>
-          </section>
+                }
+              }}
+              rows={1}
+              placeholder="Ask about transactions, users, vendors…"
+              className="max-h-40 min-h-[2.25rem] flex-1 resize-none bg-transparent px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim() || sendMutation.isPending}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-white transition-all hover:bg-[#111827]/90 disabled:cursor-not-allowed disabled:opacity-30"
+              aria-label="Send"
+            >
+              {sendMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </button>
+          </form>
+          <p className="mx-auto mt-2 max-w-3xl px-1 text-center text-[11px] text-slate-400 sm:text-left">
+            Data-changing actions are never run automatically — the assistant
+            proposes them and you approve each one.
+          </p>
         </div>
-      </Card>
+      </section>
     </div>
   );
 };
 
-type MiniStatTone = "neutral" | "success" | "warning";
-
-const MINI_STAT_TONES: Record<MiniStatTone, string> = {
-  neutral: "bg-[#111827]/10 text-[#111827]",
-  success: "bg-emerald-50 text-emerald-600",
-  warning: "bg-amber-50 text-amber-600",
-};
-
-const MiniStat = ({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Bot;
-  label: string;
-  value: string;
-  tone: MiniStatTone;
-}) => (
-  <Card className="flex h-full min-w-0 flex-col rounded-xl p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)] sm:p-3.5">
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="overflow-wrap-anywhere text-xs font-medium leading-snug text-slate-500">{label}</p>
-        <p className="mt-1 text-lg font-semibold tabular-nums text-slate-900 sm:text-xl">
-          {value}
-        </p>
-      </div>
-      <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl ${MINI_STAT_TONES[tone]}`}
-      >
-        <Icon className="h-4.5 w-4.5" />
-      </div>
-    </div>
-  </Card>
-);
-
-const ConversationSidebar = ({
-  activeId,
+const ConversationList = ({
   conversations,
+  activeId,
   loading,
-  onClose,
-  onNew,
-  onOpen,
+  onSelect,
+  onNewChat,
   onDelete,
   deletingId,
 }: {
-  activeId: number | null;
   conversations: AiConversationSummary[];
+  activeId: number | null;
   loading: boolean;
-  onClose?: () => void;
-  onNew: () => void;
-  onOpen: (id: number) => void;
+  onSelect: (id: number) => void;
+  onNewChat: () => void;
   onDelete: (id: number) => void;
-  deletingId?: number;
-}) => (
-  <aside className="flex h-full min-h-0 max-w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b1220] font-normal text-white shadow-xl lg:rounded-none lg:border-0 lg:shadow-none">
-    <div className="border-b border-white/10 p-3.5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-wide text-white/35">
-            AI threads
-          </p>
-          <h3 className="overflow-wrap-anywhere text-sm text-white">Conversation history</h3>
-        </div>
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-white/45 transition-colors hover:bg-white/5 hover:text-white"
-            aria-label="Close history"
-          >
-            <X className="h-4 w-4" />
-          </button>
+  deletingId: number | null;
+}) => {
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+
+  return (
+    <div className="flex h-full w-full flex-col">
+      <div className="border-b border-slate-100 p-3">
+        <p className="px-1 pb-3 pt-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">
+          Conversations
+        </p>
+        <button
+          type="button"
+          onClick={onNewChat}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#111827] px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#111827]/90"
+        >
+          <MessageSquarePlus className="h-4 w-4" /> New chat
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-2 [scrollbar-width:thin]">
+        {loading ? (
+          <div className="space-y-1.5 p-1">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-11 animate-pulse rounded-xl bg-slate-100"
+              />
+            ))}
+          </div>
+        ) : conversations.length ? (
+          conversations.map((c) => {
+            const isActive = activeId === c.id;
+            const isConfirming = confirmId === c.id;
+            return (
+              <div
+                key={c.id}
+                className={`group mb-1 flex items-center rounded-xl transition-colors ${
+                  isActive ? "bg-[#111827]/10" : "hover:bg-slate-50"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelect(c.id)}
+                  className="min-w-0 flex-1 px-3 py-2.5 text-left"
+                >
+                  <p
+                    className={`truncate text-sm ${
+                      isActive
+                        ? "font-semibold text-[#111827]"
+                        : "font-medium text-slate-700"
+                    }`}
+                  >
+                    {c.title ?? "Untitled"}
+                  </p>
+                  {relativeTime(c.last_activity_at ?? c.created_at) && (
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-400">
+                      <Clock3 className="h-3 w-3" />
+                      {relativeTime(c.last_activity_at ?? c.created_at)}
+                    </p>
+                  )}
+                </button>
+
+                {isConfirming ? (
+                  <div className="flex items-center gap-0.5 pr-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onDelete(c.id);
+                        setConfirmId(null);
+                      }}
+                      className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50"
+                      aria-label="Confirm delete"
+                    >
+                      {deletingId === c.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmId(null)}
+                      className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100"
+                      aria-label="Cancel delete"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmId(c.id)}
+                    className="mr-1.5 rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-100 hover:text-red-500 lg:opacity-0 lg:group-hover:opacity-100"
+                    aria-label="Delete conversation"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="flex flex-col items-center px-3 py-10 text-center">
+            <Bot className="h-6 w-6 text-slate-300" />
+            <p className="mt-2 text-xs text-slate-400">No conversations yet.</p>
+          </div>
         )}
       </div>
-      <button
-        type="button"
-        onClick={onNew}
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs text-[#111827] transition-colors hover:bg-white/90"
-      >
-        <Plus className="h-3.5 w-3.5" /> New chat
-      </button>
     </div>
-
-    <div className="min-h-0 flex-1 overflow-y-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {loading ? (
-        <div className="space-y-2 p-1">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="h-16 animate-pulse rounded-xl border border-slate-100 bg-slate-50"
-            />
-          ))}
-        </div>
-      ) : conversations.length ? (
-        conversations.map((c) => {
-          const isActive = activeId === c.id;
-          return (
-            <div
-              key={c.id}
-              className={`group mb-1.5 flex items-center rounded-xl border transition-colors ${
-                isActive
-                  ? "border-white/10 bg-slate-700/70"
-                  : "border-transparent hover:border-white/10 hover:bg-white/5"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => onOpen(c.id)}
-                className="min-w-0 flex-1 px-3 py-3 text-left"
-              >
-                <p className="line-clamp-2 overflow-wrap-anywhere text-sm leading-snug text-white">
-                  {c.title ?? "Untitled conversation"}
-                </p>
-                <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-white/55">
-                  <Clock3 className="h-3.5 w-3.5 shrink-0" />
-                  {formatDateTime(c.last_activity_at)}
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(c.id)}
-                disabled={deletingId === c.id}
-                className="mr-1 rounded-lg p-2 text-white/25 opacity-100 transition-colors hover:bg-red-500/10 hover:text-red-200 disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100"
-                aria-label="Delete conversation"
-              >
-                {deletingId === c.id ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Trash2 className="h-3.5 w-3.5" />
-                )}
-              </button>
-            </div>
-          );
-        })
-      ) : (
-        <div className="rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-8 text-center">
-          <MessageSquareText className="mx-auto h-5 w-5 text-white/25" />
-          <p className="mt-2 text-xs text-white/50">No conversations yet.</p>
-        </div>
-      )}
-    </div>
-  </aside>
-);
+  );
+};
 
 const EmptyState = ({
   onPick,
@@ -683,40 +483,27 @@ const EmptyState = ({
   onPick: (text: string) => void;
   disabled: boolean;
 }) => (
-  <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col items-center py-1 text-center sm:py-5">
-    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] text-white shadow-md shadow-[#111827]/15 sm:h-12 sm:w-12">
-      <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
+  <div className="mx-auto flex h-full max-w-lg flex-col items-center justify-center py-8 text-center">
+    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#111827]/10 text-[#111827]">
+      <Sparkles className="h-7 w-7" />
     </div>
-    <h2 className="mt-2.5 text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
-      Manage operations with live context
+    <h2 className="mt-4 text-lg font-semibold text-slate-900">
+      How can I help you manage the site?
     </h2>
-    <p className="mt-1 hidden max-w-xl text-sm text-slate-500 min-[390px]:block">
-      Ask for health checks, customer investigations, transaction reviews, or
-      draft actions. Any change to platform data stays pending until you approve
-      it.
+    <p className="mt-1 max-w-sm text-sm text-slate-500">
+      I can look up live data and propose actions for your approval.
     </p>
-    <div className="mt-3 grid w-full grid-cols-1 gap-2 min-[390px]:grid-cols-2 sm:mt-5 sm:gap-3">
+    <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
       {SUGGESTIONS.map((s) => (
         <button
-          key={s.prompt}
+          key={s}
           type="button"
           disabled={disabled}
-          onClick={() => onPick(s.prompt)}
-          className="group rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition-colors hover:border-[#111827]/30 hover:bg-slate-50 disabled:opacity-50"
+          onClick={() => onPick(s)}
+          className="group flex items-start gap-2 rounded-xl border border-slate-200 px-3.5 py-3 text-left text-sm text-slate-600 transition-colors hover:border-[#111827]/30 hover:bg-slate-50 disabled:opacity-50"
         >
-          <span className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#111827]/10 text-[#111827] transition-colors group-hover:bg-[#111827] group-hover:text-white">
-              <s.icon className="h-4.5 w-4.5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-slate-800">
-                {s.title}
-              </span>
-              <span className="mt-0.5 block text-xs leading-5 text-slate-500">
-                {s.description}
-              </span>
-            </span>
-          </span>
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#111827]" />
+          <span>{s}</span>
         </button>
       ))}
     </div>
@@ -741,12 +528,14 @@ const MessageBubble = ({
   const isUser = message.role === "user";
 
   return (
-    <div className={`flex min-w-0 max-w-full gap-2 sm:gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
+    <div
+      className={`mx-auto flex max-w-3xl gap-2.5 sm:gap-3 ${
+        isUser ? "flex-row-reverse" : ""
+      }`}
+    >
       <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-          isUser
-            ? "hidden bg-[#111827] text-white sm:flex"
-            : "border border-slate-200 bg-white text-[#111827]"
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+          isUser ? "bg-[#111827] text-white" : "bg-[#111827]/10 text-[#111827]"
         }`}
       >
         {isUser ? (
@@ -756,26 +545,34 @@ const MessageBubble = ({
         )}
       </div>
       <div
-        className={`min-w-0 max-w-[calc(100%-2.5rem)] overflow-hidden overflow-wrap-anywhere rounded-2xl px-3 py-2.5 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:max-w-[min(44rem,85%)] sm:px-4 sm:py-3 ${
+        className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm sm:max-w-[80%] ${
           isUser
-            ? "whitespace-pre-wrap bg-[#111827] text-white"
-            : "border border-slate-200 bg-white text-slate-800"
+            ? "rounded-tr-sm bg-[#111827] text-white"
+            : "rounded-tl-sm bg-slate-100 text-slate-800"
         }`}
       >
-        {isUser ? message.content : <Markdown text={message.content ?? ""} />}
-        {message.created_at && (
-          <div
-            className={`mt-1 text-[11px] ${
-              isUser ? "text-slate-200 text-right" : "text-slate-400 text-left"
-            }`}
-          >
-            {new Date(message.created_at).toLocaleString()}
-          </div>
-        )}
+        {message.content}
       </div>
     </div>
   );
 };
+
+const TypingIndicator = () => (
+  <div className="mx-auto flex max-w-3xl gap-2.5 sm:gap-3">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#111827]/10 text-[#111827]">
+      <Bot className="h-4 w-4" />
+    </div>
+    <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-slate-100 px-4 py-3.5">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400"
+          style={{ animationDelay: `${i * 0.15}s` }}
+        />
+      ))}
+    </div>
+  </div>
+);
 
 const ProposalCard = ({
   proposal,
@@ -790,68 +587,58 @@ const ProposalCard = ({
   busy: boolean;
   error: string | null;
 }) => (
-  <div className="min-w-0 max-w-full rounded-2xl border border-amber-200 bg-amber-50/70 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-4">
-    <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-        <ShieldAlert className="h-5 w-5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-            Action needs your approval
-          </p>
-          <span className="rounded-full border border-amber-200 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-            #{proposal.id}
-          </span>
-        </div>
-        <p className="mt-1 text-sm font-semibold text-slate-900">
-          {proposal.summary ?? proposal.tool}
+  <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/60">
+    <div className="flex items-center gap-2 border-b border-amber-200/70 bg-amber-100/50 px-4 py-2">
+      <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600" />
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+        Action needs your approval
+      </p>
+    </div>
+    <div className="p-4">
+      <p className="text-sm font-medium text-slate-800">
+        {proposal.summary ?? proposal.tool}
+      </p>
+      <ArgList args={proposal.arguments} />
+      {error && (
+        <p className="mt-3 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs text-red-700">
+          {error}
         </p>
-        <p className="mt-1 text-xs leading-5 text-amber-800/80">
-          This has not run yet. Review the payload before approving.
-        </p>
-        <ArgList args={proposal.arguments} />
-        {error && (
-          <p className="mt-2 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs text-red-700">
-            {error}
-          </p>
-        )}
-        <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
-          <button
-            type="button"
-            onClick={onApprove}
-            disabled={busy}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {busy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Check className="h-3.5 w-3.5" />
-            )}
-            Approve &amp; run
-          </button>
-          <button
-            type="button"
-            onClick={onReject}
-            disabled={busy}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-60"
-          >
-            <X className="h-3.5 w-3.5" /> Reject
-          </button>
-        </div>
+      )}
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={onApprove}
+          disabled={busy}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60 sm:flex-none sm:py-2"
+        >
+          {busy ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Check className="h-4 w-4" />
+          )}
+          Approve &amp; run
+        </button>
+        <button
+          type="button"
+          onClick={onReject}
+          disabled={busy}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-60 sm:flex-none sm:py-2"
+        >
+          <X className="h-4 w-4" /> Reject
+        </button>
       </div>
     </div>
   </div>
 );
 
 const DecidedProposal = ({ proposal }: { proposal: AiProposal }) => (
-  <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs">
+  <div className="mx-auto flex max-w-3xl items-center gap-2 pl-1 text-xs">
     <span
-      className={`rounded-full border px-2 py-0.5 font-medium capitalize ${STATUS_STYLES[proposal.status]}`}
+      className={`shrink-0 rounded-full border px-2 py-0.5 font-medium capitalize ${STATUS_STYLES[proposal.status]}`}
     >
       {proposal.status}
     </span>
-    <span className="min-w-0 overflow-wrap-anywhere text-slate-500">
+    <span className="min-w-0 truncate text-slate-500">
       {proposal.summary ?? proposal.tool}
       {proposal.status === "failed" && proposal.error
         ? ` — ${proposal.error}`
@@ -864,12 +651,14 @@ const ArgList = ({ args }: { args: Record<string, unknown> }) => {
   const entries = Object.entries(args ?? {});
   if (entries.length === 0) return null;
   return (
-    <dl className="mt-3 grid grid-cols-1 gap-1.5 rounded-xl border border-amber-100 bg-white/70 p-3 text-xs sm:grid-cols-[auto_1fr]">
+    <dl className="mt-3 grid grid-cols-[minmax(0,auto)_1fr] gap-x-3 gap-y-1 rounded-lg bg-white/60 p-2.5 text-xs">
       {entries.map(([key, value]) => (
         <div key={key} className="contents">
-          <dt className="font-medium text-slate-400">{key}</dt>
-          <dd className="min-w-0 break-words font-mono text-slate-600">
-            {typeof value === "object" ? JSON.stringify(value) : String(value)}
+          <dt className="truncate text-slate-400">{key}</dt>
+          <dd className="truncate font-medium text-slate-600">
+            {typeof value === "object"
+              ? JSON.stringify(value)
+              : String(value)}
           </dd>
         </div>
       ))}
