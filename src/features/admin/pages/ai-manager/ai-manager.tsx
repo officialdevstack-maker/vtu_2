@@ -15,6 +15,8 @@ import {
   X,
 } from "lucide-react";
 import { isAxiosError } from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   aiManagerService,
   type AiConversation,
@@ -546,17 +548,85 @@ const MessageBubble = ({
         )}
       </div>
       <div
-        className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm sm:max-w-[80%] ${
+        className={`max-w-[85%] break-words rounded-2xl px-4 py-2.5 text-sm sm:max-w-[80%] ${
           isUser
-            ? "rounded-tr-sm bg-[#111827] text-white"
+            ? "whitespace-pre-wrap rounded-tr-sm bg-[#111827] text-white"
             : "rounded-tl-sm bg-slate-100 text-slate-800"
         }`}
       >
-        {message.content}
+        {isUser ? (
+          message.content
+        ) : (
+          <MarkdownMessage content={message.content ?? ""} />
+        )}
       </div>
     </div>
   );
 };
+
+// Renders assistant replies as Markdown (bold, lists, tables, code, links) so
+// responses read like a real AI chat rather than raw text with literal
+// asterisks. Each element is Tailwind-styled to sit on the slate-100 bubble;
+// wide tables/code scroll inside their own box instead of stretching the page.
+const MarkdownMessage = ({ content }: { content: string }) => (
+  <div className="text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p: ({ node: _n, ...p }) => <p className="my-2" {...p} />,
+        ul: ({ node: _n, ...p }) => <ul className="my-2 list-disc space-y-1 pl-5" {...p} />,
+        ol: ({ node: _n, ...p }) => <ol className="my-2 list-decimal space-y-1 pl-5" {...p} />,
+        li: ({ node: _n, ...p }) => <li className="marker:text-slate-400" {...p} />,
+        strong: ({ node: _n, ...p }) => <strong className="font-semibold text-slate-900" {...p} />,
+        em: ({ node: _n, ...p }) => <em className="italic" {...p} />,
+        a: ({ node: _n, ...p }) => (
+          <a
+            className="font-medium text-[#111827] underline underline-offset-2"
+            target="_blank"
+            rel="noopener noreferrer"
+            {...p}
+          />
+        ),
+        h1: ({ node: _n, ...p }) => <h1 className="mb-2 mt-3 text-base font-semibold text-slate-900" {...p} />,
+        h2: ({ node: _n, ...p }) => <h2 className="mb-2 mt-3 text-sm font-semibold text-slate-900" {...p} />,
+        h3: ({ node: _n, ...p }) => <h3 className="mb-1.5 mt-2.5 text-sm font-semibold text-slate-800" {...p} />,
+        blockquote: ({ node: _n, ...p }) => (
+          <blockquote className="my-2 border-l-2 border-slate-300 pl-3 text-slate-600" {...p} />
+        ),
+        hr: ({ node: _n, ...p }) => <hr className="my-3 border-slate-200" {...p} />,
+        code: ({ node: _n, className, children, ...p }) => {
+          const isBlock = /language-/.test(className ?? "");
+          return isBlock ? (
+            <code
+              className="block overflow-x-auto rounded-lg bg-slate-900/90 p-3 font-mono text-xs leading-relaxed text-slate-100"
+              {...p}
+            >
+              {children}
+            </code>
+          ) : (
+            <code
+              className="rounded bg-slate-200/80 px-1 py-0.5 font-mono text-[0.85em] text-slate-800"
+              {...p}
+            >
+              {children}
+            </code>
+          );
+        },
+        pre: ({ node: _n, ...p }) => <pre className="my-2" {...p} />,
+        table: ({ node: _n, ...p }) => (
+          <div className="my-2 overflow-x-auto">
+            <table className="w-full border-collapse text-xs" {...p} />
+          </div>
+        ),
+        thead: ({ node: _n, ...p }) => <thead className="border-b border-slate-300" {...p} />,
+        th: ({ node: _n, ...p }) => <th className="px-2 py-1.5 text-left font-semibold text-slate-700" {...p} />,
+        td: ({ node: _n, ...p }) => <td className="border-t border-slate-200 px-2 py-1.5 align-top" {...p} />,
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  </div>
+);
 
 const TypingIndicator = () => (
   <div className="mx-auto flex max-w-3xl gap-2.5 sm:gap-3">
