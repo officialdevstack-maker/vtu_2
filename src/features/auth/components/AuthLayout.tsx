@@ -148,10 +148,10 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   const { app_name, logo } = useBranding();
 
   return (
-    <div className="flex min-h-screen w-full bg-white">
-      <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:px-10 md:w-[62%] md:px-12 lg:w-[46%] lg:px-20">
+    <div className="flex min-h-dvh w-full overflow-x-hidden bg-white">
+      <div className="flex w-full flex-col items-center justify-center px-4 py-8 sm:px-10 sm:py-12 md:w-[62%] md:px-12 lg:w-[46%] lg:px-20">
         <div className="w-full max-w-md animate-auth-fade-in">
-          <RouterLink to="/" className="mb-10 flex items-center gap-2.5">
+          <RouterLink to="/" className="mb-8 flex min-w-0 items-center gap-2.5 sm:mb-10">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white overflow-hidden shrink-0 ring-1 ring-slate-200/70">
               {logo ? (
                 <img src={logo} alt={app_name} className="h-full w-full object-contain" />
@@ -161,7 +161,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
                 </svg>
               )}
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">{app_name}</span>
+            <span className="min-w-0 truncate text-xl font-bold tracking-tight text-slate-900">{app_name}</span>
           </RouterLink>
 
           {children}

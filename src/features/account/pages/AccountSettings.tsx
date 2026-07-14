@@ -5,7 +5,6 @@ import { Toggle, PageHeader, Card, Button } from "../../user/components/shared-u
 import { useAuth, AUTH_QUERY_KEY } from "@/shared/providers/auth";
 import { accountService } from "../services/accountService";
 import { authService } from "@/features/auth/authService";
-import { extractApiErrorMessage } from "@/shared/utils";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -30,7 +29,6 @@ export default function AccountSettingsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // UI-only preferences — no backend column exists for these yet.
@@ -73,18 +71,12 @@ export default function AccountSettingsPage() {
   const resendVerificationMutation = useMutation({
     mutationFn: authService.resendVerificationEmail,
     onSuccess: (response) => {
-      setEmailError(null);
       setEmailNotice(response.message || "Verification email sent.");
       setResendCooldown(60);
     },
-    onError: (error) => {
+    onError: () => {
       setEmailNotice(null);
-      setEmailError(
-        extractApiErrorMessage(
-          error,
-          "We could not send the email. Please try again.",
-        ),
-      );
+      setResendCooldown(30);
     },
   });
 
@@ -165,17 +157,13 @@ export default function AccountSettingsPage() {
           )}
         </div>
 
-        {(emailNotice || emailError) && (
+        {emailNotice && (
           <div
-            className={`mt-4 rounded-xl border px-3.5 py-2.5 text-sm ${
-              emailError
-                ? "border-red-100 bg-red-50 text-red-700"
-                : "border-emerald-100 bg-emerald-50 text-emerald-700"
-            }`}
+            className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700"
             role="status"
             aria-live="polite"
           >
-            {emailError ?? emailNotice}
+            {emailNotice}
           </div>
         )}
 

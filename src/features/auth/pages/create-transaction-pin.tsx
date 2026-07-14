@@ -37,7 +37,6 @@ export default function CreateTransactionPinPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const navigate = useNavigate();
@@ -118,25 +117,23 @@ export default function CreateTransactionPinPage() {
   const handleResendVerification = async () => {
     if (resendingEmail || resendCooldown > 0) return;
     setResendingEmail(true);
-    setEmailError(null);
     try {
       const response = await authService.resendVerificationEmail();
       setEmailNotice(response.message || "Verification email sent.");
       setResendCooldown(60);
-    } catch (err) {
-      setEmailError(extractErrorMessage(err));
+    } catch {
+      setEmailNotice(null);
+      setResendCooldown(30);
     } finally {
       setResendingEmail(false);
     }
   };
 
   useEffect(() => {
-    const state = location.state as { emailNotice?: string; emailError?: string } | null;
+    const state = location.state as { emailNotice?: string } | null;
     const notice = state?.emailNotice;
-    const noticeError = state?.emailError;
     if (notice) setEmailNotice(notice);
-    if (noticeError) setEmailError(noticeError);
-    if (notice || noticeError) {
+    if (notice) {
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location.pathname, location.state, navigate]);
@@ -192,10 +189,10 @@ export default function CreateTransactionPinPage() {
           </div>
         ) : (
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
               {stage === "create" ? "Create transaction PIN" : "Confirm transaction PIN"}
             </h1>
-            <p className="mt-1 mb-8 text-sm text-slate-500">
+            <p className="mb-6 mt-1 text-sm text-slate-500 sm:mb-8">
               {stage === "create"
                 ? "Choose 4 digits you'll use to authorize wallet actions."
                 : "Enter the same 4 digits again to confirm."}
@@ -207,21 +204,17 @@ export default function CreateTransactionPinPage() {
               </div>
             )}
 
-            {(emailNotice || emailError) && (
+            {emailNotice && (
               <div
-                className={`mb-6 rounded-xl border px-3.5 py-3 text-left text-sm ${
-                  emailError
-                    ? "border-red-100 bg-red-50 text-red-700"
-                    : "border-emerald-100 bg-emerald-50 text-emerald-700"
-                }`}
+                className="mb-6 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-3 text-left text-sm text-emerald-700"
                 role="status"
                 aria-live="polite"
               >
                 <div className="flex items-start gap-2">
                   <Mail className="mt-0.5 h-4 w-4 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p>{emailError ?? emailNotice}</p>
-                    {user?.email && <p className="mt-1 truncate text-xs opacity-80">{user.email}</p>}
+                    <p>{emailNotice}</p>
+                    {user?.email && <p className="mt-1 break-words text-xs opacity-80">{user.email}</p>}
                     {!user?.email_verified_at && (
                       <Button
                         type="button"
@@ -240,7 +233,7 @@ export default function CreateTransactionPinPage() {
               </div>
             )}
 
-            <div className={`mb-10 ${shake ? "animate-shake" : ""}`}>
+            <div className={`mb-8 sm:mb-10 ${shake ? "animate-shake" : ""}`}>
               <PinDots length={PIN_LENGTH} filled={value.length} />
             </div>
 

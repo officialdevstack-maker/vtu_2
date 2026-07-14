@@ -57,7 +57,7 @@ export default function RegisterPage() {
         replace: true,
         state: registration.verificationEmailSent
           ? { emailNotice: "Verification email sent. Check your inbox to confirm your account." }
-          : { emailError: "Your account was created, but the verification email could not be sent. Please try again below." },
+          : null,
       });
     } catch (err) {
       setError("root", { message: extractErrorMessage(err) });

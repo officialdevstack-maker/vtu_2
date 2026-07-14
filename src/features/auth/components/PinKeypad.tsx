@@ -29,14 +29,14 @@ export function PinKeypad({
   disabled?: boolean;
 }) {
   return (
-    <div className="mx-auto grid w-full max-w-[280px] grid-cols-3 gap-3">
+    <div className="mx-auto grid w-full max-w-[280px] grid-cols-3 gap-2.5 min-[380px]:gap-3">
       {keys.map((key) => (
         <button
           key={key}
           type="button"
           disabled={disabled}
           onClick={() => onDigit(key)}
-          className="flex h-16 w-full items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-xl font-semibold text-slate-900 transition-all duration-150 hover:bg-slate-100 active:scale-95 disabled:opacity-50"
+          className="flex h-14 w-full items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-xl font-semibold text-slate-900 transition-all duration-150 hover:bg-slate-100 active:scale-95 disabled:opacity-50 min-[380px]:h-16"
         >
           {key}
         </button>
@@ -47,7 +47,7 @@ export function PinKeypad({
         disabled={disabled}
         onClick={onClear}
         aria-label="Clear"
-        className="flex h-16 w-full items-center justify-center rounded-2xl text-slate-400 transition-all duration-150 hover:bg-slate-50 active:scale-95 disabled:opacity-50"
+        className="flex h-14 w-full items-center justify-center rounded-2xl text-slate-400 transition-all duration-150 hover:bg-slate-50 active:scale-95 disabled:opacity-50 min-[380px]:h-16"
       >
         <RotateCcw className="h-5 w-5" />
       </button>
@@ -56,7 +56,7 @@ export function PinKeypad({
         type="button"
         disabled={disabled}
         onClick={() => onDigit("0")}
-        className="flex h-16 w-full items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-xl font-semibold text-slate-900 transition-all duration-150 hover:bg-slate-100 active:scale-95 disabled:opacity-50"
+        className="flex h-14 w-full items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-xl font-semibold text-slate-900 transition-all duration-150 hover:bg-slate-100 active:scale-95 disabled:opacity-50 min-[380px]:h-16"
       >
         0
       </button>
@@ -66,7 +66,7 @@ export function PinKeypad({
         disabled={disabled}
         onClick={onBackspace}
         aria-label="Backspace"
-        className="flex h-16 w-full items-center justify-center rounded-2xl text-slate-400 transition-all duration-150 hover:bg-slate-50 active:scale-95 disabled:opacity-50"
+        className="flex h-14 w-full items-center justify-center rounded-2xl text-slate-400 transition-all duration-150 hover:bg-slate-50 active:scale-95 disabled:opacity-50 min-[380px]:h-16"
       >
         <Delete className="h-5 w-5" />
       </button>
