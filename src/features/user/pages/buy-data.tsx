@@ -1,4 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+
+const normalizePlanType = (value: string | null | undefined): string =>
+  (value ?? "").trim().toLowerCase().replace(/[_\s]+/g, "");
+
+const parsePlanSize = (plan: DataPlan): number => {
+  const raw = `${plan.plan_name ?? ""}${plan.plan_size ?? ""}`;
+  const match = raw.match(/([0-9.]+)\s*(mb|gb)/i);
+  if (!match) {
+    const fallback = Number.parseFloat(`${plan.plan_name ?? ""}`);
+    return Number.isFinite(fallback) ? fallback : 0;
+  }
+
+  const value = Number.parseFloat(match[1]);
+  return match[2].toLowerCase() === "gb" ? value * 1000 : value;
+};
 import { Wifi } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -67,6 +82,20 @@ export default function BuyDataPage() {
     return map;
   }, [dataPlansQuery.data]);
 
+  const allowedPlanTypesByNetwork = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+
+    for (const network of networksQuery.data ?? []) {
+      const ids = (network.network_types ?? [])
+        .filter((entry) => entry.service_type === "data" && (entry.pivot.active ?? true))
+        .map((entry) => normalizePlanType(entry.name));
+
+      map.set(network.name.toLowerCase(), new Set(ids));
+    }
+
+    return map;
+  }, [networksQuery.data]);
+
   const networks = useMemo(
     () =>
       (networksQuery.data ?? []).filter(
@@ -100,7 +129,19 @@ export default function BuyDataPage() {
   const selectedNetwork = networks.find(
     (n) => n.name.toLowerCase() === network,
   );
-  const availablePlans = plansByNetwork.get(network) ?? [];
+  const availablePlans = useMemo(() => {
+    const plans = plansByNetwork.get(network) ?? [];
+    const allowedPlanTypes = allowedPlanTypesByNetwork.get(network) ?? null;
+
+    return plans.filter((plan) => {
+      const normalized = normalizePlanType(plan.plan_type);
+      if (!normalized) {
+        return false;
+      }
+
+      return !allowedPlanTypes || allowedPlanTypes.size === 0 || allowedPlanTypes.has(normalized);
+    });
+  }, [allowedPlanTypesByNetwork, network, plansByNetwork]);
 
   const planTypes = useMemo(
     () => Array.from(new Set(availablePlans.map((p) => p.plan_type))),
@@ -120,8 +161,8 @@ export default function BuyDataPage() {
   const plansForType = useMemo(
     () =>
       availablePlans
-        .filter((p) => p.plan_type === planType)
-        .sort((a, b) => Number(a.price ?? 0) - Number(b.price ?? 0)),
+        .filter((p) => normalizePlanType(p.plan_type) === normalizePlanType(planType))
+        .sort((a, b) => parsePlanSize(a) - parsePlanSize(b) || Number(a.price ?? 0) - Number(b.price ?? 0)),
     [availablePlans, planType],
   );
 
