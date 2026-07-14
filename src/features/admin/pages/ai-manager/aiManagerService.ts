@@ -9,6 +9,8 @@ export type AiMessage = {
   id: number;
   role: AiMessageRole;
   content: string;
+  // Tool names the assistant called on this step (for the activity line).
+  tools?: string[];
   created_at: string | null;
 };
 

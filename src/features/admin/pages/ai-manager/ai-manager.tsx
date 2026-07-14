@@ -13,6 +13,7 @@ import {
   Sparkles,
   Trash2,
   User as UserIcon,
+  Wrench,
   X,
 } from "lucide-react";
 import { isAxiosError } from "axios";
@@ -546,6 +547,19 @@ const EmptyState = ({
   </div>
 );
 
+// Snake_case tool name → readable phrase, e.g. "search_transactions" →
+// "search transactions".
+const prettyTool = (name: string) => name.replace(/_/g, " ");
+
+const ToolActivity = ({ tools }: { tools: string[] }) => (
+  <div className="mx-auto flex max-w-3xl items-center gap-1.5 pl-11 text-[11px] text-slate-400">
+    <Wrench className="h-3 w-3 shrink-0" />
+    <span className="truncate">
+      Looked up {tools.map(prettyTool).join(" · ")}
+    </span>
+  </div>
+);
+
 const MessageBubble = ({
   message,
 }: {
@@ -559,6 +573,13 @@ const MessageBubble = ({
         </span>
       </div>
     );
+  }
+
+  // A step where the assistant only called tools (no prose) — show it as a
+  // subtle activity line ("looked up …") instead of an empty bubble, so the
+  // admin can see what data grounded the reply.
+  if (!message.content && message.tools && message.tools.length > 0) {
+    return <ToolActivity tools={message.tools} />;
   }
 
   const isUser = message.role === "user";
