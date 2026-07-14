@@ -316,7 +316,7 @@ const AiManagerPage = () => {
   }, [historyOpen]);
 
   return (
-    <div className="admin-ai-page flex min-h-0 min-w-0 flex-col gap-3 sm:gap-4">
+    <div className="admin-ai-page flex w-full min-h-0 min-w-0 max-w-full flex-col gap-3 sm:gap-4">
       <PageHeader
         title={
           <span className="inline-flex min-w-0 flex-wrap items-center gap-2">
@@ -332,7 +332,7 @@ const AiManagerPage = () => {
             <Button
               variant="secondary"
               size="sm"
-              className="lg:hidden"
+              className="min-h-11 flex-1 sm:min-h-0 sm:flex-none lg:hidden"
               onClick={(event) => {
                 historyTriggerRef.current = event.currentTarget;
                 setHistoryOpen(true);
@@ -340,7 +340,7 @@ const AiManagerPage = () => {
             >
               <Menu className="h-3.5 w-3.5" /> History
             </Button>
-            <Button size="sm" onClick={startNewChat}>
+            <Button className="min-h-11 flex-1 sm:min-h-0 sm:flex-none" size="sm" onClick={startNewChat}>
               <Plus className="h-3.5 w-3.5" /> New chat
             </Button>
           </>
@@ -391,7 +391,7 @@ const AiManagerPage = () => {
         </div>
       )}
 
-      <Card className="admin-chat-card min-h-0 flex-1 overflow-hidden">
+      <Card className="admin-chat-card min-h-0 w-full min-w-0 max-w-full flex-1 overflow-hidden">
         <div className="grid h-full min-h-0 lg:grid-cols-[20rem_minmax(0,1fr)]">
           <div className="hidden min-h-0 border-r border-slate-100 lg:block">
             <ConversationSidebar
@@ -407,12 +407,12 @@ const AiManagerPage = () => {
 
           {/* Chat panel */}
           <section className="flex min-h-0 min-w-0 flex-col bg-white">
-            <header className="border-b border-slate-100 px-4 py-3.5 sm:px-5">
-              <div className="flex min-w-0 flex-wrap items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827]/10 text-[#111827]">
+            <header className="shrink-0 border-b border-slate-100 px-3 py-2.5 sm:px-5 sm:py-3.5">
+              <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#111827]/10 text-[#111827] sm:h-10 sm:w-10">
                   <Sparkles className="h-5 w-5" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h2 className="overflow-wrap-anywhere text-sm font-semibold text-slate-900">
                     {active?.title ?? "New AI workspace"}
                   </h2>
@@ -431,7 +431,7 @@ const AiManagerPage = () => {
 
             <div
               ref={threadRef}
-              className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/60 px-3 py-4 sm:px-5"
+              className="min-h-0 min-w-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-slate-50/60 px-2.5 py-3 sm:space-y-4 sm:px-5 sm:py-4"
             >
               {!active || active.messages.length === 0 ? (
                 <EmptyState onPick={submit} disabled={sendMutation.isPending} />
@@ -519,7 +519,7 @@ const AiManagerPage = () => {
                   )}
                 </button>
               </form>
-              <p className="mt-2 px-1 text-[11px] text-slate-400">
+              <p className="mt-1.5 hidden px-1 text-[11px] text-slate-400 min-[390px]:block">
                 Actions that change data need approval. Reply "approve",
                 "approve #ID", or use the buttons to run one.
               </p>
@@ -593,7 +593,7 @@ const ConversationSidebar = ({
           <p className="text-xs uppercase tracking-wide text-white/35">
             AI threads
           </p>
-          <h3 className="truncate text-sm text-white">Conversation history</h3>
+          <h3 className="overflow-wrap-anywhere text-sm text-white">Conversation history</h3>
         </div>
         {onClose && (
           <button
@@ -645,7 +645,7 @@ const ConversationSidebar = ({
                 <p className="line-clamp-2 overflow-wrap-anywhere text-sm leading-snug text-white">
                   {c.title ?? "Untitled conversation"}
                 </p>
-                <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-white/40">
+                <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-white/55">
                   <Clock3 className="h-3.5 w-3.5 shrink-0" />
                   {formatDateTime(c.last_activity_at)}
                 </p>
@@ -683,14 +683,14 @@ const EmptyState = ({
   onPick: (text: string) => void;
   disabled: boolean;
 }) => (
-  <div className="mx-auto flex max-w-3xl flex-col items-center py-2 text-center sm:py-5">
+  <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col items-center py-1 text-center sm:py-5">
     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] text-white shadow-md shadow-[#111827]/15 sm:h-12 sm:w-12">
       <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
     </div>
     <h2 className="mt-2.5 text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
       Manage operations with live context
     </h2>
-    <p className="mt-1 max-w-xl text-sm text-slate-500">
+    <p className="mt-1 hidden max-w-xl text-sm text-slate-500 min-[390px]:block">
       Ask for health checks, customer investigations, transaction reviews, or
       draft actions. Any change to platform data stays pending until you approve
       it.
@@ -741,7 +741,7 @@ const MessageBubble = ({
   const isUser = message.role === "user";
 
   return (
-    <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
+    <div className={`flex min-w-0 max-w-full gap-2 sm:gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
           isUser
@@ -756,7 +756,7 @@ const MessageBubble = ({
         )}
       </div>
       <div
-        className={`max-w-[min(44rem,100%)] overflow-hidden rounded-2xl px-4 py-3 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:max-w-[min(44rem,85%)] ${
+        className={`min-w-0 max-w-[calc(100%-2.5rem)] overflow-hidden overflow-wrap-anywhere rounded-2xl px-3 py-2.5 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:max-w-[min(44rem,85%)] sm:px-4 sm:py-3 ${
           isUser
             ? "whitespace-pre-wrap bg-[#111827] text-white"
             : "border border-slate-200 bg-white text-slate-800"
@@ -790,8 +790,8 @@ const ProposalCard = ({
   busy: boolean;
   error: string | null;
 }) => (
-  <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-    <div className="flex items-start gap-3">
+  <div className="min-w-0 max-w-full rounded-2xl border border-amber-200 bg-amber-50/70 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-4">
+    <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
         <ShieldAlert className="h-5 w-5" />
       </div>
@@ -816,7 +816,7 @@ const ProposalCard = ({
             {error}
           </p>
         )}
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
           <button
             type="button"
             onClick={onApprove}
@@ -851,7 +851,7 @@ const DecidedProposal = ({ proposal }: { proposal: AiProposal }) => (
     >
       {proposal.status}
     </span>
-    <span className="truncate text-slate-500">
+    <span className="min-w-0 overflow-wrap-anywhere text-slate-500">
       {proposal.summary ?? proposal.tool}
       {proposal.status === "failed" && proposal.error
         ? ` — ${proposal.error}`
