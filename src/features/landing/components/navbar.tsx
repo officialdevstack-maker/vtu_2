@@ -6,10 +6,10 @@ import { useBranding } from "@/shared/branding";
 import { Button } from "./ui";
 
 const navLinks = [
-  { label: "Features", href: "#services" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About", href: "#why-vendify" },
-  { label: "Support", href: "#faq" },
+  { label: "Features", href: "/#services" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "About", href: "/#why-vendify" },
+  { label: "Support", href: "/#faq" },
 ];
 
 function BrandMark() {

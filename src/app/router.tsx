@@ -6,6 +6,7 @@ import App from "@/App";
 import { UserLayout, userRouter } from "@/features/user";
 import { adminRouter } from "@/features/admin";
 import AdminProtectedLayout from "@/features/admin/components/AdminProtectedLayout";
+import { PrivacyPolicyPage, RefundPolicyPage, TermsOfServicePage } from "@/features/legal/legal-page";
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,18 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <App />,
+      },
+      {
+        path: "privacy",
+        element: <PrivacyPolicyPage />,
+      },
+      {
+        path: "terms",
+        element: <TermsOfServicePage />,
+      },
+      {
+        path: "refund-policy",
+        element: <RefundPolicyPage />,
       },
 
       ...authRouter,
