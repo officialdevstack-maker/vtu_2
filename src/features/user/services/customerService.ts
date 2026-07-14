@@ -314,7 +314,7 @@ export type WalletWithdrawalPayload = {
 
 const catalogRequestCache = new Map<string, { expiresAt: number; promise: Promise<unknown> }>();
 
-const memoizedCatalogRequest = <T>(cacheKey: string, request: () => Promise<T>, ttlMs = 60_000): Promise<T> => {
+const memoizedCatalogRequest = <T>(cacheKey: string, request: () => Promise<T>, ttlMs = 3 * 60_000): Promise<T> => {
   const cachedEntry = catalogRequestCache.get(cacheKey);
   if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
     return cachedEntry.promise as Promise<T>;
@@ -368,7 +368,7 @@ export const customerService = {
       apiClient
         .get<ApiEnvelope<Network[]>>("/table/networks")
         .then((r) => r.data.data),
-      60_000,
+      3 * 60_000,
     ),
 
   getAirtimePlans: (): Promise<AirtimePlan[]> =>
@@ -376,7 +376,7 @@ export const customerService = {
       apiClient
         .get<ApiEnvelope<AirtimePlan[]>>("/table/airtime_plans")
         .then((r) => r.data.data),
-      60_000,
+      3 * 60_000,
     ),
 
   purchaseAirtime: (payload: AirtimePurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
@@ -389,7 +389,7 @@ export const customerService = {
       apiClient
         .get<ApiEnvelope<DataPlan[]>>("/table/data_plans")
         .then((r) => r.data.data),
-      60_000,
+      3 * 60_000,
     ),
 
   purchaseData: (payload: DataPurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
@@ -402,7 +402,7 @@ export const customerService = {
       apiClient
         .get<ApiEnvelope<CableNetwork[]>>("/table/network_types")
         .then((r) => r.data.data.filter((n) => n.service_type === "cable")),
-      60_000,
+      3 * 60_000,
     ),
 
   getCablePlans: (): Promise<CablePlan[]> =>
@@ -410,7 +410,7 @@ export const customerService = {
       apiClient
         .get<ApiEnvelope<CablePlan[]>>("/table/cable_plans")
         .then((r) => r.data.data),
-      60_000,
+      3 * 60_000,
     ),
 
   verifyCableIuc: (cableNetwork: string, iuc: string): Promise<CableVerification> =>
@@ -430,7 +430,7 @@ export const customerService = {
       apiClient
         .get<ApiEnvelope<BillPlan[]>>("/table/bill_plans")
         .then((r) => r.data.data),
-      60_000,
+      3 * 60_000,
     ),
 
   verifyMeter: (disco: string, meterNumber: string, meterType: "prepaid" | "postpaid"): Promise<ElectricityVerification> =>
