@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 const normalizePlanType = (value: string | null | undefined): string =>
-  (value ?? "").trim().toLowerCase().replace(/[_\s]+/g, "");
+  (value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "");
 
 const parsePlanSize = (plan: DataPlan): number => {
   const raw = `${plan.plan_name ?? ""}${plan.plan_size ?? ""}`;
@@ -87,7 +90,10 @@ export default function BuyDataPage() {
 
     for (const network of networksQuery.data ?? []) {
       const ids = (network.network_types ?? [])
-        .filter((entry) => entry.service_type === "data" && (entry.pivot.active ?? true))
+        .filter(
+          (entry) =>
+            entry.service_type === "data" && (entry.pivot.active ?? true),
+        )
         .map((entry) => normalizePlanType(entry.name));
 
       map.set(network.name.toLowerCase(), new Set(ids));
@@ -139,7 +145,11 @@ export default function BuyDataPage() {
         return false;
       }
 
-      return !allowedPlanTypes || allowedPlanTypes.size === 0 || allowedPlanTypes.has(normalized);
+      return (
+        !allowedPlanTypes ||
+        allowedPlanTypes.size === 0 ||
+        allowedPlanTypes.has(normalized)
+      );
     });
   }, [allowedPlanTypesByNetwork, network, plansByNetwork]);
 
@@ -161,8 +171,14 @@ export default function BuyDataPage() {
   const plansForType = useMemo(
     () =>
       availablePlans
-        .filter((p) => normalizePlanType(p.plan_type) === normalizePlanType(planType))
-        .sort((a, b) => parsePlanSize(a) - parsePlanSize(b) || Number(a.price ?? 0) - Number(b.price ?? 0)),
+        .filter(
+          (p) => normalizePlanType(p.plan_type) === normalizePlanType(planType),
+        )
+        .sort(
+          (a, b) =>
+            parsePlanSize(a) - parsePlanSize(b) ||
+            Number(a.price ?? 0) - Number(b.price ?? 0),
+        ),
     [availablePlans, planType],
   );
 
@@ -282,196 +298,199 @@ export default function BuyDataPage() {
           subtitle="Data bundles for every network"
         />
 
-      {step === "form" && (
-        <div className="p-5 space-y-4">
-          <WalletBalanceBanner balance={Number(user?.wallet_balance ?? 0)} />
+        {step === "form" && (
+          <div className="p-5 space-y-4">
+            <WalletBalanceBanner balance={Number(user?.wallet_balance ?? 0)} />
 
-          <div>
-            <FieldLabel>Select network</FieldLabel>
-            {networksQuery.isPending || dataPlansQuery.isPending ? (
-              <div className="grid grid-cols-4 gap-2">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[74px] rounded-lg bg-gray-100 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : (
-              <NetworkPicker
-                networks={networks.map((n) => ({
-                  id: n.name.toLowerCase(),
-                  name: n.name.toUpperCase(),
-                  bg: NETWORK_COLORS[n.name.toLowerCase()] ?? "bg-slate-400",
-                }))}
-                value={network}
-                onChange={(id) => {
-                  setNetwork(id);
-                  setSelectedPlanId(null);
-                }}
-              />
-            )}
-          </div>
-
-          {planTypes.length > 1 && (
             <div>
-              <FieldLabel>Plan type</FieldLabel>
-              <OptionPicker
-                options={planTypes.map((t) => ({
-                  id: t,
-                  label: PLAN_TYPE_LABELS[t] ?? t,
-                }))}
-                value={planType}
-                onChange={(value) => {
-                  setPlanType(value);
-                  setSelectedPlanId(null);
-                }}
-              />
-            </div>
-          )}
-
-          <div>
-            <FieldLabel>Phone number</FieldLabel>
-            <input
-              type="tel"
-              maxLength={11}
-              value={phone}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "");
-                setPhone(digits);
-                if (digits.length >= 4) {
-                  const detected = detectNetwork(digits);
-                  if (
-                    detected &&
-                    networks.some((n) => n.name.toLowerCase() === detected)
-                  ) {
-                    setNetwork(detected);
+              <FieldLabel>Select network</FieldLabel>
+              {networksQuery.isPending || dataPlansQuery.isPending ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-[74px] rounded-lg bg-gray-100 animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <NetworkPicker
+                  networks={networks.map((n) => ({
+                    id: n.name.toLowerCase(),
+                    name: n.name.toUpperCase(),
+                    bg: NETWORK_COLORS[n.name.toLowerCase()] ?? "bg-slate-400",
+                  }))}
+                  value={network}
+                  onChange={(id) => {
+                    setNetwork(id);
                     setSelectedPlanId(null);
-                  }
-                }
-              }}
-              placeholder="08012345678"
-              className={`${inputCls} font-mono`}
-            />
-            {phone && phone.length !== 11 && (
-              <p className="text-xs text-red-500 mt-1">
-                Enter a valid 11-digit phone number
-              </p>
-            )}
-          </div>
+                  }}
+                />
+              )}
+            </div>
 
-          <div>
-            <FieldLabel>Select data plan</FieldLabel>
-            {plansForType.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">
-                No plans available for this network.
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {plansForType.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setSelectedPlanId(p.id)}
-                    className={`relative p-3 rounded-lg border transition-colors text-left ${selectedPlanId === p.id ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
-                  >
-                    <p className="font-medium text-slate-900 text-sm">
-                      {p.plan}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {p.validity}
-                    </p>
-                    {(() => {
-                      const original = Number(p.price ?? 0);
-                      const discounted = applyDiscount(original, dataDiscount);
-                      return discounted < original ? (
-                        <p className="text-sm font-medium mt-1">
-                          <span className="text-slate-400 line-through mr-1.5">
-                            {fmt(original)}
-                          </span>
-                          <span className="text-[#111827]">
-                            {fmt(discounted)}
-                          </span>
-                        </p>
-                      ) : (
-                        <p className="text-sm font-medium text-[#111827] mt-1">
-                          {fmt(original)}
-                        </p>
-                      );
-                    })()}
-                  </button>
-                ))}
+            {planTypes.length > 1 && (
+              <div>
+                <FieldLabel>Plan type</FieldLabel>
+                <OptionPicker
+                  options={planTypes.map((t) => ({
+                    id: t,
+                    label: PLAN_TYPE_LABELS[t] ?? t,
+                  }))}
+                  value={planType}
+                  onChange={(value) => {
+                    setPlanType(value);
+                    setSelectedPlanId(null);
+                  }}
+                />
               </div>
             )}
-          </div>
 
-          <ContinueButton
-            onClick={() => setStep("confirm")}
-            disabled={!isFormValid}
-          />
-        </div>
-      )}
-
-      {step === "confirm" && selectedNetwork && selectedPlan && (
-        <div className="p-5 space-y-4">
-          <ConfirmSummary
-            rows={[
-              { label: "Network", value: selectedNetwork.name.toUpperCase() },
-              {
-                label: "Plan",
-                value: `${selectedPlan.plan} · ${selectedPlan.validity}`,
-              },
-              { label: "Phone number", value: phone },
-              { label: "Amount", value: fmt(planPrice) },
-              ...(discountAmount > 0
-                ? [
-                    {
-                      label: "Discount",
-                      value: `- ${fmt(discountAmount)}`,
-                      emphasize: "success" as const,
-                    },
-                    {
-                      label: "You pay",
-                      value: fmt(payableAmount),
-                      emphasize: "success" as const,
-                    },
-                  ]
-                : []),
-            ]}
-          />
-
-          {error && (
-            <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
-              {error}
+            <div>
+              <FieldLabel>Phone number</FieldLabel>
+              <input
+                type="tel"
+                maxLength={11}
+                value={phone}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "");
+                  setPhone(digits);
+                  if (digits.length >= 4) {
+                    const detected = detectNetwork(digits);
+                    if (
+                      detected &&
+                      networks.some((n) => n.name.toLowerCase() === detected)
+                    ) {
+                      setNetwork(detected);
+                      setSelectedPlanId(null);
+                    }
+                  }
+                }}
+                placeholder="08012345678"
+                className={`${inputCls} font-mono`}
+              />
+              {phone && phone.length !== 11 && (
+                <p className="text-xs text-red-500 mt-1">
+                  Enter a valid 11-digit phone number
+                </p>
+              )}
             </div>
-          )}
 
-          <button
-            type="button"
-            onClick={() => setShowPromo((v) => !v)}
-            className="text-xs font-medium text-[#111827] hover:opacity-80 transition-opacity"
-          >
-            {showPromo ? "Remove promo code" : "Have a promo code?"}
-          </button>
-          {showPromo && (
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="Enter promo code"
-              className={`${inputCls} font-mono uppercase`}
+            <div>
+              <FieldLabel>Select data plan</FieldLabel>
+              {plansForType.length === 0 ? (
+                <p className="text-xs text-slate-400 py-4 text-center">
+                  No plans available for this network.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {plansForType.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setSelectedPlanId(p.id)}
+                      className={`relative p-3 rounded-lg border transition-colors text-left ${selectedPlanId === p.id ? "border-[#111827] bg-[#111827]/10" : "border-gray-200 hover:border-gray-300"}`}
+                    >
+                      <p className="font-medium text-slate-900 text-sm">
+                        {p.plan}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {p.validity}
+                      </p>
+                      {(() => {
+                        const original = Number(p.price ?? 0);
+                        const discounted = applyDiscount(
+                          original,
+                          dataDiscount,
+                        );
+                        return discounted < original ? (
+                          <p className="text-sm font-medium mt-1">
+                            <span className="text-slate-400 line-through mr-1.5">
+                              {fmt(original)}
+                            </span>
+                            <span className="text-[#111827]">
+                              {fmt(discounted)}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="text-sm font-medium text-[#111827] mt-1">
+                            {fmt(original)}
+                          </p>
+                        );
+                      })()}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <ContinueButton
+              onClick={() => setStep("confirm")}
+              disabled={!isFormValid}
             />
-          )}
+          </div>
+        )}
 
-          <PinField value={pin} onChange={setPin} />
+        {step === "confirm" && selectedNetwork && selectedPlan && (
+          <div className="p-5 space-y-4">
+            <ConfirmSummary
+              rows={[
+                { label: "Network", value: selectedNetwork.name.toUpperCase() },
+                {
+                  label: "Plan",
+                  value: `${selectedPlan.plan} · ${selectedPlan.validity}`,
+                },
+                { label: "Phone number", value: phone },
+                { label: "Amount", value: fmt(planPrice) },
+                ...(discountAmount > 0
+                  ? [
+                      {
+                        label: "Discount",
+                        value: `- ${fmt(discountAmount)}`,
+                        emphasize: "success" as const,
+                      },
+                      {
+                        label: "You pay",
+                        value: fmt(payableAmount),
+                        emphasize: "success" as const,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
-          <ConfirmActions
-            onBack={() => setStep("form")}
-            onConfirm={() => void handleConfirm()}
-            loading={loading}
-          />
-        </div>
-      )}
+            {error && (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowPromo((v) => !v)}
+              className="text-xs font-medium text-[#111827] hover:opacity-80 transition-opacity"
+            >
+              {showPromo ? "Remove promo code" : "Have a promo code?"}
+            </button>
+            {showPromo && (
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="Enter promo code"
+                className={`${inputCls} font-mono uppercase`}
+              />
+            )}
+
+            <PinField value={pin} onChange={setPin} />
+
+            <ConfirmActions
+              onBack={() => setStep("form")}
+              onConfirm={() => void handleConfirm()}
+              loading={loading}
+            />
+          </div>
+        )}
       </PurchaseShell>
     </div>
   );
