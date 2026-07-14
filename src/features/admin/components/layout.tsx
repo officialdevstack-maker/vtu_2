@@ -165,6 +165,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
           { label: "Template", path: "/admin/notifications/template" },
         ],
       },
+      { label: "Mobile App", path: "/admin/mobile-app", icon: Smartphone },
       { label: "Settings", path: "/admin/settings", icon: Settings },
     ],
   },

@@ -21,6 +21,17 @@ export const router = createBrowserRouter([
         element: <App />,
       },
 
+      // Public "download the mobile app" page — no auth, reads /app/latest.
+      {
+        path: "download",
+        lazy: async () => {
+          const { default: Component } = await import(
+            "@/features/download/download-page"
+          );
+          return { Component };
+        },
+      },
+
       ...authRouter,
 
       {
