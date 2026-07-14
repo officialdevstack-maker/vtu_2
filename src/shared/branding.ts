@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient, brandingLogoUrl } from "@shared/api/apiClient";
+import { apiClient } from "@shared/api/apiClient";
 
 // Public, unauthenticated subset of General settings (see
 // BrandingController::show on the backend) — safe to call from pages
@@ -21,9 +21,11 @@ export type Branding = {
   app_phone?: string | null;
 };
 
+const PRIMARY_LOGO_URL = "/favicon.png?v=3";
+
 const FALLBACK: Branding = {
   app_name: "Vendify",
-  logo: brandingLogoUrl,
+  logo: PRIMARY_LOGO_URL,
   meta_title: "Vendify",
   meta_description: null,
   app_email: null,
@@ -35,7 +37,7 @@ const FALLBACK: Branding = {
 // index.html's inline bootstrap script reads this exact same key to set
 // document.title before React (or even the JS bundle) has loaded, and this
 // hook reads it again as `initialData` so there's no loading flash either.
-export const BRANDING_STORAGE_KEY = "vendify-branding-cache-v1";
+export const BRANDING_STORAGE_KEY = "vendify-branding-cache-v2";
 
 function readCache(): { data: Branding; updatedAt: number } | null {
   try {
@@ -61,10 +63,10 @@ export function useBranding(): Branding & { isLoading: boolean } {
     queryKey: ["branding"],
     queryFn: () =>
       apiClient.get<ApiEnvelope<Branding>>("/branding").then((r) => {
-        // Build the asset URL from the same API base as the request. This
-        // avoids stale APP_URL values and cross-origin frontend deployments
-        // producing broken logo images.
-        const branding = { ...r.data.data, logo: brandingLogoUrl };
+        // The primary Vendify mark ships with the frontend so auth screens,
+        // loaders and navigation never depend on a separate image request to
+        // the API host (which may be deployed on another origin).
+        const branding = { ...r.data.data, logo: PRIMARY_LOGO_URL };
         writeCache(branding);
         return branding;
       }),
@@ -73,11 +75,13 @@ export function useBranding(): Branding & { isLoading: boolean } {
     // the localStorage cache surviving page reloads) could otherwise show a
     // days-stale brand name forever after just one admin edit.
     staleTime: 30 * 60 * 1000,
-    initialData: cached?.data,
+    initialData: cached?.data
+      ? { ...cached.data, logo: PRIMARY_LOGO_URL }
+      : undefined,
     initialDataUpdatedAt: cached?.updatedAt,
   });
 
-  return { ...FALLBACK, ...data, isLoading };
+  return { ...FALLBACK, ...data, logo: PRIMARY_LOGO_URL, isLoading };
 }
 
 // Keeps the browser tab title, meta description and favicon tallied with

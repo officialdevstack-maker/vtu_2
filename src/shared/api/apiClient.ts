@@ -39,7 +39,6 @@ const normalizeApiBaseUrl = (value: string | undefined) => {
 const rawBaseUrl = env('VITE_API_BASE_URL', '/api') as string;
 const apiBaseUrl = normalizeApiBaseUrl(rawBaseUrl);
 const siteBaseUrl = apiBaseUrl.replace(/\/api(?:\/v\d+)?$/i, '');
-export const brandingLogoUrl = `${apiBaseUrl}/branding/logo?v=2`;
 export const AUTH_TOKEN_KEY = 'kora-auth-token';
 
 export const getAuthToken = () => {
