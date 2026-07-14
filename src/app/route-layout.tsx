@@ -1,8 +1,6 @@
 import { AuthProvider, useAuth } from "@/shared/providers/auth";
 import { toWhatsAppLink } from "@/shared/utils";
-import { useDocumentBranding } from "@/shared/branding";
-import { generalService } from "@/features/admin/pages/generalService";
-import { useQuery } from "@tanstack/react-query";
+import { useBranding, useDocumentBranding } from "@/shared/branding";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { MessageCircle } from "lucide-react";
 import { Outlet } from "react-router";
@@ -20,19 +18,14 @@ function DocumentBranding() {
 // tooling and don't need this on the admin control panel.
 function WhatsAppSupportButton() {
   const { user } = useAuth();
+  const { app_phone } = useBranding();
   const isCustomer = Boolean(user) && user?.user_type !== "admin";
-  const generalQuery = useQuery({
-    queryKey: ["general-settings"],
-    queryFn: () => generalService.get(),
-    enabled: isCustomer,
-    staleTime: Infinity,
-  });
 
-  if (!isCustomer || !generalQuery.data?.app_phone) return null;
+  if (!isCustomer || !app_phone) return null;
 
   return (
     <a
-      href={toWhatsAppLink(generalQuery.data.app_phone)}
+      href={toWhatsAppLink(app_phone)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"
