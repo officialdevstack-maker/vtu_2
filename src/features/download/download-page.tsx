@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Download, ShieldCheck, Smartphone } from "lucide-react";
 import { apiClient } from "@shared/api/apiClient";
 import { useBranding } from "@shared/branding";
+import { useSeo } from "@shared/seo";
 
 // Mirrors the public AppReleaseController::latest payload. Null while there is
 // no published build yet.
@@ -21,6 +22,11 @@ const DownloadPage = () => {
   const [release, setRelease] = useState<LatestRelease>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useSeo({
+    title: "Download the Android App",
+    description: `Get the ${app_name || "Vendify"} Android app — buy airtime, data and pay bills faster from your phone. Free, secure and fast.`,
+  });
 
   useEffect(() => {
     apiClient

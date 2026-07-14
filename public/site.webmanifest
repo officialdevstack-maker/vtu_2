@@ -1,0 +1,19 @@
+{
+  "name": "Vendify — Airtime, Data & Bills",
+  "short_name": "Vendify",
+  "description": "Buy airtime and data, and pay electricity, cable TV and exam bills instantly in Nigeria.",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#208AEF",
+  "icons": [
+    {
+      "src": "/favicon.png?v=4",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

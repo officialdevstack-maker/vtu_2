@@ -1,16 +1,10 @@
 import { AuthProvider, useAuth } from "@/shared/providers/auth";
 import { toWhatsAppLink } from "@/shared/utils";
-import { useBranding, useDocumentBranding } from "@/shared/branding";
+import { useBranding } from "@/shared/branding";
+import { SeoProvider } from "@/shared/seo";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { MessageCircle } from "lucide-react";
 import { Outlet } from "react-router";
-
-// Keeps document.title / meta description tallied with Settings > General,
-// site-wide, on every route (including logged-out pages).
-function DocumentBranding() {
-  useDocumentBranding();
-  return null;
-}
 
 // Customer-facing WhatsApp support bubble — only shown to a logged-in,
 // non-admin user (the number itself is admin-configured, General::app_phone,
@@ -39,14 +33,16 @@ function WhatsAppSupportButton() {
 
 const RootLayout = () => {
   return (
-    <>
-      <DocumentBranding />
+    // SeoProvider owns document.title / meta / OG / canonical site-wide, and
+    // lets any page refine them via useSeo(). It's inside the router tree, so
+    // it can read the active route for per-page canonical URLs.
+    <SeoProvider>
       <AuthProvider>
         <Outlet />
         <WhatsAppSupportButton />
       </AuthProvider>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-    </>
+    </SeoProvider>
   );
 };
 

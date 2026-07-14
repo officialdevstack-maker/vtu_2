@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@shared/api/apiClient";
 import primaryLogoUrl from "@/assets/vendify-logo.png";
@@ -83,36 +82,6 @@ export function useBranding(): Branding & { isLoading: boolean } {
   return { ...FALLBACK, ...data, logo: PRIMARY_LOGO_URL, isLoading };
 }
 
-// Keeps the browser tab title, meta description and favicon tallied with
-// whatever the admin has configured, site-wide. Mount once near the app root.
-export function useDocumentBranding(): void {
-  const { meta_title, meta_description, logo, isLoading } = useBranding();
-
-  useEffect(() => {
-    if (isLoading) return;
-    document.title = meta_title;
-
-    if (meta_description) {
-      let tag = document.querySelector<HTMLMetaElement>('meta[name="description"]');
-      if (!tag) {
-        tag = document.createElement("meta");
-        tag.name = "description";
-        document.head.appendChild(tag);
-      }
-      tag.content = meta_description;
-    }
-
-    if (logo) {
-      let icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-      if (!icon) {
-        icon = document.createElement("link");
-        icon.rel = "icon";
-        document.head.appendChild(icon);
-      }
-      // The static tag declares type="image/svg+xml" for the bundled default;
-      // the uploaded logo is usually PNG/JPG, so drop the stale hint.
-      icon.removeAttribute("type");
-      icon.href = logo;
-    }
-  }, [meta_title, meta_description, logo, isLoading]);
-}
+// NOTE: document title / meta / favicon management now lives in a single
+// place — src/shared/seo.tsx (SeoProvider) — so per-page useSeo() overrides
+// never race a global default. See that file for the head-tag logic.

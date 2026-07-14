@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { useAuth, type User } from "@/shared/providers/auth";
 import { useBranding } from "@/shared/branding";
+import { useSeo } from "@/shared/seo";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { loginSchema, type LoginFormData } from "../validators";
 
@@ -36,6 +37,10 @@ const LoginForm = () => {
   const location = useLocation();
   const { isAuthenticated, login, user } = useAuth();
   const { app_name } = useBranding();
+  useSeo({
+    title: "Login",
+    description: `Sign in to your ${app_name || "Vendify"} account to buy airtime, data and pay bills.`,
+  });
   const from = (location.state as { from?: Location } | null)?.from?.pathname;
 
   useEffect(() => {

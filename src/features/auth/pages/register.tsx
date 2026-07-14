@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
 import { useAuth } from "@/shared/providers/auth";
+import { useBranding } from "@/shared/branding";
+import { useSeo } from "@/shared/seo";
 import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
 import { registerSchema, type RegisterFormData } from "../validators";
 
@@ -28,6 +30,11 @@ function extractErrorMessage(err: unknown): string {
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const { app_name } = useBranding();
+  useSeo({
+    title: "Create your account",
+    description: `Create a free ${app_name || "Vendify"} account to buy airtime and data at a discount, and pay electricity, cable TV and exam bills instantly.`,
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get("ref")?.trim().toUpperCase() || undefined;

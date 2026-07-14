@@ -1,0 +1,18 @@
+# Vendify — https://vendify.com.ng
+User-agent: *
+Allow: /$
+Allow: /download
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+
+# Authenticated / transactional areas — no SEO value, keep out of the index.
+Disallow: /admin
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /reset-password
+Disallow: /create-transaction-pin
+Disallow: /verify-email
+Disallow: /email-verified
+
+Sitemap: https://vendify.com.ng/sitemap.xml

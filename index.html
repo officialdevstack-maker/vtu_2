@@ -5,18 +5,83 @@
     <link href="/src/index.css" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=4" />
     <link rel="apple-touch-icon" sizes="512x512" href="/favicon.png?v=4" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vendify</title>
+
+    <title>Vendify — Buy Airtime, Data & Pay Bills Instantly in Nigeria</title>
+    <meta
+      name="description"
+      content="Vendify is the fast, secure way to buy airtime and data, pay electricity, cable TV and exam bills in Nigeria — with instant delivery, low prices and 24/7 support."
+    />
+    <meta
+      name="keywords"
+      content="Vendify, buy airtime, buy data, cheap data Nigeria, pay electricity bill, cable TV subscription, DSTV GOTV, WAEC pin, VTU, recharge, bill payment Nigeria"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Vendify" />
+    <meta name="theme-color" content="#208AEF" />
+    <link rel="canonical" href="https://vendify.com.ng/" />
+
+    <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Vendify" />
+    <meta property="og:title" content="Vendify — Buy Airtime, Data & Pay Bills Instantly in Nigeria" />
+    <meta
+      property="og:description"
+      content="Fast, secure airtime, data, electricity, cable TV and exam-pin payments with instant delivery and low prices."
+    />
+    <meta property="og:url" content="https://vendify.com.ng/" />
+    <meta property="og:image" content="https://vendify.com.ng/favicon.png" />
+    <meta property="og:locale" content="en_NG" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vendify — Buy Airtime, Data & Pay Bills Instantly" />
+    <meta
+      name="twitter:description"
+      content="Fast, secure airtime, data, electricity, cable TV and exam-pin payments with instant delivery and low prices."
+    />
+    <meta name="twitter:image" content="https://vendify.com.ng/favicon.png" />
+
+    <!-- iOS standalone / add-to-home-screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Vendify" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Search-engine structured data. The admin brand name overrides "Vendify"
+         at runtime (see src/shared/seo.tsx); this static block is what crawlers
+         that don't execute JS still read. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Vendify",
+        "url": "https://vendify.com.ng/",
+        "logo": "https://vendify.com.ng/favicon.png",
+        "description": "Buy airtime and data, and pay electricity, cable TV and exam bills instantly in Nigeria.",
+        "areaServed": "NG"
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Vendify",
+        "url": "https://vendify.com.ng/"
+      }
+    </script>
+
     <!--
-      Applies the last-known admin-configured brand title before React (or
-      even the JS bundle) loads, so a repeat visit never flashes this static
-      "Vendify" default. Reads the exact same localStorage key
-      src/shared/branding.ts writes to after each successful /branding
-      fetch — first-ever visit (nothing cached yet) still shows this
-      fallback until that fetch resolves, which is unavoidable without SSR.
+      Applies the last-known admin-configured brand title (and description)
+      before React (or even the JS bundle) loads, so a repeat visit never
+      flashes the static "Vendify" default. Reads the exact same localStorage
+      key src/shared/branding.ts writes to after each successful /branding
+      fetch — first-ever visit (nothing cached yet) still shows the static
+      fallbacks above until that fetch resolves, which is unavoidable without
+      SSR.
     -->
     <script>
       (function () {
@@ -24,8 +89,14 @@
           var raw = localStorage.getItem('vendify-branding-cache-v2');
           if (!raw) return;
           var cached = JSON.parse(raw);
-          if (cached && cached.data && cached.data.meta_title) {
-            document.title = cached.data.meta_title;
+          var d = cached && cached.data;
+          if (!d) return;
+          if (d.meta_title) {
+            document.title = d.meta_title;
+          }
+          if (d.meta_description) {
+            var m = document.querySelector('meta[name="description"]');
+            if (m) m.setAttribute('content', d.meta_description);
           }
         } catch (e) {}
       })();

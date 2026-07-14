@@ -5,7 +5,7 @@ import { useBranding } from "@/shared/branding";
 import { SectionHeading } from "./ui";
 import { Reveal } from "./motion";
 
-const buildFaqs = (appName: string) => [
+export const buildFaqs = (appName: string) => [
   {
     question: "How fast are payments delivered?",
     answer:
