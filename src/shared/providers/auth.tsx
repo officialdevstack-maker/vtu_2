@@ -114,7 +114,7 @@ interface AuthContextType {
   isInitializing: boolean;
   refreshUser: () => Promise<void>;
   login: (login: string, password: string) => Promise<User | null>;
-  register: (payload: RegisterPayload) => Promise<User | null>;
+  register: (payload: RegisterPayload) => Promise<RegistrationResult>;
   logout: () => Promise<void>;
   hasPermission: (slug: string) => boolean;
 }
@@ -130,6 +130,12 @@ type AuthPayload = {
   user?: User;
   token?: string;
   access_token?: string;
+  verification_email_sent?: boolean;
+};
+
+export type RegistrationResult = {
+  user: User | null;
+  verificationEmailSent: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -149,10 +155,14 @@ export const AUTH_QUERY_KEY = ["auth", "user"] as const;
 
 const postAuthMessage = (message: AuthChannelMessage) => {
   if (!canUseAuthChannel()) return;
-
-  const channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
-  channel.postMessage(message);
-  channel.close();
+  try {
+    const channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
+    channel.postMessage(message);
+    channel.close();
+  } catch {
+    // Some Safari/privacy contexts expose BroadcastChannel but reject its
+    // construction. Cross-tab sync is optional; authentication is not.
+  }
 };
 
 const fetchCurrentUser = async (): Promise<User | null> => {
@@ -192,7 +202,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
+    let channel: BroadcastChannel;
+    try {
+      channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
+    } catch {
+      setIsSyncingToken(false);
+      return;
+    }
     const fallbackTimer = window.setTimeout(() => {
       setIsSyncingToken(false);
     }, 700);
@@ -284,7 +300,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
-        return freshUser;
+        return {
+          user: freshUser,
+          verificationEmailSent: response.data.data?.verification_email_sent === true,
+        };
       } finally {
         setIsLoading(false);
       }

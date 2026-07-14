@@ -123,17 +123,23 @@ export default function CreateTransactionPinPage() {
       const response = await authService.resendVerificationEmail();
       setEmailNotice(response.message || "Verification email sent.");
       setResendCooldown(60);
-    } catch {
-      setEmailError("We could not send the email. Please try again.");
+    } catch (err) {
+      setEmailError(extractErrorMessage(err));
     } finally {
       setResendingEmail(false);
     }
   };
 
   useEffect(() => {
-    const notice = (location.state as { emailNotice?: string } | null)?.emailNotice;
+    const state = location.state as { emailNotice?: string; emailError?: string } | null;
+    const notice = state?.emailNotice;
+    const noticeError = state?.emailError;
     if (notice) setEmailNotice(notice);
-  }, [location.state]);
+    if (noticeError) setEmailError(noticeError);
+    if (notice || noticeError) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;

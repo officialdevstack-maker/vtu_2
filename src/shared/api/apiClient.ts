@@ -43,27 +43,35 @@ export const AUTH_TOKEN_KEY = 'kora-auth-token';
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
-
-  const token = window.sessionStorage.getItem(AUTH_TOKEN_KEY);
-
-  // Older builds stored bearer tokens in localStorage. Remove that persistent
-  // copy so browser/tab close really ends the remembered client session.
-  window.localStorage.removeItem(AUTH_TOKEN_KEY);
-
-  return token;
+  try {
+    const token = window.sessionStorage.getItem(AUTH_TOKEN_KEY);
+    // Older builds stored bearer tokens in localStorage. Remove that persistent
+    // copy so browser/tab close really ends the remembered client session.
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    return token;
+  } catch {
+    // Safari privacy modes and restricted embedded browsers may expose the
+    // Storage API while throwing on access. Treat that as no persisted token
+    // instead of crashing the entire route tree during app bootstrap.
+    return null;
+  }
 };
 
 export const setAuthToken = (token: string | null) => {
   if (typeof window === 'undefined') return;
 
-  if (token) {
-    window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
-    window.localStorage.removeItem(AUTH_TOKEN_KEY);
-    return;
-  }
+  try {
+    if (token) {
+      window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+      window.localStorage.removeItem(AUTH_TOKEN_KEY);
+      return;
+    }
 
-  window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
-  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch {
+    // Storage can be unavailable even when window.sessionStorage exists.
+  }
 };
 
 export const apiClient = axios.create({
