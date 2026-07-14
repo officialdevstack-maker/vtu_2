@@ -76,9 +76,7 @@ export function useBranding(): Branding & { isLoading: boolean } {
     // the localStorage cache surviving page reloads) could otherwise show a
     // days-stale brand name forever after just one admin edit.
     staleTime: 30 * 60 * 1000,
-    initialData: cached?.data
-      ? { ...cached.data, logo: PRIMARY_LOGO_URL }
-      : undefined,
+    initialData: cached?.data,
     initialDataUpdatedAt: cached?.updatedAt,
   });
 

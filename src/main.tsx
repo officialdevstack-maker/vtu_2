@@ -26,7 +26,7 @@ createRoot(document.getElementById("root")!).render(
     client={queryClient}
     persistOptions={{
       persister,
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 60 * 1000,
       // Bump to invalidate every persisted entry after a breaking change to
       // a catalog endpoint's response shape.
       buster: "v1",
