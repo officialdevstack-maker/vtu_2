@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftRight, ArrowUpCircle, Bell, LogOut, Menu, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../shared/providers/auth";
 import { useBranding } from "@/shared/branding";
 import GlobalSearch from "@/shared/components/global-search";
+import { notificationService } from "@/shared/notificationService";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -42,6 +44,13 @@ export default function Topbar({
   const { user, logout, hasPermission } = useAuth();
   const { app_name } = useBranding();
   const [menuOpen, setMenuOpen] = useState(false);
+  const unreadQuery = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: () => notificationService.getUnreadCount(),
+    enabled: Boolean(user),
+    refetchInterval: 60_000,
+  });
+  const hasUnreadNotifications = (unreadQuery.data ?? 0) > 0;
   const title = pageTitles[location.pathname] ?? app_name;
 
   const displayName = user?.username ?? "there";
@@ -82,7 +91,12 @@ export default function Topbar({
             className="relative rounded-md p-2 text-slate-500 transition-colors hover:bg-gray-100 hover:text-slate-700"
           >
             <Bell className="h-4.5 w-4.5" />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+            {hasUnreadNotifications && (
+              <span
+                className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500"
+                aria-hidden="true"
+              />
+            )}
           </button>
 
           <button
