@@ -57,9 +57,22 @@ export type AiAlert = {
   updated_at: string | null;
 };
 
+// Platform-wide daily AI usage against the configured cap (0/unlimited = no
+// cap). Drives the "N of M today" chip and the limit-reached message.
+export type AiUsage = {
+  used: number;
+  limit: number;
+  remaining: number;
+  unlimited: boolean;
+  resets_at: string;
+};
+
 const BASE = "/admin/ai";
 
 export const aiManagerService = {
+  getUsage: (): Promise<AiUsage> =>
+    apiClient.get<ApiEnvelope<AiUsage>>(`${BASE}/usage`).then((r) => r.data.data),
+
   listConversations: (): Promise<AiConversationSummary[]> =>
     apiClient
       .get<ApiEnvelope<AiConversationSummary[]>>(`${BASE}/conversations`)

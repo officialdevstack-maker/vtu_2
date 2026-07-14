@@ -4,6 +4,7 @@ import {
   Bot,
   Check,
   Clock3,
+  Gauge,
   Loader2,
   MessageSquarePlus,
   PanelLeft,
@@ -80,6 +81,14 @@ const AiManagerPage = () => {
     queryFn: () => aiManagerService.listConversations(),
   });
 
+  const usageQuery = useQuery({
+    queryKey: ["ai", "usage"],
+    queryFn: () => aiManagerService.getUsage(),
+    // Cheap to refetch; keeps the daily counter honest as messages are sent.
+    staleTime: 30_000,
+  });
+  const usage = usageQuery.data;
+
   const conversationQuery = useQuery({
     queryKey: ["ai", "conversation", activeId],
     queryFn: () => aiManagerService.getConversation(activeId as number),
@@ -103,6 +112,7 @@ const AiManagerPage = () => {
     onSuccess: (data) => {
       setActiveId(data.id);
       refreshConversation(data);
+      queryClient.invalidateQueries({ queryKey: ["ai", "usage"] });
     },
   });
 
@@ -163,9 +173,11 @@ const AiManagerPage = () => {
     [active?.proposals],
   );
 
+  const limitReached = Boolean(usage && !usage.unlimited && usage.remaining <= 0);
+
   const submit = (message: string) => {
     const text = message.trim();
-    if (!text || sendMutation.isPending) return;
+    if (!text || sendMutation.isPending || limitReached) return;
     setDraft("");
     sendMutation.mutate(text);
   };
@@ -251,6 +263,22 @@ const AiManagerPage = () => {
             </p>
           </div>
 
+          {usage && !usage.unlimited && (
+            <span
+              title={`Resets ${usage.resets_at}`}
+              className={`hidden shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium sm:inline-flex ${
+                usage.remaining <= 0
+                  ? "bg-red-50 text-red-600"
+                  : usage.remaining <= Math.max(1, usage.limit * 0.1)
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-slate-100 text-slate-500"
+              }`}
+            >
+              <Gauge className="h-3.5 w-3.5" />
+              {usage.used}/{usage.limit} today
+            </span>
+          )}
+
           <button
             type="button"
             onClick={startNewChat}
@@ -326,12 +354,17 @@ const AiManagerPage = () => {
                 }
               }}
               rows={1}
-              placeholder="Ask about transactions, users, vendors…"
-              className="max-h-40 min-h-[2.25rem] flex-1 resize-none bg-transparent px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+              disabled={limitReached}
+              placeholder={
+                limitReached
+                  ? "Daily AI limit reached — resets at midnight"
+                  : "Ask about transactions, users, vendors…"
+              }
+              className="max-h-40 min-h-[2.25rem] flex-1 resize-none bg-transparent px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed"
             />
             <button
               type="submit"
-              disabled={!draft.trim() || sendMutation.isPending}
+              disabled={!draft.trim() || sendMutation.isPending || limitReached}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#111827] text-white transition-all hover:bg-[#111827]/90 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="Send"
             >
