@@ -64,11 +64,9 @@ export function useBranding(): Branding & { isLoading: boolean } {
         writeCache(r.data.data);
         return r.data.data;
       }),
-    // Branding rarely changes — 30 minutes keeps repeat pings rare within a
-    // session without going all the way to Infinity, which (combined with
-    // the localStorage cache surviving page reloads) could otherwise show a
-    // days-stale brand name forever after just one admin edit.
-    staleTime: 30 * 60 * 1000,
+    // Branding rarely changes, but the UI should stay in sync within a minute
+    // so admin edits are reflected quickly after refresh or navigation.
+    staleTime: 60 * 1000,
     initialData: cached?.data,
     initialDataUpdatedAt: cached?.updatedAt,
   });

@@ -314,7 +314,7 @@ export type WalletWithdrawalPayload = {
 
 const catalogRequestCache = new Map<string, { expiresAt: number; promise: Promise<unknown> }>();
 
-const memoizedCatalogRequest = <T>(cacheKey: string, request: () => Promise<T>, ttlMs = 3 * 60_000): Promise<T> => {
+const memoizedCatalogRequest = <T>(cacheKey: string, request: () => Promise<T>, ttlMs = 60_000): Promise<T> => {
   const cachedEntry = catalogRequestCache.get(cacheKey);
   if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
     return cachedEntry.promise as Promise<T>;
