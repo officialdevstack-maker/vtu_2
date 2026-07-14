@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   NavLink,
   Outlet,
@@ -183,6 +183,44 @@ const Layout = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const mobileSidebarRef = useRef<HTMLElement>(null);
+  const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!mobileSidebarOpen) return;
+    const menuTrigger = mobileMenuTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const drawer = mobileSidebarRef.current;
+    const focusable = () =>
+      Array.from(
+        drawer?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
+    focusable()[0]?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileSidebarOpen(false);
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      menuTrigger?.focus();
+    };
+  }, [mobileSidebarOpen]);
 
   const unreadQuery = useQuery({
     queryKey: ["notifications", "unread-count"],
@@ -405,10 +443,10 @@ const Layout = () => {
   );
 
   return (
-    <div className="admin-theme h-screen overflow-hidden bg-app-bg text-slate-900">
+    <div className="admin-theme h-dvh min-h-0 max-w-full overflow-hidden bg-app-bg text-slate-900">
       <TopLoadingBar active={navigation.state === "loading"} />
       <div className="flex h-full min-h-0">
-        <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#111827] lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex">
+        <aside className="hidden h-dvh w-64 shrink-0 flex-col border-r border-white/10 bg-[#111827] lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex">
           {renderSidebarContent()}
         </aside>
 
@@ -416,6 +454,7 @@ const Layout = () => {
           <header className="sticky top-0 z-20 h-14 border-b border-slate-100 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
             <div className="flex h-full min-w-0 items-center gap-2 px-3 sm:px-4 lg:px-6">
               <button
+                ref={mobileMenuTriggerRef}
                 type="button"
                 onClick={() => setMobileSidebarOpen(true)}
                 className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 lg:hidden"
@@ -540,7 +579,7 @@ const Layout = () => {
             </div>
           </header>
 
-          <div className="min-w-0 p-4 sm:p-6">
+          <div className="admin-page-container">
             <Outlet />
           </div>
         </main>
@@ -550,12 +589,12 @@ const Layout = () => {
       <AiAlertsWidget />
 
       {mobileSidebarOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 overflow-hidden lg:hidden">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <aside className="relative flex h-full w-[min(20rem,86vw)] flex-col border-r border-white/10 bg-[#111827] shadow-xl">
+          <aside ref={mobileSidebarRef} role="dialog" aria-modal="true" aria-label="Admin navigation" className="admin-mobile-sidebar relative flex h-dvh max-w-full flex-col border-r border-white/10 bg-[#111827] shadow-xl">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(false)}
