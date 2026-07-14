@@ -1,11 +1,24 @@
 import { useMemo, useState } from "react";
 import { Eye, EyeOff, Landmark, ArrowDownLeft, Building2 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import { PageHeader, Card, Button, CopyButton, StatusBadge, EmptyState } from "../components/shared-ui";
+import {
+  PageHeader,
+  Card,
+  Button,
+  CopyButton,
+  StatusBadge,
+  EmptyState,
+} from "../components/shared-ui";
 import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
 import { walletService } from "../services/walletService";
 import { fmt } from "../data/mock";
-import { transactionTypeMeta, isCredit, toNumber, badgeStatus, dateLabel } from "../utils/transactionDisplay";
+import {
+  transactionTypeMeta,
+  isCredit,
+  toNumber,
+  badgeStatus,
+  dateLabel,
+} from "../utils/transactionDisplay";
 import WalletTransferPage from "./wallet-transfer";
 import WalletWithdrawalPage from "./wallet-withdrawal";
 
@@ -28,8 +41,15 @@ function FundTab() {
   const recentFundings = useMemo<UserTransaction[]>(
     () =>
       [...(user?.transactions ?? [])]
-        .filter((tx) => tx.transaction_type === "wallet_funding" || tx.transaction_type === "manual_funding")
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .filter(
+          (tx) =>
+            tx.transaction_type === "wallet_funding" ||
+            tx.transaction_type === "manual_funding",
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )
         .slice(0, 8),
     [user?.transactions],
   );
@@ -40,8 +60,11 @@ function FundTab() {
     try {
       await walletService.generateVirtualAccounts();
       await refreshUser();
+      await new Promise((resolve) => window.setTimeout(resolve, 200));
     } catch {
-      setGenerateError("Could not set up your account right now. Please try again shortly.");
+      setGenerateError(
+        "Could not set up your account right now. Please try again shortly.",
+      );
     } finally {
       setGenerating(false);
     }
@@ -56,15 +79,24 @@ function FundTab() {
           <span className="min-w-0 break-words text-xl font-semibold text-white tabular-nums sm:text-2xl">
             {balanceVisible ? fmt(toNumber(user?.wallet_balance)) : "₦ ••••••"}
           </span>
-          <button onClick={() => setBalanceVisible((v) => !v)} className="text-slate-400 hover:text-white transition-colors">
-            {balanceVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          <button
+            onClick={() => setBalanceVisible((v) => !v)}
+            className="text-slate-400 hover:text-white transition-colors"
+          >
+            {balanceVisible ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
           </button>
         </div>
       </Card>
 
       {/* Virtual account details */}
       <Card className="p-5">
-        <h3 className="text-slate-900 font-semibold text-sm mb-3">Fund your wallet</h3>
+        <h3 className="text-slate-900 font-semibold text-sm mb-3">
+          Fund your wallet
+        </h3>
 
         {banks.length === 0 ? (
           <>
@@ -78,7 +110,12 @@ function FundTab() {
               title="No account set up yet"
               description="Set up your dedicated account number to start funding your wallet by bank transfer."
               action={
-                <Button size="sm" onClick={() => void handleGenerateAccount()} loading={generating} disabled={generating}>
+                <Button
+                  size="sm"
+                  onClick={() => void handleGenerateAccount()}
+                  loading={generating}
+                  disabled={generating}
+                >
                   {generating ? "Setting up…" : "Set up my account"}
                 </Button>
               }
@@ -87,13 +124,18 @@ function FundTab() {
         ) : (
           <div className="space-y-3">
             {banks.map((bank) => (
-              <div key={bank.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+              <div
+                key={bank.id}
+                className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center shrink-0">
                       <Landmark className="w-4 h-4" />
                     </div>
-                    <span className="text-slate-900 text-sm font-medium">{bank.bank_name}</span>
+                    <span className="text-slate-900 text-sm font-medium">
+                      {bank.bank_name}
+                    </span>
                   </div>
                   <StatusBadge status={bank.status} />
                 </div>
@@ -101,22 +143,30 @@ function FundTab() {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 text-sm">Account number</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-900 text-sm font-medium font-mono">{bank.bank_account}</span>
-                    <CopyButton value={bank.bank_account} label="account number" />
+                    <span className="text-slate-900 text-sm font-medium font-mono">
+                      {bank.bank_account}
+                    </span>
+                    <CopyButton
+                      value={bank.bank_account}
+                      label="account number"
+                    />
                   </div>
                 </div>
 
                 {bank.account_name && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 text-sm">Account name</span>
-                    <span className="text-slate-900 text-sm font-medium">{bank.account_name}</span>
+                    <span className="text-slate-900 text-sm font-medium">
+                      {bank.account_name}
+                    </span>
                   </div>
                 )}
               </div>
             ))}
 
             <p className="text-slate-400 text-xs">
-              Transfer any amount from any bank to the account above — your wallet is credited automatically, usually within minutes.
+              Transfer any amount from any bank to the account above — your
+              wallet is credited automatically, usually within minutes.
             </p>
           </div>
         )}
@@ -125,26 +175,41 @@ function FundTab() {
       {/* Recent fundings */}
       {recentFundings.length > 0 && (
         <Card className="p-5">
-          <h3 className="text-slate-900 font-semibold text-sm mb-3">Recent fundings</h3>
+          <h3 className="text-slate-900 font-semibold text-sm mb-3">
+            Recent fundings
+          </h3>
           <div className="divide-y divide-gray-100">
             {recentFundings.map((tx) => {
-              const meta = transactionTypeMeta[tx.transaction_type] ?? { label: tx.transaction_type, icon: ArrowDownLeft };
+              const meta = transactionTypeMeta[tx.transaction_type] ?? {
+                label: tx.transaction_type,
+                icon: ArrowDownLeft,
+              };
               const Icon = meta.icon;
               const credit = isCredit(tx);
               return (
-                <div key={tx.id} className="flex items-center justify-between py-2.5">
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between py-2.5"
+                >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm text-slate-900 font-medium truncate">{meta.label}</p>
-                      <p className="text-xs text-slate-400">{dateLabel(tx.created_at)}</p>
+                      <p className="text-sm text-slate-900 font-medium truncate">
+                        {meta.label}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {dateLabel(tx.created_at)}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={`text-sm font-medium tabular-nums ${credit ? "text-emerald-600" : "text-slate-900"}`}>
-                      {credit ? "+" : ""}{fmt(toNumber(tx.amount))}
+                    <p
+                      className={`text-sm font-medium tabular-nums ${credit ? "text-emerald-600" : "text-slate-900"}`}
+                    >
+                      {credit ? "+" : ""}
+                      {fmt(toNumber(tx.amount))}
                     </p>
                     <StatusBadge status={badgeStatus(tx.status)} />
                   </div>
@@ -161,11 +226,15 @@ function FundTab() {
 export default function WalletPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab | null) ?? "fund";
-  const setActiveTab = (tab: Tab) => setSearchParams({ tab }, { replace: true });
+  const setActiveTab = (tab: Tab) =>
+    setSearchParams({ tab }, { replace: true });
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-5">
-      <PageHeader title="Wallet" description="Fund, send, and withdraw your wallet balance" />
+      <PageHeader
+        title="Wallet"
+        description="Fund, send, and withdraw your wallet balance"
+      />
 
       <div className="grid w-full grid-cols-1 gap-1.5 rounded-lg bg-gray-100 p-1 min-[340px]:grid-cols-3 sm:w-fit">
         {tabs.map((t) => (
