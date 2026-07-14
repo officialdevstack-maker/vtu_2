@@ -44,7 +44,7 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const registration = await registerAccount({
+      await registerAccount({
         fullname: data.fullname,
         username: data.username,
         email: data.email,
@@ -53,12 +53,7 @@ export default function RegisterPage() {
         password_confirmation: data.confirmPassword,
         referral_code: referralCode,
       });
-      navigate("/create-transaction-pin", {
-        replace: true,
-        state: registration.verificationEmailSent
-          ? { emailNotice: "Verification email sent. Check your inbox to confirm your account." }
-          : null,
-      });
+      navigate("/create-transaction-pin", { replace: true });
     } catch (err) {
       setError("root", { message: extractErrorMessage(err) });
     }
