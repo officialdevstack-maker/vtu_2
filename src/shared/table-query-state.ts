@@ -85,7 +85,17 @@ export function useTableQueryState<T extends Record<string, Primitive>>(
       setSearchParams(
         (current) => {
           const next = new URLSearchParams(current);
-          const merged = { ...state, ...patch } as T;
+
+          // Merge against the params as they are *right now* rather than the
+          // `state` captured at render, so two set() calls in one tick don't
+          // clobber each other. It also keeps this callback referentially
+          // stable, which matters when it's passed to usePagination.
+          const live = {} as T;
+          for (const key of Object.keys(defaults) as Array<keyof T>) {
+            const raw = current.get(paramName(key));
+            live[key] = raw === null ? defaults[key] : decode(raw, defaults[key]);
+          }
+          const merged = { ...live, ...patch } as T;
 
           // Any change other than paging means the current page number is
           // meaningless against the new result set — go back to page one.
@@ -109,7 +119,7 @@ export function useTableQueryState<T extends Record<string, Primitive>>(
         { replace: true },
       );
     },
-    [setSearchParams, state, defaults, paramName, pageKey],
+    [setSearchParams, defaults, paramName, pageKey],
   );
 
   /** Clear only this table's params, leaving anything else in the URL alone. */

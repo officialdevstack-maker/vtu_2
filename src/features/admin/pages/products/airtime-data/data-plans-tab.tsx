@@ -11,6 +11,7 @@ import {
   ArrowDown,
   ArrowUpDown,
   CheckCircle2,
+  X,
   XCircle,
 } from "lucide-react";
 import {
@@ -343,6 +344,16 @@ export function DataPlansTab() {
           value={statusFilter}
           onChange={setStatusFilter}
         />
+        {isDirty && (
+          <button
+            type="button"
+            onClick={reset}
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear filters
+          </button>
+        )}
         <div className="flex-1" />
         <Button
           size="sm"
