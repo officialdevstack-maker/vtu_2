@@ -21,6 +21,7 @@ import {
 import { providerService, type Provider } from "../../apis/providerService";
 
 const BACK = "/admin/products/airtime-data?tab=airtime";
+const NEW = "/admin/products/airtime-data/airtime-plan/new";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -329,6 +330,8 @@ export default function AirtimePlanFormPage() {
   const [types, setTypes] = useState<{ name: string; active: boolean }[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [saving, setSaving] = useState(false);
+  const [saveMode, setSaveMode] = useState<"return" | "new">("return");
+  const [justSaved, setJustSaved] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -376,12 +379,13 @@ export default function AirtimePlanFormPage() {
 
   const valid = String(form.name).trim().length > 0;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (after: "return" | "new" = "return") => {
     const formErrors = validateForm(form);
     setErrors(formErrors);
     setSubmitError(null);
     if (Object.keys(formErrors).length > 0) return;
 
+    setSaveMode(after);
     setSaving(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -391,7 +395,21 @@ export default function AirtimePlanFormPage() {
       } else {
         await airtimePlanService.create(payload);
       }
-      navigate(BACK);
+
+      if (after === "return") {
+        navigate(BACK);
+        return;
+      }
+      // Save & create another (see data-plan-form for the rationale).
+      if (initial) {
+        navigate(NEW);
+      } else {
+        setForm(blankForm());
+        setErrors({});
+        setSubmitError(null);
+        setJustSaved(true);
+        window.setTimeout(() => setJustSaved(false), 2500);
+      }
     } catch (err) {
       setSubmitError(extractErrorMessage(err));
     } finally {
@@ -451,12 +469,21 @@ export default function AirtimePlanFormPage() {
               Cancel
             </Button>
             <Button
+              variant="secondary"
               size="sm"
               disabled={!valid || saving}
-              loading={saving}
-              onClick={handleSubmit}
+              loading={saving && saveMode === "new"}
+              onClick={() => handleSubmit("new")}
             >
-              {initial ? "Save changes" : "Create airtime plan"}
+              {justSaved ? "Saved ✓" : "Save & new"}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving && saveMode === "return"}
+              onClick={() => handleSubmit("return")}
+            >
+              {initial ? "Save & return" : "Create & return"}
             </Button>
           </>
         }

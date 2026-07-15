@@ -21,6 +21,7 @@ import {
 } from "./bill-service";
 
 const BACK = "/admin/products/bill";
+const NEW = "/admin/products/bill/new";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -298,6 +299,8 @@ export default function BillPlanFormPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [fee, setFee] = useState<Record<string, RoleFee>>({});
   const [saving, setSaving] = useState(false);
+  const [saveMode, setSaveMode] = useState<"return" | "new">("return");
+  const [justSaved, setJustSaved] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -350,12 +353,13 @@ export default function BillPlanFormPage() {
 
   const valid = form.disco.trim().length > 0;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (after: "return" | "new" = "return") => {
     const formErrors = validateForm(form);
     setErrors(formErrors);
     setSubmitError(hasFeeErrors ? "Fix the invalid per-role service fees before saving." : null);
     if (Object.keys(formErrors).length > 0 || hasFeeErrors) return;
 
+    setSaveMode(after);
     setSaving(true);
     try {
       const payload = toPayload(form, fee) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -364,7 +368,22 @@ export default function BillPlanFormPage() {
       } else {
         await billPlanService.create(payload);
       }
-      navigate(BACK);
+
+      if (after === "return") {
+        navigate(BACK);
+        return;
+      }
+      // Save & create another (see data-plan-form for the rationale).
+      if (initial) {
+        navigate(NEW);
+      } else {
+        setForm(blankForm());
+        setFee({});
+        setErrors({});
+        setSubmitError(null);
+        setJustSaved(true);
+        window.setTimeout(() => setJustSaved(false), 2500);
+      }
     } catch (err) {
       setSubmitError(extractErrorMessage(err));
     } finally {

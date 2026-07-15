@@ -572,12 +572,21 @@ export default function DataPlanFormPage() {
               Cancel
             </Button>
             <Button
+              variant="secondary"
               size="sm"
               disabled={!valid || saving}
-              loading={saving}
-              onClick={handleSubmit}
+              loading={saving && saveMode === "new"}
+              onClick={() => handleSubmit("new")}
             >
-              {initial ? "Save changes" : "Create plan"}
+              {justSaved ? "Saved ✓" : "Save & new"}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving && saveMode === "return"}
+              onClick={() => handleSubmit("return")}
+            >
+              {initial ? "Save & return" : "Create & return"}
             </Button>
           </>
         }

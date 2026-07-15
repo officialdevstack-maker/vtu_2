@@ -22,6 +22,7 @@ import {
 } from "./service";
 
 const BACK = "/admin/products/cable?tab=plans";
+const NEW = "/admin/products/cable/new";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -340,6 +341,8 @@ export default function CablePlanFormPage() {
   const [rolesLoading, setRolesLoading] = useState(true);
   const [fee, setFee] = useState<Record<string, RoleFee>>({});
   const [saving, setSaving] = useState(false);
+  const [saveMode, setSaveMode] = useState<"return" | "new">("return");
+  const [justSaved, setJustSaved] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -396,12 +399,13 @@ export default function CablePlanFormPage() {
 
   const valid = form.cable_network.trim().length > 0 && form.plan_name.trim().length > 0;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (after: "return" | "new" = "return") => {
     const formErrors = validateForm(form);
     setErrors(formErrors);
     setSubmitError(hasFeeErrors ? "Fix the invalid per-role fees before saving." : null);
     if (Object.keys(formErrors).length > 0 || hasFeeErrors) return;
 
+    setSaveMode(after);
     setSaving(true);
     try {
       const payload = toPayload(form, fee) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -410,7 +414,22 @@ export default function CablePlanFormPage() {
       } else {
         await cablePlanService.create(payload);
       }
-      navigate(BACK);
+
+      if (after === "return") {
+        navigate(BACK);
+        return;
+      }
+      // Save & create another (see data-plan-form for the rationale).
+      if (initial) {
+        navigate(NEW);
+      } else {
+        setForm(blankForm());
+        setFee({});
+        setErrors({});
+        setSubmitError(null);
+        setJustSaved(true);
+        window.setTimeout(() => setJustSaved(false), 2500);
+      }
     } catch (err) {
       setSubmitError(extractErrorMessage(err));
     } finally {
@@ -462,8 +481,22 @@ export default function CablePlanFormPage() {
             <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
               Cancel
             </Button>
-            <Button size="sm" disabled={!valid || saving} loading={saving} onClick={handleSubmit}>
-              {initial ? "Save changes" : "Create cable plan"}
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving && saveMode === "new"}
+              onClick={() => handleSubmit("new")}
+            >
+              {justSaved ? "Saved ✓" : "Save & new"}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving && saveMode === "return"}
+              onClick={() => handleSubmit("return")}
+            >
+              {initial ? "Save & return" : "Create & return"}
             </Button>
           </>
         }
