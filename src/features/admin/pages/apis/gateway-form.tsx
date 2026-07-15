@@ -145,6 +145,43 @@ function SecretInput({
   );
 }
 
+// Mirrors RolePriceInput on the data-plan form: the amount and its unit read
+// as one control, with ₦/% appended inside the field instead of a separate
+// wide dropdown, so the fee inputs match the role-pricing look site-wide.
+function FeeInput({
+  value,
+  type,
+  onValueChange,
+  onTypeChange,
+}: {
+  value: string;
+  type: FeeType;
+  onValueChange: (v: string) => void;
+  onTypeChange: (t: FeeType) => void;
+}) {
+  return (
+    <div className="relative">
+      <input
+        type="number"
+        min={0}
+        step="0.01"
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        placeholder="0"
+        className={`${inputCls} pr-12`}
+      />
+      <select
+        value={type}
+        onChange={(e) => onTypeChange(e.target.value as FeeType)}
+        className="absolute right-1.5 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent text-xs text-slate-500 outline-none"
+      >
+        <option value="fiat">₦</option>
+        <option value="percent">%</option>
+      </select>
+    </div>
+  );
+}
+
 export default function GatewayFormPage() {
   const { id } = useParams<{ id?: string }>();
   const location = useLocation();
@@ -406,63 +443,38 @@ export default function GatewayFormPage() {
             </p>
             <div className="space-y-4">
               <Field label="Deposit fee">
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={form.charge_fee}
-                    onChange={(e) => set("charge_fee", e.target.value)}
-                    placeholder="0"
-                    className={`${inputCls} flex-1`}
-                  />
-                  <select
-                    value={form.charge_type}
-                    onChange={(e) =>
-                      set("charge_type", e.target.value as FeeType)
-                    }
-                    className={`${selectCls} w-32`}
-                  >
-                    <option value="fiat">Fixed (₦)</option>
-                    <option value="percent">Percent (%)</option>
-                  </select>
-                </div>
-              </Field>
-
-              <Field label="Fee cap (optional)">
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={form.charge_fee_cap}
-                  onChange={(e) => set("charge_fee_cap", e.target.value)}
-                  placeholder="Leave blank for no cap"
-                  className={`${inputCls}`}
+                <FeeInput
+                  value={form.charge_fee}
+                  type={form.charge_type}
+                  onValueChange={(v) => set("charge_fee", v)}
+                  onTypeChange={(t) => set("charge_type", t)}
                 />
               </Field>
 
-              <Field label="Withdrawal fee">
-                <div className="flex gap-2">
+              {/* A cap only bounds a percentage fee — a flat fee is already a
+                  fixed amount, and PaymentBase::creditedAmount would otherwise
+                  silently min() it down. So only offer it for percent. */}
+              {form.charge_type === "percent" && (
+                <Field label="Max deposit fee (₦, optional)">
                   <input
                     type="number"
                     min={0}
                     step="0.01"
-                    value={form.withdrawal_fee}
-                    onChange={(e) => set("withdrawal_fee", e.target.value)}
-                    placeholder="0"
-                    className={`${inputCls} flex-1`}
+                    value={form.charge_fee_cap}
+                    onChange={(e) => set("charge_fee_cap", e.target.value)}
+                    placeholder="Leave blank for no cap"
+                    className={`${inputCls}`}
                   />
-                  <select
-                    value={form.withdrawal_fee_type}
-                    onChange={(e) =>
-                      set("withdrawal_fee_type", e.target.value as FeeType)
-                    }
-                    className={`${selectCls} w-32`}
-                  >
-                    <option value="fiat">Fixed (₦)</option>
-                    <option value="percent">Percent (%)</option>
-                  </select>
-                </div>
+                </Field>
+              )}
+
+              <Field label="Withdrawal fee">
+                <FeeInput
+                  value={form.withdrawal_fee}
+                  type={form.withdrawal_fee_type}
+                  onValueChange={(v) => set("withdrawal_fee", v)}
+                  onTypeChange={(t) => set("withdrawal_fee_type", t)}
+                />
               </Field>
             </div>
           </Card>

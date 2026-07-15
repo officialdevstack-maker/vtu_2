@@ -34,6 +34,8 @@ type FormState = {
   useCustomProvider: boolean;
   provider_id: string;
   fallback_provider_id: string;
+  provider_discount: string;
+  fallback_provider_discount: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -104,6 +106,18 @@ function extractErrorMessage(err: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+// Spells the percentage out in naira — "3.5%" alone doesn't make it obvious
+// which way the money flows, and getting it backwards corrupts every airtime
+// profit figure.
+function discountPreview(value: string): string {
+  const pct = Number(value);
+  if (value === "" || Number.isNaN(pct) || pct <= 0) {
+    return "No discount set — airtime profit won't be tracked for this plan.";
+  }
+  const cost = (1000 * (1 - pct / 100)).toFixed(2);
+  return `You're billed ₦${cost} for ₦1,000 of airtime (₦${(1000 - Number(cost)).toFixed(2)} profit).`;
+}
+
 function NumberInput({
   value,
   onChange,
@@ -150,6 +164,8 @@ const blankForm = (): FormState => ({
   useCustomProvider: false,
   provider_id: "",
   fallback_provider_id: "",
+  provider_discount: "",
+  fallback_provider_discount: "",
 });
 
 const toForm = (d: AirtimePlan): FormState => ({
@@ -170,6 +186,12 @@ const toForm = (d: AirtimePlan): FormState => ({
         : "",
   fallback_provider_id:
     d.fallback_provider_id != null ? String(d.fallback_provider_id) : "",
+  provider_discount:
+    d.provider_discount != null ? String(d.provider_discount) : "",
+  fallback_provider_discount:
+    d.fallback_provider_discount != null
+      ? String(d.fallback_provider_discount)
+      : "",
 });
 
 const toPayload = (form: FormState): Record<string, unknown> => {
@@ -183,15 +205,40 @@ const toPayload = (form: FormState): Record<string, unknown> => {
     use_provider_as_providerable: form.useCustomProvider,
   };
 
-  if (form.useCustomProvider || form.fallback_provider_id) {
+  // The discount lives on the same providerable pivot, so it must be sent even
+  // when the plan uses the network's default provider (no custom provider).
+  if (
+    form.useCustomProvider ||
+    form.fallback_provider_id ||
+    form.provider_discount !== "" ||
+    form.fallback_provider_discount !== ""
+  ) {
     payload.providerable = {
       provider_id: form.useCustomProvider ? form.provider_id || null : null,
       fallback_provider_id: form.fallback_provider_id || null,
+      // Null, not 0 — blank means "no discount known", which keeps airtime out
+      // of the profit figure rather than booking the whole sale as profit.
+      provider_discount:
+        form.provider_discount !== "" ? Number(form.provider_discount) : null,
+      fallback_provider_discount:
+        form.fallback_provider_discount !== ""
+          ? Number(form.fallback_provider_discount)
+          : null,
     };
   }
 
   return payload;
 };
+
+// A discount is a percentage off face value — 0-100, blank allowed.
+const percentAmount = z
+  .string()
+  .refine(
+    (v) =>
+      v === "" ||
+      (!Number.isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 100),
+    { message: "Enter a discount between 0 and 100." },
+  );
 
 const amountSchema = z
   .string()
@@ -210,6 +257,8 @@ const planFormSchema = z
     useCustomProvider: z.boolean(),
     provider_id: z.string(),
     fallback_provider_id: z.string(),
+    provider_discount: percentAmount,
+    fallback_provider_discount: percentAmount,
   })
   .refine(
     (data) =>
@@ -236,7 +285,16 @@ const planFormSchema = z
   );
 
 type FormErrors = Partial<
-  Record<"name" | "min" | "max" | "provider_id" | "fallback_provider_id", string>
+  Record<
+    | "name"
+    | "min"
+    | "max"
+    | "provider_id"
+    | "fallback_provider_id"
+    | "provider_discount"
+    | "fallback_provider_discount",
+    string
+  >
 >;
 
 function validateForm(form: FormState): FormErrors {
@@ -528,6 +586,25 @@ export default function AirtimePlanFormPage() {
                 </>
               )}
 
+              {/* Airtime sells at face value, so the provider's commission is
+                  the only cost basis there is — without it a sale looks like
+                  100% profit. */}
+              <Field
+                label="Provider discount"
+                hint="what the provider takes off face value"
+                error={errors.provider_discount}
+              >
+                <NumberInput
+                  value={form.provider_discount}
+                  onChange={(v) => set("provider_discount", v)}
+                  placeholder="0"
+                  suffix="%"
+                />
+                <p className="mt-1 text-[11px] leading-4 text-slate-400">
+                  {discountPreview(form.provider_discount)}
+                </p>
+              </Field>
+
               <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5">
                 <p className="text-xs font-semibold text-slate-700">
                   Automatic fallback
@@ -557,6 +634,26 @@ export default function AirtimePlanFormPage() {
                         ))}
                     </select>
                   </Field>
+
+                  {form.fallback_provider_id && (
+                    <div className="mt-3">
+                      <Field
+                        label="Fallback provider discount"
+                        hint="this provider's own rate"
+                        error={errors.fallback_provider_discount}
+                      >
+                        <NumberInput
+                          value={form.fallback_provider_discount}
+                          onChange={(v) => set("fallback_provider_discount", v)}
+                          placeholder="0"
+                          suffix="%"
+                        />
+                        <p className="mt-1 text-[11px] leading-4 text-slate-400">
+                          {discountPreview(form.fallback_provider_discount)}
+                        </p>
+                      </Field>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

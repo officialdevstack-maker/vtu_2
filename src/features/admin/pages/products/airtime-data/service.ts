@@ -175,6 +175,8 @@ export type AirtimePlan = {
   cost_price?: string | number | null;
   provider?: DataPlanProvider;
   fallback_provider_id?: string | number | null;
+  provider_discount?: string | number | null;
+  fallback_provider_discount?: string | number | null;
   fallback_server_id?: string | number | null;
   fallback_cost_price?: string | number | null;
   fallback_provider?: DataPlanProvider;
@@ -194,6 +196,8 @@ export type AirtimePlanPayload = {
     cost_price?: number;
     server_id?: string | number | null;
     fallback_provider_id?: string | number | null;
+    provider_discount?: string | number | null;
+    fallback_provider_discount?: string | number | null;
     fallback_server_id?: string | number | null;
     fallback_cost_price?: string | number | null;
   };
@@ -297,6 +301,8 @@ export type DataPlan = {
   server_id?: string | number | null;
   provider_id?: string | number | null;
   fallback_provider_id?: string | number | null;
+  provider_discount?: string | number | null;
+  fallback_provider_discount?: string | number | null;
   fallback_server_id?: string | number | null;
   fallback_cost_price?: string | number | null;
   fallback_provider?: DataPlanProvider;
@@ -320,6 +326,8 @@ export type DataPlanPayload = {
     cost_price?: number;
     server_id?: string | number | null;
     fallback_provider_id?: string | number | null;
+    provider_discount?: string | number | null;
+    fallback_provider_discount?: string | number | null;
     fallback_server_id?: string | number | null;
     fallback_cost_price?: string | number | null;
   };
