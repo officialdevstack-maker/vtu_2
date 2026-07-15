@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient, getAuthToken, setAuthToken } from "../api/apiClient";
+import { clearCatalogRequestCache } from "../api/catalogCache";
 import { clearImpersonation } from "../impersonation";
 import { config } from "../config";
 import type { RegisterPayload } from "@/features/auth/authService";
@@ -236,6 +237,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (message.type === "logout") {
         queryClient.clear();
+        clearCatalogRequestCache();
         setAuthToken(null);
         setHasToken(false);
         setIsSyncingToken(false);
@@ -260,6 +262,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       try {
         setAuthToken(null);
+        // Also guards the path where a session ends without logout() running
+        // (an expired token, or navigating straight to /login client-side).
+        clearCatalogRequestCache();
         await apiClient.get("/sanctum/csrf-cookie");
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", { login: loginValue, password });
         persistAuthToken(response.data.data);
@@ -322,6 +327,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // dashboard/transactions data must not leak into the next session on
       // this device (e.g. a shared computer, or switching accounts).
       queryClient.clear();
+      clearCatalogRequestCache();
       setAuthToken(null);
       setHasToken(false);
       postAuthMessage({ type: "logout" });

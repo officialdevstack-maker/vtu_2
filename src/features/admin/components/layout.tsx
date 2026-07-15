@@ -63,6 +63,13 @@ type NavItem = {
   path: string;
   icon: typeof LayoutGrid;
   children?: NavChild[];
+  /**
+   * Permission slug required to see this item. Omit to show it to every admin
+   * (the default — most items have always been visible to anyone who can reach
+   * the panel). Set it where the backend route is permission-gated, so staff
+   * roles aren't shown a link that would 403.
+   */
+  permission?: string;
 };
 
 const navGroups: Array<{ title: string; items: NavItem[] }> = [
@@ -166,6 +173,12 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         ],
       },
       { label: "Mobile App", path: "/admin/mobile-app", icon: Smartphone },
+      {
+        label: "Audit Log",
+        path: "/admin/audit-logs",
+        icon: History,
+        permission: "audit_logs",
+      },
       { label: "Settings", path: "/admin/settings", icon: Settings },
     ],
   },

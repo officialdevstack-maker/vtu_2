@@ -1,4 +1,5 @@
 import { apiClient } from "@shared/api/apiClient";
+import { memoizedCatalogRequest } from "@shared/api/catalogCache";
 
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
@@ -310,35 +311,6 @@ export type WalletWithdrawalPayload = {
   account_number: string;
   account_name: string;
   pin: string;
-};
-
-const catalogRequestCache = new Map<string, { expiresAt: number; promise: Promise<unknown> }>();
-
-const memoizedCatalogRequest = <T>(cacheKey: string, request: () => Promise<T>, ttlMs = 60_000): Promise<T> => {
-  const cachedEntry = catalogRequestCache.get(cacheKey);
-  if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
-    return cachedEntry.promise as Promise<T>;
-  }
-
-  const promise = request()
-    .then((data) => {
-      catalogRequestCache.set(cacheKey, {
-        expiresAt: Date.now() + ttlMs,
-        promise: Promise.resolve(data),
-      });
-      return data;
-    })
-    .catch((error) => {
-      catalogRequestCache.delete(cacheKey);
-      throw error;
-    });
-
-  catalogRequestCache.set(cacheKey, {
-    expiresAt: Date.now() + ttlMs,
-    promise,
-  });
-
-  return promise;
 };
 
 export const customerService = {

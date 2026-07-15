@@ -531,6 +531,14 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "audit-logs",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/audit-logs/index");
+          return { Component };
+        },
+      },
+      {
         path: "settings",
         lazy: async () => {
           const { default: Component } = await import("./pages/settings/index");
