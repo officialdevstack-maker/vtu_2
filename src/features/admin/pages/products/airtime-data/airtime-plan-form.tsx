@@ -33,6 +33,7 @@ type FormState = {
   active: boolean;
   useCustomProvider: boolean;
   provider_id: string;
+  fallback_provider_id: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -148,6 +149,7 @@ const blankForm = (): FormState => ({
   active: true,
   useCustomProvider: false,
   provider_id: "",
+  fallback_provider_id: "",
 });
 
 const toForm = (d: AirtimePlan): FormState => ({
@@ -166,6 +168,8 @@ const toForm = (d: AirtimePlan): FormState => ({
       : d.provider_id != null
         ? String(d.provider_id)
         : "",
+  fallback_provider_id:
+    d.fallback_provider_id != null ? String(d.fallback_provider_id) : "",
 });
 
 const toPayload = (form: FormState): Record<string, unknown> => {
@@ -179,9 +183,10 @@ const toPayload = (form: FormState): Record<string, unknown> => {
     use_provider_as_providerable: form.useCustomProvider,
   };
 
-  if (form.useCustomProvider) {
+  if (form.useCustomProvider || form.fallback_provider_id) {
     payload.providerable = {
-      provider_id: form.provider_id || null,
+      provider_id: form.useCustomProvider ? form.provider_id || null : null,
+      fallback_provider_id: form.fallback_provider_id || null,
     };
   }
 
@@ -204,6 +209,7 @@ const planFormSchema = z
     active: z.boolean(),
     useCustomProvider: z.boolean(),
     provider_id: z.string(),
+    fallback_provider_id: z.string(),
   })
   .refine(
     (data) =>
@@ -218,10 +224,19 @@ const planFormSchema = z
   .refine((data) => !data.useCustomProvider || data.provider_id !== "", {
     message: "Select a provider.",
     path: ["provider_id"],
-  });
+  })
+  .refine(
+    (data) =>
+      data.fallback_provider_id === "" ||
+      data.fallback_provider_id !== data.provider_id,
+    {
+      message: "Choose a different fallback provider.",
+      path: ["fallback_provider_id"],
+    },
+  );
 
 type FormErrors = Partial<
-  Record<"name" | "min" | "max" | "provider_id", string>
+  Record<"name" | "min" | "max" | "provider_id" | "fallback_provider_id", string>
 >;
 
 function validateForm(form: FormState): FormErrors {
@@ -496,7 +511,7 @@ export default function AirtimePlanFormPage() {
 
               {form.useCustomProvider && (
                 <>
-                  <Field label="Provider" error={errors.provider_id}>
+                  <Field label="Primary provider" error={errors.provider_id}>
                     <select
                       value={form.provider_id}
                       onChange={(e) => set("provider_id", e.target.value)}
@@ -512,6 +527,38 @@ export default function AirtimePlanFormPage() {
                   </Field>
                 </>
               )}
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5">
+                <p className="text-xs font-semibold text-slate-700">
+                  Automatic fallback
+                </p>
+                <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                  Retry once through this provider only when the primary
+                  provider confirms the airtime purchase failed.
+                </p>
+                <div className="mt-3">
+                  <Field
+                    label="Fallback provider"
+                    hint="optional"
+                    error={errors.fallback_provider_id}
+                  >
+                    <select
+                      value={form.fallback_provider_id}
+                      onChange={(e) => set("fallback_provider_id", e.target.value)}
+                      className={selectCls}
+                    >
+                      <option value="">No fallback</option>
+                      {providers
+                        .filter((p) => String(p.id) !== form.provider_id)
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                    </select>
+                  </Field>
+                </div>
+              </div>
             </div>
           </Card>
 

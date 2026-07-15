@@ -42,6 +42,8 @@ type FormState = {
   useCustomProvider: boolean;
   provider_id: string;
   server_id: string;
+  fallback_provider_id: string;
+  fallback_server_id: string;
   cost_price: string;
 };
 
@@ -189,6 +191,8 @@ const blankForm = (): FormState => ({
   useCustomProvider: false,
   provider_id: "",
   server_id: "",
+  fallback_provider_id: "",
+  fallback_server_id: "",
   cost_price: "",
 });
 
@@ -208,6 +212,10 @@ const toForm = (d: DataPlan): FormState => ({
       : d.server_id != null
         ? String(d.server_id)
         : "",
+  fallback_provider_id:
+    d.fallback_provider_id != null ? String(d.fallback_provider_id) : "",
+  fallback_server_id:
+    d.fallback_server_id != null ? String(d.fallback_server_id) : "",
   cost_price: d.cost_price != null ? String(d.cost_price) : "",
 });
 
@@ -262,6 +270,9 @@ const toPayload = (
     provider_id: form.useCustomProvider ? form.provider_id || null : null,
     // providerables.server_id is an integer column — must be numeric or null.
     server_id: form.server_id !== "" ? Number(form.server_id) : null,
+    fallback_provider_id: form.fallback_provider_id || null,
+    fallback_server_id:
+      form.fallback_server_id !== "" ? form.fallback_server_id : null,
     cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
   };
 
@@ -292,12 +303,31 @@ const dataPlanFormSchema = z
     useCustomProvider: z.boolean(),
     provider_id: z.string(),
     server_id: nonNegativeAmount,
+    fallback_provider_id: z.string(),
+    fallback_server_id: nonNegativeAmount,
     cost_price: nonNegativeAmount,
   })
   .refine((data) => !data.useCustomProvider || data.provider_id !== "", {
     message: "Select a provider.",
     path: ["provider_id"],
-  });
+  })
+  .refine(
+    (data) =>
+      data.fallback_provider_id === "" ||
+      data.fallback_provider_id !== data.provider_id,
+    {
+      message: "Choose a different fallback provider.",
+      path: ["fallback_provider_id"],
+    },
+  )
+  .refine(
+    (data) =>
+      data.fallback_provider_id === "" || data.fallback_server_id !== "",
+    {
+      message: "Enter the fallback provider's plan ID.",
+      path: ["fallback_server_id"],
+    },
+  );
 
 type FormErrors = Partial<
   Record<
@@ -309,6 +339,8 @@ type FormErrors = Partial<
     | "sort_order"
     | "provider_id"
     | "server_id"
+    | "fallback_provider_id"
+    | "fallback_server_id"
     | "cost_price",
     string
   >
@@ -662,7 +694,7 @@ export default function DataPlanFormPage() {
               </div>
 
               {form.useCustomProvider && (
-                <Field label="Provider" error={errors.provider_id}>
+                <Field label="Primary provider" error={errors.provider_id}>
                   <select
                     value={form.provider_id}
                     onChange={(e) => set("provider_id", e.target.value)}
@@ -682,13 +714,58 @@ export default function DataPlanFormPage() {
                   they're the cost basis for percentage pricing and the plan's
                   id on the fulfilling vendor. Only the Provider above overrides
                   which vendor fulfils the plan. */}
-              <Field label="Plan ID" hint="optional" error={errors.server_id}>
+              <Field label="Primary plan ID" hint="optional" error={errors.server_id}>
                 <NumberInput
                   value={form.server_id}
                   onChange={(v) => set("server_id", v)}
                   placeholder="Provider's numeric plan ID"
                 />
               </Field>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5">
+                <p className="text-xs font-semibold text-slate-700">
+                  Automatic fallback
+                </p>
+                <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                  If the primary provider confirms a failure, retry this plan
+                  once through the backup provider.
+                </p>
+                <div className="mt-3 space-y-3">
+                  <Field
+                    label="Fallback provider"
+                    hint="optional"
+                    error={errors.fallback_provider_id}
+                  >
+                    <select
+                      value={form.fallback_provider_id}
+                      onChange={(e) => set("fallback_provider_id", e.target.value)}
+                      className={selectCls}
+                    >
+                      <option value="">No fallback</option>
+                      {providers
+                        .filter((p) => String(p.id) !== form.provider_id)
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                    </select>
+                  </Field>
+
+                  {form.fallback_provider_id && (
+                    <Field
+                      label="Fallback plan ID"
+                      error={errors.fallback_server_id}
+                    >
+                      <NumberInput
+                        value={form.fallback_server_id}
+                        onChange={(v) => set("fallback_server_id", v)}
+                        placeholder="Backup provider's plan ID"
+                      />
+                    </Field>
+                  )}
+                </div>
+              </div>
 
               <Field
                 label="Cost price"
