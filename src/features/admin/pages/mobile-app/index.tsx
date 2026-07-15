@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { isAxiosError } from "axios";
 import {
   CheckCircle2,
   Download,
@@ -27,6 +28,14 @@ import {
 
 // 200MB — matches AppReleaseController::MAX_KB. APKs are large.
 const APK_MAX_BYTES = 200 * 1024 * 1024;
+
+const uploadErrorMessage = (error: unknown) => {
+  if (isAxiosError(error) && !error.response) {
+    return "The upload was blocked before the server could process it. Ensure the server allows request bodies of at least 256 MB, then try again.";
+  }
+
+  return extractErrorMessage(error);
+};
 
 const MobileAppPage = () => {
   const [releases, setReleases] = useState<AppRelease[]>([]);
@@ -101,7 +110,7 @@ const MobileAppPage = () => {
       load();
       window.setTimeout(() => setUploaded(false), 3000);
     } catch (err) {
-      setUploadError(extractErrorMessage(err));
+      setUploadError(uploadErrorMessage(err));
     } finally {
       setUploading(false);
     }
