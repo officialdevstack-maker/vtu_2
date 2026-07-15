@@ -15,6 +15,7 @@ import {
   XCircle,
   Loader2,
   KeyRound,
+  Upload,
 } from "lucide-react";
 import {
   PageHeader,
@@ -333,7 +334,7 @@ const ProviderDetailPage = () => {
       const summary = await providerService.syncPlans(id);
       setSyncMessage({
         ok: true,
-        text: `${summary.message ?? "Plans synced."} Synced: ${summary.created} new (as drafts), ${summary.updated} updated, ${summary.skipped} skipped.`,
+        text: `${summary.message ?? "Plans synced."} ${summary.created} new, ${summary.updated} updated, ${summary.skipped} skipped. ${summary.pending_pricing ?? 0} awaiting provider cost.`,
       });
     } catch (err) {
       const text = axios.isAxiosError(err)
@@ -421,6 +422,17 @@ const ProviderDetailPage = () => {
               <Button variant="secondary" size="sm" onClick={back}>
                 <ArrowLeft className="w-3.5 h-3.5" /> Back
               </Button>
+              {supportsSyncPlans(provider.sub_category) && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    navigate(`/admin/apis/provider/${id}/plan-import`)
+                  }
+                >
+                  <Upload className="w-3.5 h-3.5" /> Price plans
+                </Button>
+              )}
               {supportsSyncPlans(provider.sub_category) && (
                 <Button
                   variant="secondary"

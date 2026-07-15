@@ -131,6 +131,14 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "apis/provider/:id/plan-import",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/apis/provider-plan-import");
+          return { Component };
+        },
+      },
+      {
         path: "affiliates",
         lazy: async () => {
           const { default: Component } =

@@ -101,6 +101,27 @@ export type ProviderBank = {
   name: string;
 };
 
+export type ImportedProviderPlan = {
+  id: number;
+  external_plan_id: string;
+  network: string;
+  plan_type: string;
+  plan_name: string;
+  plan_size: string;
+  validity: string;
+  cost_price: number | null;
+  markup_percent: number;
+  selling_price: number | null;
+  priced: boolean;
+  active: boolean;
+  is_draft: boolean;
+};
+
+export type ProviderPlanImports = {
+  provider: { id: number; name: string };
+  plans: ImportedProviderPlan[];
+};
+
 const BASE = "/table/vendors";
 
 export const providerService = {
@@ -149,10 +170,7 @@ export const providerService = {
       )
       .then((r) => r.data.data.identifier),
 
-  updateAutoFund: (
-    id: string,
-    payload: AutoFundPayload,
-  ): Promise<Provider> =>
+  updateAutoFund: (id: string, payload: AutoFundPayload): Promise<Provider> =>
     apiClient
       .put<ApiEnvelope<Provider>>(`${BASE}/${id}`, payload)
       .then((r) => r.data.data),
@@ -166,23 +184,55 @@ export const providerService = {
 
   getBanksForProvider: (providerId: string | number): Promise<ProviderBank[]> =>
     apiClient
-      .get<ApiEnvelope<{ banks: ProviderBank[] }>>(`/admin/vendor/${providerId}/banks`)
+      .get<ApiEnvelope<{ banks: ProviderBank[] }>>(
+        `/admin/vendor/${providerId}/banks`,
+      )
       .then((r) => r.data.data.banks ?? []),
 
-  // Only vendor classes that implement syncPlans() (currently Ogdams)
-  // support this — the backend returns a 422 for the rest.
+  // Vendor classes that implement syncPlans() expose this catalogue action;
+  // the backend returns a 422 for unsupported integrations.
   syncPlans: (
     id: string | number,
-  ): Promise<{ created: number; updated: number; skipped: number; message?: string }> =>
+  ): Promise<{
+    created: number;
+    updated: number;
+    skipped: number;
+    pending_pricing?: number;
+    message?: string;
+  }> =>
     apiClient
       .post<
         ApiEnvelope<{
           created: number;
           updated: number;
           skipped: number;
+          pending_pricing?: number;
           message?: string;
         }>
       >(`/admin/vendor/${id}/sync-plans`)
+      .then((r) => r.data.data),
+
+  getPlanImports: (id: string | number): Promise<ProviderPlanImports> =>
+    apiClient
+      .get<ApiEnvelope<ProviderPlanImports>>(`/admin/vendor/${id}/plan-imports`)
+      .then((r) => r.data.data),
+
+  importPlanPrices: (
+    id: string | number,
+    payload: {
+      markup_percent: number;
+      activate: boolean;
+      plans: Array<{ plan_id: number; cost_price: number }>;
+    },
+  ): Promise<{ updated: number; activated: number; markup_percent: number }> =>
+    apiClient
+      .post<
+        ApiEnvelope<{
+          updated: number;
+          activated: number;
+          markup_percent: number;
+        }>
+      >(`/admin/vendor/${id}/plan-imports`, payload)
       .then((r) => r.data.data),
 
   getFundingHistory: (vendorId: string): Promise<FundingRecord[]> =>
