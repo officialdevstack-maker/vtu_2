@@ -1,13 +1,38 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export const DEFAULT_PAGE_SIZE = 10;
 
-export function usePagination<T>(items: T[], pageSize = DEFAULT_PAGE_SIZE, initialPage = 1) {
-  const [page, setPage] = useState(initialPage);
+/**
+ * Paginate a client-side list.
+ *
+ * Uncontrolled (the default): the hook owns the page number.
+ * Controlled: pass `onPageChange` and the page is driven entirely by
+ * `initialPage` — used with useTableQueryState to keep the page in the URL.
+ */
+export function usePagination<T>(
+  items: T[],
+  pageSize = DEFAULT_PAGE_SIZE,
+  initialPage = 1,
+  onPageChange?: (page: number) => void,
+) {
+  const isControlled = typeof onPageChange === "function";
+  const [internalPage, setInternalPage] = useState(initialPage);
 
+  // In controlled mode `initialPage` IS the page, so there is nothing to sync.
   useEffect(() => {
-    setPage(initialPage);
-  }, [initialPage]);
+    if (!isControlled) setInternalPage(initialPage);
+  }, [initialPage, isControlled]);
+
+  const page = isControlled ? initialPage : internalPage;
+
+  const setPage = useCallback(
+    (next: number) => {
+      if (isControlled) onPageChange(next);
+      else setInternalPage(next);
+    },
+    [isControlled, onPageChange],
+  );
+
   const totalItems = items.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const currentPage = Math.min(page, totalPages);

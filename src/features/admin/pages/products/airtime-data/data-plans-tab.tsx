@@ -22,7 +22,8 @@ import {
   inputCls,
   Pagination,
 } from "../../../../user/components/shared-ui";
-import { usePagination } from "@shared/pagination";
+import { DEFAULT_PAGE_SIZE, usePagination } from "@shared/pagination";
+import { useTableQueryState } from "@shared/table-query-state";
 import { Toolbar, SelectFilter } from "./shared";
 import { dataPlanService, type DataPlan } from "./service";
 
@@ -79,11 +80,37 @@ export function DataPlansTab() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<DataPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [networkFilter, setNetworkFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [sort, setSort] = useState<SortState>({ key: "network", direction: "asc" });
+
+  // Search/filter/sort/page live in the URL, so a refresh, the browser back
+  // button, or a shared link all reproduce the same view instead of dropping
+  // you back on an unfiltered page 1.
+  const { state, set, reset, isDirty } = useTableQueryState({
+    q: "",
+    network: "",
+    type: "",
+    status: "",
+    sort: "network",
+    dir: "asc",
+    page: 1,
+  });
+
+  const search = state.q;
+  const networkFilter = state.network;
+  const typeFilter = state.type;
+  const statusFilter = state.status;
+  const sort: SortState = useMemo(
+    () => ({
+      key: state.sort as SortKey,
+      direction: state.dir === "desc" ? "desc" : "asc",
+    }),
+    [state.sort, state.dir],
+  );
+
+  const setSearch = (value: string) => set({ q: value });
+  const setNetworkFilter = (value: string) => set({ network: value });
+  const setTypeFilter = (value: string) => set({ type: value });
+  const setStatusFilter = (value: string) => set({ status: value });
+
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   // The table scrolls horizontally (overflow-x-auto), which forces
   // overflow-y to auto too per the CSS spec — an `absolute` dropdown would
@@ -120,10 +147,10 @@ export function DataPlansTab() {
   };
 
   const toggleSort = (key: SortKey) => {
-    setSort((prev) =>
-      prev.key === key
-        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
-        : { key, direction: "asc" },
+    set(
+      sort.key === key
+        ? { sort: key, dir: sort.direction === "asc" ? "desc" : "asc" }
+        : { sort: key, dir: "asc" },
     );
   };
 
@@ -185,6 +212,8 @@ export function DataPlansTab() {
     return sorted;
   }, [plans, search, networkFilter, typeFilter, statusFilter, sort]);
 
+  // Controlled by the URL. useTableQueryState already sends the user back to
+  // page 1 whenever a filter or the sort changes, so no reset effect is needed.
   const {
     currentPage,
     totalPages,
@@ -192,13 +221,9 @@ export function DataPlansTab() {
     pageSize,
     pageItems,
     setPage,
-  } = usePagination(filtered);
-
-  // Jump back to page 1 whenever the result set changes shape (new search,
-  // filter, or sort) so the user isn't stranded on a now-empty page.
-  useEffect(() => {
-    setPage(1);
-  }, [search, networkFilter, typeFilter, statusFilter, sort, setPage]);
+  } = usePagination(filtered, DEFAULT_PAGE_SIZE, state.page, (page) =>
+    set({ page }),
+  );
 
   // The header checkbox only ever acts on the current page — selection
   // itself persists across page changes. "Select all N matching plans"
