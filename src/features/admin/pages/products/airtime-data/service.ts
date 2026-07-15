@@ -176,6 +176,7 @@ export type AirtimePlan = {
   provider?: DataPlanProvider;
   fallback_provider_id?: string | number | null;
   fallback_server_id?: string | number | null;
+  fallback_cost_price?: string | number | null;
   fallback_provider?: DataPlanProvider;
   use_provider_as_providerable?: boolean | null;
 };
@@ -194,6 +195,7 @@ export type AirtimePlanPayload = {
     server_id?: string | number | null;
     fallback_provider_id?: string | number | null;
     fallback_server_id?: string | number | null;
+    fallback_cost_price?: string | number | null;
   };
 };
 
@@ -296,6 +298,7 @@ export type DataPlan = {
   provider_id?: string | number | null;
   fallback_provider_id?: string | number | null;
   fallback_server_id?: string | number | null;
+  fallback_cost_price?: string | number | null;
   fallback_provider?: DataPlanProvider;
   provider?: DataPlanProvider;
   created_at?: string | null;
@@ -318,6 +321,7 @@ export type DataPlanPayload = {
     server_id?: string | number | null;
     fallback_provider_id?: string | number | null;
     fallback_server_id?: string | number | null;
+    fallback_cost_price?: string | number | null;
   };
 };
 

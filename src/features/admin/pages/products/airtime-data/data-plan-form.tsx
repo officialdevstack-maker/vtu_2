@@ -44,6 +44,7 @@ type FormState = {
   server_id: string;
   fallback_provider_id: string;
   fallback_server_id: string;
+  fallback_cost_price: string;
   cost_price: string;
 };
 
@@ -193,6 +194,7 @@ const blankForm = (): FormState => ({
   server_id: "",
   fallback_provider_id: "",
   fallback_server_id: "",
+  fallback_cost_price: "",
   cost_price: "",
 });
 
@@ -216,6 +218,8 @@ const toForm = (d: DataPlan): FormState => ({
     d.fallback_provider_id != null ? String(d.fallback_provider_id) : "",
   fallback_server_id:
     d.fallback_server_id != null ? String(d.fallback_server_id) : "",
+  fallback_cost_price:
+    d.fallback_cost_price != null ? String(d.fallback_cost_price) : "",
   cost_price: d.cost_price != null ? String(d.cost_price) : "",
 });
 
@@ -273,6 +277,10 @@ const toPayload = (
     fallback_provider_id: form.fallback_provider_id || null,
     fallback_server_id:
       form.fallback_server_id !== "" ? form.fallback_server_id : null,
+    // Null, not 0 — blank means "the fallback costs the same as cost_price",
+    // whereas 0 would tell the profit calculation the goods were free.
+    fallback_cost_price:
+      form.fallback_cost_price !== "" ? Number(form.fallback_cost_price) : null,
     cost_price: form.cost_price !== "" ? Number(form.cost_price) : 0,
   };
 
@@ -305,6 +313,7 @@ const dataPlanFormSchema = z
     server_id: nonNegativeAmount,
     fallback_provider_id: z.string(),
     fallback_server_id: nonNegativeAmount,
+    fallback_cost_price: nonNegativeAmount,
     cost_price: nonNegativeAmount,
   })
   .refine((data) => !data.useCustomProvider || data.provider_id !== "", {
@@ -341,6 +350,7 @@ type FormErrors = Partial<
     | "server_id"
     | "fallback_provider_id"
     | "fallback_server_id"
+    | "fallback_cost_price"
     | "cost_price",
     string
   >
@@ -761,6 +771,21 @@ export default function DataPlanFormPage() {
                         value={form.fallback_server_id}
                         onChange={(v) => set("fallback_server_id", v)}
                         placeholder="Backup provider's plan ID"
+                      />
+                    </Field>
+                  )}
+
+                  {form.fallback_provider_id && (
+                    <Field
+                      label="Fallback cost price"
+                      hint="leave blank if same as cost price"
+                      error={errors.fallback_cost_price}
+                    >
+                      <NumberInput
+                        value={form.fallback_cost_price}
+                        onChange={(v) => set("fallback_cost_price", v)}
+                        placeholder="Same as cost price"
+                        suffix="₦"
                       />
                     </Field>
                   )}
