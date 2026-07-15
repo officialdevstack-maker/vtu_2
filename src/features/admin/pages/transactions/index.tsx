@@ -89,6 +89,22 @@ const dateLabel = (value: string | null) =>
       })
     : "—";
 
+const dateParts = (value: string) => {
+  const date = new Date(value);
+
+  return {
+    date: date.toLocaleDateString("en-NG", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+    time: date.toLocaleTimeString("en-NG", {
+      hour: "numeric",
+      minute: "2-digit",
+    }),
+  };
+};
+
 const daysAgo = (value: string) =>
   Math.floor((Date.now() - new Date(value).getTime()) / (1000 * 60 * 60 * 24));
 
@@ -534,31 +550,21 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="border-b border-gray-100 px-4 py-3">
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(240px,1fr)_repeat(5,minmax(132px,auto))]">
-            <div className="relative min-w-0">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search reference, customer, email, or phone"
-                className={`${inputCls} h-10 pl-9 text-xs`}
-              />
-            </div>
-            <SelectFilter
-              label="Type"
-              value={typeFilter}
-              options={["All", ...Object.keys(transactionTypeLabels)]}
-              labels={transactionTypeLabels}
-              onChange={(value) => {
-                setTypeFilter(value as FilterValue<TransactionType>);
+      <Card className="p-4 sm:p-5">
+        <div className="space-y-3">
+          <div className="relative min-w-0">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
                 setPage(1);
               }}
+              placeholder="Search ID, customer, phone, email, provider..."
+              className={`${inputCls} h-11 pl-10 text-sm`}
             />
+          </div>
+          <div className="flex flex-wrap gap-2.5">
             <SelectFilter
               label="Status"
               value={statusFilter}
@@ -566,6 +572,25 @@ export default function TransactionsPage() {
               labels={transactionStatusLabels}
               onChange={(value) => {
                 setStatusFilter(value as FilterValue<TransactionStatus>);
+                setPage(1);
+              }}
+            />
+            <SelectFilter
+              label="Provider"
+              value={providerFilter}
+              options={["All", ...providers]}
+              onChange={(value) => {
+                setProviderFilter(value);
+                setPage(1);
+              }}
+            />
+            <SelectFilter
+              label="Type"
+              value={typeFilter}
+              options={["All", ...Object.keys(transactionTypeLabels)]}
+              labels={transactionTypeLabels}
+              onChange={(value) => {
+                setTypeFilter(value as FilterValue<TransactionType>);
                 setPage(1);
               }}
             />
@@ -586,15 +611,6 @@ export default function TransactionsPage() {
                 ),
               )}
             </select>
-            <SelectFilter
-              label="Provider"
-              value={providerFilter}
-              options={["All", ...providers]}
-              onChange={(value) => {
-                setProviderFilter(value);
-                setPage(1);
-              }}
-            />
             <Button
               type="button"
               variant="secondary"
@@ -607,6 +623,9 @@ export default function TransactionsPage() {
             </Button>
           </div>
         </div>
+      </Card>
+
+      <Card className="overflow-hidden">
 
         {selected.size > 0 ? (
           <div className="flex items-center justify-between gap-3 border-b border-[#111827]/15 bg-[#111827]/10 px-4 py-2">
@@ -695,10 +714,10 @@ export default function TransactionsPage() {
             </div>
 
             <div className="hidden overflow-x-auto sm:block">
-              <table className="w-full table-fixed min-w-[560px] lg:min-w-0 text-sm">
+              <table className="w-full min-w-[980px] table-fixed text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="w-10 px-4 py-2 text-left">
+                  <tr className="border-y border-slate-200 bg-slate-50/80">
+                    <th className="w-12 px-5 py-3.5 text-left">
                       <input
                         type="checkbox"
                         checked={allPageSelected}
@@ -707,15 +726,14 @@ export default function TransactionsPage() {
                         aria-label="Select all on page"
                       />
                     </th>
-                    <th className="hidden lg:table-cell lg:w-[11%] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-slate-500">Reference</th>
-                    <th className="w-[42%] lg:w-[20%] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-slate-500">Customer</th>
-                    <th className="hidden lg:table-cell lg:w-[9%] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-slate-500">Type</th>
-                    <th className="hidden lg:table-cell lg:w-[10%] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-slate-500">Provider</th>
-                    <th className="w-[20%] lg:w-[11%] whitespace-nowrap px-2 py-2 text-right text-xs font-medium text-slate-500">Amount</th>
-                    <th className="w-[22%] lg:w-[12%] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-slate-500">Status</th>
-                    <th className="hidden lg:table-cell lg:w-[12%] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-slate-500">Recipient</th>
-                    <th className="hidden lg:table-cell lg:w-[9%] whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-slate-500">Date</th>
-                    <th className="w-10 whitespace-nowrap px-2 py-2 text-center text-xs font-medium text-slate-500">Actions</th>
+                    <th className="w-[12%] px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Date</th>
+                    <th className="w-[18%] px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Transaction ID</th>
+                    <th className="w-[18%] px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Customer</th>
+                    <th className="w-[15%] px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Service</th>
+                    <th className="w-[12%] px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Amount</th>
+                    <th className="w-[11%] px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Provider</th>
+                    <th className="w-[10%] px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Status</th>
+                    <th className="w-20 px-3 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -724,7 +742,7 @@ export default function TransactionsPage() {
                       key={tx.id}
                       className={`transition-colors hover:bg-gray-50 ${selected.has(tx.id) ? "bg-[#111827]/5" : ""}`}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <input
                           type="checkbox"
                           checked={selected.has(tx.id)}
@@ -733,44 +751,67 @@ export default function TransactionsPage() {
                           aria-label={`Select ${tx.reference}`}
                         />
                       </td>
-                      <td className="hidden lg:table-cell min-w-0 px-2 py-3 font-mono text-xs text-slate-500">
-                        <span className="block truncate" title={tx.reference}>
-                          {tx.reference}
-                        </span>
+                      <td className="px-3 py-4">
+                        <p className="whitespace-nowrap text-xs font-medium text-slate-700">
+                          {dateParts(tx.created_at).date}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          {dateParts(tx.created_at).time}
+                        </p>
                       </td>
-                      <td className="px-2 py-3">
+                      <td className="min-w-0 px-3 py-4 font-mono">
+                        <p className="truncate text-xs font-medium text-slate-700" title={tx.reference}>
+                          {tx.reference}
+                        </p>
+                        <p className="mt-1 truncate text-[11px] text-slate-400" title={tx.payment_reference ?? undefined}>
+                          {tx.payment_reference ?? `TX-${tx.id}`}
+                        </p>
+                      </td>
+                      <td className="px-3 py-4">
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-medium text-slate-900">
+                          <p className="truncate text-xs font-medium text-slate-800">
                             {tx.user?.fullname ?? "—"}
                           </p>
-                          <p className="truncate text-xs text-slate-400">
-                            {tx.user?.email ?? tx.recipient}
+                          <p className="mt-1 truncate text-[11px] text-slate-400">
+                            {tx.account_or_phone ?? tx.recipient ?? tx.user?.email}
                           </p>
                         </div>
                       </td>
-                      <td className="hidden lg:table-cell whitespace-nowrap px-2 py-3 text-xs text-slate-600">
-                        {transactionTypeLabels[tx.transaction_type] ??
-                          tx.transaction_type}
+                      <td className="px-3 py-4">
+                        <p className="truncate text-xs font-medium text-slate-700">
+                          {transactionTypeLabels[tx.transaction_type] ?? tx.transaction_type}
+                        </p>
+                        <p className="mt-1 truncate text-[11px] uppercase text-slate-400">
+                          {tx.plan_type ?? (Number(tx.quantity) > 0 ? `${tx.quantity} unit${Number(tx.quantity) === 1 ? "" : "s"}` : "—")}
+                        </p>
                       </td>
-                      <td className="hidden lg:table-cell whitespace-nowrap px-2 py-3 text-xs text-slate-500 capitalize">
-                        {tx.provider ?? "—"}
+                      <td className="px-3 py-4">
+                        <p className="whitespace-nowrap text-sm font-semibold tabular-nums text-slate-900">{fmt(tx.amount)}</p>
+                        <p className="mt-1 text-[11px] text-slate-400">Fee {fmt(tx.service_fee)}</p>
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3 text-right text-xs font-semibold tabular-nums text-slate-900">
-                        {fmt(tx.amount)}
+                      <td className="px-3 py-4">
+                        <p className="truncate text-xs font-medium capitalize text-slate-700">{tx.provider ?? "—"}</p>
+                        <p className="mt-1 truncate text-[11px] capitalize text-slate-400">{tx.platform ?? "Wallet"}</p>
                       </td>
-                      <td className="whitespace-nowrap px-2 py-3">
+                      <td className="whitespace-nowrap px-3 py-4">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <TransactionStatusBadge status={tx.status} />
                           <RefundedPill tx={tx} />
                         </div>
                       </td>
-                      <td className="hidden lg:table-cell whitespace-nowrap px-2 py-3 text-xs text-slate-500">
-                        {tx.recipient}
+                      <td className="px-3 py-4">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setDetailTransaction(tx)}
+                            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                            title="View transaction"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          {renderActionMenu(tx)}
+                        </div>
                       </td>
-                      <td className="hidden lg:table-cell whitespace-nowrap px-2 py-3 text-xs text-slate-400">
-                        {dateLabel(tx.created_at)}
-                      </td>
-                      <td className="px-2 py-3">{renderActionMenu(tx)}</td>
                     </tr>
                   ))}
                 </tbody>
