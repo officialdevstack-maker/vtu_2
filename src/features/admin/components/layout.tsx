@@ -18,6 +18,7 @@ import {
   Cable,
   ChevronRight,
   HelpCircle,
+  History,
   LayoutGrid,
   Landmark,
   LogOut,
@@ -325,7 +326,9 @@ const Layout = () => {
               {group.title}
             </p>
             <div className="space-y-1">
-              {group.items.map((item) => {
+              {group.items
+                .filter((item) => !item.permission || hasPermission(item.permission))
+                .map((item) => {
                 const active = isActive(item.path);
                 const hasActiveChild =
                   item.children?.some((child) => isActive(child.path)) ?? false;
