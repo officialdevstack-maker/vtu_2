@@ -24,6 +24,7 @@ import {
 import { providerService, type Provider } from "../../apis/providerService";
 
 const BACK = "/admin/products/airtime-data?tab=data-plans";
+const NEW = "/admin/products/airtime-data/data-plans/new";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -403,6 +404,8 @@ export default function DataPlanFormPage() {
   const [rolesLoading, setRolesLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, RolePrice>>({});
   const [saving, setSaving] = useState(false);
+  const [saveMode, setSaveMode] = useState<"return" | "new">("return");
+  const [justSaved, setJustSaved] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -478,7 +481,9 @@ export default function DataPlanFormPage() {
 
   const valid = form.network.trim().length > 0 && form.plan_type.trim().length > 0;
 
-  const handleSubmit = async () => {
+  // "return" saves and goes back to the list; "new" saves and reopens a blank
+  // form so several plans can be added in a row without a round-trip.
+  const handleSubmit = async (after: "return" | "new" = "return") => {
     const formErrors = validateForm(form);
     setErrors(formErrors);
     setSubmitError(
@@ -488,6 +493,7 @@ export default function DataPlanFormPage() {
     );
     if (Object.keys(formErrors).length > 0 || hasPriceErrors) return;
 
+    setSaveMode(after);
     setSaving(true);
     try {
       const payload = toPayload(form, pricing) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -496,7 +502,24 @@ export default function DataPlanFormPage() {
       } else {
         await dataPlanService.create(payload);
       }
-      navigate(BACK);
+
+      if (after === "return") {
+        navigate(BACK);
+        return;
+      }
+
+      // Save & create another. Editing an existing row remounts as a fresh
+      // create via the /new route; a blank create form just resets in place.
+      if (initial) {
+        navigate(NEW);
+      } else {
+        setForm(blankForm());
+        setPricing({});
+        setErrors({});
+        setSubmitError(null);
+        setJustSaved(true);
+        window.setTimeout(() => setJustSaved(false), 2500);
+      }
     } catch (err) {
       setSubmitError(extractErrorMessage(err));
     } finally {
