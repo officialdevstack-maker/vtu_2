@@ -435,8 +435,22 @@ export default function BillPlanFormPage() {
             <Button variant="secondary" size="sm" onClick={() => navigate(BACK)}>
               Cancel
             </Button>
-            <Button size="sm" disabled={!valid || saving} loading={saving} onClick={handleSubmit}>
-              {initial ? "Save changes" : "Create bill plan"}
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving && saveMode === "new"}
+              onClick={() => handleSubmit("new")}
+            >
+              {justSaved ? "Saved ✓" : "Save & new"}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!valid || saving}
+              loading={saving && saveMode === "return"}
+              onClick={() => handleSubmit("return")}
+            >
+              {initial ? "Save & return" : "Create & return"}
             </Button>
           </>
         }
