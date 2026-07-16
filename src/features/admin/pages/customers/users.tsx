@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -28,19 +28,10 @@ import {
   selectCls,
 } from "../../../user/components/shared-ui";
 import { ActionMenu } from "../../../../shared/components/action-menu";
-import { usePagination } from "../../../../shared/pagination";
 import { customerService, type Customer } from "./service";
 
 type CustomerStatus = "active" | "suspended" | "inactive";
 type KycStatus = "verified" | "pending" | "unverified";
-
-const daysAgo = (iso?: string) => {
-  if (!iso) return 9999;
-  const diff = Date.now() - Date.parse(iso);
-  return Number.isFinite(diff)
-    ? Math.floor(diff / (1000 * 60 * 60 * 24))
-    : 9999;
-};
 
 const formatDate = (iso?: string) =>
   iso
@@ -75,15 +66,31 @@ export default function CustomersPage() {
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [currentPage, setCustomerPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [summary, setSummary] = useState({ total: 0, active: 0, suspended: 0, new_customers: 0 });
+  const pageSize = 10;
+  const deferredSearch = useDeferredValue(search.trim());
 
   useEffect(() => {
     let mounted = true;
 
     const loadCustomers = async () => {
       try {
-        const response = await customerService.getAll();
+        const response = await customerService.getAll({
+          page: currentPage,
+          per_page: pageSize,
+          search: deferredSearch || undefined,
+          status: statusFilter === "all" ? undefined : statusFilter,
+          kyc: kycFilter === "all" ? undefined : kycFilter,
+          days: dateFilter === "all" ? undefined : dateFilter,
+        });
         if (mounted) {
-          setCustomers(response);
+          setCustomers(response.data);
+          setTotalPages(response.meta.last_page);
+          setTotalItems(response.meta.total);
+          setSummary(response.summary);
           setError(null);
         }
       } catch {
@@ -99,40 +106,13 @@ export default function CustomersPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [currentPage, dateFilter, deferredSearch, kycFilter, statusFilter]);
 
-  const filtered = customers.filter((c) => {
-    const q = search.toLowerCase();
-    const matchesSearch =
-      !q ||
-      (c.username ?? "").toLowerCase().includes(q) ||
-      c.name.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
-      c.phone.replace(/\s/g, "").includes(q.replace(/\s/g, ""));
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
-    const matchesKyc = kycFilter === "all" || c.kyc === kycFilter;
-    const matchesDate =
-      dateFilter === "all" || daysAgo(c.dateJoined) <= Number(dateFilter);
-    return matchesSearch && matchesStatus && matchesKyc && matchesDate;
-  });
-
-  const {
-    currentPage,
-    pageItems: paginated,
-    pageSize,
-    setPage: setCustomerPage,
-    totalItems,
-    totalPages,
-  } = usePagination(filtered);
-
-  const totalCustomers = customers.length;
-  const activeCustomers = customers.filter((c) => c.status === "active").length;
-  const suspendedCustomers = customers.filter(
-    (c) => c.status === "suspended",
-  ).length;
-  const newCustomers = customers.filter(
-    (c) => daysAgo(c.dateJoined) <= 30,
-  ).length;
+  const paginated = customers;
+  const totalCustomers = summary.total;
+  const activeCustomers = summary.active;
+  const suspendedCustomers = summary.suspended;
+  const newCustomers = summary.new_customers;
 
   const hasActiveFilters =
     search !== "" ||
@@ -330,7 +310,7 @@ export default function CustomersPage() {
 
         {loading ? (
           <SkeletonRows count={5} />
-        ) : filtered.length === 0 ? (
+        ) : customers.length === 0 ? (
           <EmptyState
             icon={Users}
             title="No customers found"

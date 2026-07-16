@@ -117,15 +117,38 @@ type ApiEnvelope<T> = { status: boolean; message: string; data: T };
 
 const USERS = "/admin/users";
 
+export type CustomerPage = {
+  data: Customer[];
+  meta: { current_page: number; last_page: number; per_page: number; total: number };
+  summary: { total: number; active: number; suspended: number; new_customers: number };
+};
+
 export const customerService = {
-  getAll: async (): Promise<Customer[]> => {
+  getAll: async (params: {
+    page?: number; per_page?: number; search?: string; status?: string; kyc?: string; days?: string;
+  } = {}): Promise<CustomerPage> => {
     try {
-      const response = await apiClient.get<ApiEnvelope<any>>(USERS);
-      return digUsers(response.data).map(mapCustomer);
+      const response = await apiClient.get<ApiEnvelope<any>>(USERS, { params });
+      const payload = response.data?.data ?? {};
+      return {
+        data: digUsers(response.data).map(mapCustomer),
+        meta: payload.meta ?? { current_page: 1, last_page: 1, per_page: params.per_page ?? 10, total: 0 },
+        summary: payload.summary ?? { total: 0, active: 0, suspended: 0, new_customers: 0 },
+      };
     } catch (error: any) {
       if (error?.response?.status === 404 || error?.response?.status === 401) {
         const fallback = await apiClient.get<ApiEnvelope<any>>("/table/users");
-        return digUsers(fallback.data).map(mapCustomer);
+        const data = digUsers(fallback.data).map(mapCustomer);
+        return {
+          data,
+          meta: { current_page: 1, last_page: 1, per_page: data.length, total: data.length },
+          summary: {
+            total: data.length,
+            active: data.filter((item) => item.status === "active").length,
+            suspended: data.filter((item) => item.status === "suspended").length,
+            new_customers: data.filter((item) => Date.now() - Date.parse(item.dateJoined) <= 30 * 86400000).length,
+          },
+        };
       }
       throw error;
     }
