@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -28,14 +28,15 @@ function loginErrorMessage(error: unknown) {
   })?.response;
   const loginError = response?.data?.errors?.login?.[0];
 
-  return loginError ?? response?.data?.message ?? "Invalid credentials. Please try again.";
+  return loginError ?? response?.data?.message ??
+    (error instanceof Error ? error.message : "Invalid credentials. Please try again.");
 }
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, login, user } = useAuth();
+  const { isAuthenticated, isInitializing, login, user } = useAuth();
   const { app_name } = useBranding();
   useSeo({
     title: "Login",
@@ -43,15 +44,21 @@ const LoginForm = () => {
   });
   const from = (location.state as { from?: Location } | null)?.from?.pathname;
 
+  const submitInFlight = useRef(false);
+
   useEffect(() => {
-    if (isAuthenticated) {
+    // This handles an already-authenticated visitor who lands on /login. The
+    // submit handler below owns successful-login navigation, so one submit
+    // cannot issue two competing router transitions.
+    if (!isInitializing && isAuthenticated && !submitInFlight.current) {
       navigate(resolveDestination(user, from), { replace: true });
     }
-  }, [from, isAuthenticated, navigate, user]);
+  }, [from, isAuthenticated, isInitializing, navigate, user]);
 
   const {
     register,
     handleSubmit,
+    clearErrors,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
@@ -59,11 +66,16 @@ const LoginForm = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    if (submitInFlight.current) return;
+    submitInFlight.current = true;
+    clearErrors("root");
     try {
       const user = await login(data.login, data.password);
       navigate(resolveDestination(user, from), { replace: true });
     } catch (error) {
       setError("root", { message: loginErrorMessage(error) });
+    } finally {
+      submitInFlight.current = false;
     }
   };
 

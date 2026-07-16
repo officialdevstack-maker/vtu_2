@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Link, isRouteErrorResponse, useLocation, useNavigate, useRouteError } from "react-router-dom";
-import { AlertTriangle, Home, RotateCw, SearchX, Zap } from "lucide-react";
+import { Link, isRouteErrorResponse, useNavigate, useRouteError } from "react-router-dom";
+import { AlertTriangle, Home, SearchX, Zap } from "lucide-react";
 import { useBranding } from "@/shared/branding";
 
 // Wired up as the root route's errorElement (see app/router.tsx) — React
@@ -9,7 +9,6 @@ import { useBranding } from "@/shared/branding";
 // so this one component covers both "page not found" and "something broke".
 export default function RouteErrorPage() {
   const error = useRouteError();
-  const location = useLocation();
   const navigate = useNavigate();
   const { app_name, logo } = useBranding();
 
@@ -20,26 +19,7 @@ export default function RouteErrorPage() {
     if (!is404) {
       console.error("Route error boundary caught:", error);
     }
-
-    const message = error instanceof Error
-      ? `${error.name}: ${error.message}`
-      : String(error ?? "");
-    const isStaleChunk = /chunkloaderror|loading (?:css )?chunk|failed to fetch dynamically imported module|importing a module script failed|error loading dynamically imported module/i.test(message);
-
-    if (!is404 && isStaleChunk) {
-      // A cached index.html can briefly reference route chunks removed by a
-      // new deployment. Reload once to fetch the current document and chunk
-      // manifest, but retain a short guard so a genuine network failure
-      // cannot create an infinite refresh loop.
-      const recoveryKey = `vendify-chunk-recovery:${location.pathname}`;
-      const lastAttempt = Number(window.sessionStorage.getItem(recoveryKey) ?? 0);
-
-      if (Date.now() - lastAttempt > 60_000) {
-        window.sessionStorage.setItem(recoveryKey, String(Date.now()));
-        window.location.reload();
-      }
-    }
-  }, [error, is404, location.pathname]);
+  }, [error, is404]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-app-bg px-4 text-center">
@@ -74,14 +54,6 @@ export default function RouteErrorPage() {
       )}
 
       <div className="flex items-center gap-3">
-        {!is404 && (
-          <button
-            onClick={() => window.location.reload()}
-            className="brand-primary-button inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          >
-            <RotateCw className="w-4 h-4" /> Reload page
-          </button>
-        )}
         <Link
           to="/"
           onClick={(e) => {
