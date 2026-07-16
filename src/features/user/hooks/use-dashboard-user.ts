@@ -12,7 +12,11 @@ export const useDashboardUser = () => {
   const query = useQuery({
     queryKey: CUSTOMER_DASHBOARD_QUERY_KEY,
     queryFn: () => customerService.getDashboardUser(),
-    enabled: Boolean(authUser && authUser.user_type !== "admin"),
+    // The user dashboard can be available to staff accounts too. Gating only
+    // on the legacy user_type caused accounts whose role was displayed as
+    // "User" but whose user_type was "admin" to leave the query disabled;
+    // React Query then stayed pending and the stat cards remained skeletons.
+    enabled: Boolean(authUser),
     initialData: authUser?.stats ? authUser : undefined,
     staleTime: 30_000,
   });
