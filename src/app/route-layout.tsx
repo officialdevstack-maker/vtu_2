@@ -14,12 +14,13 @@ function WhatsAppSupportButton() {
   const { user } = useAuth();
   const { app_phone } = useBranding();
   const isCustomer = Boolean(user) && user?.user_type !== "admin";
+  const whatsappLink = app_phone ? toWhatsAppLink(app_phone) : null;
 
-  if (!isCustomer || !app_phone) return null;
+  if (!isCustomer || !whatsappLink) return null;
 
   return (
     <a
-      href={toWhatsAppLink(app_phone)}
+      href={whatsappLink}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"

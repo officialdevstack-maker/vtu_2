@@ -71,12 +71,21 @@ export function detectNetwork(phone: string): string | null {
   return null;
 }
 
-// Converts a local Nigerian number (leading 0) to a wa.me link; a number
-// already in international format (no leading 0) passes through untouched.
-export function toWhatsAppLink(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  const intl = digits.startsWith("0") ? `234${digits.slice(1)}` : digits;
-  return `https://wa.me/${intl}`;
+// Converts common Nigerian phone formats to WhatsApp's required E.164-like
+// digits-only format. Invalid placeholders such as "#" must not become a
+// clickable but unusable wa.me link.
+export function toWhatsAppLink(phone: string): string | null {
+  let digits = phone.trim().replace(/\D/g, "");
+
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("2340")) digits = `234${digits.slice(4)}`;
+  else if (digits.startsWith("0")) digits = `234${digits.slice(1)}`;
+  else if (digits.length === 10) digits = `234${digits}`;
+
+  // WhatsApp requires an international number containing 8-15 digits.
+  if (!/^\d{8,15}$/.test(digits)) return null;
+
+  return `https://wa.me/${digits}`;
 }
 
 export function redirect(path: any) {
