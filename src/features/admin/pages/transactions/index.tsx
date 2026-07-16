@@ -108,6 +108,19 @@ const dateParts = (value: string) => {
 const daysAgo = (value: string) =>
   Math.floor((Date.now() - new Date(value).getTime()) / (1000 * 60 * 60 * 24));
 
+// Friendly labels for the origin-channel filter. "Wallet" is the synthetic
+// option for rows with no platform (funding/manual adjustments).
+const PLATFORM_LABELS: Record<string, string> = {
+  All: "All channels",
+  web: "Web",
+  app: "Mobile app",
+  api: "API",
+  affiliate: "Affiliate",
+  bot: "Bot",
+  agent: "Agent",
+  Wallet: "Wallet",
+};
+
 const statusTone: Record<TransactionStatus, string> = {
   success: "bg-emerald-50 text-emerald-700",
   pending: "bg-amber-50 text-amber-700",
@@ -219,6 +232,7 @@ export default function TransactionsPage() {
     useState<FilterValue<TransactionStatus>>("All");
   const [dateFilter, setDateFilter] = useState<DateFilter>("All time");
   const [providerFilter, setProviderFilter] = useState("All");
+  const [platformFilter, setPlatformFilter] = useState("All");
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [detailTransaction, setDetailTransaction] =
     useState<Transaction | null>(null);
@@ -259,12 +273,25 @@ export default function TransactionsPage() {
     [transactions],
   );
 
+  // Origin channels present in the data — the column reads "Wallet" when null,
+  // so the filter offers that too for funding/adjustment rows.
+  const platforms = useMemo(() => {
+    const values = new Set<string>();
+    let hasWallet = false;
+    for (const t of transactions) {
+      if (t.platform) values.add(t.platform);
+      else hasWallet = true;
+    }
+    return [...Array.from(values).sort(), ...(hasWallet ? ["Wallet"] : [])];
+  }, [transactions]);
+
   const hasActiveFilters =
     search !== "" ||
     typeFilter !== "All" ||
     statusFilter !== "All" ||
     dateFilter !== "All time" ||
-    providerFilter !== "All";
+    providerFilter !== "All" ||
+    platformFilter !== "All";
 
   const resetFilters = () => {
     setSearch("");
@@ -272,6 +299,7 @@ export default function TransactionsPage() {
     setStatusFilter("All");
     setDateFilter("All time");
     setProviderFilter("All");
+    setPlatformFilter("All");
     setPage(1);
   };
 
@@ -297,6 +325,11 @@ export default function TransactionsPage() {
       const matchesStatus = statusFilter === "All" || tx.status === statusFilter;
       const matchesProvider =
         providerFilter === "All" || tx.provider === providerFilter;
+      const matchesPlatform =
+        platformFilter === "All" ||
+        (platformFilter === "Wallet"
+          ? !tx.platform
+          : tx.platform === platformFilter);
       const age = daysAgo(tx.created_at);
       const matchesDate =
         dateFilter === "All time" ||
@@ -309,10 +342,19 @@ export default function TransactionsPage() {
         matchesType &&
         matchesStatus &&
         matchesProvider &&
+        matchesPlatform &&
         matchesDate
       );
     });
-  }, [dateFilter, providerFilter, search, statusFilter, transactions, typeFilter]);
+  }, [
+    dateFilter,
+    providerFilter,
+    platformFilter,
+    search,
+    statusFilter,
+    transactions,
+    typeFilter,
+  ]);
 
   const stats = useMemo(
     () => ({
@@ -584,6 +626,18 @@ export default function TransactionsPage() {
                 setPage(1);
               }}
             />
+            {platforms.length > 0 && (
+              <SelectFilter
+                label="Channel"
+                value={platformFilter}
+                options={["All", ...platforms]}
+                labels={PLATFORM_LABELS}
+                onChange={(value) => {
+                  setPlatformFilter(value);
+                  setPage(1);
+                }}
+              />
+            )}
             <SelectFilter
               label="Type"
               value={typeFilter}
