@@ -60,7 +60,21 @@ export default function NotificationsPage() {
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationService.markRead(id),
-    onSuccess: (_result, id) => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+
+      const wasUnread = queryClient
+        .getQueriesData<NotificationPage>({
+          predicate: (query) =>
+            query.queryKey[0] === "notifications" &&
+            typeof query.queryKey[1] === "number",
+        })
+        .some(([, current]) =>
+          current?.data.some(
+            (notification) => notification.id === id && !notification.read_at,
+          ),
+        );
+
       const readAt = new Date().toISOString();
       updateCachedNotifications((notification) =>
         notification.id === id
@@ -69,14 +83,23 @@ export default function NotificationsPage() {
       );
       queryClient.setQueryData<number>(
         ["notifications", "unread-count"],
-        (current = 0) => Math.max(0, current - 1),
+        (current = 0) => (wasUnread ? Math.max(0, current - 1) : current),
       );
+
+      return { wasUnread };
+    },
+    onError: () => {
+      // The server remains authoritative. Refetch only on failure so a slow
+      // request never makes the click feel unresponsive.
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: () => notificationService.markAllRead(),
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["notifications"] });
+
       const readAt = new Date().toISOString();
       updateCachedNotifications((notification) =>
         notification.read_at
@@ -84,6 +107,9 @@ export default function NotificationsPage() {
           : { ...notification, read_at: readAt },
       );
       queryClient.setQueryData(["notifications", "unread-count"], 0);
+    },
+    onError: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 
@@ -107,7 +133,7 @@ export default function NotificationsPage() {
             <button
               onClick={handleMarkAllRead}
               disabled={markAllReadMutation.isPending}
-              className="text-[#111827] text-sm font-medium hover:opacity-80 transition-opacity"
+              className="cursor-pointer text-[#111827] text-sm font-medium hover:opacity-80 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
             >
               {markAllReadMutation.isPending ? "Marking…" : "Mark all as read"}
             </button>
@@ -140,10 +166,12 @@ export default function NotificationsPage() {
                 const unread = !n.read_at;
 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={n.id}
                     onClick={() => handleMarkRead(n)}
-                    className={`flex gap-3.5 p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    disabled={!unread || markReadMutation.isPending}
+                    className={`flex w-full gap-3.5 p-4 text-left hover:bg-gray-50 transition-colors cursor-pointer disabled:cursor-default ${
                       unread ? "bg-[#111827]/5" : ""
                     }`}
                   >
@@ -168,7 +196,7 @@ export default function NotificationsPage() {
                         {dateLabel(n.created_at)}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
