@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Route, SlidersHorizontal, Send } from "lucide-react";
+import { ExternalLink, Route, SlidersHorizontal, Send, Waypoints } from "lucide-react";
 import {
   Button,
   Card,
@@ -330,6 +330,84 @@ export default function AffiliateControlsPage() {
         </div>
 
         <div className="space-y-5">
+          <SectionCard
+            icon={Waypoints}
+            title="Tunnel all transactions to this platform"
+            description="One switch to route every one of the affiliate's provider slots here, so all matching plans vend on this platform and draw from the funding account's wallet."
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 px-3.5 py-3">
+                <div>
+                  <p className="text-xs font-medium text-slate-700">Tunnel everything here</p>
+                  <p className="text-xs text-slate-400">
+                    {controls.tunnel_all?.updated_at
+                      ? `Last asked: ${new Date(controls.tunnel_all.updated_at).toLocaleString()}`
+                      : "Never requested"}
+                  </p>
+                </div>
+                <Toggle value={tunnelEnabled} onChange={setTunnelEnabled} />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  Parent URL (this platform)
+                </label>
+                <input
+                  value={tunnelUrl}
+                  onChange={(e) => setTunnelUrl(e.target.value)}
+                  placeholder="https://this-platform.example"
+                  className={`${inputCls} font-mono`}
+                  disabled={!tunnelEnabled}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Funding account username
+                  </label>
+                  <input
+                    value={tunnelUsername}
+                    onChange={(e) => setTunnelUsername(e.target.value)}
+                    placeholder="parent account username"
+                    className={inputCls}
+                    disabled={!tunnelEnabled}
+                    autoComplete="off"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    Funding account password
+                  </label>
+                  <input
+                    type="password"
+                    value={tunnelPassword}
+                    onChange={(e) => setTunnelPassword(e.target.value)}
+                    placeholder="not stored"
+                    className={inputCls}
+                    disabled={!tunnelEnabled}
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] leading-4 text-slate-400">
+                This queues a reroute for all 5 slots at once — the same as
+                filling every slot below with this URL and these credentials. The
+                account you enter is the parent account whose wallet pays for the
+                affiliate's tunneled transactions.
+              </p>
+              <Button
+                size="sm"
+                fullWidth
+                disabled={savingTunnel}
+                loading={savingTunnel}
+                onClick={() => void saveTunnelAll()}
+              >
+                <Send className="w-3.5 h-3.5" />
+                {tunnelEnabled ? "Tunnel all slots here" : "Turn off tunnel-all"}
+              </Button>
+            </div>
+          </SectionCard>
+
           <SectionCard
             icon={Route}
             title="Provider rerouting"
