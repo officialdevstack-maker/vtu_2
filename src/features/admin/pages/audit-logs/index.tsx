@@ -69,7 +69,11 @@ function ChangeTable({ changes }: { changes: Record<string, unknown> }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] text-xs">
+      {/* A diff needs room for before + after columns; a flat snapshot has just
+          one value column, so it can fit narrow screens without scrolling. */}
+      <table
+        className={`w-full text-xs ${hasDiff ? "min-w-[420px]" : "min-w-0"}`}
+      >
         <thead>
           <tr className="text-left text-slate-400">
             <th className="pb-1.5 pr-4 font-medium">Field</th>
@@ -152,10 +156,18 @@ function LogRow({ log }: { log: AuditLog }) {
                 {log.subject_id ? ` #${log.subject_id}` : ""}
               </>
             )}
+            {/* On mobile there's no room for a right-hand column, so the
+                timestamp rides along on the meta line instead. */}
+            {log.created_at && (
+              <span className="sm:hidden">
+                {" · "}
+                {new Date(log.created_at).toLocaleString()}
+              </span>
+            )}
           </span>
         </span>
 
-        <span className="shrink-0 whitespace-nowrap text-xs text-slate-400">
+        <span className="hidden shrink-0 whitespace-nowrap text-xs text-slate-400 sm:block">
           {log.created_at ? new Date(log.created_at).toLocaleString() : "—"}
         </span>
       </button>
@@ -257,9 +269,9 @@ const AuditLogsPage = () => {
       />
 
       <Card className="min-w-0 overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 p-3">
-          <div className="relative min-w-0 flex-1 sm:min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <div className="space-y-2 border-b border-gray-100 p-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={state.q}
               onChange={(e) => set({ q: e.target.value })}
@@ -268,69 +280,73 @@ const AuditLogsPage = () => {
             />
           </div>
 
-          <select
-            value={state.action}
-            onChange={(e) => set({ action: e.target.value })}
-            className={`${inputCls} w-auto py-2`}
-          >
-            <option value="">All actions</option>
-            {filterOptions?.actions.map((a) => (
-              <option key={a} value={a} className="capitalize">
-                {prettyAction(a)}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={state.subject_type}
-            onChange={(e) => set({ subject_type: e.target.value })}
-            className={`${inputCls} w-auto py-2`}
-          >
-            <option value="">All records</option>
-            {filterOptions?.subject_types.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={state.user_id}
-            onChange={(e) => set({ user_id: e.target.value })}
-            className={`${inputCls} w-auto py-2`}
-          >
-            <option value="">Anyone</option>
-            {filterOptions?.actors.map((a) => (
-              <option key={a.id} value={String(a.id)}>
-                {a.name ?? `User #${a.id}`}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="date"
-            value={state.date_from}
-            onChange={(e) => set({ date_from: e.target.value })}
-            className={`${inputCls} w-auto py-2`}
-            aria-label="From date"
-          />
-          <input
-            type="date"
-            value={state.date_to}
-            onChange={(e) => set({ date_to: e.target.value })}
-            className={`${inputCls} w-auto py-2`}
-            aria-label="To date"
-          />
-
-          {isDirty && (
-            <button
-              type="button"
-              onClick={reset}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          {/* Two-up grid on mobile keeps the controls aligned instead of
+              wrapping to uneven widths; falls back to an inline row on sm+. */}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+            <select
+              value={state.action}
+              onChange={(e) => set({ action: e.target.value })}
+              className={`${inputCls} w-full py-2 sm:w-auto`}
             >
-              <X className="h-3.5 w-3.5" /> Clear
-            </button>
-          )}
+              <option value="">All actions</option>
+              {filterOptions?.actions.map((a) => (
+                <option key={a} value={a} className="capitalize">
+                  {prettyAction(a)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={state.subject_type}
+              onChange={(e) => set({ subject_type: e.target.value })}
+              className={`${inputCls} w-full py-2 sm:w-auto`}
+            >
+              <option value="">All records</option>
+              {filterOptions?.subject_types.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={state.user_id}
+              onChange={(e) => set({ user_id: e.target.value })}
+              className={`${inputCls} col-span-2 w-full py-2 sm:col-span-1 sm:w-auto`}
+            >
+              <option value="">Anyone</option>
+              {filterOptions?.actors.map((a) => (
+                <option key={a.id} value={String(a.id)}>
+                  {a.name ?? `User #${a.id}`}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={state.date_from}
+              onChange={(e) => set({ date_from: e.target.value })}
+              className={`${inputCls} w-full py-2 sm:w-auto`}
+              aria-label="From date"
+            />
+            <input
+              type="date"
+              value={state.date_to}
+              onChange={(e) => set({ date_to: e.target.value })}
+              className={`${inputCls} w-full py-2 sm:w-auto`}
+              aria-label="To date"
+            />
+
+            {isDirty && (
+              <button
+                type="button"
+                onClick={reset}
+                className="col-span-2 inline-flex shrink-0 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:col-span-1 sm:justify-start"
+              >
+                <X className="h-3.5 w-3.5" /> Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {error ? (
