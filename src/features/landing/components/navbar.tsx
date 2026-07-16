@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap } from "lucide-react";
 import { useBranding } from "@/shared/branding";
 import { Button } from "./ui";
@@ -30,13 +29,6 @@ function BrandMark() {
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { scrollY } = useScroll();
-  const barOpacity = useTransform(scrollY, [0, 80], [0.7, 0.92]);
-  const barShadow = useTransform(
-    scrollY,
-    [0, 80],
-    ["0 8px 30px -18px rgba(15,23,42,0.08)", "0 16px 40px -16px rgba(15,23,42,0.16)"],
-  );
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -47,10 +39,9 @@ export function Navbar() {
 
   return (
     <header className="fixed inset-x-0 top-4 z-50 flex justify-center px-4">
-      <motion.nav
+      <nav
         aria-label="Primary"
-        style={{ opacity: barOpacity, boxShadow: barShadow }}
-        className="flex w-full max-w-4xl items-center justify-between gap-4 rounded-full border border-slate-900/[0.06] bg-white/70 px-4 py-2.5 backdrop-blur-2xl sm:px-5"
+        className="flex w-full max-w-4xl items-center justify-between gap-4 rounded-full border border-slate-900/[0.06] bg-white/90 px-4 py-2.5 shadow-[0_12px_36px_-18px_rgba(15,23,42,0.16)] backdrop-blur-2xl sm:px-5"
       >
         <BrandMark />
 
@@ -88,15 +79,10 @@ export function Navbar() {
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
-      </motion.nav>
+      </nav>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.98 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      {mobileOpen && (
+          <div
             className="glass-strong shadow-premium absolute inset-x-4 top-[calc(100%+0.5rem)] rounded-3xl p-3 md:hidden"
           >
             <ul className="flex flex-col">
@@ -120,9 +106,8 @@ export function Navbar() {
                 Create account
               </Button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+      )}
     </header>
   );
 }

@@ -168,7 +168,13 @@ const postAuthMessage = (message: AuthChannelMessage) => {
 
 const fetchCurrentUser = async (): Promise<User | null> => {
   try {
-    const response = await apiClient.get("/user");
+    const path = typeof window === "undefined" ? "" : window.location.pathname;
+    const needsDashboardData = ["/dashboard", "/transactions", "/wallet"].some(
+      (route) => path === route || path.startsWith(`${route}/`),
+    );
+    const response = await apiClient.get("/user", {
+      params: needsDashboardData ? { include_dashboard: 1 } : undefined,
+    });
     return response.data.data?.user ?? null;
   } catch {
     return null;

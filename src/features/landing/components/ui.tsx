@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import clsx from "clsx";
 
 export function GlassCard({
@@ -101,11 +100,7 @@ export function Button({
     className,
   );
 
-  const content = (
-    <motion.span whileTap={{ scale: 0.97 }} className={classes}>
-      {children}
-    </motion.span>
-  );
+  const content = <span className={`${classes} active:scale-[0.97]`}>{children}</span>;
 
   if (to) {
     return (

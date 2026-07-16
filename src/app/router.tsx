@@ -3,7 +3,6 @@ import RootLayout from "./route-layout";
 import RouteErrorPage from "./route-error";
 import { authRouter } from "@/features/auth/router";
 import { userRouter } from "@/features/user/router";
-import { adminRouter } from "@/features/admin/router";
 
 export const router = createBrowserRouter([
   {
@@ -73,11 +72,11 @@ export const router = createBrowserRouter([
       },
       // admin routes — auth + admin-role guard
       {
+        path: "admin/*",
         lazy: async () => {
-          const { default: Component } = await import("@/features/admin/components/AdminProtectedLayout");
+          const { default: Component } = await import("@/features/admin/admin-app");
           return { Component };
         },
-        children: [...adminRouter],
       },
     ],
   },
