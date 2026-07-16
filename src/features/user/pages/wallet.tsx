@@ -122,7 +122,12 @@ function FundTab() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 text-sm">Account number</span>
-                <CopyButton value={fundingQuery.data.account.account_number} label="account number" />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold font-mono tracking-wide text-slate-900">
+                    {fundingQuery.data.account.account_number}
+                  </span>
+                  <CopyButton value={fundingQuery.data.account.account_number} label="account number" />
+                </div>
               </div>
               {fundingQuery.data.account.account_name && (
                 <div className="flex items-center justify-between">
