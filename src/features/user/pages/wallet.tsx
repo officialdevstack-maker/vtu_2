@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Eye, EyeOff, Landmark, ArrowDownLeft, Building2 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -37,6 +38,12 @@ function FundTab() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const fundingQuery = useQuery({
+    queryKey: ["wallet-funding-account"],
+    queryFn: walletService.getFundingAccount,
+    retry: 1,
+    staleTime: 30_000,
+  });
 
   const banks = user?.banks ?? [];
 
@@ -61,6 +68,7 @@ function FundTab() {
     setGenerateError(null);
     try {
       await walletService.generateVirtualAccounts();
+      await fundingQuery.refetch();
       await refreshUser();
       await new Promise((resolve) => window.setTimeout(resolve, 200));
     } catch {
@@ -100,7 +108,31 @@ function FundTab() {
           Fund your wallet
         </h3>
 
-        {banks.length === 0 ? (
+        {fundingQuery.isPending ? (
+          <div className="space-y-3" aria-label="Loading funding account">
+            <div className="h-20 animate-pulse rounded-lg bg-gray-100" />
+            <div className="h-4 w-2/3 animate-pulse rounded bg-gray-100" />
+          </div>
+        ) : fundingQuery.data?.status === "ready" && fundingQuery.data.account ? (
+          <div className="space-y-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-900 text-sm font-medium">{fundingQuery.data.account.bank_name}</span>
+                <StatusBadge status="active" />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 text-sm">Account number</span>
+                <CopyButton value={fundingQuery.data.account.account_number} label="account number" />
+              </div>
+              {fundingQuery.data.account.account_name && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 text-sm">Account name</span>
+                  <span className="text-slate-900 text-sm font-medium">{fundingQuery.data.account.account_name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : banks.length === 0 ? (
           <>
             {generateError && (
               <div className="mb-3 rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
@@ -110,7 +142,7 @@ function FundTab() {
             <EmptyState
               icon={Building2}
               title="No account set up yet"
-              description="Set up your dedicated account number to start funding your wallet by bank transfer."
+              description={fundingQuery.data?.message ?? (fundingQuery.isError ? "We could not load your funding account." : "Set up your dedicated account number to start funding your wallet by bank transfer.")}
               action={
                 <Button
                   size="sm"
