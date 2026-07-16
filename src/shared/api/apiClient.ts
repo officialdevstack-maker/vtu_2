@@ -77,13 +77,13 @@ export const setAuthToken = (token: string | null) => {
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,
   withCredentials: true,
-  withXSRFToken: true,
+  // Add the XSRF header only to state-changing requests below. Sending it on
+  // GET/HEAD turns every cross-origin read into an OPTIONS + GET pair.
+  withXSRFToken: false,
   xsrfCookieName: 'XSRF-TOKEN',
   xsrfHeaderName: 'X-XSRF-TOKEN',
   headers: {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
   },
 });
 
@@ -107,13 +107,24 @@ apiClient.interceptors.request.use((config) => {
     config.baseURL = siteBaseUrl;
   }
 
-  const token = Cookies.get('XSRF-TOKEN');
+  const method = (config.method ?? 'get').toLowerCase();
+  const requiresCsrf = !['get', 'head', 'options'].includes(method);
+  const token = requiresCsrf ? Cookies.get('XSRF-TOKEN') : null;
   if (token) {
     setRequestHeader(config.headers, 'X-XSRF-TOKEN', decodeURIComponent(token));
   }
 
   const authToken = getAuthToken();
-  if (authToken) {
+  const native = typeof window !== 'undefined'
+    ? (window as { __VENDIFY_NATIVE__?: string }).__VENDIFY_NATIVE__
+    : undefined;
+  const impersonating = typeof window !== 'undefined'
+    && Boolean(window.localStorage.getItem('kora-admin-token-backup'));
+
+  // Browser customers authenticate with the secure Sanctum session cookie.
+  // Bearer remains available where it is genuinely required: the native
+  // shell and admin-to-customer impersonation sessions.
+  if (authToken && (native || impersonating)) {
     setRequestHeader(config.headers, 'Authorization', `Bearer ${authToken}`);
   }
 
@@ -121,11 +132,8 @@ apiClient.interceptors.request.use((config) => {
   // recorded with the right origin platform. The native shell sets
   // window.__VENDIFY_NATIVE__ = 'app' (see webview injectedJavaScript); a plain
   // browser leaves it unset and the backend defaults to "web".
-  if (typeof window !== 'undefined') {
-    const native = (window as { __VENDIFY_NATIVE__?: string }).__VENDIFY_NATIVE__;
-    if (native) {
-      setRequestHeader(config.headers, 'X-Client-Platform', native);
-    }
+  if (native) {
+    setRequestHeader(config.headers, 'X-Client-Platform', native);
   }
 
   return config;
