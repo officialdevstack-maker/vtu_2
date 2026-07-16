@@ -316,10 +316,10 @@ export type WalletWithdrawalPayload = {
 export const customerService = {
   getDashboardUser: (): Promise<import("@/shared/providers/auth").User> =>
     apiClient
-      .get<{ data: { user: import("@/shared/providers/auth").User } }>(
-        "/user?include_dashboard=1",
+      .get<{ data: { user: import("@/shared/providers/auth").User; transactions: import("@/shared/providers/auth").UserTransaction[]; summary: import("@/shared/providers/auth").UserStats } }>(
+        "/customer/dashboard",
       )
-      .then((r) => r.data.data.user),
+      .then((r) => ({ ...r.data.data.user, transactions: r.data.data.transactions, stats: r.data.data.summary })),
 
   // Moves the user's entire referral_balance into wallet_balance.
   // Backend returns the updated user, but callers should prefer

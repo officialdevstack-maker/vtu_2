@@ -26,12 +26,6 @@ const quickActions = [
   { label: "Airtime to cash", icon: Banknote, path: "/airtime-to-cash" },
 ];
 
-const isSameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-
-const isSameMonth = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
-
 const dateLabel = (value: string) =>
   new Date(value).toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
@@ -59,31 +53,12 @@ export default function DashboardPage() {
     [user?.transactions],
   );
 
-  const derived = useMemo(() => {
-    const now = new Date();
-    let totalDeposits = 0;
-    let totalPurchases = 0;
-    let todaySpend = 0;
-    let todayDataGB = 0;
-
-    for (const tx of transactions) {
-      if (tx.status !== "success") continue;
-      const created = new Date(tx.created_at);
-      const amount = toNumber(tx.amount);
-      const credit = isCredit(tx);
-
-      if (isSameMonth(created, now)) {
-        if (credit) totalDeposits += amount;
-        else totalPurchases += amount;
-      }
-      if (!credit && isSameDay(created, now)) todaySpend += amount;
-      if (tx.transaction_type === "data_subscription" && isSameDay(created, now)) {
-        todayDataGB += toNumber(tx.quantity);
-      }
-    }
-
-    return { totalDeposits, totalPurchases, todaySpend, todayDataGB };
-  }, [transactions]);
+  const derived = {
+    totalDeposits: user?.stats?.monthly_deposits ?? 0,
+    totalPurchases: user?.stats?.monthly_purchases ?? 0,
+    todaySpend: user?.stats?.today_spend ?? 0,
+    todayDataGB: user?.stats?.today_data_gb ?? 0,
+  };
 
   const spendingChart = useMemo(
     () =>

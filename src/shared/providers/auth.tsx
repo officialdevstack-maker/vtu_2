@@ -47,6 +47,10 @@ export type UserStats = {
   transaction_status: { successful: number; failed: number; pending: number };
   tx_chart: { labels: string[]; datasets: { label: string; data: number[] }[] };
   tx_amount_30d: { date: string; total_amount: string | number }[];
+  monthly_deposits?: number;
+  monthly_purchases?: number;
+  today_spend?: number;
+  today_data_gb?: number;
 };
 
 export type Permission = {
@@ -168,12 +172,7 @@ const postAuthMessage = (message: AuthChannelMessage) => {
 
 const fetchCurrentUser = async (signal?: AbortSignal): Promise<User | null> => {
   try {
-    const path = typeof window === "undefined" ? "" : window.location.pathname;
-    const needsDashboardData = ["/dashboard", "/transactions", "/wallet"].some(
-      (route) => path === route || path.startsWith(`${route}/`),
-    );
     const response = await apiClient.get("/user", {
-      params: needsDashboardData ? { include_dashboard: 1 } : undefined,
       signal,
     });
     return response.data.data?.user ?? null;
