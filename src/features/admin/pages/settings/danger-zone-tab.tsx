@@ -2,7 +2,12 @@ import { useState } from "react";
 import { AlertTriangle, Trash2, Zap } from "lucide-react";
 import { apiClient } from "@shared/api/apiClient";
 import { Card, Button, inputCls } from "../../../user/components/shared-ui";
-import { SectionTitle, ErrorBanner, extractErrorMessage } from "./shared";
+import {
+  SectionTitle,
+  ErrorBanner,
+  extractErrorMessage,
+  extractErrorDetail,
+} from "./shared";
 
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
 
@@ -180,15 +185,18 @@ export function DangerZoneTab() {
   }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
     const handle = async () => {
       setLoading(true);
       setError(null);
+      setErrorDetail(null);
       try {
         const res = await runMigrations();
         onDone(res.output);
       } catch (err) {
         setError(extractErrorMessage(err));
+        setErrorDetail(extractErrorDetail(err));
       } finally {
         setLoading(false);
       }
@@ -212,8 +220,13 @@ export function DangerZoneTab() {
           </p>
 
           {error && (
-            <div className="mb-3">
+            <div className="mb-3 space-y-2">
               <ErrorBanner message={error} />
+              {errorDetail && (
+                <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed bg-red-50 border border-red-100 text-red-900 p-3 rounded">
+                  {errorDetail}
+                </pre>
+              )}
             </div>
           )}
 

@@ -69,6 +69,39 @@ export function extractErrorMessage(err: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+// Some endpoints (e.g. migrations) shell out to the framework and can attach
+// the raw command/exception output to a failed response. The friendly
+// `message` alone hides which migration/SQL actually failed, so pull any
+// verbose detail the backend included for display alongside it. Returns null
+// when the response carries nothing beyond the human-readable message.
+export function extractErrorDetail(err: unknown): string | null {
+  if (!axios.isAxiosError(err)) return null;
+  const data = err.response?.data as
+    | {
+        data?: { output?: unknown; exit_code?: unknown };
+        output?: unknown;
+        error?: unknown;
+        exception?: unknown;
+        trace?: unknown;
+      }
+    | undefined;
+  if (!data || typeof data !== "object") return null;
+
+  const candidates = [
+    data.data?.output,
+    data.output,
+    data.error,
+    data.exception,
+    data.trace,
+  ];
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return null;
+}
+
 export function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
