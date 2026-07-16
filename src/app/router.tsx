@@ -5,10 +5,20 @@ import { authRouter } from "@/features/auth/router";
 import { userRouter } from "@/features/user/router";
 import { adminRouter } from "@/features/admin/router";
 
+const RouteHydrateFallback = () => (
+  <div className="flex min-h-screen items-center justify-center bg-slate-50" role="status" aria-live="polite">
+    <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-800" />
+      Loading Vendify…
+    </div>
+  </div>
+);
+
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
+    hydrateFallbackElement: <RouteHydrateFallback />,
     // Catches both unmatched paths (404) and any thrown error anywhere in
     // this tree — see route-error.tsx.
     errorElement: <RouteErrorPage />,
