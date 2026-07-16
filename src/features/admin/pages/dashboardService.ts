@@ -39,8 +39,8 @@ export type Stats = {
 };
 
 export const statsService = {
-  get: (): Promise<Stats> =>
-    apiClient.get<ApiEnvelope<Stats>>("/admin/stats").then((r) => r.data.data),
+  get: (signal?: AbortSignal): Promise<Stats> =>
+    apiClient.get<ApiEnvelope<Stats>>("/admin/stats", { signal }).then((r) => r.data.data),
 };
 
 // ─── /admin/analytics ───────────────────────────────────────────────────────
@@ -102,9 +102,9 @@ export type Analytics = {
 export type AnalyticsParams = { start_date?: string; end_date?: string };
 
 export const analyticsService = {
-  get: (params?: AnalyticsParams): Promise<Analytics> =>
+  get: (params?: AnalyticsParams, signal?: AbortSignal): Promise<Analytics> =>
     apiClient
-      .get<ApiEnvelope<Analytics>>("/admin/analytics", { params })
+      .get<ApiEnvelope<Analytics>>("/admin/analytics", { params, signal })
       .then((r) => r.data.data),
 };
 
@@ -124,14 +124,14 @@ const defaultRangeParams = (): AnalyticsParams => {
 };
 
 export const prefetchAdminDashboard = (queryClient: QueryClient) => {
-  queryClient.prefetchQuery({ queryKey: ["admin", "stats"], queryFn: () => statsService.get() });
+  queryClient.prefetchQuery({ queryKey: ["admin", "stats"], queryFn: ({ signal }) => statsService.get(signal) });
   queryClient.prefetchQuery({
     queryKey: ["admin", "analytics", DEFAULT_RANGE_DAYS],
-    queryFn: () => analyticsService.get(defaultRangeParams()),
+    queryFn: ({ signal }) => analyticsService.get(defaultRangeParams(), signal),
   });
-  queryClient.prefetchQuery({ queryKey: ["admin", "providers"], queryFn: () => providerService.getAll() });
+  queryClient.prefetchQuery({ queryKey: ["admin", "providers"], queryFn: ({ signal }) => providerService.getAll(signal) });
   queryClient.prefetchQuery({
     queryKey: ["admin", "recent-transactions"],
-    queryFn: () => transactionService.getRecent(8),
+    queryFn: ({ signal }) => transactionService.getRecent(8, signal),
   });
 };

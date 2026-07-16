@@ -102,25 +102,25 @@ export default function AdminPage() {
   // without anyone needing to re-derive a combined loading flag by hand.
   const statsQuery = useQuery({
     queryKey: ["admin", "stats"],
-    queryFn: () => statsService.get(),
+    queryFn: ({ signal }) => statsService.get(signal),
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
   });
   const analyticsQuery = useQuery({
     queryKey: ["admin", "analytics", rangeDays],
-    queryFn: () => analyticsService.get(rangeParams(rangeDays)),
+    queryFn: ({ signal }) => analyticsService.get(rangeParams(rangeDays), signal),
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
   const providersQuery = useQuery({
     queryKey: ["admin", "providers"],
-    queryFn: () => providerService.getAll(),
+    queryFn: ({ signal }) => providerService.getAll(signal),
     staleTime: 2 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
   const recentTxnsQuery = useQuery({
     queryKey: ["admin", "recent-transactions"],
-    queryFn: () => transactionService.getRecent(8),
+    queryFn: ({ signal }) => transactionService.getRecent(8, signal),
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
   });

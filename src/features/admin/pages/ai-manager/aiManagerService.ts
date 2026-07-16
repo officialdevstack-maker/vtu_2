@@ -205,9 +205,9 @@ export const aiManagerService = {
       .then((r) => r.data.data),
 
   // Proactive monitoring alerts written by the backend AiMonitor middleware.
-  listAlerts: (): Promise<AiAlert[]> =>
+  listAlerts: (signal?: AbortSignal): Promise<AiAlert[]> =>
     apiClient
-      .get<ApiEnvelope<AiAlert[]>>(`${BASE}/alerts`)
+      .get<ApiEnvelope<AiAlert[]>>(`${BASE}/alerts`, { signal })
       .then((r) => r.data.data),
 
   acknowledgeAlert: (id: number): Promise<void> =>

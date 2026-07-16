@@ -125,8 +125,8 @@ export type ProviderPlanImports = {
 const BASE = "/table/vendors";
 
 export const providerService = {
-  getAll: (): Promise<Provider[]> =>
-    apiClient.get<ApiEnvelope<Provider[]>>(BASE).then((r) => r.data.data),
+  getAll: (signal?: AbortSignal): Promise<Provider[]> =>
+    apiClient.get<ApiEnvelope<Provider[]>>(BASE, { signal }).then((r) => r.data.data),
 
   getById: (id: string): Promise<Provider> =>
     apiClient

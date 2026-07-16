@@ -1,5 +1,24 @@
 import { QueryClient } from "@tanstack/react-query";
 
+const httpStatusOf = (error: unknown): number | undefined =>
+  (error as { response?: { status?: number } } | null)?.response?.status;
+
+// Retry only failures that can reasonably recover. Authentication,
+// permission, validation and missing-route responses must never turn into a
+// request loop. TanStack passes the number of failures already observed, so
+// this permits at most one retry (two total attempts).
+export const shouldRetryQuery = (failureCount: number, error: unknown): boolean => {
+  const status = httpStatusOf(error);
+  if (status != null && status >= 400 && status < 500 && status !== 408 && status !== 429) {
+    return false;
+  }
+
+  return failureCount < 1;
+};
+
+export const queryRetryDelay = (attemptIndex: number): number =>
+  Math.min(1_000 * 2 ** attemptIndex, 8_000);
+
 // Catalog-style queries: server data that changes on admin action, not per
 // user or per minute (plan lists, network lists, bank lists, site settings).
 // These are safe to treat as fresh for a long time and to persist across
@@ -31,14 +50,15 @@ const CATALOG_GC_TIME = 10 * 60 * 1000;
 // refetch storm on every tab focus/remount), kept around for 5 minutes after
 // its last observer unmounts (so navigating back to a page — or switching
 // between admin/user view — is instant from cache), and a failed query
-// retries once rather than the default three (most failures here are auth
-// 401/403s that a retry won't fix).
+// retries transient failures with a small, bounded exponential backoff. 4xx
+// auth/permission/validation failures are not retried.
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30 * 1000,
       gcTime: 5 * 60 * 1000,
-      retry: 1,
+      retry: shouldRetryQuery,
+      retryDelay: queryRetryDelay,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
     },

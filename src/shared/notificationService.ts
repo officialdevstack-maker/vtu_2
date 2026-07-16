@@ -35,9 +35,9 @@ export const notificationService = {
       })
       .then((r) => ({ data: r.data.data, meta: r.data.meta })),
 
-  getUnreadCount: (): Promise<number> =>
+  getUnreadCount: (signal?: AbortSignal): Promise<number> =>
     apiClient
-      .get<ApiEnvelope<{ count: number }>>("/notifications/unread-count")
+      .get<ApiEnvelope<{ count: number }>>("/notifications/unread-count", { signal })
       .then((r) => r.data.data.count),
 
   markRead: (id: string): Promise<void> =>

@@ -239,13 +239,16 @@ const Layout = () => {
 
   const unreadQuery = useQuery({
     queryKey: ["notifications", "unread-count"],
-    queryFn: () => notificationService.getUnreadCount(),
+    queryFn: ({ signal }) => notificationService.getUnreadCount(signal),
     enabled: Boolean(user),
+    staleTime: 60_000,
     refetchInterval: 60000,
+    refetchIntervalInBackground: false,
   });
 
-  // Same query the floating widget uses (shared key = one request); here it
-  // just decides whether the topbar AI avatar shows its attention dot.
+  // The layout is the single owner of alert fetching/polling. Both the topbar
+  // indicator and floating widget consume this result without mounting a
+  // second query observer.
   const aiAlertsQuery = useAiAlerts(Boolean(user));
   const aiAlertCount = aiAlertsQuery.data?.length ?? 0;
 
@@ -604,7 +607,7 @@ const Layout = () => {
       </div>
 
       {/* Proactive AI monitor — floats only while there are open alerts. */}
-      <AiAlertsWidget />
+      <AiAlertsWidget alerts={aiAlertsQuery.data ?? []} />
 
       {mobileSidebarOpen ? (
         <div className="fixed inset-0 z-50 overflow-hidden lg:hidden">

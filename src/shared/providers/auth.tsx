@@ -166,7 +166,7 @@ const postAuthMessage = (message: AuthChannelMessage) => {
   }
 };
 
-const fetchCurrentUser = async (): Promise<User | null> => {
+const fetchCurrentUser = async (signal?: AbortSignal): Promise<User | null> => {
   try {
     const path = typeof window === "undefined" ? "" : window.location.pathname;
     const needsDashboardData = ["/dashboard", "/transactions", "/wallet"].some(
@@ -174,9 +174,13 @@ const fetchCurrentUser = async (): Promise<User | null> => {
     );
     const response = await apiClient.get("/user", {
       params: needsDashboardData ? { include_dashboard: 1 } : undefined,
+      signal,
     });
     return response.data.data?.user ?? null;
-  } catch {
+  } catch (error) {
+    // Let TanStack Query recognise an unmount/navigation cancellation. Turning
+    // an aborted request into `null` would incorrectly cache a logged-out user.
+    if (signal?.aborted) throw error;
     return null;
   }
 };
@@ -198,7 +202,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const { data: user = null, isLoading: isLoadingUser } = useQuery({
     queryKey: AUTH_QUERY_KEY,
-    queryFn: fetchCurrentUser,
+    queryFn: ({ signal }) => fetchCurrentUser(signal),
     enabled: hasToken,
     staleTime: 60_000,
   });

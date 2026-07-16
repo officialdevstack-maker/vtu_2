@@ -17,9 +17,11 @@ import {
 export const useAiAlerts = (enabled: boolean) =>
   useQuery({
     queryKey: ["ai", "alerts"],
-    queryFn: () => aiManagerService.listAlerts(),
+    queryFn: ({ signal }) => aiManagerService.listAlerts(signal),
     enabled,
+    staleTime: 60_000,
     refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     // Permission-gated endpoint: admins without ai_manager get a 403 — stay
     // quiet instead of retry-looping.
     retry: false,
@@ -30,13 +32,10 @@ const SEVERITY_DOT: Record<AiAlert["severity"], string> = {
   warning: "bg-amber-500",
 };
 
-const AiAlertsWidget = () => {
+const AiAlertsWidget = ({ alerts }: { alerts: AiAlert[] }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-
-  const alertsQuery = useAiAlerts(true);
-  const alerts = alertsQuery.data ?? [];
 
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["ai", "alerts"] });

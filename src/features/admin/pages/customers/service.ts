@@ -234,9 +234,10 @@ export const transactionService = {
 
   // Most recent transactions across all users, with the owning user attached
   // (see TransactionResource::toArray()'s whenLoaded('user')).
-  getRecent: async (limit = 8): Promise<Transaction[]> => {
+  getRecent: async (limit = 8, signal?: AbortSignal): Promise<Transaction[]> => {
     const response = await apiClient.get<ApiEnvelope<any>>("/table/transactions", {
       params: { sort: "created_at,desc", with: "user", per_page: limit, page: 1 },
+      signal,
     });
     return digArray(response.data) as Transaction[];
   },
