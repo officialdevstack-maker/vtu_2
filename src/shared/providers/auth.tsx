@@ -184,13 +184,6 @@ const fetchCurrentUser = async (signal?: AbortSignal): Promise<User | null> => {
   }
 };
 
-const isProtectedPath = () => {
-  if (typeof window === "undefined") return false;
-  return /^(?:\/admin|\/dashboard|\/wallet|\/transactions|\/notifications|\/settings|\/profile)(?:\/|$)/.test(
-    window.location.pathname,
-  );
-};
-
 const persistAuthToken = (payload?: AuthPayload | null) => {
   const token = payload?.token ?? payload?.access_token;
   if (token) {
@@ -201,13 +194,7 @@ const persistAuthToken = (payload?: AuthPayload | null) => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
-  // A Sanctum session cookie is HttpOnly, so it cannot be inspected from
-  // JavaScript. On a protected deep link we must still hydrate /user even
-  // when this browser has no bearer token (for example after a cookie-based
-  // login or a browser restart).
-  const [hasToken, setHasToken] = useState(
-    () => Boolean(getAuthToken()) || isProtectedPath(),
-  );
+  const [hasToken, setHasToken] = useState(() => Boolean(getAuthToken()));
   const [isSyncingToken, setIsSyncingToken] = useState(
     () => !getAuthToken() && canUseAuthChannel(),
   );
@@ -283,38 +270,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (loginValue: string, password: string) => {
       setIsLoading(true);
       try {
+        setAuthToken(null);
+        // Also guards the path where a session ends without logout() running
+        // (an expired token, or navigating straight to /login client-side).
+        clearCatalogRequestCache();
         await apiClient.get("/sanctum/csrf-cookie");
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", { login: loginValue, password });
-
-        // Do not clear a currently stored session until the new credentials
-        // have succeeded. A failed attempt must leave the form and any active
-        // session untouched. Once it succeeds, discard every old account's
-        // cache before publishing the new identity.
-        setAuthToken(null);
-        queryClient.clear();
-        clearCatalogRequestCache();
         persistAuthToken(response.data.data);
-        // A successful login establishes either a bearer token or a Sanctum
-        // cookie session. In both cases allow the shared auth query to run;
-        // treating cookie-only success as logged out caused the admin guard
-        // to race navigation back to /login.
-        setHasToken(true);
-        setIsSyncingToken(false);
         if (response.data.data?.token || response.data.data?.access_token) {
+          setHasToken(true);
           postAuthMessage({
             type: "token-response",
             token: response.data.data.token ?? response.data.data.access_token ?? "",
           });
         }
-        const returnedUser = response.data.data?.user ?? null;
-        const freshUser = returnedUser ?? await queryClient.fetchQuery({
-          queryKey: AUTH_QUERY_KEY,
-          queryFn: ({ signal }) => fetchCurrentUser(signal),
-          staleTime: 0,
-        });
-        if (!freshUser) {
-          throw new Error("Your session could not be verified. Please sign in again.");
-        }
+        const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
         return freshUser;
       } catch (error: any) {
