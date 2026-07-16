@@ -10,6 +10,7 @@ import {
 export const notificationMeta: Record<string, { icon: LucideIcon; tone: "success" | "warning" | "error" | "info" }> = {
   transaction_success: { icon: CheckCircle2, tone: "success" },
   transaction_failed: { icon: XCircle, tone: "error" },
+  wallet_funded: { icon: Landmark, tone: "success" },
   wallet_transfer_in: { icon: Send, tone: "success" },
   wallet_withdrawal_completed: { icon: Landmark, tone: "success" },
   wallet_withdrawal_failed: { icon: Landmark, tone: "error" },
