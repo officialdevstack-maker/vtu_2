@@ -351,6 +351,7 @@ export type DirectiveType =
   | "reroute_provider"
   | "update_settings"
   | "retry_transaction"
+  | "set_funding_mode"
   | "custom";
 
 export const childDirectiveService = {
@@ -410,6 +411,13 @@ export type AffiliateControlsState = {
     enabled: boolean;
     parent_url: string;
     username?: string;
+    updated_at: string;
+  };
+  // "Aggregate funding to this platform": the parent generates the child's
+  // customer virtual accounts and relays credits, so all funding money lands
+  // here. Read on the parent by ChildInstance::fundingAggregationEnabled().
+  funding_aggregation?: {
+    enabled: boolean;
     updated_at: string;
   };
 };

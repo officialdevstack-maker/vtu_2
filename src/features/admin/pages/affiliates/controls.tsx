@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Route, SlidersHorizontal, Send, Waypoints } from "lucide-react";
+import { ExternalLink, Landmark, Route, SlidersHorizontal, Send, Waypoints } from "lucide-react";
 import {
   Button,
   Card,
@@ -100,6 +100,15 @@ export default function AffiliateControlsPage() {
   );
   const [tunnelPassword, setTunnelPassword] = useState<string>("");
   const [savingTunnel, setSavingTunnel] = useState(false);
+
+  // ── Funding aggregation ──
+  // When on, the parent generates this child's customer virtual accounts and
+  // relays credits, so all funding money lands on the parent (see the
+  // parent's ChildFundingController).
+  const [fundingEnabled, setFundingEnabled] = useState<boolean>(
+    controls.funding_aggregation?.enabled ?? false,
+  );
+  const [savingFunding, setSavingFunding] = useState(false);
 
   // ── Process flags ──
   const [flags, setFlags] = useState<Partial<Record<ProcessFlagKey, boolean>>>(
@@ -219,6 +228,35 @@ export default function AffiliateControlsPage() {
       setError(extractErrorMessage(err, "Could not queue the tunnel-all directives."));
     } finally {
       setSavingTunnel(false);
+    }
+  };
+
+  const saveFundingAggregation = async () => {
+    setSavingFunding(true);
+    try {
+      // Tell the child which mode to use — it routes new customers' funding
+      // account requests to the parent when aggregating. The parent side gates
+      // on config.controls.funding_aggregation (persisted below) regardless.
+      await childDirectiveService.create(id, "set_funding_mode", {
+        aggregate: fundingEnabled,
+        parent_url:
+          typeof window !== "undefined" ? window.location.origin : "",
+      });
+      await persist(
+        {
+          funding_aggregation: {
+            enabled: fundingEnabled,
+            updated_at: new Date().toISOString(),
+          },
+        },
+        fundingEnabled
+          ? "Funding aggregation on — the parent now issues this affiliate's customer accounts and relays credits."
+          : "Funding aggregation off — the affiliate handles its own customer funding again.",
+      );
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not update funding aggregation."));
+    } finally {
+      setSavingFunding(false);
     }
   };
 
@@ -404,6 +442,46 @@ export default function AffiliateControlsPage() {
               >
                 <Send className="w-3.5 h-3.5" />
                 {tunnelEnabled ? "Tunnel all slots here" : "Turn off tunnel-all"}
+              </Button>
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            icon={Landmark}
+            title="Aggregate funding to this platform"
+            description="The parent issues this affiliate's customer bank accounts and receives their funding, then relays each credit back so the affiliate's customer wallet stays in sync."
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 px-3.5 py-3">
+                <div>
+                  <p className="text-xs font-medium text-slate-700">
+                    Parent collects customer funding
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {controls.funding_aggregation?.updated_at
+                      ? `Last set: ${new Date(controls.funding_aggregation.updated_at).toLocaleString()}`
+                      : "Never set"}
+                  </p>
+                </div>
+                <Toggle value={fundingEnabled} onChange={setFundingEnabled} />
+              </div>
+              <p className="text-[11px] leading-4 text-slate-400">
+                When on, the affiliate app asks this platform to create a virtual
+                account for each customer, so money is paid to the parent. The
+                parent then notifies the affiliate to credit that customer’s
+                wallet. No payment keys are needed on the affiliate.
+              </p>
+              <Button
+                size="sm"
+                fullWidth
+                disabled={savingFunding}
+                loading={savingFunding}
+                onClick={() => void saveFundingAggregation()}
+              >
+                <Send className="w-3.5 h-3.5" />
+                {fundingEnabled
+                  ? "Turn on funding aggregation"
+                  : "Turn off funding aggregation"}
               </Button>
             </div>
           </SectionCard>
