@@ -30,6 +30,7 @@ import {
   type TemplateType,
   type TemplateEvent,
   type TemplateChannel,
+  type TemplateVariableCatalog,
 } from "./service";
 
 const eventOptions: TemplateEvent[] = ["login", "register", "purchase", "wallet_credit", "wallet_debit"];
@@ -105,6 +106,7 @@ export default function TemplatesPage() {
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [deleteTarget, setDeleteTarget] = useState<Template | null>(null);
+  const [catalog, setCatalog] = useState<TemplateVariableCatalog | null>(null);
 
   const loadTemplates = () => {
     setLoading(true);
@@ -128,12 +130,49 @@ export default function TemplatesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeFilter, eventFilter, enabledFilter]);
 
+  // The supported-variable catalog, loaded once — powers the insertable
+  // palette and the "won't resolve" warning below the editor.
+  useEffect(() => {
+    templateService
+      .getVariables()
+      .then(setCatalog)
+      .catch(() => setCatalog(null));
+  }, []);
+
   const totalTemplates = templates.length;
   const eventTemplates = templates.filter((t) => t.type === "event").length;
   const broadcastTemplates = templates.filter((t) => t.type === "broadcast").length;
   const enabledTemplates = templates.filter((t) => t.enabled).length;
 
-  const formVariables = useMemo(() => extractVariables(form.content), [form.content]);
+  const formVariables = useMemo(
+    () => extractVariables(`${form.subject} ${form.content}`),
+    [form.subject, form.content],
+  );
+
+  // Variables available to the template being edited: globals plus, for an
+  // event template, that event's own. Broadcast templates get only the globals.
+  const availableVariables = useMemo(() => {
+    if (!catalog) return [];
+    const eventVars =
+      form.type === "event" && form.event ? (catalog.events[form.event] ?? []) : [];
+    return [...catalog.global, ...eventVars];
+  }, [catalog, form.type, form.event]);
+
+  // Placeholders used in the body that nothing supplies — they'd render
+  // literally. "custom_"-prefixed ones are intentional, so don't warn on them.
+  const unknownVariables = useMemo(() => {
+    if (!catalog) return [];
+    const known = new Set(availableVariables.map((v) => v.name));
+    return formVariables.filter(
+      (v) => !known.has(v) && !v.startsWith("custom_"),
+    );
+  }, [catalog, availableVariables, formVariables]);
+
+  const insertVariable = (name: string) =>
+    setForm((f) => ({
+      ...f,
+      content: `${f.content}${f.content && !f.content.endsWith(" ") ? " " : ""}{{${name}}}`,
+    }));
 
   const toggleChannel = (c: TemplateChannel) => {
     setForm((f) => ({
@@ -542,17 +581,50 @@ export default function TemplatesPage() {
                     rows={5}
                     className={`${inputCls} resize-none font-mono text-xs`}
                   />
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {formVariables.length === 0 ? (
-                      <p className="text-xs text-slate-400">No variables detected yet</p>
-                    ) : (
-                      formVariables.map((v) => (
-                        <span key={v} className="text-[10px] font-mono font-medium text-[#111827] bg-[#111827]/10 border border-[#111827]/15 rounded-full px-2 py-0.5">
-                          {`{{${v}}}`}
-                        </span>
-                      ))
-                    )}
-                  </div>
+                  {/* Any placeholder the send code won't fill in — it would be
+                      delivered to the customer verbatim, so flag it. */}
+                  {unknownVariables.length > 0 && (
+                    <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                      <p className="text-[11px] leading-4 text-amber-700">
+                        {unknownVariables.map((v) => `{{${v}}}`).join(", ")}{" "}
+                        {unknownVariables.length === 1 ? "isn't" : "aren't"} a
+                        supported variable and will show literally to customers.
+                        Pick one below, or prefix it with{" "}
+                        <span className="font-mono">custom_</span> if intentional.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Insertable palette of the variables this template supports —
+                      this is how you "add" a variable: pick from what the send
+                      pipeline actually provides. */}
+                  {availableVariables.length > 0 && (
+                    <div className="mt-2">
+                      <p className="mb-1 text-[11px] font-medium text-slate-500">
+                        Available variables — click to insert
+                        {form.type === "event" && !form.event && (
+                          <span className="text-slate-400">
+                            {" "}
+                            (pick an event above for event-specific ones)
+                          </span>
+                        )}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableVariables.map((v) => (
+                          <button
+                            key={v.name}
+                            type="button"
+                            title={v.description}
+                            onClick={() => insertVariable(v.name)}
+                            className="rounded-full border border-[#111827]/15 bg-[#111827]/[0.06] px-2 py-0.5 font-mono text-[10px] font-medium text-[#111827] transition-colors hover:bg-[#111827]/12"
+                          >
+                            {`{{${v.name}}}`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-2">Channels</label>
