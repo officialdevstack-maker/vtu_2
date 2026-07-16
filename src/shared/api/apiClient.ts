@@ -118,13 +118,11 @@ apiClient.interceptors.request.use((config) => {
   const native = typeof window !== 'undefined'
     ? (window as { __VENDIFY_NATIVE__?: string }).__VENDIFY_NATIVE__
     : undefined;
-  const impersonating = typeof window !== 'undefined'
-    && Boolean(window.localStorage.getItem('kora-admin-token-backup'));
-
-  // Browser customers authenticate with the secure Sanctum session cookie.
-  // Bearer remains available where it is genuinely required: the native
-  // shell and admin-to-customer impersonation sessions.
-  if (authToken && (native || impersonating)) {
+  // Login currently issues a Sanctum bearer token and the auth provider uses
+  // that token as the durable, tab-scoped session marker. Production's cookie
+  // session is not authenticating the cross-subdomain follow-up requests, so
+  // every protected request must carry the token returned by login.
+  if (authToken) {
     setRequestHeader(config.headers, 'Authorization', `Bearer ${authToken}`);
   }
 
