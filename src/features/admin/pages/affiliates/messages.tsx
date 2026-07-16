@@ -17,6 +17,10 @@ import {
 } from "./service";
 import { useAffiliate } from "./affiliate-layout";
 import { EmailCustomerModal, extractErrorMessage } from "./modals";
+import {
+  templateService,
+  type Template,
+} from "../notifications/service";
 
 // The email side of running an affiliate: everything the parent has ever
 // sent to this child's customers, plus the two ways to send more — a
@@ -47,6 +51,10 @@ export default function AffiliateMessagesPage() {
   const [referralCountMin, setReferralCountMin] = useState<string>("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+
+  // Reuse the global notification templates to seed an affiliate email.
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templateId, setTemplateId] = useState("");
   const [sending, setSending] = useState(false);
   const [sentCount, setSentCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +65,22 @@ export default function AffiliateMessagesPage() {
 
   const refreshMessages = () => {
     childMessageService.getForInstance(id).then(setMessages);
+  };
+
+  useEffect(() => {
+    templateService
+      .getAll()
+      .then(setTemplates)
+      .catch(() => setTemplates([]));
+  }, []);
+
+  const applyTemplate = (value: string) => {
+    setTemplateId(value);
+    if (!value) return;
+    const t = templates.find((tpl) => String(tpl.id) === value);
+    if (!t) return;
+    if (t.subject) setSubject(t.subject);
+    setBody(t.content);
   };
 
   useEffect(() => {
@@ -187,6 +211,30 @@ export default function AffiliateMessagesPage() {
                   ? "Could not determine reachable customers"
                   : `Reaches ${count} synced customer${count === 1 ? "" : "s"} with an email address.`}
             </p>
+            {templates.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                  Start from a template
+                </label>
+                <select
+                  value={templateId}
+                  onChange={(e) => applyTemplate(e.target.value)}
+                  className={selectCls}
+                >
+                  <option value="">Write from scratch</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={String(t.id)}>
+                      {t.name}
+                      {t.type === "event" && t.event ? ` (${t.event})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Fills in the subject and message below; edit as needed before
+                  sending.
+                </p>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
                 Subject <span className="text-red-400">*</span>

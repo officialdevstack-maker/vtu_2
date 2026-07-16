@@ -18,11 +18,13 @@ import { useAuth } from "@/shared/providers/auth";
 import { roleService, type Role } from "../customers/service";
 import {
   broadcastService,
+  templateService,
   type AudienceFilters,
   type AudienceMode,
   type BroadcastChannel,
   type BroadcastHistoryItem,
   type BroadcastUserSearchResult,
+  type Template,
 } from "./service";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -152,6 +154,11 @@ export default function BroadcastPage() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [smsMessage, setSmsMessage] = useState("");
+
+  // Saved templates to start a broadcast from — selecting one prefills the
+  // per-channel fields below (they stay fully editable afterwards).
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templateId, setTemplateId] = useState<string>("");
   const [priorityHigh, setPriorityHigh] = useState(false);
 
   // When
@@ -182,7 +189,41 @@ export default function BroadcastPage() {
       .getAll()
       .then(setRoles)
       .catch(() => setRolesAvailable(false));
+    // Templates are a convenience; a failure here shouldn't block composing.
+    templateService
+      .getAll()
+      .then(setTemplates)
+      .catch(() => setTemplates([]));
   }, []);
+
+  // Prefill the per-channel fields from a saved template. We map the template's
+  // single subject/content onto every channel's fields, and enable the channels
+  // the template targets, so one pick sets up a send the admin can then tweak.
+  const applyTemplate = (id: string) => {
+    setTemplateId(id);
+    if (!id) return;
+    const t = templates.find((tpl) => String(tpl.id) === id);
+    if (!t) return;
+
+    if (t.subject) {
+      setEmailSubject(t.subject);
+      setNotifTitle(t.subject);
+    }
+    setEmailBody(t.content);
+    setNotifMessage(t.content);
+    setSmsMessage(t.content);
+    if (!broadcastName.trim()) setBroadcastName(t.name);
+
+    // Turn on the channels the template is configured for, mapped to the
+    // broadcast channel names (email→Email, in_app→database, sms→sms).
+    const mapped = new Set<BroadcastChannel>(channels);
+    for (const ch of t.channels) {
+      if (ch === "email") mapped.add("Email");
+      else if (ch === "sms") mapped.add("sms");
+      else if (ch === "in_app" || ch === "push") mapped.add("database");
+    }
+    setChannels(Array.from(mapped));
+  };
 
   // Debounced user search for "target specific individuals".
   useEffect(() => {
@@ -533,6 +574,33 @@ export default function BroadcastPage() {
                 className={inputCls}
               />
             </div>
+
+            {templates.length > 0 && (
+              <div>
+                <SectionTitle>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5" /> Start from a template (optional)
+                  </span>
+                </SectionTitle>
+                <select
+                  value={templateId}
+                  onChange={(e) => applyTemplate(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Write from scratch</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={String(t.id)}>
+                      {t.name}
+                      {t.type === "event" && t.event ? ` (${t.event})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-400">
+                  Fills the channel fields below from the template — you can edit
+                  them before sending.
+                </p>
+              </div>
+            )}
 
             <div>
               <SectionTitle>Channels</SectionTitle>

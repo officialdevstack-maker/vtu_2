@@ -42,6 +42,15 @@ export type TemplateFilters = {
 // backend/app/Http/Middleware/HandleRequest.php).
 type TemplateEnvelope<T> = { success: boolean; message?: string; data: T };
 
+// A supported placeholder from the backend catalog (App\Support\TemplateVariables).
+export type TemplateVariable = { name: string; token: string; description: string };
+
+export type TemplateVariableCatalog = {
+  global: TemplateVariable[];
+  events: Record<TemplateEvent, TemplateVariable[]>;
+  note: string;
+};
+
 const BASE = "/admin/templates";
 
 export const templateService = {
@@ -49,6 +58,12 @@ export const templateService = {
     apiClient
       .get<TemplateEnvelope<Template[]>>(BASE, { params: filters })
       .then((r) => r.data.data ?? []),
+
+  // The catalog of supported {{variables}} — global plus per event.
+  getVariables: (): Promise<TemplateVariableCatalog> =>
+    apiClient
+      .get<TemplateEnvelope<TemplateVariableCatalog>>(`${BASE}/variables`)
+      .then((r) => r.data.data),
 
   getById: (id: string | number): Promise<Template> =>
     apiClient.get<TemplateEnvelope<Template>>(`${BASE}/${id}`).then((r) => r.data.data),
