@@ -78,7 +78,7 @@ export default function BuyDataPage() {
   const plansByNetwork = useMemo(() => {
     const map = new Map<string, DataPlan[]>();
     for (const plan of dataPlansQuery.data ?? []) {
-      if (!plan.active || !Number.isFinite(Number(plan.price)) || Number(plan.price) <= 0) continue;
+      if (!plan.active) continue;
       const key = plan.network.toLowerCase();
       map.set(key, [...(map.get(key) ?? []), plan]);
     }
@@ -184,9 +184,7 @@ export default function BuyDataPage() {
 
   const selectedPlan =
     plansForType.find((p) => p.id === selectedPlanId) ?? null;
-  const planPrice = selectedPlan && Number.isFinite(Number(selectedPlan.price))
-    ? Number(selectedPlan.price)
-    : NaN;
+  const planPrice = Number(selectedPlan?.price ?? 0);
 
   const discountQuery = useQuery({
     queryKey: ["discount-preview", "data", network, planPrice],
@@ -207,7 +205,7 @@ export default function BuyDataPage() {
   const dataDiscount = dataDiscountQuery.data ?? null;
 
   const isFormValid =
-    Boolean(selectedNetwork) && Boolean(selectedPlan) && Number.isFinite(planPrice) && planPrice > 0 && phone.length === 11;
+    Boolean(selectedNetwork) && Boolean(selectedPlan) && phone.length === 11;
   const isConfirmValid = pin.length === 4;
 
   const handleConfirm = async () => {
