@@ -84,6 +84,23 @@ export default function AffiliateControlsPage() {
   });
   const [savingRoutes, setSavingRoutes] = useState(false);
 
+  // ── Tunnel-all ──
+  // Points every provider slot at this parent in one action. The child handles
+  // slots 1-5, so tunnel-all covers all of them (the manual reroute UI above
+  // only exposes 1-3). Password is directive-only, never persisted.
+  const [tunnelEnabled, setTunnelEnabled] = useState<boolean>(
+    controls.tunnel_all?.enabled ?? false,
+  );
+  const [tunnelUrl, setTunnelUrl] = useState<string>(
+    controls.tunnel_all?.parent_url ||
+      (typeof window !== "undefined" ? window.location.origin : ""),
+  );
+  const [tunnelUsername, setTunnelUsername] = useState<string>(
+    controls.tunnel_all?.username ?? "",
+  );
+  const [tunnelPassword, setTunnelPassword] = useState<string>("");
+  const [savingTunnel, setSavingTunnel] = useState(false);
+
   // ── Process flags ──
   const [flags, setFlags] = useState<Partial<Record<ProcessFlagKey, boolean>>>(
     controls.process_flags?.values ?? {},
@@ -151,6 +168,57 @@ export default function AffiliateControlsPage() {
       setError(extractErrorMessage(err, "Could not queue the reroute directives."));
     } finally {
       setSavingRoutes(false);
+    }
+  };
+
+  const saveTunnelAll = async () => {
+    if (tunnelEnabled) {
+      if (!tunnelUrl.trim()) {
+        setError("The parent URL is required to tunnel transactions here.");
+        return;
+      }
+      if (!tunnelUsername.trim() || !tunnelPassword.trim()) {
+        setError(
+          "A funding-account username and password are required — that's the parent account whose wallet pays for the tunneled transactions.",
+        );
+        return;
+      }
+    }
+    setSavingTunnel(true);
+    try {
+      // Point every slot the child supports (1-5) at this parent, so any plan
+      // mapped to any slot now vends here. Turning the toggle off queues no
+      // reroute (the parent can't know the child's original providers); it just
+      // records intent — reroute the slots back manually to undo.
+      if (tunnelEnabled) {
+        const url = tunnelUrl.trim().replace(/\/+$/, "");
+        for (const slot of ["1", "2", "3", "4", "5"]) {
+          await childDirectiveService.create(id, "reroute_provider", {
+            slot,
+            website_url: url,
+            username: tunnelUsername.trim(),
+            password: tunnelPassword.trim(),
+          });
+        }
+      }
+      await persist(
+        {
+          tunnel_all: {
+            enabled: tunnelEnabled,
+            parent_url: tunnelUrl.trim(),
+            username: tunnelUsername.trim() || undefined,
+            updated_at: new Date().toISOString(),
+          },
+        },
+        tunnelEnabled
+          ? "Tunnel-all directives queued for all 5 slots — every mapped plan will vend on this platform once the affiliate polls."
+          : "Tunnel-all turned off. Reroute the slots back to their own providers to fully undo.",
+      );
+      setTunnelPassword("");
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not queue the tunnel-all directives."));
+    } finally {
+      setSavingTunnel(false);
     }
   };
 

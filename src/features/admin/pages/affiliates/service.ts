@@ -403,6 +403,15 @@ export type AffiliateControlsState = {
     Record<ProviderRouteSlot, { website_url: string; username?: string; updated_at: string }>
   >;
   process_flags?: { values: Partial<Record<ProcessFlagKey, boolean>>; updated_at: string };
+  // "Tunnel everything to this platform": points ALL of the child's provider
+  // slots at the parent in one action, so every matching plan vends here.
+  // The funding account's password is never persisted (directive-only).
+  tunnel_all?: {
+    enabled: boolean;
+    parent_url: string;
+    username?: string;
+    updated_at: string;
+  };
 };
 
 export const getControls = (instance: ChildInstance | null): AffiliateControlsState =>
