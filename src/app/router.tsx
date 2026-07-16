@@ -1,12 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "./route-layout";
 import RouteErrorPage from "./route-error";
-import { authRouter, ProtectedLayout } from "@/features/auth";
-import App from "@/App";
-import { UserLayout, userRouter } from "@/features/user";
-import { adminRouter } from "@/features/admin";
-import AdminProtectedLayout from "@/features/admin/components/AdminProtectedLayout";
-import { PrivacyPolicyPage, RefundPolicyPage, TermsOfServicePage } from "@/features/legal/legal-page";
+import { authRouter } from "@/features/auth/router";
+import { userRouter } from "@/features/user/router";
+import { adminRouter } from "@/features/admin/router";
 
 export const router = createBrowserRouter([
   {
@@ -19,19 +16,31 @@ export const router = createBrowserRouter([
       // public routes
       {
         index: true,
-        element: <App />,
+        lazy: async () => {
+          const { default: Component } = await import("@/features/landing/landing-page");
+          return { Component };
+        },
       },
       {
         path: "privacy",
-        element: <PrivacyPolicyPage />,
+        lazy: async () => {
+          const { PrivacyPolicyPage: Component } = await import("@/features/legal/legal-page");
+          return { Component };
+        },
       },
       {
         path: "terms",
-        element: <TermsOfServicePage />,
+        lazy: async () => {
+          const { TermsOfServicePage: Component } = await import("@/features/legal/legal-page");
+          return { Component };
+        },
       },
       {
         path: "refund-policy",
-        element: <RefundPolicyPage />,
+        lazy: async () => {
+          const { RefundPolicyPage: Component } = await import("@/features/legal/legal-page");
+          return { Component };
+        },
       },
 
       // Public "download the mobile app" page — no auth, reads /app/latest.
@@ -48,17 +57,26 @@ export const router = createBrowserRouter([
       ...authRouter,
 
       {
-        element: <ProtectedLayout />,
+        lazy: async () => {
+          const { default: Component } = await import("@/features/auth/comonents/ProtectedLayout");
+          return { Component };
+        },
         children: [
           {
-            element: <UserLayout />,
+            lazy: async () => {
+              const { default: Component } = await import("@/features/user/components/layout");
+              return { Component };
+            },
             children: [...userRouter],
           },
         ],
       },
       // admin routes — auth + admin-role guard
       {
-        element: <AdminProtectedLayout />,
+        lazy: async () => {
+          const { default: Component } = await import("@/features/admin/components/AdminProtectedLayout");
+          return { Component };
+        },
         children: [...adminRouter],
       },
     ],

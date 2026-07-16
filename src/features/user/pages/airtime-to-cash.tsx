@@ -75,8 +75,8 @@ export default function AirtimeToCashPage() {
   const queryClient = useQueryClient();
 
   const networksQuery = useQuery({
-    queryKey: ["airtime-to-cash", "networks"],
-    queryFn: () => customerService.getAirtimeToCashNetworks(),
+    queryKey: ["networks"],
+    queryFn: () => customerService.getNetworks(),
   });
   const networks = useMemo(
     () => (networksQuery.data ?? []).filter((n) => n.airtime_to_cash_active),

@@ -17,13 +17,19 @@ export type SearchResult = {
 // adminSearch requires user_type=admin and can see across all customers;
 // userSearch only ever returns the logged-in user's own rows.
 export const searchService = {
-  admin: (q: string): Promise<SearchResult[]> =>
+  admin: (q: string, signal?: AbortSignal): Promise<SearchResult[]> =>
     apiClient
-      .get<ApiEnvelope<{ results: SearchResult[] }>>("/admin/search", { params: { q } })
+      .get<ApiEnvelope<{ results: SearchResult[] }>>("/admin/search", {
+        params: { q },
+        signal,
+      })
       .then((r) => r.data.data.results),
 
-  user: (q: string): Promise<SearchResult[]> =>
+  user: (q: string, signal?: AbortSignal): Promise<SearchResult[]> =>
     apiClient
-      .get<ApiEnvelope<{ results: SearchResult[] }>>("/search", { params: { q } })
+      .get<ApiEnvelope<{ results: SearchResult[] }>>("/search", {
+        params: { q },
+        signal,
+      })
       .then((r) => r.data.data.results),
 };

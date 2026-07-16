@@ -22,8 +22,13 @@ export type AppNotification = {
   created_at: string;
 };
 
+export type NotificationPage = {
+  data: AppNotification[];
+  meta: PaginatedMeta;
+};
+
 export const notificationService = {
-  getAll: (page = 1, perPage = 10): Promise<{ data: AppNotification[]; meta: PaginatedMeta }> =>
+  getAll: (page = 1, perPage = 10): Promise<NotificationPage> =>
     apiClient
       .get<PaginatedApiEnvelope<AppNotification[]>>("/notifications", {
         params: { page, per_page: perPage },

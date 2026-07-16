@@ -6,9 +6,9 @@ import { QueryClient } from "@tanstack/react-query";
 // page reloads — a stale plan list is corrected on the next background
 // refetch, and purchases are validated server-side anyway.
 //
-// Listed as top-level query-key prefixes; used both for the longer
-// staleTime below and as the persistence whitelist in main.tsx (user- and
-// admin-specific data deliberately never touches localStorage).
+// Listed as top-level query-key prefixes and used for the longer in-memory
+// staleTime below. main.tsx has a narrower persistence whitelist because
+// role-priced plan data must never survive an account/session change.
 export const CATALOG_QUERY_KEYS = [
   "general-settings",
   "networks",
@@ -21,13 +21,13 @@ export const CATALOG_QUERY_KEYS = [
   "wallet-withdrawal-banks",
 ] as const;
 
-const CATALOG_STALE_TIME = 60 * 1000;
+const CATALOG_STALE_TIME = 5 * 60 * 1000;
 // gcTime must outlive staleTime, and must be >= the persister maxAge so a
 // restored-from-localStorage entry isn't immediately garbage-collected.
-const CATALOG_GC_TIME = 60 * 1000;
+const CATALOG_GC_TIME = 10 * 60 * 1000;
 
 // One shared client for the whole app. Defaults tuned for an admin/customer
-// dashboard, not a live feed: data is treated as fresh for a minute (no
+// dashboard, not a live feed: data is treated as fresh for 30 seconds (no
 // refetch storm on every tab focus/remount), kept around for 5 minutes after
 // its last observer unmounts (so navigating back to a page — or switching
 // between admin/user view — is instant from cache), and a failed query
@@ -36,8 +36,8 @@ const CATALOG_GC_TIME = 60 * 1000;
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
-      gcTime: 60 * 1000,
+      staleTime: 30 * 1000,
+      gcTime: 5 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
@@ -55,3 +55,18 @@ for (const key of CATALOG_QUERY_KEYS) {
 export const isCatalogQueryKey = (queryKey: readonly unknown[]): boolean =>
   typeof queryKey[0] === "string" &&
   (CATALOG_QUERY_KEYS as readonly string[]).includes(queryKey[0]);
+
+// Only genuinely public, price-free metadata may survive a browser session.
+// Plan prices and fees can vary by the authenticated role, so those remain
+// in the in-memory QueryClient and are cleared on logout/account changes.
+const PERSISTABLE_CATALOG_QUERY_KEYS = [
+  "general-settings",
+  "networks",
+  "cable-networks",
+] as const;
+
+export const isPersistableCatalogQueryKey = (
+  queryKey: readonly unknown[],
+): boolean =>
+  typeof queryKey[0] === "string" &&
+  (PERSISTABLE_CATALOG_QUERY_KEYS as readonly string[]).includes(queryKey[0]);

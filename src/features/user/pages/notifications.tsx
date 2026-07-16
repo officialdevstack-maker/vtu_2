@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import {
   PageHeader,
@@ -11,6 +11,7 @@ import {
 import {
   notificationService,
   type AppNotification,
+  type NotificationPage,
 } from "@/shared/notificationService";
 import {
   notificationIcon,
@@ -28,31 +29,72 @@ export default function NotificationsPage() {
     queryKey: ["notifications", page],
     queryFn: () => notificationService.getAll(page, PAGE_SIZE),
   });
+  const unreadQuery = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: () => notificationService.getUnreadCount(),
+  });
 
   const notifs = notifsQuery.data?.data ?? [];
   const meta = notifsQuery.data?.meta;
-  const unreadCount = notifs.filter((n) => !n.read_at).length;
+  const unreadCount = unreadQuery.data ?? 0;
   const unreadLabel =
     unreadCount === 1
-      ? "1 unread on this page"
-      : `${unreadCount} unread on this page`;
+      ? "1 unread notification"
+      : `${unreadCount} unread notifications`;
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    queryClient.invalidateQueries({
-      queryKey: ["notifications", "unread-count"],
-    });
+  const updateCachedNotifications = (
+    updater: (notification: AppNotification) => AppNotification,
+  ) => {
+    queryClient.setQueriesData<NotificationPage>(
+      {
+        predicate: (query) =>
+          query.queryKey[0] === "notifications" &&
+          typeof query.queryKey[1] === "number",
+      },
+      (current) =>
+        current
+          ? { ...current, data: current.data.map(updater) }
+          : current,
+    );
   };
 
-  const handleMarkRead = async (n: AppNotification) => {
-    if (n.read_at) return;
-    await notificationService.markRead(n.id);
-    invalidate();
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => notificationService.markRead(id),
+    onSuccess: (_result, id) => {
+      const readAt = new Date().toISOString();
+      updateCachedNotifications((notification) =>
+        notification.id === id
+          ? { ...notification, read_at: readAt }
+          : notification,
+      );
+      queryClient.setQueryData<number>(
+        ["notifications", "unread-count"],
+        (current = 0) => Math.max(0, current - 1),
+      );
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: () => notificationService.markAllRead(),
+    onSuccess: () => {
+      const readAt = new Date().toISOString();
+      updateCachedNotifications((notification) =>
+        notification.read_at
+          ? notification
+          : { ...notification, read_at: readAt },
+      );
+      queryClient.setQueryData(["notifications", "unread-count"], 0);
+    },
+  });
+
+  const handleMarkRead = (n: AppNotification) => {
+    if (n.read_at || markReadMutation.isPending) return;
+    markReadMutation.mutate(n.id);
   };
 
-  const handleMarkAllRead = async () => {
-    await notificationService.markAllRead();
-    invalidate();
+  const handleMarkAllRead = () => {
+    if (markAllReadMutation.isPending) return;
+    markAllReadMutation.mutate();
   };
 
   return (
@@ -63,14 +105,20 @@ export default function NotificationsPage() {
         actions={
           unreadCount > 0 ? (
             <button
-              onClick={() => void handleMarkAllRead()}
+              onClick={handleMarkAllRead}
+              disabled={markAllReadMutation.isPending}
               className="text-[#111827] text-sm font-medium hover:opacity-80 transition-opacity"
             >
-              Mark all as read
+              {markAllReadMutation.isPending ? "Marking…" : "Mark all as read"}
             </button>
           ) : undefined
         }
       />
+      {(markReadMutation.isError || markAllReadMutation.isError) && (
+        <Card className="border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          The notification update did not complete. Please try again.
+        </Card>
+      )}
       <Card className="overflow-hidden">
         {notifsQuery.isPending ? (
           <div className="p-4 space-y-3">
@@ -94,7 +142,7 @@ export default function NotificationsPage() {
                 return (
                   <div
                     key={n.id}
-                    onClick={() => void handleMarkRead(n)}
+                    onClick={() => handleMarkRead(n)}
                     className={`flex gap-3.5 p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                       unread ? "bg-[#111827]/5" : ""
                     }`}

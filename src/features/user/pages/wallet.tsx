@@ -21,6 +21,7 @@ import {
 } from "../utils/transactionDisplay";
 import WalletTransferPage from "./wallet-transfer";
 import WalletWithdrawalPage from "./wallet-withdrawal";
+import { useDashboardUser } from "../hooks/use-dashboard-user";
 
 type Tab = "fund" | "send" | "withdraw";
 
@@ -31,7 +32,8 @@ const tabs: { id: Tab; label: string }[] = [
 ];
 
 function FundTab() {
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
+  const { user } = useDashboardUser();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);

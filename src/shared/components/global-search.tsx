@@ -48,25 +48,34 @@ export default function GlobalSearch({
     if (trimmed.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setSearched(false);
+      setLoading(false);
       return;
     }
 
     setLoading(true);
+    const controller = new AbortController();
     const handle = setTimeout(() => {
       const search = scope === "admin" ? searchService.admin : searchService.user;
-      search(trimmed)
+      search(trimmed, controller.signal)
         .then((r) => {
           setResults(r);
           setSearched(true);
         })
-        .catch(() => {
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return;
+          void error;
           setResults([]);
           setSearched(true);
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
     }, DEBOUNCE_MS);
 
-    return () => clearTimeout(handle);
+    return () => {
+      clearTimeout(handle);
+      controller.abort();
+    };
   }, [query, scope]);
 
   useEffect(() => {

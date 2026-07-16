@@ -339,7 +339,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [queryClient]);
 
   const refreshUser = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+    await Promise.allSettled([
+      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: ["customer", "dashboard"] }),
+    ]);
   }, [queryClient]);
 
   const hasPermission = useCallback(

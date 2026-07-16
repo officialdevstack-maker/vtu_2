@@ -1,10 +1,12 @@
 import type { RouteObject } from "react-router";
-import Layout from "./components/layout";
 
 export const adminRouter: RouteObject[] = [
   {
     path: "admin",
-    element: <Layout />,
+    lazy: async () => {
+      const { default: Component } = await import("./components/layout");
+      return { Component };
+    },
     children: [
       {
         index: true,

@@ -314,6 +314,13 @@ export type WalletWithdrawalPayload = {
 };
 
 export const customerService = {
+  getDashboardUser: (): Promise<import("@/shared/providers/auth").User> =>
+    apiClient
+      .get<{ data: { user: import("@/shared/providers/auth").User } }>(
+        "/user?include_dashboard=1",
+      )
+      .then((r) => r.data.data.user),
+
   // Moves the user's entire referral_balance into wallet_balance.
   // Backend returns the updated user, but callers should prefer
   // refreshUser() from useAuth() afterward to keep every field in sync.
@@ -421,9 +428,7 @@ export const customerService = {
   // available for conversion when its airtime_to_cash_active flag is set
   // (Products > Airtime & Data > Networks), not a separate list.
   getAirtimeToCashNetworks: (): Promise<Network[]> =>
-    apiClient
-      .get<ApiEnvelope<Network[]>>("/table/networks")
-      .then((r) => r.data.data),
+    customerService.getNetworks(),
 
   getMyAirtimeToCashRequests: (): Promise<AirtimeToCashRequestItem[]> =>
     apiClient

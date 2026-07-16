@@ -1,20 +1,19 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Wallet, ArrowDownLeft, ShoppingBag, CheckCircle2, AlertTriangle, TrendingUp,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
   Banknote, Send, Landmark,
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../data/mock";
 import { SkeletonCard, StatusBadge, StatCard, Card, Button, EmptyState } from "../components/shared-ui";
-import { apiClient } from "../../../shared/api/apiClient";
-import { useAuth, type User, type UserTransaction } from "../../../shared/providers/auth";
+import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
 import { transactionTypeMeta, isCredit, toNumber, badgeStatus } from "../utils/transactionDisplay";
+import { useDashboardUser } from "../hooks/use-dashboard-user";
+
+const SpendingChart = lazy(() => import("../components/spending-chart"));
 
 const quickActions = [
   { label: "Fund wallet", icon: Wallet, path: "/wallet?tab=fund" },
@@ -37,21 +36,13 @@ const dateLabel = (value: string) =>
   new Date(value).toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
 export default function DashboardPage() {
-  const { user: authUser, isInitializing, refreshUser } = useAuth();
+  const { isInitializing, refreshUser } = useAuth();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [converting, setConverting] = useState(false);
   const navigate = useNavigate();
 
-  const dashboardUserQuery = useQuery({
-    queryKey: ["auth", "user", "dashboard"],
-    queryFn: () =>
-      apiClient
-        .get<{ data: { user: User } }>("/user?include_dashboard=1")
-        .then((response) => response.data.data.user),
-    enabled: Boolean(authUser && authUser.user_type !== "admin" && !authUser.stats),
-    staleTime: 60_000,
-  });
-  const user = dashboardUserQuery.data ?? authUser;
+  const dashboardUserQuery = useDashboardUser();
+  const user = dashboardUserQuery.user;
 
   const networksQuery = useQuery({
     queryKey: ["networks"],
@@ -132,6 +123,9 @@ export default function DashboardPage() {
     );
   }
 
+  const dashboardDetailsLoading =
+    dashboardUserQuery.isPending && !user.stats;
+
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -190,14 +184,35 @@ export default function DashboardPage() {
       </Card>
 
       {/* Stat cards */}
-      <div className="dashboard-stat-grid">
-        <StatCard label="Deposits this month" value={fmt(derived.totalDeposits)} icon={ArrowDownLeft} tone="success" meta="This month" />
-        <StatCard label="Purchases this month" value={fmt(derived.totalPurchases)} icon={ShoppingBag} tone="neutral" meta="This month" />
-        <StatCard label="Successful" value={String(monthlySuccessful)} icon={CheckCircle2} tone="success" meta="This month" />
-        <StatCard label="Pending / failed" value={String(monthlyAttention)} icon={AlertTriangle} tone="warning" meta="Needs attention" />
-        <StatCard label="Today's spend" value={fmt(derived.todaySpend)} icon={TrendingUp} tone="neutral" meta="Across all services" />
-        <StatCard label="Data bought today" value={`${derived.todayDataGB}GB`} icon={Wifi} tone="neutral" meta="Data subscriptions" />
-      </div>
+      {dashboardDetailsLoading ? (
+        <div className="dashboard-stat-grid">
+          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : (
+        <div className="dashboard-stat-grid">
+          <StatCard label="Deposits this month" value={fmt(derived.totalDeposits)} icon={ArrowDownLeft} tone="success" meta="This month" />
+          <StatCard label="Purchases this month" value={fmt(derived.totalPurchases)} icon={ShoppingBag} tone="neutral" meta="This month" />
+          <StatCard label="Successful" value={String(monthlySuccessful)} icon={CheckCircle2} tone="success" meta="This month" />
+          <StatCard label="Pending / failed" value={String(monthlyAttention)} icon={AlertTriangle} tone="warning" meta="Needs attention" />
+          <StatCard label="Today's spend" value={fmt(derived.todaySpend)} icon={TrendingUp} tone="neutral" meta="Across all services" />
+          <StatCard label="Data bought today" value={`${derived.todayDataGB}GB`} icon={Wifi} tone="neutral" meta="Data subscriptions" />
+        </div>
+      )}
+
+      {dashboardUserQuery.isError && !user.stats ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm text-amber-800">
+            Some dashboard activity could not be loaded. Your balance is still available.
+          </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => void dashboardUserQuery.refetch()}
+          >
+            Retry
+          </Button>
+        </Card>
+      ) : null}
 
       {/* Quick actions */}
       <Card className="p-4">
@@ -232,21 +247,9 @@ export default function DashboardPage() {
               No successful transactions in the last 30 days yet.
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={160}>
-              <AreaChart data={spendingChart} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#111827" stopOpacity={0.1} />
-                    <stop offset="95%" stopColor="#111827" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₦${v / 1000}k`} />
-                <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "8px", fontSize: "12px" }} formatter={(v) => [fmt(Number(v)), "Spent"]} />
-                <Area type="monotone" dataKey="amount" stroke="#111827" strokeWidth={1.75} fill="url(#spendGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-slate-100" />}>
+              <SpendingChart data={spendingChart} />
+            </Suspense>
           )}
         </Card>
 

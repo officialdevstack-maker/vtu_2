@@ -7,6 +7,7 @@ import {
 import { usePagination } from "../../../shared/pagination";
 import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
 import { transactionTypeMeta, isCredit, toNumber, badgeStatus, dateLabel } from "../utils/transactionDisplay";
+import { useDashboardUser } from "../hooks/use-dashboard-user";
 
 type Period = "today" | "yesterday" | "this_week" | "earlier";
 
@@ -123,7 +124,9 @@ const exportCsv = (rows: UserTransaction[]) => {
 };
 
 export default function TransactionsPage() {
-  const { user, isInitializing } = useAuth();
+  const { isInitializing } = useAuth();
+  const dashboardQuery = useDashboardUser();
+  const user = dashboardQuery.user;
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
@@ -168,7 +171,7 @@ export default function TransactionsPage() {
 
   const resetToFirstPage = () => setPage(1);
 
-  if (isInitializing) {
+  if (isInitializing || (dashboardQuery.isPending && !user?.transactions)) {
     return (
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader title="Transactions" description="Every payment made from your wallet" />
@@ -186,6 +189,15 @@ export default function TransactionsPage() {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4">
       <PageHeader title="Transactions" description="Every payment made from your wallet" />
+
+      {dashboardQuery.isError && !user?.transactions ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm text-amber-800">Transaction history could not be loaded.</p>
+          <Button size="sm" variant="secondary" onClick={() => void dashboardQuery.refetch()}>
+            Retry
+          </Button>
+        </Card>
+      ) : null}
 
       <Card className="p-3.5">
         <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[minmax(220px,1fr)_10rem_9rem_auto] lg:items-center">
