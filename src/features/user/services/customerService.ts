@@ -345,7 +345,7 @@ export const customerService = {
   getNetworks: (): Promise<Network[]> =>
     memoizedCatalogRequest("customer:networks", () =>
       apiClient
-        .get<ApiEnvelope<Network[]>>("/table/networks")
+        .get<ApiEnvelope<Network[]>>("/customer/catalog/networks")
         .then((r) => r.data.data),
       3 * 60_000,
     ),
@@ -366,7 +366,7 @@ export const customerService = {
   getDataPlans: (): Promise<DataPlan[]> =>
     memoizedCatalogRequest("customer:data-plans", () =>
       apiClient
-        .get<ApiEnvelope<DataPlan[]>>("/table/data_plans")
+        .get<ApiEnvelope<DataPlan[]>>("/customer/catalog/data-plans")
         .then((r) => r.data.data),
       60_000,
     ),
