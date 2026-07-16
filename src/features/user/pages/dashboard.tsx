@@ -197,9 +197,9 @@ export default function DashboardPage() {
             <button
               key={a.label}
               onClick={() => navigate(a.path)}
-              className="flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 p-2.5 transition-colors hover:border-[#111827]/30 hover:bg-[#111827]/5 sm:p-3"
+              className="group flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 p-2.5 transition-colors hover:border-[#111827]/30 hover:bg-[#111827]/5 sm:p-3"
             >
-              <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-lg flex items-center justify-center transition-colors group-hover:bg-[#111827] group-hover:text-white">
                 <a.icon className="w-4 h-4" />
               </div>
               <span className="overflow-wrap-anywhere text-center text-xs font-medium leading-snug text-slate-700">{a.label}</span>
