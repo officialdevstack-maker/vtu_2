@@ -117,6 +117,17 @@ apiClient.interceptors.request.use((config) => {
     setRequestHeader(config.headers, 'Authorization', `Bearer ${authToken}`);
   }
 
+  // Tell the backend which channel this request came from, so a purchase is
+  // recorded with the right origin platform. The native shell sets
+  // window.__VENDIFY_NATIVE__ = 'app' (see webview injectedJavaScript); a plain
+  // browser leaves it unset and the backend defaults to "web".
+  if (typeof window !== 'undefined') {
+    const native = (window as { __VENDIFY_NATIVE__?: string }).__VENDIFY_NATIVE__;
+    if (native) {
+      setRequestHeader(config.headers, 'X-Client-Platform', native);
+    }
+  }
+
   return config;
 });
 
