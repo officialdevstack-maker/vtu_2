@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
 import { WelcomeMessageGate } from "./welcome-message-gate";
@@ -7,6 +8,8 @@ import { MobileServicesSheet } from "./mobile-services-sheet";
 import { ImpersonationBanner } from "@/shared/components/impersonation-banner";
 import { LayoutDashboard, Zap, Receipt, Wallet, Settings } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/shared/providers/auth";
+import { notificationService } from "@/shared/notificationService";
 
 const mobileNavItems = [
   { path: "/dashboard", icon: LayoutDashboard, label: "Home" },
@@ -35,6 +38,18 @@ const UserLayout = () => {
   const [servicesSheetOpen, setServicesSheetOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  // One query observer for the entire customer shell prevents the topbar and
+  // sidebar from creating competing unread-count pollers after login.
+  const unreadQuery = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: ({ signal }) => notificationService.getUnreadCount(signal),
+    enabled: Boolean(user),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+  });
+  const unreadCount = unreadQuery.data ?? 0;
 
   useEffect(() => {
     // Route changes are the external event that dismisses transient mobile UI.
@@ -69,11 +84,15 @@ const UserLayout = () => {
         onClose={() => setSidebarOpen(false)}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={toggleCollapsed}
+        unreadCount={unreadCount}
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <ImpersonationBanner />
-        <Topbar onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+        <Topbar
+          onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          unreadCount={unreadCount}
+        />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="user-page-container">
             <Outlet />

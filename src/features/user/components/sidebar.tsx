@@ -20,11 +20,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
 import { useBranding } from "@/shared/branding";
-import { notificationService } from "@/shared/notificationService";
 
 const initialsOf = (name?: string) =>
   (name ?? "")
@@ -116,24 +115,19 @@ export default function Sidebar({
   onClose,
   collapsed,
   onToggleCollapsed,
+  unreadCount,
 }: {
   open: boolean;
   onClose: () => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  unreadCount: number;
 }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user, hasPermission } = useAuth();
   const queryClient = useQueryClient();
   const branding = useBranding();
-
-  const unreadQuery = useQuery({
-    queryKey: ["notifications", "unread-count"],
-    queryFn: () => notificationService.getUnreadCount(),
-    enabled: Boolean(user),
-    refetchInterval: 60000,
-  });
 
   const prefetchNetworks = () =>
     queryClient.prefetchQuery({
@@ -242,7 +236,7 @@ export default function Sidebar({
               <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const active = isActive(item.path);
-                  const badge = item.id === "notifications" ? unreadQuery.data : undefined;
+                  const badge = item.id === "notifications" ? unreadCount : undefined;
                   return (
                     <button
                       key={item.id}
