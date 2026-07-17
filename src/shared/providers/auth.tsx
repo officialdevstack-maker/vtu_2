@@ -5,13 +5,21 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useRef,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient, getAuthToken, setAuthToken } from "../api/apiClient";
+import {
+  apiClient,
+  getAuthToken,
+  isNativeClient,
+  postToNative,
+  setAuthToken,
+} from "../api/apiClient";
 import { clearCatalogRequestCache } from "../api/catalogCache";
 import { clearImpersonation } from "../impersonation";
 import { config } from "../config";
 import type { RegisterPayload } from "@/features/auth/authService";
+import { SessionExpiryModal } from "../components/session-expiry-modal";
 
 // Shape returned by GET /user. The default auth check stays lightweight;
 // customer dashboard-only fields are fetched by the dashboard when needed.
@@ -118,7 +126,7 @@ interface AuthContextType {
   isLoading: boolean;
   isInitializing: boolean;
   refreshUser: () => Promise<void>;
-  login: (login: string, password: string) => Promise<User | null>;
+  login: (login: string, password: string, remember?: boolean) => Promise<User | null>;
   register: (payload: RegisterPayload) => Promise<RegistrationResult>;
   logout: () => Promise<void>;
   hasPermission: (slug: string) => boolean;
@@ -135,7 +143,18 @@ type AuthPayload = {
   user?: User;
   token?: string;
   access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  session?: AuthSessionInfo;
   verification_email_sent?: boolean;
+};
+
+export type AuthSessionInfo = {
+  id: string;
+  channel: string;
+  device_name: string;
+  expires_at: string | null;
+  current?: boolean;
 };
 
 export type RegistrationResult = {
@@ -149,9 +168,8 @@ const canUseAuthChannel = () =>
   typeof window !== "undefined" && "BroadcastChannel" in window;
 
 type AuthChannelMessage =
-  | { type: "request-token" }
-  | { type: "token-response"; token: string }
-  | { type: "logout" };
+  | { type: "logout" }
+  | { type: "session-expiry"; expiresAt: string };
 
 // One shared cache key for the current user everywhere in the app — the
 // dashboard, transaction pages, and the account-switcher dropdown all read
@@ -175,7 +193,11 @@ const fetchCurrentUser = async (signal?: AbortSignal): Promise<User | null> => {
     const response = await apiClient.get("/user", {
       signal,
     });
-    return response.data.data?.user ?? null;
+    const payload = response.data.data as AuthPayload | undefined;
+    if (payload?.session?.expires_at && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("vendify:session-expiry-updated", { detail: payload.session.expires_at }));
+    }
+    return payload?.user ?? null;
   } catch (error) {
     // Let TanStack Query recognise an unmount/navigation cancellation. Turning
     // an aborted request into `null` would incorrectly cache a logged-out user.
@@ -186,29 +208,38 @@ const fetchCurrentUser = async (signal?: AbortSignal): Promise<User | null> => {
 
 const persistAuthToken = (payload?: AuthPayload | null) => {
   const token = payload?.token ?? payload?.access_token;
-  if (token) {
+  if (token && isNativeClient()) {
     setAuthToken(token);
+    postToNative({
+      type: "vendify-auth-credentials",
+      accessToken: token,
+      refreshToken: payload?.refresh_token,
+      expiresIn: payload?.expires_in,
+      session: payload?.session,
+      storage: "secure-keychain-required",
+    });
   }
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
-  const [hasToken, setHasToken] = useState(() => Boolean(getAuthToken()));
-  const [isSyncingToken, setIsSyncingToken] = useState(
-    () => !getAuthToken() && canUseAuthChannel(),
-  );
+  const [nativeReady, setNativeReady] = useState(() => !isNativeClient() || Boolean(getAuthToken()));
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [isExtending, setIsExtending] = useState(false);
+  const lastExtensionAt = useRef(0);
+  const expiringRef = useRef(false);
 
   const { data: user = null, isLoading: isLoadingUser } = useQuery({
     queryKey: AUTH_QUERY_KEY,
     queryFn: ({ signal }) => fetchCurrentUser(signal),
-    enabled: hasToken,
+    enabled: nativeReady,
     staleTime: 60_000,
   });
 
   useEffect(() => {
     if (!canUseAuthChannel()) {
-      setIsSyncingToken(false);
       return;
     }
 
@@ -216,58 +247,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       channel = new BroadcastChannel(AUTH_CHANNEL_NAME);
     } catch {
-      setIsSyncingToken(false);
       return;
     }
-    const fallbackTimer = window.setTimeout(() => {
-      setIsSyncingToken(false);
-    }, 700);
 
     channel.onmessage = (event: MessageEvent<AuthChannelMessage>) => {
       const message = event.data;
-
-      if (message.type === "request-token") {
-        const token = getAuthToken();
-        if (token) {
-          channel.postMessage({ type: "token-response", token });
-        }
-        return;
-      }
-
-      if (message.type === "token-response") {
-        if (!getAuthToken() && message.token) {
-          setAuthToken(message.token);
-          setHasToken(true);
-          setIsSyncingToken(false);
-          void queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-        }
-        return;
-      }
 
       if (message.type === "logout") {
         queryClient.clear();
         clearCatalogRequestCache();
         setAuthToken(null);
-        setHasToken(false);
-        setIsSyncingToken(false);
         clearImpersonation();
+        setExpiresAt(null);
+        return;
+      }
+
+      if (message.type === "session-expiry") {
+        const timestamp = Date.parse(message.expiresAt);
+        if (Number.isFinite(timestamp)) setExpiresAt(timestamp);
       }
     };
 
-    if (!getAuthToken()) {
-      channel.postMessage({ type: "request-token" });
-    }
-
     return () => {
-      window.clearTimeout(fallbackTimer);
       channel.close();
     };
   }, [queryClient]);
 
-  const isInitializing = isSyncingToken || isLoadingUser;
+  const isInitializing = !nativeReady || isLoadingUser;
+
+  useEffect(() => {
+    if (!isNativeClient()) return;
+    const handleToken = () => {
+      setNativeReady(Boolean(getAuthToken()));
+      if (getAuthToken()) void queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+    };
+    window.addEventListener("vendify:native-token-updated", handleToken);
+    postToNative({ type: "vendify-auth-state-required" });
+    return () => window.removeEventListener("vendify:native-token-updated", handleToken);
+  }, [queryClient]);
+
+  useEffect(() => {
+    const handleExpiry = (event: Event) => {
+      const value = (event as CustomEvent<string>).detail;
+      const timestamp = Date.parse(value);
+      if (!Number.isFinite(timestamp)) return;
+      setExpiresAt(timestamp);
+      postAuthMessage({ type: "session-expiry", expiresAt: value });
+    };
+    window.addEventListener("vendify:session-expiry-updated", handleExpiry);
+    return () => window.removeEventListener("vendify:session-expiry-updated", handleExpiry);
+  }, []);
 
   const login = useCallback(
-    async (loginValue: string, password: string) => {
+    async (loginValue: string, password: string, remember = false) => {
       setIsLoading(true);
       try {
         setAuthToken(null);
@@ -275,14 +307,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // (an expired token, or navigating straight to /login client-side).
         clearCatalogRequestCache();
         await apiClient.get("/sanctum/csrf-cookie");
-        const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", { login: loginValue, password });
+        const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", {
+          login: loginValue,
+          password,
+          remember,
+          client_type: isNativeClient() ? "mobile" : "web",
+        });
         persistAuthToken(response.data.data);
-        if (response.data.data?.token || response.data.data?.access_token) {
-          setHasToken(true);
-          postAuthMessage({
-            type: "token-response",
-            token: response.data.data.token ?? response.data.data.access_token ?? "",
-          });
+        const sessionExpiry = response.data.data?.session?.expires_at;
+        if (sessionExpiry) {
+          window.dispatchEvent(new CustomEvent("vendify:session-expiry-updated", { detail: sessionExpiry }));
         }
         const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
@@ -303,14 +337,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         setAuthToken(null);
         await apiClient.get("/sanctum/csrf-cookie");
-        const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/register", payload);
+        const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/register", {
+          ...payload,
+          client_type: isNativeClient() ? "mobile" : "web",
+        });
         persistAuthToken(response.data.data);
-        if (response.data.data?.token || response.data.data?.access_token) {
-          setHasToken(true);
-          postAuthMessage({
-            type: "token-response",
-            token: response.data.data.token ?? response.data.data.access_token ?? "",
-          });
+        const sessionExpiry = response.data.data?.session?.expires_at;
+        if (sessionExpiry) {
+          window.dispatchEvent(new CustomEvent("vendify:session-expiry-updated", { detail: sessionExpiry }));
         }
         const freshUser = response.data.data?.user ?? null;
         queryClient.setQueryData(AUTH_QUERY_KEY, freshUser);
@@ -325,6 +359,77 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [queryClient],
   );
 
+  const expireSession = useCallback(() => {
+    if (!user || expiringRef.current) return;
+    expiringRef.current = true;
+    const intended = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (!window.location.pathname.startsWith("/login")) {
+      window.sessionStorage.setItem("vendify-intended-path", intended);
+    }
+    queryClient.clear();
+    clearCatalogRequestCache();
+    setAuthToken(null);
+    clearImpersonation();
+    setExpiresAt(null);
+    postAuthMessage({ type: "logout" });
+    const redirect = () => window.location.assign("/login?reason=session-expired");
+    const fallback = window.setTimeout(redirect, 1500);
+    void apiClient.post("/logout", undefined, { timeout: 1200 }).finally(() => {
+      window.clearTimeout(fallback);
+      redirect();
+    });
+  }, [queryClient, user]);
+
+  const extendSession = useCallback(async () => {
+    if (isNativeClient() || isExtending) return;
+    setIsExtending(true);
+    try {
+      const response = await apiClient.post<ApiEnvelope<{ session?: AuthSessionInfo }>>("/session/extend");
+      const nextExpiry = response.data.data?.session?.expires_at;
+      if (nextExpiry) {
+        lastExtensionAt.current = Date.now();
+        window.dispatchEvent(new CustomEvent("vendify:session-expiry-updated", { detail: nextExpiry }));
+      }
+    } finally {
+      setIsExtending(false);
+    }
+  }, [isExtending]);
+
+  useEffect(() => {
+    const handleExpired = () => expireSession();
+    window.addEventListener("vendify:session-expired", handleExpired);
+    return () => window.removeEventListener("vendify:session-expired", handleExpired);
+  }, [expireSession]);
+
+  useEffect(() => {
+    if (!user || !expiresAt || isNativeClient()) {
+      return;
+    }
+
+    const tick = () => {
+      const seconds = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      setCountdown(seconds <= 120 ? seconds : null);
+      if (seconds === 0) expireSession();
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [expiresAt, expireSession, user]);
+
+  useEffect(() => {
+    if (!user || !expiresAt || isNativeClient()) return;
+    const handleActivity = () => {
+      const remaining = expiresAt - Date.now();
+      const extensionDue = Date.now() - lastExtensionAt.current > 5 * 60_000;
+      if (remaining > 120_000 && remaining < 25 * 60_000 && extensionDue) {
+        void extendSession();
+      }
+    };
+    const events: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "scroll", "touchstart"];
+    events.forEach((event) => window.addEventListener(event, handleActivity, { passive: true }));
+    return () => events.forEach((event) => window.removeEventListener(event, handleActivity));
+  }, [expiresAt, extendSession, user]);
+
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -338,11 +443,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       queryClient.clear();
       clearCatalogRequestCache();
       setAuthToken(null);
-      setHasToken(false);
       postAuthMessage({ type: "logout" });
       // A plain logout during an impersonation session must also drop the
       // parked admin token, or the next login would show the banner again.
       clearImpersonation();
+      setExpiresAt(null);
+      postToNative({ type: "vendify-auth-cleared" });
       setIsLoading(false);
     }
   }, [queryClient]);
@@ -374,6 +480,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
+      {user && countdown !== null && countdown <= 120 ? (
+        <SessionExpiryModal seconds={countdown} extending={isExtending} onStaySignedIn={() => void extendSession()} />
+      ) : null}
     </AuthContext.Provider>
   );
 };

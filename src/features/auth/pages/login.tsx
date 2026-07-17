@@ -19,7 +19,8 @@ function resolveDestination(user: User | null, from?: string) {
   const isAdmin = user.user_type === "admin";
   if (!isAdmin && !user.has_pin) return "/create-transaction-pin";
   const fallback = isAdmin ? "/admin" : "/dashboard";
-  return from && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
+  const safeDestination = from?.startsWith("/") && !from.startsWith("//") && !from.startsWith("/login");
+  return safeDestination && (isAdmin || !from.startsWith("/admin")) ? from : fallback;
 }
 
 function loginErrorMessage(error: unknown) {
@@ -41,7 +42,9 @@ const LoginForm = () => {
     title: "Login",
     description: `Sign in to your ${app_name || "Vendify"} account to buy airtime, data and pay bills.`,
   });
-  const from = (location.state as { from?: Location } | null)?.from?.pathname;
+  const stateDestination = (location.state as { from?: Location } | null)?.from?.pathname;
+  const storedDestination = window.sessionStorage.getItem("vendify-intended-path") ?? undefined;
+  const from = stateDestination ?? storedDestination;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -60,7 +63,8 @@ const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const user = await login(data.login, data.password);
+      const user = await login(data.login, data.password, data.rememberMe === true);
+      window.sessionStorage.removeItem("vendify-intended-path");
       navigate(resolveDestination(user, from), { replace: true });
     } catch (error) {
       setError("root", { message: loginErrorMessage(error) });

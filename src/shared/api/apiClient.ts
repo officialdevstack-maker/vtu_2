@@ -40,15 +40,33 @@ const rawBaseUrl = env('VITE_API_BASE_URL', '/api') as string;
 const apiBaseUrl = normalizeApiBaseUrl(rawBaseUrl);
 const siteBaseUrl = apiBaseUrl.replace(/\/api(?:\/v\d+)?$/i, '');
 export const AUTH_TOKEN_KEY = 'kora-auth-token';
+let nativeAccessToken: string | null = null;
+
+type NativeWindow = Window & {
+  __VENDIFY_NATIVE__?: string;
+  __VENDIFY_DEVICE_ID__?: string;
+  __VENDIFY_DEVICE_NAME__?: string;
+  __vendifySetAccessToken?: (token: string | null) => void;
+  ReactNativeWebView?: { postMessage: (message: string) => void };
+};
+
+export const isNativeClient = () =>
+  typeof window !== 'undefined' && Boolean((window as NativeWindow).__VENDIFY_NATIVE__);
+
+export const postToNative = (message: Record<string, unknown>) => {
+  if (typeof window === 'undefined') return;
+  (window as NativeWindow).ReactNativeWebView?.postMessage(JSON.stringify(message));
+};
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
   try {
-    const token = window.sessionStorage.getItem(AUTH_TOKEN_KEY);
-    // Older builds stored bearer tokens in localStorage. Remove that persistent
-    // copy so browser/tab close really ends the remembered client session.
+    // Purge credentials written by older builds. Browser authentication now
+    // lives only in Laravel's encrypted HttpOnly cookie. The native shell may
+    // inject a short-lived access token, which remains in memory only.
+    window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
     window.localStorage.removeItem(AUTH_TOKEN_KEY);
-    return token;
+    return nativeAccessToken;
   } catch {
     // Safari privacy modes and restricted embedded browsers may expose the
     // Storage API while throwing on access. Treat that as no persisted token
@@ -58,21 +76,21 @@ export const getAuthToken = () => {
 };
 
 export const setAuthToken = (token: string | null) => {
-  if (typeof window === 'undefined') return;
-
-  try {
-    if (token) {
-      window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+  nativeAccessToken = token;
+  if (typeof window !== 'undefined') {
+    try {
+      window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
       window.localStorage.removeItem(AUTH_TOKEN_KEY);
-      return;
+    } catch {
+      // Storage can be unavailable in restricted embedded browsers.
     }
-
-    window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
-    window.localStorage.removeItem(AUTH_TOKEN_KEY);
-  } catch {
-    // Storage can be unavailable even when window.sessionStorage exists.
+    window.dispatchEvent(new CustomEvent('vendify:native-token-updated'));
   }
 };
+
+if (typeof window !== 'undefined') {
+  (window as NativeWindow).__vendifySetAccessToken = (token) => setAuthToken(token);
+}
 
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,
@@ -116,13 +134,11 @@ apiClient.interceptors.request.use((config) => {
 
   const authToken = getAuthToken();
   const native = typeof window !== 'undefined'
-    ? (window as { __VENDIFY_NATIVE__?: string }).__VENDIFY_NATIVE__
+    ? (window as NativeWindow).__VENDIFY_NATIVE__
     : undefined;
-  // Login currently issues a Sanctum bearer token and the auth provider uses
-  // that token as the durable, tab-scoped session marker. Production's cookie
-  // session is not authenticating the cross-subdomain follow-up requests, so
-  // every protected request must carry the token returned by login.
-  if (authToken) {
+  // Only the native shell uses bearer authentication. Web requests rely on
+  // the encrypted HttpOnly Sanctum session cookie and CSRF protection.
+  if (native && authToken) {
     setRequestHeader(config.headers, 'Authorization', `Bearer ${authToken}`);
   }
 
@@ -132,10 +148,39 @@ apiClient.interceptors.request.use((config) => {
   // browser leaves it unset and the backend defaults to "web".
   if (native) {
     setRequestHeader(config.headers, 'X-Client-Platform', native);
+    const nativeWindow = window as NativeWindow;
+    if (nativeWindow.__VENDIFY_DEVICE_ID__) {
+      setRequestHeader(config.headers, 'X-Device-Id', nativeWindow.__VENDIFY_DEVICE_ID__);
+    }
+    if (nativeWindow.__VENDIFY_DEVICE_NAME__) {
+      setRequestHeader(config.headers, 'X-Device-Name', nativeWindow.__VENDIFY_DEVICE_NAME__);
+    }
   }
 
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => {
+    const expiresAt = response.headers['x-session-expires-at'];
+    if (typeof expiresAt === 'string' && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('vendify:session-expiry-updated', { detail: expiresAt }));
+    }
+    return response;
+  },
+  (error) => {
+    const status = error?.response?.status;
+    const url = String(error?.config?.url ?? '');
+    if (status === 401 && !url.includes('login') && !url.includes('auth/refresh') && typeof window !== 'undefined') {
+      if (isNativeClient()) {
+        postToNative({ type: 'vendify-auth-refresh-required' });
+      } else {
+        window.dispatchEvent(new CustomEvent('vendify:session-expired'));
+      }
+    }
+    return Promise.reject(error);
+  },
+);
 
 // export const formatApiResponse = async <T>(
 //   apiPromise: Promise<AxiosResponse<T>>

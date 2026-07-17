@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Shield, Bell, ChevronRight, Pencil, CheckCircle2, Mail, XCircle } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Shield, Bell, ChevronRight, Pencil, CheckCircle2, Mail, XCircle, Monitor, Smartphone, MapPin, LogOut } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Toggle, PageHeader, Card, Button } from "../../user/components/shared-ui";
 import { useAuth, AUTH_QUERY_KEY } from "@/shared/providers/auth";
 import { accountService } from "../services/accountService";
@@ -16,7 +16,7 @@ const initialsOf = (name?: string) =>
     .toUpperCase() || "?";
 
 export default function AccountSettingsPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const queryClient = useQueryClient();
 
   const [editingProfile, setEditingProfile] = useState(false);
@@ -31,10 +31,8 @@ export default function AccountSettingsPage() {
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // UI-only preferences — no backend column exists for these yet.
-  const [twoFA, setTwoFA] = useState(true);
-  const [txPin, setTxPin] = useState(true);
-  const [biometric, setBiometric] = useState(false);
+  // Notification preferences remain local until their backend preference
+  // columns are introduced; security controls below reflect real server state.
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(false);
   const [smsNotifs, setSmsNotifs] = useState(true);
@@ -50,13 +48,19 @@ export default function AccountSettingsPage() {
   });
 
   const passwordMutation = useMutation({
-    mutationFn: accountService.updatePassword,
+    mutationFn: async (payload: Parameters<typeof accountService.updatePassword>[0]) => {
+      await accountService.reauthenticate(payload.current_password);
+      return accountService.updatePassword(payload);
+    },
     onSuccess: () => {
       setPasswordSuccess(true);
       setPasswordError(null);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      window.setTimeout(() => {
+        void logout().finally(() => window.location.assign("/login?reason=password-changed"));
+      }, 800);
     },
     onError: (error: any) => {
       setPasswordSuccess(false);
@@ -66,6 +70,28 @@ export default function AccountSettingsPage() {
           "Could not update password. Please try again.",
       );
     },
+  });
+
+  const sessionsQuery = useQuery({
+    queryKey: ["security", "sessions"],
+    queryFn: accountService.activeSessions,
+    staleTime: 30_000,
+  });
+
+  const revokeSessionMutation = useMutation({
+    mutationFn: accountService.revokeSession,
+    onSuccess: (result) => {
+      if (result.current) {
+        void logout().finally(() => window.location.assign("/login"));
+      } else {
+        void sessionsQuery.refetch();
+      }
+    },
+  });
+
+  const logoutOthersMutation = useMutation({
+    mutationFn: accountService.logoutOtherSessions,
+    onSuccess: () => void sessionsQuery.refetch(),
   });
 
   const resendVerificationMutation = useMutation({
@@ -226,19 +252,22 @@ export default function AccountSettingsPage() {
           <h3 className="text-slate-900 font-semibold text-sm">Security</h3>
         </div>
         <div className="divide-y divide-gray-100">
-          {[
-            { label: "Two-factor authentication", desc: "Require OTP for all sign-ins", value: twoFA, onChange: setTwoFA },
-            { label: "Transaction PIN", desc: "Require PIN for all transactions", value: txPin, onChange: setTxPin },
-            { label: "Biometric login", desc: "Use fingerprint or Face ID", value: biometric, onChange: setBiometric },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-slate-900 text-sm font-medium">{item.label}</p>
-                <p className="text-slate-400 text-xs mt-0.5">{item.desc}</p>
-              </div>
-              <Toggle value={item.value} onChange={item.onChange} />
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-slate-900 text-sm font-medium">Transaction PIN</p>
+              <p className="text-slate-400 text-xs mt-0.5">Required before money-moving transactions</p>
             </div>
-          ))}
+            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${user?.has_pin ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+              {user?.has_pin ? "Enabled" : "Set up required"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-slate-900 text-sm font-medium">Mobile app lock</p>
+              <p className="text-slate-400 text-xs mt-0.5">Biometric or device authentication is managed by the Vendify app</p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">Mobile</span>
+          </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
@@ -275,6 +304,70 @@ export default function AccountSettingsPage() {
             Update password
           </Button>
         </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Monitor className="h-4 w-4 text-slate-400" />
+            <h3 className="text-sm font-semibold text-slate-900">Active sessions & devices</h3>
+          </div>
+          {(sessionsQuery.data?.filter((session) => !session.current).length ?? 0) > 0 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={logoutOthersMutation.isPending}
+              onClick={() => logoutOthersMutation.mutate()}
+            >
+              Log out others
+            </Button>
+          )}
+        </div>
+        <p className="mb-4 text-xs leading-5 text-slate-400">
+          Review browsers and apps with access to your account. Location is approximate when safely available.
+        </p>
+
+        {sessionsQuery.isLoading ? (
+          <div className="space-y-2" aria-label="Loading active sessions">
+            {[0, 1].map((item) => <div key={item} className="h-16 animate-pulse rounded-2xl bg-slate-100" />)}
+          </div>
+        ) : sessionsQuery.isError ? (
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">Active sessions could not be loaded.</p>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {(sessionsQuery.data ?? []).map((session) => (
+              <div key={session.id} className={`flex items-start gap-3 py-3 ${session.current ? "border-l-2 border-orange-400 pl-3" : ""}`}>
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                  {session.device_type === "Mobile" || session.channel === "mobile" ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-medium text-slate-900">{session.device_name}</p>
+                    {session.current && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">Current device</span>}
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {[session.browser, session.platform].filter(Boolean).join(" · ") || session.channel}
+                    {session.last_active_at ? ` · Active ${new Date(session.last_active_at).toLocaleString()}` : ""}
+                  </p>
+                  {session.approximate_location && (
+                    <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400"><MapPin className="h-3 w-3" />{session.approximate_location}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => revokeSessionMutation.mutate(session.id)}
+                  disabled={revokeSessionMutation.isPending}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-medium text-slate-600 transition hover:border-orange-200 hover:text-orange-600 disabled:opacity-50"
+                  aria-label={`Log out ${session.device_name}`}
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Log out
+                </button>
+              </div>
+            ))}
+            {(sessionsQuery.data?.length ?? 0) === 0 && <p className="py-4 text-sm text-slate-400">No active sessions found.</p>}
+          </div>
+        )}
       </Card>
 
       <Card className="p-5">

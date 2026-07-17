@@ -31,6 +31,7 @@ import { usePagination } from "../../../../shared/pagination";
 import { fmt } from "../../../user/data/mock";
 import { startImpersonation } from "@/shared/impersonation";
 import { extractErrorMessage } from "../settings/shared";
+import { apiClient } from "@/shared/api/apiClient";
 import {
   customerService,
   transactionService,
@@ -307,6 +308,10 @@ export default function CustomerDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [funding, setFunding] = useState(false);
   const [impersonating, setImpersonating] = useState(false);
+  const [showRecentAuth, setShowRecentAuth] = useState(false);
+  const [recentAuthPassword, setRecentAuthPassword] = useState("");
+  const [recentAuthError, setRecentAuthError] = useState<string | null>(null);
+  const [confirmingIdentity, setConfirmingIdentity] = useState(false);
 
   const back = () => navigate("/admin/customers/users");
 
@@ -361,13 +366,35 @@ export default function CustomerDetailPage() {
     setImpersonating(true);
     setError(null);
     try {
-      const token = await customerService.impersonate(id);
-      // Parks the admin token and does a full reload into /dashboard —
-      // this page unmounts, so no state reset needed on success.
-      startImpersonation(token, `/admin/customers/users/${id}`);
+      await customerService.impersonate(id);
+      // The backend has switched the HttpOnly session. Reload under the
+      // customer identity without exposing either account's credentials.
+      startImpersonation(`/admin/customers/users/${id}`);
     } catch (err) {
-      setError(extractErrorMessage(err));
+      const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
+      if (code === "RECENT_AUTH_REQUIRED") {
+        setShowRecentAuth(true);
+        setRecentAuthError(null);
+      } else {
+        setError(extractErrorMessage(err));
+      }
       setImpersonating(false);
+    }
+  };
+
+  const confirmIdentityAndRetry = async () => {
+    if (!recentAuthPassword) return;
+    setConfirmingIdentity(true);
+    setRecentAuthError(null);
+    try {
+      await apiClient.post("/security/re-authenticate", { password: recentAuthPassword });
+      setShowRecentAuth(false);
+      setRecentAuthPassword("");
+      await handleImpersonate();
+    } catch (err) {
+      setRecentAuthError(extractErrorMessage(err));
+    } finally {
+      setConfirmingIdentity(false);
     }
   };
 
@@ -637,6 +664,37 @@ export default function CustomerDetailPage() {
               <Button variant="secondary" fullWidth onClick={() => setConfirmDelete(false)}>Cancel</Button>
               <Button variant="danger" fullWidth disabled={deleting} loading={deleting} onClick={() => void handleDelete()}>
                 Delete customer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRecentAuth && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-4 backdrop-blur-sm sm:items-center">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200/70 bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="recent-auth-title">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#111827] text-white">
+              <ShieldCheck className="h-4 w-4" />
+            </div>
+            <h2 id="recent-auth-title" className="text-base font-semibold text-slate-900">Confirm it’s you</h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Enter your admin password before starting this sensitive support session.</p>
+            <input
+              type="password"
+              autoFocus
+              autoComplete="current-password"
+              value={recentAuthPassword}
+              onChange={(event) => setRecentAuthPassword(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Enter") void confirmIdentityAndRetry(); }}
+              placeholder="Your password"
+              className={`${inputCls} mt-4`}
+            />
+            {recentAuthError && <p className="mt-2 text-xs text-red-600">{recentAuthError}</p>}
+            <div className="mt-4 flex gap-3">
+              <Button variant="secondary" fullWidth disabled={confirmingIdentity} onClick={() => { setShowRecentAuth(false); setRecentAuthPassword(""); }}>
+                Cancel
+              </Button>
+              <Button fullWidth loading={confirmingIdentity} disabled={!recentAuthPassword || confirmingIdentity} onClick={() => void confirmIdentityAndRetry()}>
+                Continue
               </Button>
             </div>
           </div>

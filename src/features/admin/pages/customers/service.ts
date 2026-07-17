@@ -193,17 +193,10 @@ export const customerService = {
     return mapCustomer(digUser(response.data));
   },
 
-  // Issues a login token for the customer so the admin can browse the app as
-  // them — see UserController::impersonate. The caller hands the token to
-  // startImpersonation(), which parks the admin session and reloads.
-  impersonate: async (id: string): Promise<string> => {
-    const response = await apiClient.post<ApiEnvelope<any>>(`${USERS}/${id}/impersonate`);
-    let node: any = response.data;
-    for (let i = 0; i < 4 && node != null; i++) {
-      if (typeof node.token === "string") return node.token;
-      node = node.data;
-    }
-    throw new Error("The impersonation response did not include a token.");
+  // The backend performs a server-side session switch; no bearer token is
+  // returned to or stored by JavaScript.
+  impersonate: async (id: string): Promise<void> => {
+    await apiClient.post(`${USERS}/${id}/impersonate`);
   },
 };
 
