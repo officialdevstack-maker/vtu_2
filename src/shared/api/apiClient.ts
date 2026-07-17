@@ -192,11 +192,23 @@ apiClient.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
     const status = error?.response?.status;
     const url = String(error?.config?.url ?? '');
     if (status === 419) {
       csrfToken = null;
+      const retryConfig = error?.config as (typeof error.config & {
+        _vendifyCsrfRetried?: boolean;
+      }) | undefined;
+
+      if (retryConfig && !retryConfig._vendifyCsrfRetried && !isNativeClient()) {
+        retryConfig._vendifyCsrfRetried = true;
+        const refreshedToken = await primeCsrfProtection(true);
+        if (refreshedToken) {
+          setRequestHeader(retryConfig.headers, 'X-CSRF-TOKEN', refreshedToken);
+          return apiClient.request(retryConfig);
+        }
+      }
     }
     if (status === 401 && !url.includes('login') && !url.includes('auth/refresh') && typeof window !== 'undefined') {
       if (isNativeClient()) {

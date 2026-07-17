@@ -140,11 +140,6 @@ export default function NotificationsPage() {
           ) : undefined
         }
       />
-      {(markReadMutation.isError || markAllReadMutation.isError) && (
-        <Card className="border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          The notification update did not complete. Please try again.
-        </Card>
-      )}
       <Card className="overflow-hidden">
         {notifsQuery.isPending ? (
           <div className="p-4 space-y-3">
