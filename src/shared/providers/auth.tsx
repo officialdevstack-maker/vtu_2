@@ -13,6 +13,7 @@ import {
   getAuthToken,
   isNativeClient,
   postToNative,
+  primeCsrfProtection,
   setAuthToken,
 } from "../api/apiClient";
 import { clearCatalogRequestCache } from "../api/catalogCache";
@@ -306,7 +307,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Also guards the path where a session ends without logout() running
         // (an expired token, or navigating straight to /login client-side).
         clearCatalogRequestCache();
-        await apiClient.get("/sanctum/csrf-cookie");
+        await primeCsrfProtection(true);
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/login", {
           login: loginValue,
           password,
@@ -336,7 +337,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       try {
         setAuthToken(null);
-        await apiClient.get("/sanctum/csrf-cookie");
+        await primeCsrfProtection(true);
         const response = await apiClient.post<ApiEnvelope<AuthPayload>>("/register", {
           ...payload,
           client_type: isNativeClient() ? "mobile" : "web",

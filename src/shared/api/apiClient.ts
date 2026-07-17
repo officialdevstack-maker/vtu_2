@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { env } from '../env';
-import Cookies from 'js-cookie';
 
 // API base URL comes from VITE_API_BASE_URL in the environment; no Vite proxy is required.
 const normalizeApiBaseUrl = (value: string | undefined) => {
@@ -41,6 +40,8 @@ const apiBaseUrl = normalizeApiBaseUrl(rawBaseUrl);
 const siteBaseUrl = apiBaseUrl.replace(/\/api(?:\/v\d+)?$/i, '');
 export const AUTH_TOKEN_KEY = 'kora-auth-token';
 let nativeAccessToken: string | null = null;
+let csrfToken: string | null = null;
+let csrfRequest: Promise<string> | null = null;
 
 type NativeWindow = Window & {
   __VENDIFY_NATIVE__?: string;
@@ -56,6 +57,27 @@ export const isNativeClient = () =>
 export const postToNative = (message: Record<string, unknown>) => {
   if (typeof window === 'undefined') return;
   (window as NativeWindow).ReactNativeWebView?.postMessage(JSON.stringify(message));
+};
+
+export const primeCsrfProtection = async (force = false) => {
+  if (isNativeClient()) return null;
+  if (!force && csrfToken) return csrfToken;
+  if (!force && csrfRequest) return csrfRequest;
+
+  csrfRequest = axios
+    .get<{ token: string }>(`${siteBaseUrl}/sanctum/csrf-token`, {
+      withCredentials: true,
+      headers: { Accept: 'application/json' },
+    })
+    .then((response) => {
+      csrfToken = response.data.token;
+      return csrfToken;
+    })
+    .finally(() => {
+      csrfRequest = null;
+    });
+
+  return csrfRequest;
 };
 
 export const getAuthToken = () => {
@@ -116,7 +138,7 @@ const setRequestHeader = (headers: unknown, name: string, value: string) => {
   (headers as Record<string, string>)[name] = value;
 };
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
   const requestUrl = config.url ?? '';
   const normalizedUrl = requestUrl.replace(/^\/+/, '');
   config.url = normalizedUrl;
@@ -127,15 +149,17 @@ apiClient.interceptors.request.use((config) => {
 
   const method = (config.method ?? 'get').toLowerCase();
   const requiresCsrf = !['get', 'head', 'options'].includes(method);
-  const token = requiresCsrf ? Cookies.get('XSRF-TOKEN') : null;
-  if (token) {
-    setRequestHeader(config.headers, 'X-XSRF-TOKEN', decodeURIComponent(token));
-  }
-
-  const authToken = getAuthToken();
   const native = typeof window !== 'undefined'
     ? (window as NativeWindow).__VENDIFY_NATIVE__
     : undefined;
+  if (requiresCsrf && !native) {
+    const sessionToken = await primeCsrfProtection();
+    if (sessionToken) {
+      setRequestHeader(config.headers, 'X-CSRF-TOKEN', sessionToken);
+    }
+  }
+
+  const authToken = getAuthToken();
   // Only the native shell uses bearer authentication. Web requests rely on
   // the encrypted HttpOnly Sanctum session cookie and CSRF protection.
   if (native && authToken) {
@@ -171,6 +195,9 @@ apiClient.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     const url = String(error?.config?.url ?? '');
+    if (status === 419) {
+      csrfToken = null;
+    }
     if (status === 401 && !url.includes('login') && !url.includes('auth/refresh') && typeof window !== 'undefined') {
       if (isNativeClient()) {
         postToNative({ type: 'vendify-auth-refresh-required' });

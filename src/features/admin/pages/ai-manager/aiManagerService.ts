@@ -1,5 +1,4 @@
-import Cookies from "js-cookie";
-import { apiClient, getAuthToken } from "@shared/api/apiClient";
+import { apiClient, getAuthToken, primeCsrfProtection } from "@shared/api/apiClient";
 
 // Payload sits one `.data` deep in the backend envelope (see HttpResponse).
 type ApiEnvelope<T> = { success: boolean; message: string; data: T };
@@ -132,7 +131,7 @@ export const aiManagerService = {
     signal?: AbortSignal,
   ): Promise<void> => {
     const token = getAuthToken();
-    const xsrf = Cookies.get("XSRF-TOKEN");
+    const csrf = await primeCsrfProtection();
     const res = await fetch(
       `${apiClient.defaults.baseURL ?? "/api"}/admin/ai/conversations/${id}/stream`,
       {
@@ -144,7 +143,7 @@ export const aiManagerService = {
           Accept: "text/event-stream",
           "X-Requested-With": "XMLHttpRequest",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(xsrf ? { "X-XSRF-TOKEN": decodeURIComponent(xsrf) } : {}),
+          ...(csrf ? { "X-CSRF-TOKEN": csrf } : {}),
         },
         body: JSON.stringify({ message }),
       },
