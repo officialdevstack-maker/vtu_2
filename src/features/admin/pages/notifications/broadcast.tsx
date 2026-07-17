@@ -400,8 +400,8 @@ export default function BroadcastPage() {
                     key={mode}
                     type="button"
                     onClick={() => setAudienceMode(mode)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                      audienceMode === mode ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                    className={`segmented-swatch px-2.5 py-1 rounded-md text-xs font-medium ${
+                      audienceMode === mode ? "segmented-swatch-active" : ""
                     }`}
                   >
                     {mode === "criteria" ? "By criteria" : "Specific people"}
@@ -713,8 +713,8 @@ export default function BroadcastPage() {
                   key={mode}
                   type="button"
                   onClick={() => setScheduleMode(mode)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    scheduleMode === mode ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  className={`segmented-swatch px-3 py-1.5 rounded-md text-xs font-medium ${
+                    scheduleMode === mode ? "segmented-swatch-active" : ""
                   }`}
                 >
                   {mode === "now" ? "Send now" : "Schedule for later"}

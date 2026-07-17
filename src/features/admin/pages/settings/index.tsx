@@ -38,14 +38,14 @@ const SettingsPage = () => {
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+            className={`segmented-swatch shrink-0 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap ${
               t.id === "danger"
                 ? activeTab === t.id
-                  ? "bg-white text-red-600 shadow-sm"
-                  : "text-red-500 hover:text-red-600"
+                  ? "segmented-swatch-danger segmented-swatch-active"
+                  : "segmented-swatch-danger"
                 : activeTab === t.id
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "segmented-swatch-active"
+                  : ""
             }`}
           >
             {t.label}

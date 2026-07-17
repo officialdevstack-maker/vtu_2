@@ -28,10 +28,10 @@ const CablePage = () => {
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+            className={`segmented-swatch shrink-0 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap ${
               activeTab === t.id
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "segmented-swatch-active"
+                : ""
             }`}
           >
             {t.label}

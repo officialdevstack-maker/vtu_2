@@ -280,10 +280,10 @@ export default function WalletPage() {
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`min-h-11 min-w-0 rounded-md px-2 py-1.5 text-xs font-medium leading-tight transition-colors ${
+            className={`segmented-swatch min-h-11 min-w-0 rounded-md px-2 py-1.5 text-xs font-medium leading-tight ${
               activeTab === t.id
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "segmented-swatch-active"
+                : ""
             }`}
           >
             {t.label}

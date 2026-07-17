@@ -67,10 +67,8 @@ export function ServiceTabs() {
             key={tab.path}
             to={tab.path}
             className={({ isActive }) =>
-              `inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
-                isActive
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+              `segmented-swatch inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium whitespace-nowrap ${
+                isActive ? "segmented-swatch-active" : ""
               }`
             }
           >

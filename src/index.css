@@ -297,6 +297,34 @@
     animation: brand-shimmer 1.8s ease-in-out infinite;
   }
 
+  .segmented-swatch {
+    color: rgb(100 116 139);
+    transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .segmented-swatch:hover,
+  .segmented-swatch-active {
+    background-color: var(--brand-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgb(17 24 39 / 0.16);
+  }
+
+  .segmented-swatch:focus-visible {
+    outline: 2px solid var(--brand-orange);
+    outline-offset: 2px;
+  }
+
+  .segmented-swatch-danger {
+    color: rgb(239 68 68);
+  }
+
+  .segmented-swatch-danger:hover,
+  .segmented-swatch-danger.segmented-swatch-active {
+    background-color: rgb(220 38 38);
+    color: white;
+    box-shadow: 0 2px 8px rgb(220 38 38 / 0.16);
+  }
+
   .overflow-x-auto {
     max-width: 100%;
     -webkit-overflow-scrolling: touch;

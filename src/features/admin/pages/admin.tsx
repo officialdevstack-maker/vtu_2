@@ -334,10 +334,10 @@ export default function AdminPage() {
               <button
                 key={r.days}
                 onClick={() => setRangeDays(r.days)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`segmented-swatch px-2.5 py-1 rounded-md text-xs font-medium ${
                   rangeDays === r.days
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "segmented-swatch-active"
+                    : ""
                 }`}
               >
                 {r.label}
