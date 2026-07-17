@@ -351,12 +351,13 @@ const Layout = () => {
                             : undefined
                         }
                         className={({ isActive: linkActive }) =>
-                          `flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                          `brand-nav-item relative flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                             linkActive || active
                               ? "bg-white/10 text-white"
                               : "text-white/60 hover:bg-white/5 hover:text-white/90"
                           }`
                         }
+                        data-active={active}
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
                         <span className="flex-1 truncate">{item.label}</span>
@@ -506,7 +507,7 @@ const Layout = () => {
               <div className="ml-auto flex items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => navigate("/admin/ai-manager/chat/new")}
-                  className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#111827] to-slate-600 text-white transition-transform hover:scale-105"
+                  className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#111827] text-white transition-all hover:scale-105 hover:shadow-[0_0_0_2px_rgba(255,122,26,0.2)]"
                   aria-label={
                     aiAlertCount > 0
                       ? `AI Manager — ${aiAlertCount} alert${aiAlertCount === 1 ? "" : "s"}`
@@ -516,7 +517,7 @@ const Layout = () => {
                 >
                   <Sparkles className="h-4 w-4" />
                   {aiAlertCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full bg-red-500 ring-2 ring-white" />
+                    <span className="brand-notification-dot absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full ring-2 ring-white" />
                   )}
                 </button>
 
@@ -526,7 +527,7 @@ const Layout = () => {
                 >
                   <Bell className="h-4.5 w-4.5" />
                   {Boolean(unreadQuery.data) && (
-                    <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                    <span className="brand-notification-dot absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full" />
                   )}
                 </button>
 

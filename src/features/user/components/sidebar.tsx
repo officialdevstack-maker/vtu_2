@@ -247,7 +247,8 @@ export default function Sidebar({
                           : undefined
                       }
                       title={collapsed ? item.label : undefined}
-                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors relative ${collapsed ? "lg:justify-center" : ""} ${
+                      data-active={active}
+                      className={`brand-nav-item w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors relative ${collapsed ? "lg:justify-center" : ""} ${
                         active
                           ? "bg-white/10 text-white font-medium"
                           : "text-white/60 hover:bg-white/5 hover:text-white/90"
@@ -261,7 +262,7 @@ export default function Sidebar({
                       </span>
                       {Boolean(badge) && (
                         <span
-                          className={`bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium shrink-0 ${collapsed ? "lg:absolute lg:top-1 lg:right-1 lg:w-2 lg:h-2 lg:text-[0px]" : "ml-auto w-4.5 h-4.5"}`}
+                          className={`brand-notification-dot text-white text-[10px] rounded-full flex items-center justify-center font-medium shrink-0 ${collapsed ? "lg:absolute lg:top-1 lg:right-1 lg:w-2 lg:h-2 lg:text-[0px]" : "ml-auto w-4.5 h-4.5"}`}
                         >
                           {badge && badge > 9 ? "9+" : badge}
                         </span>

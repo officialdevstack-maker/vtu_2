@@ -23,7 +23,7 @@ export function GlassCard({
 
 export function Kicker({ children }: { children: ReactNode }) {
   return (
-    <span className="glass shadow-premium-sm brand-primary-text inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide">
+    <span className="landing-kicker glass shadow-premium-sm brand-primary-text inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-medium tracking-wide">
       {children}
     </span>
   );

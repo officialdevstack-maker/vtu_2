@@ -116,7 +116,8 @@ const UserLayout = () => {
                   : navigate(item.path)
               }
               aria-expanded={isServices ? servicesSheetOpen : undefined}
-              className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-[10px] transition-colors min-[360px]:text-[11px] ${
+              data-active={active}
+              className={`brand-mobile-nav-item relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-[10px] transition-colors min-[360px]:text-[11px] ${
                 active
                   ? "font-medium text-[#111827]"
                   : "text-slate-400 hover:text-slate-600"

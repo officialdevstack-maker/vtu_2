@@ -82,7 +82,7 @@ export function Button({
       )}
       {...props}
     >
-      {loading && <RefreshCw className="w-4 h-4 animate-spin" />}
+      {loading && <RefreshCw className="w-4 h-4 animate-spin brand-accent-orange" />}
       {children}
     </button>
   );
@@ -139,7 +139,7 @@ type Tone = "neutral" | "success" | "warning" | "danger";
 const toneStyles: Record<Tone, string> = {
   neutral: "brand-primary-soft brand-primary-text",
   success: "bg-emerald-50 text-emerald-600",
-  warning: "bg-amber-50 text-amber-600",
+  warning: "bg-orange-50 text-orange-600",
   danger: "bg-red-50 text-red-600",
 };
 
@@ -217,8 +217,8 @@ const statusMap: Record<string, { dot: string; text: string; label: string }> =
       label: "Completed",
     },
     pending: {
-      dot: "bg-amber-500",
-      text: "text-amber-700 bg-amber-50",
+      dot: "bg-orange-500",
+      text: "text-orange-700 bg-orange-50",
       label: "Pending",
     },
     processing: {
@@ -278,8 +278,8 @@ const statusMap: Record<string, { dot: string; text: string; label: string }> =
       label: "Claimed",
     },
     paused: {
-      dot: "bg-amber-500",
-      text: "text-amber-700 bg-amber-50",
+      dot: "bg-orange-500",
+      text: "text-orange-700 bg-orange-50",
       label: "Paused",
     },
     revoked: {
@@ -357,7 +357,7 @@ export function Toggle({
 }
 
 export function SkeletonLine({ className = "" }: { className?: string }) {
-  return <div className={`bg-slate-100 rounded animate-pulse ${className}`} />;
+  return <div className={`brand-skeleton bg-slate-100 rounded animate-pulse ${className}`} />;
 }
 
 export function SkeletonCard() {
@@ -391,7 +391,7 @@ export function Spinner({
     <Loader2
       className={cn(
         spinnerSizes[size],
-        "animate-spin brand-primary-text",
+        "animate-spin brand-accent-orange",
         className,
       )}
     />
@@ -431,7 +431,7 @@ export function SessionPreloader({
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-app-bg px-4">
       <div className="relative w-16 h-16 mb-5 flex items-center justify-center">
-        <span className="absolute inset-0 rounded-2xl brand-primary-bg opacity-20 animate-ping" />
+        <span className="absolute inset-0 rounded-2xl bg-orange-400 opacity-15 animate-ping" />
         <div className="relative w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-black/10 overflow-hidden ring-1 ring-slate-200/70">
           {logo ? (
             <img
@@ -447,7 +447,7 @@ export function SessionPreloader({
       <p className="text-sm font-semibold text-slate-900 mb-1">{app_name}</p>
       <p className="text-xs text-slate-400 mb-5">{label}</p>
       <div className="w-36 h-1 rounded-full bg-slate-200 overflow-hidden">
-        <div className="h-full w-1/3 rounded-full brand-primary-bg animate-[loading-bar_1.1s_ease-in-out_infinite]" />
+        <div className="brand-loading-bar h-full w-1/3 rounded-full animate-[loading-bar_1.1s_ease-in-out_infinite]" />
       </div>
     </div>
   );
@@ -462,7 +462,7 @@ export function TopLoadingBar({ active }: { active: boolean }) {
       )}
       aria-hidden={!active}
     >
-      <div className="h-full w-1/3 animate-[loading-bar_1.1s_ease-in-out_infinite] brand-primary-bg" />
+      <div className="brand-loading-bar h-full w-1/3 animate-[loading-bar_1.1s_ease-in-out_infinite]" />
     </div>
   );
 }

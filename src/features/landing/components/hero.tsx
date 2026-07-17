@@ -35,7 +35,7 @@ export function Hero() {
           >
             Bills, paid at the
             <br />
-            speed of <span className="brand-primary-text">thought.</span>
+            speed of <span className="landing-accent-underline brand-primary-text">thought.</span>
           </h1>
 
           <p

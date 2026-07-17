@@ -31,7 +31,14 @@ export default function SpendingChart({ data }: { data: SpendingChartPoint[] }) 
           contentStyle={{ backgroundColor: "#fff", border: "1px solid #E5E7EB", borderRadius: "8px", fontSize: "12px" }}
           formatter={(value) => [fmt(Number(value)), "Spent"]}
         />
-        <Area type="monotone" dataKey="amount" stroke="#111827" strokeWidth={1.75} fill="url(#spendGrad)" />
+        <Area
+          type="monotone"
+          dataKey="amount"
+          stroke="#111827"
+          strokeWidth={1.75}
+          fill="url(#spendGrad)"
+          activeDot={{ r: 4, fill: "#ff7a1a", stroke: "#ffffff", strokeWidth: 2 }}
+        />
       </AreaChart>
     </ResponsiveContainer>
   );

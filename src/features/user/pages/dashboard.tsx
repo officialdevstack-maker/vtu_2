@@ -119,7 +119,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Balance banner */}
-      <Card className="bg-slate-900 p-4 border-slate-900 sm:p-5">
+      <Card className="relative overflow-hidden bg-slate-900 p-4 border-slate-900 sm:p-5">
+        <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/70 to-transparent" aria-hidden="true" />
         <div className="flex items-start justify-between flex-wrap gap-5">
           <div className="min-w-0 flex-1">
             <p className="text-slate-400 text-xs mb-1.5">Available balance</p>
@@ -197,7 +198,7 @@ export default function DashboardPage() {
             <button
               key={a.label}
               onClick={() => navigate(a.path)}
-              className="group flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 p-2.5 transition-colors hover:border-[#111827]/30 hover:bg-[#111827]/5 sm:p-3"
+              className="group flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 p-2.5 transition-all hover:border-orange-200 hover:bg-[#111827]/[0.025] hover:shadow-[0_0_0_3px_rgba(255,122,26,0.05)] sm:p-3"
             >
               <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-lg flex items-center justify-center transition-colors group-hover:bg-[#111827] group-hover:text-white">
                 <a.icon className="w-4 h-4" />
@@ -247,7 +248,7 @@ export default function DashboardPage() {
                 return (
                   <div key={n.id} className="flex items-center justify-between py-2.5">
                     <div className="flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${available ? "bg-emerald-500" : "bg-amber-500"}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${available ? "brand-success-pulse bg-emerald-500" : "bg-orange-500"}`} />
                       <span className="text-sm text-slate-700 capitalize">{n.name}</span>
                     </div>
                     <span className="text-xs text-slate-400">{available ? "Available" : "Limited"}</span>

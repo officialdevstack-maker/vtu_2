@@ -28,9 +28,9 @@ export const notificationMeta: Record<string, { icon: LucideIcon; tone: "success
 
 export const toneStyles: Record<string, string> = {
   success: "bg-emerald-50 text-emerald-600",
-  warning: "bg-amber-50 text-amber-600",
+  warning: "bg-orange-50 text-orange-600",
   error: "bg-red-50 text-red-600",
-  info: "bg-blue-50 text-blue-600",
+  info: "bg-slate-100 text-slate-700",
 };
 
 export function notificationIcon(type: string): { icon: LucideIcon; tone: string } {

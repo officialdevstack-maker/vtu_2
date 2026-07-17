@@ -34,6 +34,12 @@
     --brand-primary-text: #111827;
     --brand-primary-ring: rgb(17 24 39 / 0.3);
     --brand-primary-shadow: rgb(17 24 39 / 0.1);
+    --brand-orange: #ff7a1a;
+    --brand-orange-soft: rgb(255 122 26 / 0.1);
+    --brand-orange-ring: rgb(255 122 26 / 0.22);
+    --brand-green: #0bbf74;
+    --brand-green-soft: rgb(11 191 116 / 0.1);
+    --brand-green-ring: rgb(11 191 116 / 0.2);
   }
 
   html {
@@ -186,13 +192,16 @@
   }
 
   .brand-primary-button {
+    position: relative;
     background-color: var(--brand-primary);
     box-shadow: 0 1px 2px var(--brand-primary-shadow);
     color: white;
+    transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
   }
 
   .brand-primary-button:hover:not(:disabled) {
     background-color: var(--brand-primary-hover);
+    box-shadow: 0 6px 20px rgb(17 24 39 / 0.16), 0 0 0 1px var(--brand-orange-ring);
   }
 
   .brand-primary-button:disabled {
@@ -201,8 +210,8 @@
   }
 
   .brand-primary-focus:focus {
-    border-color: var(--brand-primary);
-    box-shadow: 0 0 0 4px var(--brand-primary-ring);
+    border-color: color-mix(in srgb, var(--brand-orange) 62%, var(--brand-primary));
+    box-shadow: 0 0 0 4px var(--brand-orange-ring);
   }
 
   .brand-primary-toggle:focus {
@@ -223,6 +232,69 @@
 
   .brand-primary-text {
     color: var(--brand-primary-text);
+  }
+
+  .brand-accent-orange {
+    color: var(--brand-orange);
+  }
+
+  .brand-accent-green {
+    color: var(--brand-green);
+  }
+
+  .brand-notification-dot {
+    background-color: var(--brand-orange);
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.9), 0 0 10px rgb(255 122 26 / 0.32);
+  }
+
+  .brand-nav-item::before {
+    content: "";
+    position: absolute;
+    inset-block: 0.55rem;
+    left: 0;
+    width: 2px;
+    border-radius: 999px;
+    background: transparent;
+    transition: background-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .brand-nav-item[data-active="true"]::before {
+    background: var(--brand-orange);
+    box-shadow: 0 0 10px rgb(255 122 26 / 0.34);
+  }
+
+  .brand-mobile-nav-item::after {
+    content: "";
+    position: absolute;
+    bottom: 0.2rem;
+    width: 1rem;
+    height: 2px;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .brand-mobile-nav-item[data-active="true"]::after {
+    background: var(--brand-orange);
+  }
+
+  .brand-unread-row {
+    background: linear-gradient(90deg, var(--brand-orange-soft), rgb(255 255 255 / 0) 36%);
+    box-shadow: inset 2px 0 0 var(--brand-orange);
+  }
+
+  .brand-loading-bar {
+    background: linear-gradient(90deg, var(--brand-orange), #ffad73);
+    box-shadow: 0 0 10px rgb(255 122 26 / 0.35);
+  }
+
+  .brand-success-pulse {
+    animation: brand-success-pulse 1.8s ease-out infinite;
+  }
+
+  .brand-skeleton {
+    background-image: linear-gradient(100deg, transparent 35%, rgb(255 122 26 / 0.07) 50%, transparent 65%);
+    background-size: 220% 100%;
+    animation: brand-shimmer 1.8s ease-in-out infinite;
   }
 
   .overflow-x-auto {
@@ -383,6 +455,16 @@
   100% { transform: translateX(300%); }
 }
 
+@keyframes brand-shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
+@keyframes brand-success-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--brand-green-ring); }
+  50% { box-shadow: 0 0 0 5px transparent; }
+}
+
 /* Custom select chevron: replaces the browser's native arrow (which renders
    inconsistently across browsers/OSes) with one fixed icon that's always
    vertically centered and never overlaps the selected text. */
@@ -416,6 +498,13 @@
 @layer utilities {
   .animate-bounce-in {
     animation: bounce-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-success-pulse,
+  .brand-skeleton {
+    animation: none;
   }
 }
 

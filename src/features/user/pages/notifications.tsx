@@ -172,7 +172,7 @@ export default function NotificationsPage() {
                     onClick={() => handleMarkRead(n)}
                     disabled={!unread || markReadMutation.isPending}
                     className={`flex w-full gap-3.5 p-4 text-left hover:bg-gray-50 transition-colors cursor-pointer disabled:cursor-default ${
-                      unread ? "bg-[#111827]/5" : ""
+                      unread ? "brand-unread-row" : ""
                     }`}
                   >
                     <div
@@ -186,7 +186,7 @@ export default function NotificationsPage() {
                           {n.data.title}
                         </p>
                         {unread && (
-                          <span className="w-1.5 h-1.5 bg-[#111827] rounded-full shrink-0" />
+                          <span className="brand-notification-dot w-1.5 h-1.5 rounded-full shrink-0" />
                         )}
                       </div>
                       <p className="text-slate-500 text-xs leading-relaxed">

@@ -16,7 +16,7 @@ const features = [
 export const authCardCls = "rounded-none border-0 bg-transparent p-0 shadow-none";
 
 export const authInputCls =
-  "rounded-2xl border border-slate-200 bg-slate-50 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:bg-white transition-colors";
+  "brand-primary-focus rounded-2xl border border-slate-200 bg-slate-50 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:bg-white transition-colors";
 
 function GoogleIcon() {
   return (

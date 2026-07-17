@@ -87,7 +87,7 @@ export default function Topbar({
             <Bell className="h-4.5 w-4.5" />
             {hasUnreadNotifications && (
               <span
-                className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500"
+                className="brand-notification-dot absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full"
                 aria-hidden="true"
               />
             )}
