@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/features/user/components/shared-ui";
 import { AuthLayout, authCardCls } from "../components/AuthLayout";
 import { accountService } from "@/features/account/services/accountService";
 import { PinDots, PinKeypad } from "../components/PinKeypad";
-import { getAuthToken, setAuthToken } from "@/shared/api/apiClient";
-import { useAuth } from "@/shared/providers/auth";
+import { getAuthToken, isNativeClient, setAuthToken } from "@/shared/api/apiClient";
+import { AUTH_QUERY_KEY, useAuth, type User } from "@/shared/providers/auth";
 
 const PIN_LENGTH = 4;
 
@@ -36,13 +37,17 @@ export default function CreateTransactionPinPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
-  const { user, isAuthenticated, isInitializing, refreshUser } = useAuth();
+  const queryClient = useQueryClient();
+  const { user, isAuthenticated, isInitializing } = useAuth();
 
   const value = stage === "create" ? pin : confirmPin;
   const setValue = stage === "create" ? setPin : setConfirmPin;
 
   const submit = async (finalPin: string, finalConfirm: string) => {
-    if (!getAuthToken()) {
+    // Browser authentication uses the HttpOnly session cookie, so a missing
+    // bearer token is expected on the web. Only the native shell requires an
+    // in-memory access token before this request can be made.
+    if (isNativeClient() && !getAuthToken()) {
       setError("Please sign in again before creating your transaction PIN.");
       window.setTimeout(() => navigate("/login", { replace: true }), 1200);
       return;
@@ -50,8 +55,19 @@ export default function CreateTransactionPinPage() {
 
     setSubmitting(true);
     try {
-      await accountService.updatePin({ pin: finalPin, pin_confirmation: finalConfirm });
-      await refreshUser();
+      const updatedUser = await accountService.updatePin({
+        pin: finalPin,
+        pin_confirmation: finalConfirm,
+      });
+
+      // The PIN response already contains the fresh user with has_pin=true.
+      // Seed it synchronously so ProtectedLayout cannot bounce the successful
+      // dashboard navigation back into this setup screen while /user refreshes.
+      queryClient.setQueryData<User | null>(AUTH_QUERY_KEY, (current) => ({
+        ...(current ?? {}),
+        ...updatedUser,
+        has_pin: true,
+      } as User));
       setSuccess(true);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -126,11 +142,14 @@ export default function CreateTransactionPinPage() {
   }, [navigate, success]);
 
   useEffect(() => {
-    if (isInitializing || isAuthenticated || getAuthToken()) return;
+    // Do not let a background auth refresh interrupt a PIN request that has
+    // already reached the server. A genuine 401 is handled by submit().
+    if (isInitializing || isAuthenticated || submitting || success) return;
+    if (isNativeClient() && getAuthToken()) return;
     const timeout = window.setTimeout(() => navigate("/login", { replace: true }), 1200);
     setError("Please sign in again before creating your transaction PIN.");
     return () => window.clearTimeout(timeout);
-  }, [isAuthenticated, isInitializing, navigate]);
+  }, [isAuthenticated, isInitializing, navigate, submitting, success]);
 
   // Already has a PIN (e.g. revisited this URL directly) — nothing to do
   // here, send them on to where they were actually headed.
