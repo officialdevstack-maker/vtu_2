@@ -146,17 +146,15 @@ function ShowcaseMockups() {
 
 function ShowcasePanel() {
   return (
-    <aside className="relative hidden shrink-0 overflow-hidden border-l border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-10 py-16 md:flex md:w-[38%] md:flex-col md:justify-center md:gap-10 lg:w-[54%] lg:px-16 xl:px-20">
-      <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -left-28 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
+    <aside className="hidden shrink-0 border-l border-slate-100 bg-[#f8f8fb] px-10 py-16 md:flex md:w-[38%] md:flex-col md:justify-center md:gap-10 lg:w-[54%] lg:px-16 xl:px-20">
       <div className="max-w-md animate-auth-fade-in">
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-orange-200 backdrop-blur">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700">
           <Shield className="h-3.5 w-3.5" /> Secure payments, made simple
         </div>
-        <h2 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-white lg:text-4xl">
+        <h2 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 lg:text-4xl">
           Your everyday payments, beautifully simple.
         </h2>
-        <p className="text-base leading-relaxed text-slate-300">
+        <p className="text-base leading-relaxed text-slate-500">
           Top up airtime, buy data, and move money - all protected behind a dedicated transaction PIN.
         </p>
       </div>
@@ -172,8 +170,8 @@ function ShowcasePanel() {
               <Icon className="h-4 w-4 text-[#111827]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">{title}</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{text}</p>
+              <p className="text-sm font-semibold text-slate-900">{title}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{text}</p>
             </div>
           </div>
         ))}
