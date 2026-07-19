@@ -50,12 +50,18 @@ export default function WalletWithdrawalPage() {
   }, [banksQuery.data, amountNumber]);
   const totalDebit = amountNumber + withdrawalFee;
   const balance = Number(user?.wallet_balance ?? 0);
+  const minimumWithdrawal = Number(banksQuery.data?.minimum ?? 0);
+  const maximumWithdrawal = Number(banksQuery.data?.maximum ?? 0);
+  const balanceBelowMinimum = minimumWithdrawal > 0 && balance < minimumWithdrawal;
+  const amountBelowMinimum = amountNumber > 0 && amountNumber < minimumWithdrawal;
+  const amountAboveMaximum = maximumWithdrawal > 0 && amountNumber > maximumWithdrawal;
 
   const isFormValid =
     Boolean(selectedBank) &&
     accountNumber.trim().length >= 10 &&
     accountName.trim().length > 1 &&
-    amountNumber > 0 &&
+    amountNumber >= minimumWithdrawal &&
+    (maximumWithdrawal <= 0 || amountNumber <= maximumWithdrawal) &&
     totalDebit <= balance;
   const isConfirmValid = pin.length === 4;
 
@@ -139,6 +145,12 @@ export default function WalletWithdrawalPage() {
 
           {banksQuery.isPending ? (
             <div className="h-10 rounded-lg bg-gray-100 animate-pulse" />
+          ) : balanceBelowMinimum ? (
+            <EmptyState
+              icon={Landmark}
+              title={`Minimum withdrawal is ${fmt(minimumWithdrawal)}`}
+              description={`Your current wallet balance is ${fmt(balance)}. Add at least ${fmt(minimumWithdrawal - balance)} more to withdraw.`}
+            />
           ) : !banksQuery.data?.available ? (
             <EmptyState
               icon={Landmark}
@@ -205,6 +217,16 @@ export default function WalletWithdrawalPage() {
                 {amount && totalDebit > balance && (
                   <p className="text-xs text-red-500 mt-1">
                     Amount plus fee exceeds your wallet balance.
+                  </p>
+                )}
+                {amountBelowMinimum && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Minimum withdrawal is {fmt(minimumWithdrawal)}.
+                  </p>
+                )}
+                {amountAboveMaximum && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Maximum withdrawal is {fmt(maximumWithdrawal)}.
                   </p>
                 )}
               </div>

@@ -490,6 +490,8 @@ export const customerService = {
   getWithdrawalBanks: (): Promise<{
     available: boolean;
     banks: WalletBank[];
+    minimum: number;
+    maximum: number;
     // Payout gateway's withdrawal fee (added on top of the amount). type is
     // "fiat" (flat ₦) or "percent". Absent/0 when the gateway charges none.
     withdrawal_fee?: number;
@@ -500,6 +502,8 @@ export const customerService = {
         ApiEnvelope<{
           available: boolean;
           banks: WalletBank[];
+          minimum: number;
+          maximum: number;
           withdrawal_fee?: number;
           withdrawal_fee_type?: string;
         }>
