@@ -1,12 +1,11 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Wallet, ShoppingBag,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
-  Banknote, Send, Landmark,
+  Banknote, Send, Landmark, CheckCircle2, TrendingUp, ArrowUpRight, ArrowDownLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fmt } from "../data/mock";
+import { fmt, fmtCompact } from "../data/mock";
 import { SkeletonCard, StatusBadge, Card, Button, EmptyState, CopyButton } from "../components/shared-ui";
 import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
@@ -47,13 +46,6 @@ export default function DashboardPage() {
   const dashboardUserQuery = useDashboardUser();
   const user = dashboardUserQuery.user;
 
-  const networksQuery = useQuery({
-    queryKey: ["networks"],
-    queryFn: () => customerService.getNetworks(),
-  });
-  const networks = networksQuery.data ?? [];
-  const networksLoading = networksQuery.isPending;
-
   const transactions = useMemo<UserTransaction[]>(
     () =>
       [...(user?.transactions ?? [])].sort(
@@ -81,6 +73,22 @@ export default function DashboardPage() {
       })),
     [user?.stats?.tx_amount_30d],
   );
+
+  // "This month at a glance" — an encouraging summary of the customer's own
+  // activity, replacing the old network-status card.
+  const monthStats = useMemo(() => {
+    const s = user?.stats;
+    const success = s?.monthly_successful ?? 0;
+    const failed = s?.monthly_failed ?? 0;
+    const pending = s?.monthly_pending ?? 0;
+    const total = success + failed + pending;
+    return {
+      success,
+      successRate: total > 0 ? Math.round((success / total) * 100) : 100,
+      spent: toNumber(s?.monthly_purchases ?? 0),
+      funded: toNumber(s?.monthly_deposits ?? 0),
+    };
+  }, [user?.stats]);
 
   const handleConvertReferral = async () => {
     if (!user) return;
@@ -366,33 +374,28 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="lg:col-span-2 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-900">Service availability</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">This month at a glance</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Your activity so far</p>
+            </div>
           </div>
-          {networksLoading ? (
-            <div className="space-y-2.5">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-8 bg-gray-100 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          ) : networks.length === 0 ? (
-            <p className="text-xs text-slate-400">Network status unavailable right now.</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {networks.slice(0, 6).map((n) => {
-                const available = n.network_types.some((t) => Boolean(t.pivot?.active));
-                return (
-                  <div key={n.id} className="flex items-center justify-between py-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${available ? "brand-success-pulse bg-emerald-500" : "bg-orange-500"}`} />
-                      <span className="text-sm text-slate-700 capitalize">{n.name}</span>
-                    </div>
-                    <span className="text-xs text-slate-400">{available ? "Available" : "Limited"}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Successful", value: monthStats.success.toLocaleString(), icon: CheckCircle2, tint: "text-emerald-600 bg-emerald-50" },
+              { label: "Success rate", value: `${monthStats.successRate}%`, icon: TrendingUp, tint: "text-indigo-600 bg-indigo-50" },
+              { label: "Spent", value: fmtCompact(monthStats.spent), icon: ArrowUpRight, tint: "text-rose-600 bg-rose-50" },
+              { label: "Funded", value: fmtCompact(monthStats.funded), icon: ArrowDownLeft, tint: "text-sky-600 bg-sky-50" },
+            ].map((tile) => (
+              <div key={tile.label} className="rounded-xl border border-gray-100 p-3">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-2 ${tile.tint}`}>
+                  <tile.icon className="w-4 h-4" />
+                </div>
+                <p className="text-lg font-semibold text-slate-900 leading-tight">{tile.value}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{tile.label}</p>
+              </div>
+            ))}
+          </div>
         </Card>
       </div>
 
