@@ -1,13 +1,13 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Wallet, ArrowDownLeft, ShoppingBag, CheckCircle2, AlertTriangle, TrendingUp,
+  Wallet, ShoppingBag, AlertTriangle,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
   Banknote, Send, Landmark,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fmt } from "../data/mock";
-import { SkeletonCard, StatusBadge, StatCard, Card, Button, EmptyState } from "../components/shared-ui";
+import { SkeletonCard, StatusBadge, Card, Button, EmptyState, CopyButton } from "../components/shared-ui";
 import { useAuth, type UserTransaction } from "../../../shared/providers/auth";
 import { customerService } from "../services/customerService";
 import { transactionTypeMeta, isCredit, toNumber, badgeStatus } from "../utils/transactionDisplay";
@@ -28,6 +28,15 @@ const quickActions = [
 
 const dateLabel = (value: string) =>
   new Date(value).toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+// Service purchases that can be repeated from the dashboard, mapped to
+// the page where the customer can make the same purchase again.
+const repeatPurchaseRoutes: Record<string, string> = {
+  airtime_recharge: "/buy-airtime",
+  data_subscription: "/buy-data",
+  cable_subscription: "/cable-tv",
+  electric_bill: "/electricity",
+};
 
 export default function DashboardPage() {
   const { isInitializing, refreshUser } = useAuth();
@@ -53,12 +62,16 @@ export default function DashboardPage() {
     [user?.transactions],
   );
 
-  const derived = {
-    totalDeposits: user?.stats?.monthly_deposits ?? 0,
-    totalPurchases: user?.stats?.monthly_purchases ?? 0,
-    todaySpend: user?.stats?.today_spend ?? 0,
-    todayDataGB: user?.stats?.today_data_gb ?? 0,
-  };
+  const banks = user?.banks ?? [];
+  const primaryBank = banks.find((b) => b.status === "active") ?? banks[0];
+
+  const lastPurchase = useMemo(
+    () =>
+      transactions.find(
+        (tx) => tx.status === "success" && repeatPurchaseRoutes[tx.transaction_type],
+      ),
+    [transactions],
+  );
 
   const spendingChart = useMemo(
     () =>
@@ -83,8 +96,8 @@ export default function DashboardPage() {
   if (isInitializing) {
     return (
       <div className="max-w-7xl mx-auto space-y-5">
-        <div className="dashboard-stat-grid">
-          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+        <div className="grid gap-3 md:grid-cols-3">
+          {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       </div>
     );
@@ -106,7 +119,6 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = (user.fullname ?? user.username ?? "there").split(" ")[0];
   const referralBalance = toNumber(user.referral_balance);
-  const monthlySuccessful = user.stats?.monthly_successful ?? 0;
   const monthlyAttention = (user.stats?.monthly_pending ?? 0) + (user.stats?.monthly_failed ?? 0);
 
   return (
@@ -159,19 +171,125 @@ export default function DashboardPage() {
         </div>
       </Card>
 
-      {/* Stat cards */}
+      {/* Needs-attention alert — only shown when something actually needs it */}
+      {monthlyAttention > 0 && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-orange-200 bg-orange-50 p-4">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertTriangle className="w-4 h-4 text-orange-600 shrink-0" />
+            <p className="text-sm text-orange-800">
+              {monthlyAttention} transaction{monthlyAttention === 1 ? "" : "s"} this month {monthlyAttention === 1 ? "is" : "are"} pending or failed.
+            </p>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => navigate("/transactions")}>
+            Review
+          </Button>
+        </Card>
+      )}
+
+      {/* Action cards */}
       {dashboardDetailsLoading ? (
-        <div className="dashboard-stat-grid">
-          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+        <div className="grid gap-3 md:grid-cols-3">
+          {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : (
-        <div className="dashboard-stat-grid">
-          <StatCard label="Deposits this month" value={fmt(derived.totalDeposits)} icon={ArrowDownLeft} tone="success" meta="This month" />
-          <StatCard label="Purchases this month" value={fmt(derived.totalPurchases)} icon={ShoppingBag} tone="neutral" meta="This month" />
-          <StatCard label="Successful" value={String(monthlySuccessful)} icon={CheckCircle2} tone="success" meta="This month" />
-          <StatCard label="Pending / failed" value={String(monthlyAttention)} icon={AlertTriangle} tone="warning" meta="Needs attention" />
-          <StatCard label="Today's spend" value={fmt(derived.todaySpend)} icon={TrendingUp} tone="neutral" meta="Across all services" />
-          <StatCard label="Data bought today" value={`${derived.todayDataGB}GB`} icon={Wifi} tone="neutral" meta="Data subscriptions" />
+        <div className="grid gap-3 md:grid-cols-3">
+          {/* Fund by bank transfer */}
+          <Card className="flex h-full min-w-0 flex-col p-4">
+            <div className="mb-2.5 flex min-w-0 items-start justify-between gap-2">
+              <p className="text-xs font-medium text-slate-500">Fund by bank transfer</p>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-600">
+                <Landmark className="w-4 h-4" />
+              </div>
+            </div>
+            {primaryBank ? (
+              <>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="min-w-0 break-words text-lg font-semibold text-slate-900 tabular-nums sm:text-xl">
+                    {primaryBank.bank_account}
+                  </span>
+                  <CopyButton value={primaryBank.bank_account} label="account number" />
+                </div>
+                <p className="text-xs text-slate-400 mt-1 truncate">
+                  {primaryBank.bank_name}
+                  {primaryBank.account_name ? ` · ${primaryBank.account_name}` : ""}
+                </p>
+                <p className="text-xs text-slate-400 mt-2">Transfers credit your wallet automatically.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-slate-600 flex-1">
+                  Get a dedicated account number and fund your wallet by bank transfer.
+                </p>
+                <Button size="sm" variant="secondary" className="mt-3 self-start" onClick={() => navigate("/wallet?tab=fund")}>
+                  <Plus className="w-4 h-4" /> Fund wallet
+                </Button>
+              </>
+            )}
+          </Card>
+
+          {/* Buy again */}
+          <Card className="flex h-full min-w-0 flex-col p-4">
+            <div className="mb-2.5 flex min-w-0 items-start justify-between gap-2">
+              <p className="text-xs font-medium text-slate-500">Buy again</p>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 brand-primary-soft brand-primary-text">
+                <ShoppingBag className="w-4 h-4" />
+              </div>
+            </div>
+            {lastPurchase ? (
+              <>
+                <p className="min-w-0 break-words text-lg font-semibold text-slate-900 sm:text-xl">
+                  {transactionTypeMeta[lastPurchase.transaction_type]?.label ?? lastPurchase.transaction_type}
+                </p>
+                <p className="text-xs text-slate-400 mt-1 truncate">
+                  {lastPurchase.receiver ?? lastPurchase.account_or_phone ?? "—"} · {fmt(toNumber(lastPurchase.amount))}
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="mt-3 self-start"
+                  onClick={() => navigate(repeatPurchaseRoutes[lastPurchase.transaction_type])}
+                >
+                  Repeat purchase
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-slate-600 flex-1">
+                  Your most recent purchase will appear here for one-tap repeat.
+                </p>
+                <Button size="sm" variant="secondary" className="mt-3 self-start" onClick={() => navigate("/buy-data")}>
+                  <Wifi className="w-4 h-4" /> Buy data
+                </Button>
+              </>
+            )}
+          </Card>
+
+          {/* Refer & earn */}
+          <Card className="flex h-full min-w-0 flex-col p-4">
+            <div className="mb-2.5 flex min-w-0 items-start justify-between gap-2">
+              <p className="text-xs font-medium text-slate-500">Refer & earn</p>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-orange-50 text-orange-600">
+                <Gift className="w-4 h-4" />
+              </div>
+            </div>
+            {user.referral_code ? (
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="min-w-0 break-words text-lg font-semibold text-slate-900 sm:text-xl">
+                  {user.referral_code}
+                </span>
+                <CopyButton value={user.referral_code} label="referral code" />
+              </div>
+            ) : (
+              <p className="text-sm text-slate-600">Invite friends and earn on their purchases.</p>
+            )}
+            <p className="text-xs text-slate-400 mt-1">Earned so far: {fmt(referralBalance)}</p>
+            <button
+              onClick={() => navigate("/referral")}
+              className="mt-2 self-start text-xs font-medium text-[#111827] hover:underline flex items-center gap-1"
+            >
+              View referral program <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </Card>
         </div>
       )}
 
