@@ -1,8 +1,9 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Wallet, ShoppingBag,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
   Banknote, Send, Landmark, CheckCircle2, TrendingUp, ArrowUpRight, ArrowDownLeft,
+  Settings2, X, ArrowLeft, ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fmt, fmtCompact } from "../data/mock";
@@ -25,6 +26,49 @@ const quickActions = [
   { label: "Airtime to cash", icon: Banknote, path: "/airtime-to-cash" },
 ];
 
+const QUICK_ACTIONS_KEY = "vendify-dashboard-quick-actions";
+const defaultQuickActionLabels = ["Buy data", "Buy airtime", "Electricity", "Fund wallet"];
+
+function CountUpAmount({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(value);
+      return;
+    }
+    const startedAt = performance.now();
+    const duration = 650;
+    let frame = 0;
+    const tick = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      setDisplay(value * (1 - Math.pow(1 - progress, 3)));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+
+  return <>{fmt(display)}</>;
+}
+
+const relativeDate = (value: string) => {
+  const seconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "Yesterday" : `${days} days ago`;
+};
+
+const maskRecipient = (value: string | null) => {
+  if (!value) return "—";
+  if (value.length < 7) return value;
+  return `${value.slice(0, 4)}••••${value.slice(-3)}`;
+};
+
 const dateLabel = (value: string) =>
   new Date(value).toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
@@ -41,6 +85,16 @@ export default function DashboardPage() {
   const { isInitializing, refreshUser } = useAuth();
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [converting, setConverting] = useState(false);
+  const [chartPeriod, setChartPeriod] = useState<7 | 30 | 90>(30);
+  const [customisingActions, setCustomisingActions] = useState(false);
+  const [quickActionLabels, setQuickActionLabels] = useState<string[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(QUICK_ACTIONS_KEY) ?? "null");
+      return Array.isArray(saved) && saved.length === 4 ? saved : defaultQuickActionLabels;
+    } catch {
+      return defaultQuickActionLabels;
+    }
+  });
   const navigate = useNavigate();
 
   const dashboardUserQuery = useDashboardUser();
@@ -66,12 +120,15 @@ export default function DashboardPage() {
   );
 
   const spendingChart = useMemo(
-    () =>
-      (user?.stats?.tx_amount_30d ?? []).map((row) => ({
+    () => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - chartPeriod);
+      return (user?.stats?.tx_amount_30d ?? []).filter((row) => new Date(row.date) >= cutoff).map((row) => ({
         day: new Date(row.date).toLocaleDateString("en-NG", { day: "numeric", month: "short" }),
         amount: toNumber(row.total_amount),
-      })),
-    [user?.stats?.tx_amount_30d],
+      }));
+    },
+    [user?.stats?.tx_amount_30d, chartPeriod],
   );
 
   // "This month at a glance" — an encouraging summary of the customer's own
@@ -87,6 +144,7 @@ export default function DashboardPage() {
       successRate: total > 0 ? Math.round((success / total) * 100) : 100,
       spent: toNumber(s?.monthly_purchases ?? 0),
       funded: toNumber(s?.monthly_deposits ?? 0),
+      previousSpent: toNumber(s?.previous_month_purchases ?? 0),
     };
   }, [user?.stats]);
 
@@ -127,6 +185,23 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = (user.fullname ?? user.username ?? "there").split(" ")[0];
   const referralBalance = toNumber(user.referral_balance);
+  const walletBalance = toNumber(user.wallet_balance);
+  const spendChange = monthStats.previousSpent > 0
+    ? Math.round(((monthStats.spent - monthStats.previousSpent) / monthStats.previousSpent) * 100)
+    : null;
+  const selectedQuickActions = quickActionLabels
+    .map((label) => quickActions.find((action) => action.label === label))
+    .filter((action): action is (typeof quickActions)[number] => Boolean(action));
+  const chartTotal = spendingChart.reduce((sum, point) => sum + point.amount, 0);
+  const topPurchase = user.stats?.top_purchase;
+  const topPurchaseLabel = topPurchase
+    ? (transactionTypeMeta[topPurchase.transaction_type]?.label ?? topPurchase.transaction_type)
+    : null;
+
+  const saveQuickActions = (labels: string[]) => {
+    setQuickActionLabels(labels);
+    localStorage.setItem(QUICK_ACTIONS_KEY, JSON.stringify(labels));
+  };
 
   return (
     <div className="space-y-5">
@@ -138,14 +213,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Balance banner */}
-      <Card className="relative overflow-hidden bg-slate-900 p-4 border-slate-900 sm:p-5">
+      <Card className="group relative overflow-hidden border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.75)] transition-all duration-200 hover:-translate-y-0.5 sm:p-5">
         <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/70 to-transparent" aria-hidden="true" />
+        <span className="absolute -right-20 -top-24 h-56 w-56 rounded-full bg-orange-500/[0.08] blur-3xl" aria-hidden="true" />
         <div className="flex items-start justify-between flex-wrap gap-5">
           <div className="min-w-0 flex-1">
             <p className="text-slate-400 text-xs mb-1.5">Available balance</p>
             <div className="flex items-center gap-3">
               <span className="min-w-0 break-words text-2xl font-semibold text-white tabular-nums sm:text-3xl">
-                {balanceVisible ? fmt(toNumber(user.wallet_balance)) : "₦ ••••••"}
+                {balanceVisible ? <CountUpAmount value={walletBalance} /> : "Balance hidden"}
               </span>
               <button onClick={() => setBalanceVisible((v) => !v)} className="text-slate-400 hover:text-white transition-colors">
                 {balanceVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -164,6 +240,15 @@ export default function DashboardPage() {
                 >
                   {converting ? "Converting…" : "Convert to wallet"}
                 </button>
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-white/10 pt-3 text-xs">
+              <span className="text-slate-400"><span className="text-emerald-400">↑</span> {fmt(monthStats.funded)} received</span>
+              <span className="text-slate-400"><span className="text-orange-300">↓</span> {fmt(monthStats.spent)} spent this month</span>
+              {spendChange !== null && (
+                <span className={spendChange <= 0 ? "text-emerald-300" : "text-orange-300"}>
+                  {spendChange <= 0 ? "↓" : "↑"} {Math.abs(spendChange)}% vs last month
+                </span>
               )}
             </div>
           </div>
@@ -245,7 +330,7 @@ export default function DashboardPage() {
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-slate-900 text-sm font-medium truncate">
-                      {transactionTypeMeta[lastPurchase.transaction_type]?.label ?? lastPurchase.transaction_type}
+                      {[lastPurchase.provider?.toUpperCase(), lastPurchase.quantity ? `${lastPurchase.quantity}GB` : null, transactionTypeMeta[lastPurchase.transaction_type]?.label ?? lastPurchase.transaction_type].filter(Boolean).join(" · ")}
                     </span>
                     <span className="text-sm font-semibold tabular-nums text-slate-900 shrink-0">
                       {fmt(toNumber(lastPurchase.amount))}
@@ -254,12 +339,12 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-slate-500 text-sm shrink-0">Recipient</span>
                     <span className="truncate text-slate-900 text-sm font-medium font-mono">
-                      {lastPurchase.receiver ?? lastPurchase.account_or_phone ?? "—"}
+                      {maskRecipient(lastPurchase.receiver ?? lastPurchase.account_or_phone)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-slate-500 text-sm shrink-0">Date</span>
-                    <span className="truncate text-slate-900 text-sm font-medium">{dateLabel(lastPurchase.created_at)}</span>
+                    <span className="truncate text-slate-900 text-sm font-medium" title={dateLabel(lastPurchase.created_at)}>{relativeDate(lastPurchase.created_at)}</span>
                   </div>
                 </div>
                 <Button
@@ -267,7 +352,7 @@ export default function DashboardPage() {
                   className="mt-2.5 self-start"
                   onClick={() => navigate(repeatPurchaseRoutes[lastPurchase.transaction_type])}
                 >
-                  Repeat purchase
+                  Buy again · {fmt(toNumber(lastPurchase.amount))}
                 </Button>
               </div>
             ) : (
@@ -336,13 +421,18 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <Card className="p-4">
-        <h3 className="text-sm font-semibold text-slate-900 mb-3">Quick actions</h3>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-5">
-          {quickActions.map((a) => (
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-slate-900">Quick actions</h3>
+          <button onClick={() => setCustomisingActions(true)} className="flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-900">
+            <Settings2 className="h-3.5 w-3.5" /> Customise
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {selectedQuickActions.map((a) => (
             <button
               key={a.label}
               onClick={() => navigate(a.path)}
-              className="group flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 p-2.5 transition-all hover:border-orange-200 hover:bg-[#111827]/[0.025] hover:shadow-[0_0_0_3px_rgba(255,122,26,0.05)] sm:p-3"
+              className="group flex min-h-24 min-w-0 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-200 hover:bg-[#111827]/[0.025] hover:shadow-[0_8px_24px_-16px_rgba(249,115,22,0.8)] active:scale-[0.98] sm:p-3"
             >
               <div className="w-8 h-8 bg-[#111827]/10 text-[#111827] rounded-lg flex items-center justify-center transition-colors group-hover:bg-[#111827] group-hover:text-white">
                 <a.icon className="w-4 h-4" />
@@ -354,17 +444,24 @@ export default function DashboardPage() {
       </Card>
 
       {/* Chart + Network Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <Card className="min-w-0 overflow-hidden p-3 sm:p-4 lg:col-span-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="min-w-0 overflow-hidden p-3 sm:p-4 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-900">Spending overview</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Last 30 days</p>
+              <p className="text-xs text-slate-400 mt-0.5">{fmt(chartTotal)} total spent</p>
+            </div>
+            <div className="flex rounded-lg bg-slate-100 p-0.5">
+              {([7, 30, 90] as const).map((period) => (
+                <button key={period} onClick={() => setChartPeriod(period)} className={`rounded-md px-2 py-1 text-[11px] font-medium transition-all ${chartPeriod === period ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>
+                  {period === 90 ? "3M" : `${period}D`}
+                </button>
+              ))}
             </div>
           </div>
           {spendingChart.length === 0 ? (
             <div className="h-40 flex items-center justify-center text-xs text-slate-400">
-              No successful transactions in the last 30 days yet.
+              No successful transactions in this period yet.
             </div>
           ) : (
             <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-slate-100" />}>
@@ -373,7 +470,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        <Card className="lg:col-span-2 p-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-900">This month at a glance</h3>
@@ -395,6 +492,16 @@ export default function DashboardPage() {
                 <p className="text-xs text-slate-400 mt-0.5">{tile.label}</p>
               </div>
             ))}
+          </div>
+          <div className="mt-3 rounded-xl border border-orange-100 bg-orange-50/60 p-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-orange-700">Your monthly insight</p>
+            {topPurchase ? (
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                You spent the most on <span className="font-semibold text-slate-900">{topPurchaseLabel}</span> this month: {fmt(topPurchase.total_amount)} across {topPurchase.transaction_count} {topPurchase.transaction_count === 1 ? "transaction" : "transactions"}.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-slate-500">Complete a purchase to unlock personalised spending insights.</p>
+            )}
           </div>
         </Card>
       </div>
@@ -443,6 +550,48 @@ export default function DashboardPage() {
           </div>
         )}
       </Card>
+
+      {customisingActions && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-3 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="quick-actions-title">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="quick-actions-title" className="text-sm font-semibold text-slate-900">Customise quick actions</h2>
+                <p className="mt-1 text-xs text-slate-500">Choose four shortcuts and arrange them in your preferred order.</p>
+              </div>
+              <button onClick={() => setCustomisingActions(false)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {quickActionLabels.map((label, index) => {
+                const action = quickActions.find((item) => item.label === label)!;
+                return (
+                  <div key={label} className="flex items-center gap-3 rounded-xl border border-slate-200 p-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white"><action.icon className="h-4 w-4" /></div>
+                    <span className="flex-1 text-sm font-medium text-slate-700">{label}</span>
+                    <button disabled={index === 0} onClick={() => { const next = [...quickActionLabels]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; saveQuickActions(next); }} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-25" aria-label={`Move ${label} left`}><ArrowLeft className="h-3.5 w-3.5" /></button>
+                    <button disabled={index === quickActionLabels.length - 1} onClick={() => { const next = [...quickActionLabels]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; saveQuickActions(next); }} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-25" aria-label={`Move ${label} right`}><ArrowRight className="h-3.5 w-3.5" /></button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="mb-2 mt-4 text-xs font-medium text-slate-500">Replace the last shortcut with:</p>
+            <div className="flex flex-wrap gap-2">
+              {quickActions.filter((action) => !quickActionLabels.includes(action.label)).map((action) => (
+                <button key={action.label} onClick={() => saveQuickActions([...quickActionLabels.slice(0, 3), action.label])} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700">
+                  {action.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 flex justify-end">
+              <Button size="sm" onClick={() => setCustomisingActions(false)}>Done</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

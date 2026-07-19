@@ -58,8 +58,14 @@ export type UserStats = {
   tx_amount_30d: { date: string; total_amount: string | number }[];
   monthly_deposits?: number;
   monthly_purchases?: number;
+  previous_month_purchases?: number;
   today_spend?: number;
   today_data_gb?: number;
+  top_purchase?: {
+    transaction_type: string;
+    total_amount: number;
+    transaction_count: number;
+  } | null;
 };
 
 export type Permission = {
