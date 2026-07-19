@@ -96,7 +96,7 @@ export default function DashboardPage() {
   if (isInitializing) {
     return (
       <div className="max-w-7xl mx-auto space-y-5">
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3 sm:gap-4">
           {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       </div>
@@ -173,10 +173,10 @@ export default function DashboardPage() {
 
       {/* Needs-attention alert — only shown when something actually needs it */}
       {monthlyAttention > 0 && (
-        <Card className="flex flex-wrap items-center justify-between gap-3 border-orange-200 bg-orange-50 p-4">
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center gap-2.5 min-w-0">
-            <AlertTriangle className="w-4 h-4 text-orange-600 shrink-0" />
-            <p className="text-sm text-orange-800">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <p className="text-sm text-amber-800">
               {monthlyAttention} transaction{monthlyAttention === 1 ? "" : "s"} this month {monthlyAttention === 1 ? "is" : "are"} pending or failed.
             </p>
           </div>
@@ -188,107 +188,141 @@ export default function DashboardPage() {
 
       {/* Action cards */}
       {dashboardDetailsLoading ? (
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3 sm:gap-4">
           {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3 sm:gap-4">
           {/* Fund by bank transfer */}
           <Card className="flex h-full min-w-0 flex-col p-4">
-            <div className="mb-2.5 flex min-w-0 items-start justify-between gap-2">
-              <p className="text-xs font-medium text-slate-500">Fund by bank transfer</p>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 text-emerald-600">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center shrink-0">
                 <Landmark className="w-4 h-4" />
               </div>
+              <h3 className="text-sm font-semibold text-slate-900">Fund by bank transfer</h3>
             </div>
             {primaryBank ? (
-              <>
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="min-w-0 break-words text-lg font-semibold text-slate-900 tabular-nums sm:text-xl">
-                    {primaryBank.bank_account}
-                  </span>
-                  <CopyButton value={primaryBank.bank_account} label="account number" />
+              <div className="flex flex-1 flex-col">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-900 text-sm font-medium truncate">{primaryBank.bank_name}</span>
+                    <StatusBadge status={primaryBank.status} />
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 text-sm shrink-0">Account number</span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm font-semibold font-mono tracking-wide text-slate-900">
+                        {primaryBank.bank_account}
+                      </span>
+                      <CopyButton value={primaryBank.bank_account} label="account number" />
+                    </div>
+                  </div>
+                  {primaryBank.account_name && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-500 text-sm shrink-0">Account name</span>
+                      <span className="truncate text-slate-900 text-sm font-medium">{primaryBank.account_name}</span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-slate-400 mt-1 truncate">
-                  {primaryBank.bank_name}
-                  {primaryBank.account_name ? ` · ${primaryBank.account_name}` : ""}
+                <p className="text-slate-400 text-xs mt-2.5">
+                  Transfer any amount — your wallet is credited automatically.
                 </p>
-                <p className="text-xs text-slate-400 mt-2">Transfers credit your wallet automatically.</p>
-              </>
+              </div>
             ) : (
-              <>
-                <p className="text-sm text-slate-600 flex-1">
+              <div className="flex flex-1 flex-col justify-between gap-3">
+                <p className="text-sm text-slate-500">
                   Get a dedicated account number and fund your wallet by bank transfer.
                 </p>
-                <Button size="sm" variant="secondary" className="mt-3 self-start" onClick={() => navigate("/wallet?tab=fund")}>
+                <Button size="sm" className="self-start" onClick={() => navigate("/wallet?tab=fund")}>
                   <Plus className="w-4 h-4" /> Fund wallet
                 </Button>
-              </>
+              </div>
             )}
           </Card>
 
           {/* Buy again */}
           <Card className="flex h-full min-w-0 flex-col p-4">
-            <div className="mb-2.5 flex min-w-0 items-start justify-between gap-2">
-              <p className="text-xs font-medium text-slate-500">Buy again</p>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 brand-primary-soft brand-primary-text">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center shrink-0">
                 <ShoppingBag className="w-4 h-4" />
               </div>
+              <h3 className="text-sm font-semibold text-slate-900">Buy again</h3>
             </div>
             {lastPurchase ? (
-              <>
-                <p className="min-w-0 break-words text-lg font-semibold text-slate-900 sm:text-xl">
-                  {transactionTypeMeta[lastPurchase.transaction_type]?.label ?? lastPurchase.transaction_type}
-                </p>
-                <p className="text-xs text-slate-400 mt-1 truncate">
-                  {lastPurchase.receiver ?? lastPurchase.account_or_phone ?? "—"} · {fmt(toNumber(lastPurchase.amount))}
-                </p>
+              <div className="flex flex-1 flex-col">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-900 text-sm font-medium truncate">
+                      {transactionTypeMeta[lastPurchase.transaction_type]?.label ?? lastPurchase.transaction_type}
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums text-slate-900 shrink-0">
+                      {fmt(toNumber(lastPurchase.amount))}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 text-sm shrink-0">Recipient</span>
+                    <span className="truncate text-slate-900 text-sm font-medium font-mono">
+                      {lastPurchase.receiver ?? lastPurchase.account_or_phone ?? "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 text-sm shrink-0">Date</span>
+                    <span className="truncate text-slate-900 text-sm font-medium">{dateLabel(lastPurchase.created_at)}</span>
+                  </div>
+                </div>
                 <Button
                   size="sm"
-                  variant="secondary"
-                  className="mt-3 self-start"
+                  className="mt-2.5 self-start"
                   onClick={() => navigate(repeatPurchaseRoutes[lastPurchase.transaction_type])}
                 >
                   Repeat purchase
                 </Button>
-              </>
+              </div>
             ) : (
-              <>
-                <p className="text-sm text-slate-600 flex-1">
+              <div className="flex flex-1 flex-col justify-between gap-3">
+                <p className="text-sm text-slate-500">
                   Your most recent purchase will appear here for one-tap repeat.
                 </p>
-                <Button size="sm" variant="secondary" className="mt-3 self-start" onClick={() => navigate("/buy-data")}>
+                <Button size="sm" className="self-start" onClick={() => navigate("/buy-data")}>
                   <Wifi className="w-4 h-4" /> Buy data
                 </Button>
-              </>
+              </div>
             )}
           </Card>
 
           {/* Refer & earn */}
           <Card className="flex h-full min-w-0 flex-col p-4">
-            <div className="mb-2.5 flex min-w-0 items-start justify-between gap-2">
-              <p className="text-xs font-medium text-slate-500">Refer & earn</p>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-orange-50 text-orange-600">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-[#111827]/10 text-[#111827] flex items-center justify-center shrink-0">
                 <Gift className="w-4 h-4" />
               </div>
+              <h3 className="text-sm font-semibold text-slate-900">Refer & earn</h3>
             </div>
-            {user.referral_code ? (
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="min-w-0 break-words text-lg font-semibold text-slate-900 sm:text-xl">
-                  {user.referral_code}
-                </span>
-                <CopyButton value={user.referral_code} label="referral code" />
+            <div className="flex flex-1 flex-col">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 space-y-2.5">
+                {user.referral_code && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-slate-500 text-sm shrink-0">Your code</span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm font-semibold font-mono tracking-wide text-slate-900">
+                        {user.referral_code}
+                      </span>
+                      <CopyButton value={user.referral_code} label="referral code" />
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-slate-500 text-sm shrink-0">Earned so far</span>
+                  <span className="text-slate-900 text-sm font-semibold tabular-nums">{fmt(referralBalance)}</span>
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-slate-600">Invite friends and earn on their purchases.</p>
-            )}
-            <p className="text-xs text-slate-400 mt-1">Earned so far: {fmt(referralBalance)}</p>
-            <button
-              onClick={() => navigate("/referral")}
-              className="mt-2 self-start text-xs font-medium text-[#111827] hover:underline flex items-center gap-1"
-            >
-              View referral program <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+              <button
+                onClick={() => navigate("/referral")}
+                className="mt-2.5 self-start text-xs text-[#111827] font-medium flex items-center gap-1 hover:opacity-70 transition-opacity"
+              >
+                Invite friends & earn <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </Card>
         </div>
       )}
