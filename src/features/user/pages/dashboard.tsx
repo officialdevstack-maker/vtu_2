@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Wallet, ShoppingBag, AlertTriangle,
+  Wallet, ShoppingBag,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
   Banknote, Send, Landmark,
 } from "lucide-react";
@@ -119,7 +119,6 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = (user.fullname ?? user.username ?? "there").split(" ")[0];
   const referralBalance = toNumber(user.referral_balance);
-  const monthlyAttention = (user.stats?.monthly_pending ?? 0) + (user.stats?.monthly_failed ?? 0);
 
   return (
     <div className="space-y-5">
@@ -170,21 +169,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </Card>
-
-      {/* Needs-attention alert — only shown when something actually needs it */}
-      {monthlyAttention > 0 && (
-        <Card className="flex flex-wrap items-center justify-between gap-3 border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <p className="text-sm text-amber-800">
-              {monthlyAttention} transaction{monthlyAttention === 1 ? "" : "s"} this month {monthlyAttention === 1 ? "is" : "are"} pending or failed.
-            </p>
-          </div>
-          <Button size="sm" variant="secondary" onClick={() => navigate("/transactions")}>
-            Review
-          </Button>
-        </Card>
-      )}
 
       {/* Action cards */}
       {dashboardDetailsLoading ? (
