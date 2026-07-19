@@ -1,5 +1,5 @@
 import { Apple, CheckCircle2, Lock, Phone, Shield, Smartphone, Wifi, Zap } from "lucide-react";
-import type { ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useBranding } from "@/shared/branding";
 
@@ -17,6 +17,39 @@ export const authCardCls = "rounded-none border-0 bg-transparent p-0 shadow-none
 
 export const authInputCls =
   "brand-primary-focus rounded-2xl border border-slate-200 bg-slate-50 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:bg-white transition-colors";
+
+export function AuthField({
+  label,
+  icon,
+  error,
+  action,
+  className = "",
+  ...inputProps
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  icon: ReactNode;
+  error?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <fieldset className={`group min-w-0 rounded-2xl border bg-slate-50/80 px-3 pb-1.5 shadow-[inset_0_1px_2px_rgba(15,23,42,0.025)] transition-all duration-200 focus-within:border-orange-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-orange-500/[0.07] ${error ? "border-red-300" : "border-slate-200 hover:border-slate-300"}`}>
+        <legend className="ml-1 px-1.5 text-[11px] font-medium tracking-wide text-slate-400 transition-colors group-focus-within:text-orange-600">
+          {label}
+        </legend>
+        <div className="flex min-h-10 items-center gap-3">
+          <span className="shrink-0 text-slate-400 transition-colors group-focus-within:text-slate-700">{icon}</span>
+          <input
+            {...inputProps}
+            className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-slate-900 outline-none placeholder:text-slate-300 focus:ring-0"
+          />
+          {action}
+        </div>
+      </fieldset>
+      {error && <p className="mt-1.5 px-1 text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
 
 function GoogleIcon() {
   return (
@@ -113,12 +146,17 @@ function ShowcaseMockups() {
 
 function ShowcasePanel() {
   return (
-    <aside className="hidden md:flex md:w-[38%] lg:w-[54%] shrink-0 flex-col justify-center gap-10 border-l border-slate-100 bg-[#f8f8fb] px-10 py-16 lg:px-16 xl:px-20">
+    <aside className="relative hidden shrink-0 overflow-hidden border-l border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-10 py-16 md:flex md:w-[38%] md:flex-col md:justify-center md:gap-10 lg:w-[54%] lg:px-16 xl:px-20">
+      <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -left-28 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
       <div className="max-w-md animate-auth-fade-in">
-        <h2 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 lg:text-4xl">
-          The simplest way to manage your money.
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-orange-200 backdrop-blur">
+          <Shield className="h-3.5 w-3.5" /> Secure payments, made simple
+        </div>
+        <h2 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-white lg:text-4xl">
+          Your everyday payments, beautifully simple.
         </h2>
-        <p className="text-base leading-relaxed text-slate-500">
+        <p className="text-base leading-relaxed text-slate-300">
           Top up airtime, buy data, and move money - all protected behind a dedicated transaction PIN.
         </p>
       </div>
@@ -134,8 +172,8 @@ function ShowcasePanel() {
               <Icon className="h-4 w-4 text-[#111827]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900">{title}</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{text}</p>
+              <p className="text-sm font-semibold text-white">{title}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{text}</p>
             </div>
           </div>
         ))}
@@ -148,9 +186,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   const { app_name, logo } = useBranding();
 
   return (
-    <div className="flex min-h-dvh w-full overflow-x-hidden bg-white">
-      <div className="flex w-full flex-col items-center justify-center px-4 py-8 sm:px-10 sm:py-12 md:w-[62%] md:px-12 lg:w-[46%] lg:px-20">
-        <div className="w-full max-w-md animate-auth-fade-in">
+    <div className="flex min-h-dvh w-full overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.055),transparent_30%),#fff]">
+      <div className="flex w-full flex-col items-center justify-center px-5 py-8 sm:px-10 sm:py-12 md:w-[62%] md:px-12 lg:w-[46%] lg:px-14 xl:px-20">
+        <div className="w-full max-w-lg animate-auth-fade-in">
           <RouterLink to="/" className="mb-8 flex min-w-0 items-center gap-2.5 sm:mb-10">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white overflow-hidden shrink-0 ring-1 ring-slate-200/70">
               {logo ? (

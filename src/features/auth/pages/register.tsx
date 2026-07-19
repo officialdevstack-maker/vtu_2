@@ -4,11 +4,11 @@ import { Eye, EyeOff, Gift, Lock, Mail, Phone, User } from "lucide-react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
+import { Button, Card } from "@/features/user/components/shared-ui";
 import { useAuth } from "@/shared/providers/auth";
 import { useBranding } from "@/shared/branding";
 import { useSeo } from "@/shared/seo";
-import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
+import { AuthField, AuthLayout, authCardCls } from "../components/AuthLayout";
 import { registerSchema, type RegisterFormData } from "../validators";
 
 // Every backend failure here is either a validation-shaped 4xx or the
@@ -69,10 +69,11 @@ export default function RegisterPage() {
   return (
     <AuthLayout>
       <Card className={authCardCls}>
-        <div className="mb-7">
-          <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Create an account</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Set up your profile first. Your transaction PIN comes next.
+        <div className="mb-8">
+          <div className="mb-3 h-1 w-10 rounded-full bg-orange-500" />
+          <h1 className="text-3xl font-bold text-slate-950 tracking-tight">Create your account</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">
+            Join {app_name} — it only takes a minute. Your secure transaction PIN comes next.
           </p>
         </div>
 
@@ -89,102 +90,32 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Full name</label>
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Emeka Obi"
-                {...register("fullname")}
-                className={`${inputCls} ${authInputCls} pl-9 ${errors.fullname ? "border-red-300" : ""}`}
-              />
-            </div>
-            {errors.fullname && <p className="text-red-500 text-xs mt-1">{errors.fullname.message}</p>}
-          </div>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <AuthField label="Full name" icon={<User className="h-4 w-4" />} type="text" autoComplete="name" placeholder="Emeka Obi" error={errors.fullname?.message} {...register("fullname")} />
+          <AuthField label="Username" icon={<User className="h-4 w-4" />} type="text" autoComplete="username" placeholder="emekaobi" error={errors.username?.message} {...register("username")} />
+          <AuthField className="sm:col-span-2" label="Email address" icon={<Mail className="h-4 w-4" />} type="email" autoComplete="email" placeholder="you@email.com" error={errors.email?.message} {...register("email")} />
+          <AuthField className="sm:col-span-2" label="Phone number" icon={<Phone className="h-4 w-4" />} type="tel" autoComplete="tel" inputMode="tel" placeholder="08012345678" error={errors.phone?.message} {...register("phone")} />
 
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Username</label>
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="emekaobi"
-                {...register("username")}
-                className={`${inputCls} ${authInputCls} pl-9 ${errors.username ? "border-red-300" : ""}`}
-              />
-            </div>
-            {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Email</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="email"
-                placeholder="you@email.com"
-                {...register("email")}
-                className={`${inputCls} ${authInputCls} pl-9 ${errors.email ? "border-red-300" : ""}`}
-              />
-            </div>
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Phone number</label>
-            <div className="relative">
-              <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="tel"
-                placeholder="08012345678"
-                {...register("phone")}
-                className={`${inputCls} ${authInputCls} pl-9 ${errors.phone ? "border-red-300" : ""}`}
-              />
-            </div>
-            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Password</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                {...register("password")}
-                className={`${inputCls} ${authInputCls} pl-9 pr-10 ${errors.password ? "border-red-300" : ""}`}
-              />
-              <button
+          <AuthField
+            label="Password"
+            icon={<Lock className="h-4 w-4" />}
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            placeholder="Create a strong password"
+            error={errors.password?.message}
+            {...register("password")}
+            action={<button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
-          </div>
+              </button>}
+          />
+          <AuthField label="Confirm password" icon={<Lock className="h-4 w-4" />} type={showPassword ? "text" : "password"} autoComplete="new-password" placeholder="Repeat password" error={errors.confirmPassword?.message} {...register("confirmPassword")} />
 
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Confirm password</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Confirm password"
-                {...register("confirmPassword")}
-                className={`${inputCls} ${authInputCls} pl-9 ${errors.confirmPassword ? "border-red-300" : ""}`}
-              />
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
-            )}
-          </div>
-
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 sm:col-span-2">
             <input
               type="checkbox"
               id="acceptTerms"
@@ -203,7 +134,7 @@ export default function RegisterPage() {
             </label>
           </div>
           {errors.acceptTerms && (
-            <p className="text-red-500 text-xs -mt-2">{errors.acceptTerms.message}</p>
+            <p className="text-red-500 text-xs -mt-2 sm:col-span-2">{errors.acceptTerms.message}</p>
           )}
 
           <Button
@@ -211,7 +142,7 @@ export default function RegisterPage() {
             disabled={isSubmitting}
             loading={isSubmitting}
             fullWidth
-            className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
+            className="rounded-2xl bg-slate-950 py-4 shadow-[0_12px_28px_-12px_rgba(15,23,42,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0 active:scale-[0.99] sm:col-span-2"
           >
             {isSubmitting ? "" : "Continue to PIN setup"}
           </Button>

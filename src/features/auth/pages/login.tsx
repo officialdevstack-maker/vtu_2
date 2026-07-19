@@ -3,11 +3,11 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Card, inputCls } from "@/features/user/components/shared-ui";
+import { Button, Card } from "@/features/user/components/shared-ui";
 import { useAuth, type User } from "@/shared/providers/auth";
 import { useBranding } from "@/shared/branding";
 import { useSeo } from "@/shared/seo";
-import { AuthLayout, authCardCls, authInputCls } from "../components/AuthLayout";
+import { AuthField, AuthLayout, authCardCls } from "../components/AuthLayout";
 import { loginSchema, type LoginFormData } from "../validators";
 
 // A transaction PIN guards wallet actions, so any non-admin user without one
@@ -74,9 +74,10 @@ const LoginForm = () => {
   return (
     <AuthLayout>
       <Card className={authCardCls}>
-        <div className="mb-7">
-          <h1 className="text-2xl font-semibold text-slate-950 tracking-tight">Welcome back</h1>
-          <p className="text-slate-500 text-sm mt-1">Sign in to continue to your {app_name} wallet.</p>
+        <div className="mb-8">
+          <div className="mb-3 h-1 w-10 rounded-full bg-orange-500" />
+          <h1 className="text-3xl font-bold text-slate-950 tracking-tight">Welcome back</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">Sign in securely to continue to your {app_name} wallet.</p>
         </div>
 
         {errors.root && (
@@ -86,47 +87,37 @@ const LoginForm = () => {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">
-              Email or phone number
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="you@email.com or 08012345678"
-                {...register("login")}
-                className={`${inputCls} ${authInputCls} pl-9 ${errors.login ? "border-red-300" : ""}`}
-              />
-            </div>
-            {errors.login && <p className="text-red-500 text-xs mt-1">{errors.login.message}</p>}
-          </div>
+          <AuthField
+            label="Email or phone number"
+            icon={<Mail className="h-4 w-4" />}
+            type="text"
+            autoComplete="username"
+            placeholder="you@email.com or 08012345678"
+            error={errors.login?.message}
+            {...register("login")}
+          />
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-medium text-slate-600">Password</label>
-              <RouterLink to="/forgot-password" className="text-xs text-[#111827] font-medium hover:opacity-80">
-                Forgot password?
-              </RouterLink>
-            </div>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                {...register("password")}
-                className={`${inputCls} ${authInputCls} pl-9 pr-10 ${errors.password ? "border-red-300" : ""}`}
-              />
-              <button
+            <AuthField
+              label="Password"
+              icon={<Lock className="h-4 w-4" />}
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              error={errors.password?.message}
+              {...register("password")}
+              action={<button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              </button>}
+            />
+            <div className="mt-2 flex justify-end">
+              <RouterLink to="/forgot-password" className="text-xs font-semibold text-slate-700 transition-colors hover:text-orange-600">Forgot password?</RouterLink>
             </div>
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
           <div className="flex items-center gap-2">
@@ -146,7 +137,7 @@ const LoginForm = () => {
             disabled={isSubmitting}
             loading={isSubmitting}
             fullWidth
-            className="rounded-2xl bg-[#111827] py-4 shadow-lg shadow-[#111827]/20 hover:bg-[#111827] hover:opacity-95"
+            className="rounded-2xl bg-slate-950 py-4 shadow-[0_12px_28px_-12px_rgba(15,23,42,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0 active:scale-[0.99]"
           >
             {isSubmitting ? "" : "Sign in"}
           </Button>
