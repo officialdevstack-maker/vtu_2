@@ -346,6 +346,8 @@ export function Toggle({
 }) {
   return (
     <button
+      type="button"
+      aria-pressed={value}
       onClick={() => onChange(!value)}
       className={`brand-primary-toggle w-10 h-5.5 rounded-full transition-colors relative shrink-0 focus:outline-none ${value ? "brand-primary-bg" : "bg-slate-200"}`}
     >
