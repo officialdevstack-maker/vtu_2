@@ -364,7 +364,9 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 export const dataPlanService = {
   getAll: (): Promise<DataPlan[]> =>
-    apiClient.get<ApiEnvelope<DataPlan[]>>(DATA_PLAN).then((r) => r.data.data),
+    apiClient
+      .get<ApiEnvelope<DataPlan[]>>(DATA_PLAN, { params: { view: "list" } })
+      .then((r) => r.data.data),
 
   getById: (id: string): Promise<DataPlan> =>
     apiClient

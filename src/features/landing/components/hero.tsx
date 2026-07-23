@@ -18,8 +18,13 @@ export function Hero() {
   const [showScene, setShowScene] = useState(false);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setShowScene(true), 150);
-    return () => window.clearTimeout(timeout);
+    const reveal = () => setShowScene(true);
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(reveal, { timeout: 1_200 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const timeout = globalThis.setTimeout(reveal, 400);
+    return () => globalThis.clearTimeout(timeout);
   }, []);
 
   return (

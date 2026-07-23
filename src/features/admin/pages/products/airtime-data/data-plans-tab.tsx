@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Database,
   Plus,
@@ -29,6 +30,7 @@ import { Toolbar, SelectFilter } from "./shared";
 import { dataPlanService, type DataPlan } from "./service";
 
 const MENU_WIDTH = 144; // w-36
+const EMPTY_DATA_PLANS: DataPlan[] = [];
 
 // Pull the useful bits out of an axios-style error so a failed bulk action
 // tells the admin *why* (HTTP status + server message) instead of a generic
@@ -48,7 +50,7 @@ function describeError(err: unknown): string {
   return e?.message || "unknown error";
 }
 
-type SortKey = "id" | "plan" | "network" | "plan_type" | "validity" | "status";
+type SortKey = "id" | "plan" | "network" | "plan_type" | "price" | "validity" | "status";
 type SortState = { key: SortKey; direction: "asc" | "desc" };
 
 const SORT_COLUMNS: { key: SortKey; label: string; align?: "left" | "right" }[] = [
@@ -56,9 +58,18 @@ const SORT_COLUMNS: { key: SortKey; label: string; align?: "left" | "right" }[] 
   { key: "plan", label: "Plan", align: "left" },
   { key: "network", label: "Network" },
   { key: "plan_type", label: "Type" },
+  { key: "price", label: "Price" },
   { key: "validity", label: "Validity" },
   { key: "status", label: "Status" },
 ];
+
+// Matches the formatter already used for Airtime's Min|Max (₦) column
+// (airtime-tab.tsx) so currency renders consistently across both tabs.
+const formatCurrency = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = Number(value);
+  return Number.isFinite(n) ? `₦${n.toLocaleString()}` : String(value);
+};
 
 function sortValue(plan: DataPlan, key: SortKey): string | number {
   switch (key) {
@@ -70,6 +81,10 @@ function sortValue(plan: DataPlan, key: SortKey): string | number {
       return (plan.network ?? "").toLowerCase();
     case "plan_type":
       return (plan.plan_type ?? "").toLowerCase();
+    case "price":
+      return plan.price === null || plan.price === undefined || plan.price === ""
+        ? -1
+        : Number(plan.price);
     case "validity":
       return (plan.validity ?? "").toLowerCase();
     case "status":
@@ -79,8 +94,20 @@ function sortValue(plan: DataPlan, key: SortKey): string | number {
 
 export function DataPlansTab() {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<DataPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const plansQuery = useQuery({
+    queryKey: ["admin", "data-plans", "list"],
+    queryFn: dataPlanService.getAll,
+    staleTime: 5 * 60_000,
+  });
+  const plans = plansQuery.data ?? EMPTY_DATA_PLANS;
+  const loading = plansQuery.isPending;
+  const setPlans = (
+    updater: (current: DataPlan[]) => DataPlan[],
+  ) => queryClient.setQueryData<DataPlan[]>(
+    ["admin", "data-plans", "list"],
+    (current) => updater(current ?? []),
+  );
 
   // Search/filter/sort/page live in the URL, so a refresh, the browser back
   // button, or a shared link all reproduce the same view instead of dropping
@@ -126,16 +153,8 @@ export function DataPlansTab() {
   const toId = (value: string | number) => String(value);
 
   const load = () => {
-    setLoading(true);
-    dataPlanService
-      .getAll()
-      .then(setPlans)
-      .finally(() => setLoading(false));
+    void plansQuery.refetch();
   };
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const toggleMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     if (openMenuId === id) {
@@ -508,6 +527,9 @@ export function DataPlansTab() {
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
                       {plan.plan_type}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-medium text-slate-900 text-right">
+                      {plan.price_ngn ?? formatCurrency(plan.price)}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right">
                       {plan.validity}

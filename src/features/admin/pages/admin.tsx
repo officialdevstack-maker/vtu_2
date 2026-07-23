@@ -29,23 +29,10 @@ import {
   SkeletonLine,
   EmptyState,
 } from "../../user/components/shared-ui";
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
-} from "recharts";
+import SimpleChart from "@/shared/components/simple-chart";
 import { statsService, analyticsService, type Analytics, type Stats } from "./dashboardService";
 import { providerService, type Provider } from "./apis/providerService";
 import { transactionService, type Transaction } from "./customers/service";
-
-const chartValue = (v: unknown) => (typeof v === "number" ? v : Number(v ?? 0));
 
 const SERVICE_TX_LABELS: Record<string, string> = {
   airtime_recharge: "Airtime",
@@ -88,9 +75,6 @@ const rangeParams = (days: number) => {
 
 const chartDateLabel = (iso: string) =>
   new Date(iso).toLocaleDateString("en-NG", { month: "short", day: "numeric" });
-
-// Show ~8 evenly-spaced x-axis ticks regardless of how many days are in range.
-const tickInterval = (len: number) => Math.max(0, Math.floor(len / 8) - 1);
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -540,50 +524,23 @@ export default function AdminPage() {
             />
           ) : (
             <div className="h-[210px] min-w-0 sm:h-[170px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={revenueChartData}
-                  margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#F1F5F9"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#94A3B8" }}
-                    axisLine={false}
-                    tickLine={false}
-                    interval={tickInterval(revenueChartData.length)}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#94A3B8" }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v) => fmtCompact(v)}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                    formatter={(v) => [fmt(chartValue(v)), "Revenue"]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#111827"
-                    strokeWidth={2}
-                    fill="#111827"
-                    fillOpacity={0.1}
-                    dot={false}
-                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <SimpleChart
+                data={revenueChartData.map((point) => ({
+                  label: point.date,
+                  revenue: point.revenue,
+                }))}
+                series={[
+                  {
+                    key: "revenue",
+                    label: "Revenue",
+                    color: "#111827",
+                    fill: true,
+                  },
+                ]}
+                valueFormatter={fmtCompact}
+                height={190}
+                ariaLabel={`Revenue overview for the ${rangeLabel.toLowerCase()}`}
+              />
             </div>
           )}
         </Card>
@@ -682,71 +639,35 @@ export default function AdminPage() {
             />
           ) : (
             <div className="h-[250px] min-w-0 sm:h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={txVolumeData}
-                  margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#F1F5F9"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 11, fill: "#94A3B8" }}
-                    axisLine={false}
-                    tickLine={false}
-                    interval={tickInterval(txVolumeData.length)}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#94A3B8" }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: 11 }}
-                    iconType="line"
-                    iconSize={14}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="success"
-                    name="Successful"
-                    stroke={STATUS_COLOR.success}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="pending"
-                    name="Pending"
-                    stroke={STATUS_COLOR.pending}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="fail"
-                    name="Failed"
-                    stroke={STATUS_COLOR.fail}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, stroke: "#fff", strokeWidth: 2 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <SimpleChart
+                data={txVolumeData.map((point) => ({
+                  label: point.date,
+                  success: point.success,
+                  pending: point.pending,
+                  fail: point.fail,
+                }))}
+                series={[
+                  {
+                    key: "success",
+                    label: "Successful",
+                    color: STATUS_COLOR.success,
+                  },
+                  {
+                    key: "pending",
+                    label: "Pending",
+                    color: STATUS_COLOR.pending,
+                  },
+                  {
+                    key: "fail",
+                    label: "Failed",
+                    color: STATUS_COLOR.fail,
+                  },
+                ]}
+                valueFormatter={(value) => Math.round(value).toLocaleString()}
+                height={210}
+                showLegend
+                ariaLabel={`Transaction volume for the ${rangeLabel.toLowerCase()}`}
+              />
             </div>
           )}
         </Card>
@@ -915,7 +836,7 @@ export default function AdminPage() {
                       {txDisplayType(tx.transaction_type)}
                     </td>
                     <td className="px-3 py-3 text-right font-medium text-slate-900 text-xs tabular-nums whitespace-nowrap">
-                      {fmt(chartValue(tx.amount))}
+                      {fmt(Number(tx.amount ?? 0))}
                     </td>
                     <td className="px-3 py-3">
                       <StatusBadge

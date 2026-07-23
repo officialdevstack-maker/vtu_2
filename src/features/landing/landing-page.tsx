@@ -1,4 +1,12 @@
-import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import "./styles/landing.css";
 import { Navbar } from "./components/navbar";
 import { BackgroundField } from "./components/background-field";
@@ -24,15 +32,47 @@ const Faq = lazyNamed(() => import("./components/faq"), "Faq");
 const FinalCta = lazyNamed(() => import("./components/final-cta"), "FinalCta");
 const Footer = lazyNamed(() => import("./components/footer"), "Footer");
 
+function DeferredSection({
+  children,
+  minHeight = "min-h-[240px]",
+}: {
+  children: ReactNode;
+  minHeight?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  const markerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (!marker || visible) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(marker);
+    return () => observer.disconnect();
+  }, [visible]);
+
+  return (
+    <div ref={markerRef} className={visible ? undefined : minHeight}>
+      {visible ? (
+        <Suspense fallback={<div className={minHeight} aria-hidden />}>
+          {children}
+        </Suspense>
+      ) : null}
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const { app_name } = useBranding();
   const brand = app_name || "Vendify";
-  const [showSecondaryContent, setShowSecondaryContent] = useState(false);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setShowSecondaryContent(true), 250);
-    return () => window.clearTimeout(timeout);
-  }, []);
 
   // FAQ rich results + a Service description so search engines understand what
   // the site offers. The FAQ questions are the same ones the page renders.
@@ -64,28 +104,40 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
-        {showSecondaryContent ? (
-          <Suspense fallback={<div className="min-h-[40vh]" aria-hidden />}>
-            <TrustedBy />
-            <ProductShowcase />
-            <Services />
-            <WhyVendify />
-            <HowItWorks />
-            <Stats />
-            <Pricing />
-            <Testimonials />
-            <Faq />
-            <FinalCta />
-          </Suspense>
-        ) : (
-          <div className="min-h-[40vh]" aria-hidden />
-        )}
+        <DeferredSection minHeight="min-h-24">
+          <TrustedBy />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[540px]">
+          <ProductShowcase />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[420px]">
+          <Services />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[480px]">
+          <WhyVendify />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[420px]">
+          <HowItWorks />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[260px]">
+          <Stats />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[420px]">
+          <Pricing />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[360px]">
+          <Testimonials />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[420px]">
+          <Faq />
+        </DeferredSection>
+        <DeferredSection minHeight="min-h-[300px]">
+          <FinalCta />
+        </DeferredSection>
       </main>
-      {showSecondaryContent ? (
-        <Suspense fallback={null}>
-          <Footer />
-        </Suspense>
-      ) : null}
+      <DeferredSection minHeight="min-h-[260px]">
+        <Footer />
+      </DeferredSection>
     </div>
   );
 }

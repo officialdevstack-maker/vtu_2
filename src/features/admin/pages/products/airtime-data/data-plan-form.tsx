@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, AlertCircle, Plus, Trash2 } from "lucide-react";
 import axios from "axios";
 import { z } from "zod";
@@ -443,6 +444,7 @@ export default function DataPlanFormPage() {
   const { id } = useParams<{ id?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const stateDataPlan = (location.state as { dataPlan?: DataPlan } | null)
     ?.dataPlan;
@@ -459,7 +461,9 @@ export default function DataPlanFormPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
-  const [pricing, setPricing] = useState<Record<string, RolePrice>>({});
+  const [pricing, setPricing] = useState<Record<string, RolePrice>>(
+    () => toPricingState(stateDataPlan?.pricing),
+  );
   const [saving, setSaving] = useState(false);
   const [saveMode, setSaveMode] = useState<"return" | "new">("return");
   const [justSaved, setJustSaved] = useState(false);
@@ -507,8 +511,6 @@ export default function DataPlanFormPage() {
           setPricing(toPricingState(d.pricing));
         })
         .finally(() => setFetchingInitial(false));
-    } else if (stateDataPlan?.pricing) {
-      setPricing(toPricingState(stateDataPlan.pricing));
     }
   }, [id, stateDataPlan]);
 
@@ -614,6 +616,9 @@ export default function DataPlanFormPage() {
       } else {
         await dataPlanService.create(payload);
       }
+      await queryClient.invalidateQueries({
+        queryKey: ["admin", "data-plans", "list"],
+      });
 
       if (after === "return") {
         navigate(BACK);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Shield, Bell, ChevronRight, Pencil, CheckCircle2, Mail, XCircle, Monitor, Smartphone, MapPin, LogOut } from "lucide-react";
+import { isAxiosError } from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Toggle, PageHeader, Card, Button } from "../../user/components/shared-ui";
 import { useAuth, AUTH_QUERY_KEY } from "@/shared/providers/auth";
@@ -62,11 +63,17 @@ export default function AccountSettingsPage() {
         void logout().finally(() => window.location.assign("/login?reason=password-changed"));
       }, 800);
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const response = isAxiosError<{
+        message?: string;
+        errors?: { current_password?: string[] };
+      }>(error)
+        ? error.response?.data
+        : undefined;
       setPasswordSuccess(false);
       setPasswordError(
-        error?.response?.data?.errors?.current_password?.[0] ??
-          error?.response?.data?.message ??
+        response?.errors?.current_password?.[0] ??
+          response?.message ??
           "Could not update password. Please try again.",
       );
     },
@@ -100,9 +107,13 @@ export default function AccountSettingsPage() {
       setEmailNotice(response.message || "Verification email sent.");
       setResendCooldown(60);
     },
-    onError: () => {
-      setEmailNotice(null);
-      setResendCooldown(30);
+    onError: (error) => {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+      setEmailNotice(
+        message ?? "Could not send the verification email. Please try again.",
+      );
     },
   });
 
@@ -166,7 +177,10 @@ export default function AccountSettingsPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => resendVerificationMutation.mutate()}
+                  onClick={() => {
+                    setEmailNotice(null);
+                    resendVerificationMutation.mutate();
+                  }}
                   loading={resendVerificationMutation.isPending}
                   disabled={resendVerificationMutation.isPending || resendCooldown > 0}
                 >
@@ -185,8 +199,12 @@ export default function AccountSettingsPage() {
 
         {emailNotice && (
           <div
-            className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700"
-            role="status"
+            className={`mt-4 rounded-xl border px-3.5 py-2.5 text-sm ${
+              resendVerificationMutation.isError
+                ? "border-red-100 bg-red-50 text-red-700"
+                : "border-emerald-100 bg-emerald-50 text-emerald-700"
+            }`}
+            role={resendVerificationMutation.isError ? "alert" : "status"}
             aria-live="polite"
           >
             {emailNotice}
