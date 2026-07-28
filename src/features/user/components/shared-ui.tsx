@@ -82,7 +82,9 @@ export function Button({
       )}
       {...props}
     >
-      {loading && <RefreshCw className="w-4 h-4 animate-spin brand-accent-orange" />}
+      {loading && (
+        <RefreshCw className="w-4 h-4 animate-spin brand-accent-orange" />
+      )}
       {children}
     </button>
   );
@@ -159,7 +161,9 @@ export function StatCard({
   return (
     <Card className="flex h-full min-w-0 flex-col p-3 min-[360px]:p-3.5 sm:p-4">
       <div className="mb-2 flex min-w-0 items-start justify-between gap-2 sm:mb-2.5">
-        <p className="min-w-0 overflow-wrap-anywhere text-xs font-medium leading-snug text-slate-500">{label}</p>
+        <p className="min-w-0 overflow-wrap-anywhere text-xs font-medium leading-snug text-slate-500">
+          {label}
+        </p>
         <div
           className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${toneStyles[tone]}`}
         >
@@ -359,7 +363,11 @@ export function Toggle({
 }
 
 export function SkeletonLine({ className = "" }: { className?: string }) {
-  return <div className={`brand-skeleton bg-slate-100 rounded animate-pulse ${className}`} />;
+  return (
+    <div
+      className={`brand-skeleton bg-slate-100 rounded animate-pulse ${className}`}
+    />
+  );
 }
 
 export function SkeletonCard() {
@@ -678,7 +686,9 @@ export function ServiceHeader({
         </div>
         <div className="min-w-0">
           <h2 className="font-semibold text-slate-900 text-sm">{title}</h2>
-          <p className="overflow-wrap-anywhere text-xs text-slate-400">{subtitle}</p>
+          <p className="overflow-wrap-anywhere text-xs text-slate-400">
+            {subtitle}
+          </p>
         </div>
       </div>
     </div>
@@ -983,7 +993,7 @@ export function ConfirmSummary({
         >
           <span className="text-slate-500">{r.label}</span>
           <span
-          className={`min-w-0 overflow-wrap-anywhere text-right font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}
+            className={`min-w-0 overflow-wrap-anywhere text-right font-medium ${r.emphasize === "success" ? "text-emerald-600" : "text-slate-900"}`}
           >
             {r.value}
           </span>
@@ -1031,6 +1041,7 @@ export function ConfirmActions({
 export function SuccessScreen({
   title,
   message,
+  status = "success",
   onReset,
   resetLabel = "Make another payment",
   secondaryLabel = "View receipt",
@@ -1039,17 +1050,34 @@ export function SuccessScreen({
 }: {
   title: string;
   message: ReactNode;
+  status?: "success" | "pending" | "failed";
   onReset: () => void;
   resetLabel?: string;
   secondaryLabel?: string;
   onSecondary?: () => void;
   children?: ReactNode;
 }) {
+  const statusMap: Record<
+    "success" | "pending" | "failed",
+    { bg: string; icon: LucideIcon; iconColor: string }
+  > = {
+    success: {
+      bg: "bg-emerald-50",
+      icon: CheckCircle2,
+      iconColor: "text-emerald-600",
+    },
+    pending: { bg: "bg-amber-50", icon: Clock, iconColor: "text-amber-600" },
+    failed: { bg: "bg-red-50", icon: XCircle, iconColor: "text-red-600" },
+  };
+  const { bg, icon: Icon, iconColor } = statusMap[status];
+
   return (
     <div className="max-w-md mx-auto">
       <Card className="p-8 text-center">
-        <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+        <div
+          className={`${bg} rounded-full flex items-center justify-center mx-auto mb-4 w-12 h-12`}
+        >
+          <Icon className={`w-6 h-6 ${iconColor}`} />
         </div>
         <h2 className="text-base font-semibold text-slate-900 mb-1">{title}</h2>
         <div className="text-slate-500 text-sm mb-5">{message}</div>

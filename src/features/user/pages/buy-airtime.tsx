@@ -192,9 +192,11 @@ export default function BuyAirtimePage() {
   if (step === "success" && result) {
     const charged =
       result.discount_applied?.final_amount ?? Number(result.amount);
+    const isPending = result.status === "pending";
     return (
       <SuccessScreen
-        title="Airtime sent"
+        status={result.status}
+        title={isPending ? "Airtime purchase pending" : "Airtime sent"}
         onReset={reset}
         secondaryLabel="View transactions"
         onSecondary={() => navigate("/transactions")}
@@ -205,7 +207,9 @@ export default function BuyAirtimePage() {
               <span className="font-medium text-slate-900">{fmt(charged)}</span>
             </p>
             <p>
-              Delivered to{" "}
+              {isPending
+                ? "Your purchase is awaiting provider confirmation."
+                : "Delivered to"}{" "}
               <span className="font-mono font-medium text-slate-900">
                 {result.account_or_phone ?? phone}
               </span>
@@ -233,203 +237,203 @@ export default function BuyAirtimePage() {
           subtitle="Top up any Nigerian network"
         />
 
-      {step === "form" && (
-        <div className="p-5 space-y-4">
-          <WalletBalanceBanner balance={Number(user?.wallet_balance ?? 0)} />
+        {step === "form" && (
+          <div className="p-5 space-y-4">
+            <WalletBalanceBanner balance={Number(user?.wallet_balance ?? 0)} />
 
-          <div>
-            <FieldLabel>Select network</FieldLabel>
-            {networksQuery.isPending || airtimePlansQuery.isPending ? (
-              <div className="grid grid-cols-4 gap-2">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[74px] rounded-lg bg-gray-100 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : (
-              <NetworkPicker
-                networks={networks.map((n) => ({
-                  id: n.name.toLowerCase(),
-                  name: n.name.toUpperCase(),
-                  bg: NETWORK_COLORS[n.name.toLowerCase()] ?? "bg-slate-400",
-                }))}
-                value={network}
-                onChange={setNetwork}
-              />
-            )}
-          </div>
-
-          {availablePlans.length > 1 && (
             <div>
-              <FieldLabel>Plan type</FieldLabel>
-              <OptionPicker
-                options={Array.from(
-                  new Map(
-                    availablePlans.map((p) => [
-                      planCategory(p),
-                      {
-                        id: planCategory(p),
-                        label: planCategory(p).toUpperCase(),
-                        description: p.category
-                          ? p.category.toUpperCase()
-                          : undefined,
-                      },
-                    ]),
-                  ).values(),
-                )}
-                value={networkType}
-                onChange={setNetworkType}
-              />
-            </div>
-          )}
-
-          <div>
-            <FieldLabel>Phone number</FieldLabel>
-            <input
-              type="tel"
-              maxLength={11}
-              value={phone}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "");
-                setPhone(digits);
-                if (!ported && digits.length >= 4) {
-                  const detected = detectNetwork(digits);
-                  if (
-                    detected &&
-                    networks.some((n) => n.name.toLowerCase() === detected)
-                  ) {
-                    setNetwork(detected);
-                  }
-                }
-              }}
-              placeholder="08012345678"
-              className={`${inputCls} font-mono`}
-            />
-            {phone && phone.length !== 11 && (
-              <p className="text-xs text-red-500 mt-1">
-                Enter a valid 11-digit phone number
-              </p>
-            )}
-            <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-              <label className="flex min-w-0 items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={ported}
-                  onChange={(e) => setPorted(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-gray-300 accent-[#111827]"
+              <FieldLabel>Select network</FieldLabel>
+              {networksQuery.isPending || airtimePlansQuery.isPending ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-[74px] rounded-lg bg-gray-100 animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <NetworkPicker
+                  networks={networks.map((n) => ({
+                    id: n.name.toLowerCase(),
+                    name: n.name.toUpperCase(),
+                    bg: NETWORK_COLORS[n.name.toLowerCase()] ?? "bg-slate-400",
+                  }))}
+                  value={network}
+                  onChange={setNetwork}
                 />
-                <span>This number was ported from another network</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowPortedHelp((v) => !v)}
-                aria-expanded={showPortedHelp}
-                aria-label="What does ported number mean?"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#111827]/20"
-              >
-                <Info className="h-3.5 w-3.5" />
-              </button>
+              )}
             </div>
-            {showPortedHelp && (
-              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
-                Select this if your phone number has been moved from its
-                original network to another network. It stops automatic network
-                detection from changing your selected network.
+
+            {availablePlans.length > 1 && (
+              <div>
+                <FieldLabel>Plan type</FieldLabel>
+                <OptionPicker
+                  options={Array.from(
+                    new Map(
+                      availablePlans.map((p) => [
+                        planCategory(p),
+                        {
+                          id: planCategory(p),
+                          label: planCategory(p).toUpperCase(),
+                          description: p.category
+                            ? p.category.toUpperCase()
+                            : undefined,
+                        },
+                      ]),
+                    ).values(),
+                  )}
+                  value={networkType}
+                  onChange={setNetworkType}
+                />
               </div>
             )}
-          </div>
 
-          <div>
-            <FieldLabel>Amount</FieldLabel>
-            <QuickAmountGrid
-              amounts={quickAmounts.filter(
-                (a) => a >= minAmount && a <= maxAmount,
-              )}
-              value={amount}
-              onChange={setAmount}
-              columns={4}
-            />
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder={`Enter custom amount (${fmt(minAmount)} - ${fmt(maxAmount)})`}
-              className={inputCls}
-            />
-            {amount &&
-              (amountNumber < minAmount || amountNumber > maxAmount) && (
+            <div>
+              <FieldLabel>Phone number</FieldLabel>
+              <input
+                type="tel"
+                maxLength={11}
+                value={phone}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "");
+                  setPhone(digits);
+                  if (!ported && digits.length >= 4) {
+                    const detected = detectNetwork(digits);
+                    if (
+                      detected &&
+                      networks.some((n) => n.name.toLowerCase() === detected)
+                    ) {
+                      setNetwork(detected);
+                    }
+                  }
+                }}
+                placeholder="08012345678"
+                className={`${inputCls} font-mono`}
+              />
+              {phone && phone.length !== 11 && (
                 <p className="text-xs text-red-500 mt-1">
-                  Amount must be between {fmt(minAmount)} and {fmt(maxAmount)}{" "}
-                  for {selectedNetwork?.name.toUpperCase()}
+                  Enter a valid 11-digit phone number
                 </p>
               )}
-          </div>
-
-          <ContinueButton
-            onClick={() => setStep("confirm")}
-            disabled={!isFormValid}
-          />
-        </div>
-      )}
-
-      {step === "confirm" && selectedNetwork && (
-        <div className="p-5 space-y-4">
-          <ConfirmSummary
-            rows={[
-              { label: "Network", value: selectedNetwork.name.toUpperCase() },
-              { label: "Phone number", value: phone },
-              { label: "Amount", value: fmt(amountNumber) },
-              ...(discountAmount > 0
-                ? [
-                    {
-                      label: "Discount",
-                      value: `- ${fmt(discountAmount)}`,
-                      emphasize: "success" as const,
-                    },
-                    {
-                      label: "You pay",
-                      value: fmt(payableAmount),
-                      emphasize: "success" as const,
-                    },
-                  ]
-                : []),
-            ]}
-          />
-
-          {error && (
-            <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
-              {error}
+              <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                <label className="flex min-w-0 items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={ported}
+                    onChange={(e) => setPorted(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-gray-300 accent-[#111827]"
+                  />
+                  <span>This number was ported from another network</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPortedHelp((v) => !v)}
+                  aria-expanded={showPortedHelp}
+                  aria-label="What does ported number mean?"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#111827]/20"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {showPortedHelp && (
+                <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                  Select this if your phone number has been moved from its
+                  original network to another network. It stops automatic
+                  network detection from changing your selected network.
+                </div>
+              )}
             </div>
-          )}
 
-          <button
-            type="button"
-            onClick={() => setShowPromo((v) => !v)}
-            className="text-xs font-medium text-[#111827] hover:opacity-80 transition-opacity"
-          >
-            {showPromo ? "Remove promo code" : "Have a promo code?"}
-          </button>
-          {showPromo && (
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="Enter promo code"
-              className={`${inputCls} font-mono uppercase`}
+            <div>
+              <FieldLabel>Amount</FieldLabel>
+              <QuickAmountGrid
+                amounts={quickAmounts.filter(
+                  (a) => a >= minAmount && a <= maxAmount,
+                )}
+                value={amount}
+                onChange={setAmount}
+                columns={4}
+              />
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder={`Enter custom amount (${fmt(minAmount)} - ${fmt(maxAmount)})`}
+                className={inputCls}
+              />
+              {amount &&
+                (amountNumber < minAmount || amountNumber > maxAmount) && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Amount must be between {fmt(minAmount)} and {fmt(maxAmount)}{" "}
+                    for {selectedNetwork?.name.toUpperCase()}
+                  </p>
+                )}
+            </div>
+
+            <ContinueButton
+              onClick={() => setStep("confirm")}
+              disabled={!isFormValid}
             />
-          )}
+          </div>
+        )}
 
-          <PinField value={pin} onChange={setPin} />
+        {step === "confirm" && selectedNetwork && (
+          <div className="p-5 space-y-4">
+            <ConfirmSummary
+              rows={[
+                { label: "Network", value: selectedNetwork.name.toUpperCase() },
+                { label: "Phone number", value: phone },
+                { label: "Amount", value: fmt(amountNumber) },
+                ...(discountAmount > 0
+                  ? [
+                      {
+                        label: "Discount",
+                        value: `- ${fmt(discountAmount)}`,
+                        emphasize: "success" as const,
+                      },
+                      {
+                        label: "You pay",
+                        value: fmt(payableAmount),
+                        emphasize: "success" as const,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
-          <ConfirmActions
-            onBack={() => setStep("form")}
-            onConfirm={() => void handleConfirm()}
-            loading={loading}
-          />
-        </div>
-      )}
+            {error && (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowPromo((v) => !v)}
+              className="text-xs font-medium text-[#111827] hover:opacity-80 transition-opacity"
+            >
+              {showPromo ? "Remove promo code" : "Have a promo code?"}
+            </button>
+            {showPromo && (
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="Enter promo code"
+                className={`${inputCls} font-mono uppercase`}
+              />
+            )}
+
+            <PinField value={pin} onChange={setPin} />
+
+            <ConfirmActions
+              onBack={() => setStep("form")}
+              onConfirm={() => void handleConfirm()}
+              loading={loading}
+            />
+          </div>
+        )}
       </PurchaseShell>
     </div>
   );

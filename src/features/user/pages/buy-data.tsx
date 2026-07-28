@@ -257,9 +257,11 @@ export default function BuyDataPage() {
   if (step === "success" && result) {
     const charged =
       result.discount_applied?.final_amount ?? Number(result.amount);
+    const isPending = result.status === "pending";
     return (
       <SuccessScreen
-        title="Data activated"
+        status={result.status}
+        title={isPending ? "Data purchase pending" : "Data activated"}
         onReset={reset}
         secondaryLabel="View transactions"
         onSecondary={() => navigate("/transactions")}
@@ -270,7 +272,9 @@ export default function BuyDataPage() {
               <span className="font-medium text-slate-900">{fmt(charged)}</span>
             </p>
             <p>
-              Delivered to{" "}
+              {isPending
+                ? "Your purchase is awaiting provider confirmation."
+                : "Delivered to"}{" "}
               <span className="font-mono font-medium text-slate-900">
                 {result.account_or_phone ?? phone}
               </span>
