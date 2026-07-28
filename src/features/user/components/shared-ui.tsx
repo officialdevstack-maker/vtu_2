@@ -1050,7 +1050,7 @@ export function SuccessScreen({
 }: {
   title: string;
   message: ReactNode;
-  status?: "success" | "pending" | "failed";
+  status?: "success" | "pending" | "fail" | "failed";
   onReset: () => void;
   resetLabel?: string;
   secondaryLabel?: string;
@@ -1058,7 +1058,7 @@ export function SuccessScreen({
   children?: ReactNode;
 }) {
   const statusMap: Record<
-    "success" | "pending" | "failed",
+    "success" | "pending" | "fail" | "failed",
     { bg: string; icon: LucideIcon; iconColor: string }
   > = {
     success: {
@@ -1067,6 +1067,7 @@ export function SuccessScreen({
       iconColor: "text-emerald-600",
     },
     pending: { bg: "bg-amber-50", icon: Clock, iconColor: "text-amber-600" },
+    fail: { bg: "bg-red-50", icon: XCircle, iconColor: "text-red-600" },
     failed: { bg: "bg-red-50", icon: XCircle, iconColor: "text-red-600" },
   };
   const { bg, icon: Icon, iconColor } = statusMap[status];
