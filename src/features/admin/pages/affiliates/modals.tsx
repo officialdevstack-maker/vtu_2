@@ -502,7 +502,7 @@ export function BulkMigrateModal({
 
 // Bulk email composer for selected affiliate customers. Uses the broadcast
 // engine to notify a specific list of child_customer_ids for the affiliate.
-export function BulkEmailModal({
+export function LegacyBulkEmailModal({
   instanceId,
   customerIds,
   onClose,
@@ -669,6 +669,220 @@ export function BulkEmailModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Separate migration and email into independent requests. Once migration
+// completes, the admin gets a fresh composer for customers whose parent
+// accounts are ready.
+export function BulkEmailModal({
+  instanceId,
+  customerIds,
+  onClose,
+  onSent,
+}: {
+  instanceId: string;
+  customerIds: (string | number)[];
+  onClose: () => void;
+  onSent?: (processed: number) => void;
+}) {
+  const [phase, setPhase] = useState<"migrate" | "compose" | "results">("migrate");
+  const [targetUrl, setTargetUrl] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [recipientIds, setRecipientIds] = useState<(string | number)[]>([]);
+  const [migrationResults, setMigrationResults] = useState<BulkMigrationResult[]>([]);
+  const [emailResults, setEmailResults] = useState<BulkMigrationResult[]>([]);
+
+  const migrate = async () => {
+    if (customerIds.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const nextResults = await childCustomerService.bulkMigrate(
+        instanceId,
+        customerIds,
+        targetUrl.trim() || undefined,
+      );
+      const readyIds = nextResults
+        .filter(
+          (result) =>
+            result.success || result.message === "Customer is already migrated",
+        )
+        .map((result) => result.customer_id);
+
+      setMigrationResults(nextResults);
+      setRecipientIds(readyIds);
+      onSent?.(nextResults.filter((result) => result.success).length);
+
+      if (readyIds.length === 0) {
+        setError("None of the selected customers could be migrated.");
+        return;
+      }
+      setPhase("compose");
+    } catch (err) {
+      setError(extractErrorMessage(err, "Could not migrate the selected customers. Please try again."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendEmail = async () => {
+    if (!subject.trim() || !body.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const nextResults = await childCustomerService.sendBulkEmail(
+        instanceId,
+        recipientIds,
+        subject.trim(),
+        body.trim(),
+      );
+      setEmailResults(nextResults);
+      onSent?.(nextResults.filter((result) => result.success).length);
+      setPhase("results");
+    } catch (err) {
+      setError(
+        extractErrorMessage(
+          err,
+          "Customers were migrated, but the email could not be sent. Please try again.",
+        ),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const count = phase === "migrate" ? customerIds.length : recipientIds.length;
+  const title =
+    phase === "migrate"
+      ? "Migrate selected customers"
+      : phase === "compose"
+        ? "Email migrated customers"
+        : "Email results";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200/70 bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-100 p-4">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+            <p className="truncate text-[11px] text-slate-400">
+              {count} customer{count === 1 ? "" : "s"}
+            </p>
+          </div>
+          <button onClick={onClose} className="rounded-md p-1.5 text-slate-400 hover:bg-gray-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] space-y-3.5 overflow-y-auto p-4">
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
+          {phase === "migrate" && (
+            <>
+              <p className="text-sm text-slate-700">
+                First migrate the selected customers. After migration completes,
+                a separate screen will open for composing the email.
+              </p>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  Redirect URL after migration (optional)
+                </label>
+                <input
+                  value={targetUrl}
+                  onChange={(event) => setTargetUrl(event.target.value)}
+                  placeholder="Defaults to this platform's site URL"
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <Button variant="secondary" fullWidth onClick={onClose} disabled={busy}>Cancel</Button>
+                <Button fullWidth loading={busy} disabled={busy} onClick={migrate}>
+                  <ArrowRightLeft className="h-3.5 w-3.5" /> Migrate {customerIds.length}
+                </Button>
+              </div>
+              {migrationResults.length > 0 && recipientIds.length === 0 && (
+                <ResultList results={migrationResults} />
+              )}
+            </>
+          )}
+
+          {phase === "compose" && (
+            <>
+              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                Migration is complete. Emailing is now a separate action for {recipientIds.length} ready customer
+                {recipientIds.length === 1 ? "" : "s"}.
+              </div>
+              {migrationResults.some(
+                (result) => !result.success && result.message !== "Customer is already migrated",
+              ) && (
+                <p className="text-xs text-amber-700">
+                  Customers that could not be migrated were excluded from this email.
+                </p>
+              )}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  Subject <span className="text-red-400">*</span>
+                </label>
+                <input value={subject} onChange={(event) => setSubject(event.target.value)} className={inputCls} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-600">
+                  Message <span className="text-red-400">*</span>
+                </label>
+                <textarea value={body} onChange={(event) => setBody(event.target.value)} rows={8} className={inputCls} />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Placeholders like <code className="font-mono">{"{{ user.username }}"}</code> are filled per recipient.
+                </p>
+              </div>
+              <div className="flex gap-3 pt-1">
+                <Button variant="secondary" fullWidth onClick={onClose} disabled={busy}>Send later</Button>
+                <Button
+                  fullWidth
+                  loading={busy}
+                  disabled={busy || !subject.trim() || !body.trim()}
+                  onClick={sendEmail}
+                >
+                  <Send className="h-3.5 w-3.5" /> Send email
+                </Button>
+              </div>
+            </>
+          )}
+
+          {phase === "results" && (
+            <>
+              <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                {emailResults.filter((result) => result.success).length} of {emailResults.length} emails sent successfully.
+              </div>
+              <ResultList results={emailResults} />
+              <Button fullWidth onClick={onClose}>Done</Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultList({ results }: { results: BulkMigrationResult[] }) {
+  return (
+    <div className="space-y-2 pt-2">
+      <p className="text-xs font-medium text-slate-600">Results</p>
+      {results.map((result, index) => (
+        <div
+          key={`${result.customer_id}-${index}`}
+          className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm ${
+            result.success ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"
+          }`}
+        >
+          <span>Customer #{result.customer_id}</span>
+          <span className="text-right text-[11px] opacity-70">{result.message}</span>
+        </div>
+      ))}
     </div>
   );
 }

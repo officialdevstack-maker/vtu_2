@@ -245,6 +245,19 @@ export const childCustomerService = {
       )
       .then((r) => r.data.data),
 
+  sendBulkEmail: (
+    instanceId: string | number,
+    customerIds: (string | number)[],
+    subject: string,
+    body: string,
+  ): Promise<BulkMigrationResult[]> =>
+    apiClient
+      .post<ApiEnvelope<BulkMigrationResult[]>>(
+        `/admin/child-instances/${instanceId}/customers/messages`,
+        { customer_ids: customerIds, subject, body },
+      )
+      .then((r) => r.data.data),
+
   // One-off emails to this customer via the parent's own mail infra, with a
   // persisted outbound log (replies land in the admin's inbox, not here).
   // Subject/body support {{ user.username }}-style placeholders.
