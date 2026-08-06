@@ -774,7 +774,12 @@ export function BulkEmailModal({
               {count} customer{count === 1 ? "" : "s"}
             </p>
           </div>
-          <button onClick={onClose} className="rounded-md p-1.5 text-slate-400 hover:bg-gray-100">
+          <button
+            type="button"
+            aria-label="Close migration and email dialog"
+            onClick={onClose}
+            className="rounded-md p-1.5 text-slate-400 hover:bg-gray-100"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
