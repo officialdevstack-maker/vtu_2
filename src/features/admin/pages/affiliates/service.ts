@@ -1,3 +1,4 @@
+import axios from "axios";
 import { apiClient } from "@shared/api/apiClient";
 import { DEFAULT_PAGE_SIZE } from "@shared/pagination";
 
@@ -251,12 +252,30 @@ export const childCustomerService = {
     subject: string,
     body: string,
   ): Promise<BulkMigrationResult[]> =>
-    apiClient
-      .post<ApiEnvelope<BulkMigrationResult[]>>(
-        `/admin/child-instances/${instanceId}/customers/messages`,
-        { customer_ids: customerIds, subject, body },
-      )
-      .then((r) => r.data.data),
+    // Use the long-established single-customer endpoint for each recipient.
+    // This keeps the split migration/email flow compatible with deployments
+    // whose Laravel route cache does not yet contain the newer bulk endpoint.
+    Promise.allSettled(
+      customerIds.map((customerId) =>
+        apiClient.post<ApiEnvelope<ChildCustomerMessage>>(
+          `/admin/child-instances/${instanceId}/customers/${customerId}/messages`,
+          { subject, body },
+        ),
+      ),
+    ).then((settled) =>
+      settled.map((result, index) => ({
+        customer_id: customerIds[index],
+        success: result.status === "fulfilled",
+        email_sent: result.status === "fulfilled",
+        message:
+          result.status === "fulfilled"
+            ? "Email sent"
+            : axios.isAxiosError(result.reason) &&
+                typeof (result.reason.response?.data as { message?: unknown } | undefined)?.message === "string"
+              ? (result.reason.response?.data as { message: string }).message
+              : "Email could not be sent",
+      })),
+    ),
 
   // One-off emails to this customer via the parent's own mail infra, with a
   // persisted outbound log (replies land in the admin's inbox, not here).
