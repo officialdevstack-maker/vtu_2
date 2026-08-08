@@ -9,6 +9,7 @@ import {
 } from "../../../user/components/shared-ui";
 import {
   childCustomerService,
+  childBroadcastService,
   type BulkMigrationResult,
   type ChildCustomer,
   type ChildCustomerMessage,
@@ -695,7 +696,7 @@ export function BulkEmailModal({
   const [error, setError] = useState<string | null>(null);
   const [recipientIds, setRecipientIds] = useState<(string | number)[]>([]);
   const [migrationResults, setMigrationResults] = useState<BulkMigrationResult[]>([]);
-  const [emailResults, setEmailResults] = useState<BulkMigrationResult[]>([]);
+  const [sentCount, setSentCount] = useState(0);
 
   const migrate = async () => {
     if (customerIds.length === 0) return;
@@ -735,14 +736,14 @@ export function BulkEmailModal({
     setBusy(true);
     setError(null);
     try {
-      const nextResults = await childCustomerService.sendBulkEmail(
+      const notified = await childBroadcastService.emailSelected(
         instanceId,
         recipientIds,
         subject.trim(),
         body.trim(),
       );
-      setEmailResults(nextResults);
-      onSent?.(nextResults.filter((result) => result.success).length);
+      setSentCount(notified);
+      onSent?.(notified);
       setPhase("results");
     } catch (err) {
       setError(
@@ -861,9 +862,8 @@ export function BulkEmailModal({
           {phase === "results" && (
             <>
               <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                {emailResults.filter((result) => result.success).length} of {emailResults.length} emails sent successfully.
+                {sentCount} of {recipientIds.length} emails sent successfully. This send is now available in Recent broadcasts.
               </div>
-              <ResultList results={emailResults} />
               <Button fullWidth onClick={onClose}>Done</Button>
             </>
           )}
