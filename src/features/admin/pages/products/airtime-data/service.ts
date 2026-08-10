@@ -179,6 +179,7 @@ export type AirtimePlan = {
   fallback_provider_discount?: string | number | null;
   fallback_server_id?: string | number | null;
   fallback_cost_price?: string | number | null;
+  fallbacks?: ProviderFallback[] | null;
   fallback_provider?: DataPlanProvider;
   use_provider_as_providerable?: boolean | null;
 };
@@ -200,6 +201,7 @@ export type AirtimePlanPayload = {
     fallback_provider_discount?: string | number | null;
     fallback_server_id?: string | number | null;
     fallback_cost_price?: string | number | null;
+    fallbacks?: ProviderFallback[];
   };
 };
 
@@ -269,6 +271,14 @@ export type DataPlanProvider = {
   } | null;
 } | null;
 
+export type ProviderFallback = {
+  provider_id: string | number;
+  server_id?: string | number | null;
+  cost_price?: string | number | null;
+  provider_discount?: string | number | null;
+  provider?: DataPlanProvider;
+};
+
 // A role's pricing entry: either a plain legacy fiat number, or the new
 // { type, value } shape — "percentage" is a markup over the plan's cost
 // price (see DataPlan::getPriceAttribute() / resolveCostPrice() backend-side).
@@ -305,6 +315,7 @@ export type DataPlan = {
   fallback_provider_discount?: string | number | null;
   fallback_server_id?: string | number | null;
   fallback_cost_price?: string | number | null;
+  fallbacks?: ProviderFallback[] | null;
   fallback_provider?: DataPlanProvider;
   provider?: DataPlanProvider;
   created_at?: string | null;
@@ -330,6 +341,7 @@ export type DataPlanPayload = {
     fallback_provider_discount?: string | number | null;
     fallback_server_id?: string | number | null;
     fallback_cost_price?: string | number | null;
+    fallbacks?: ProviderFallback[];
   };
 };
 
