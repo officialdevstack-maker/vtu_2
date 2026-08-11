@@ -94,6 +94,7 @@ export const templateService = {
 // see routes/console.php).
 
 export type BroadcastChannel = "Email" | "sms" | "database";
+export type EmailCategory = "transactional" | "marketing";
 export type AudienceMode = "criteria" | "individuals";
 
 export type AudienceFilters = {
@@ -117,6 +118,7 @@ export type BroadcastPayload = AudienceFilters & {
   smsMessage?: string;
   emailSubject?: string;
   emailBody?: string;
+  emailCategory: EmailCategory;
   notifTitle?: string;
   notifMessage?: string;
   sendNow: boolean;

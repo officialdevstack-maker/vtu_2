@@ -22,6 +22,7 @@ import {
   type AudienceFilters,
   type AudienceMode,
   type BroadcastChannel,
+  type EmailCategory,
   type BroadcastHistoryItem,
   type BroadcastUserSearchResult,
   type Template,
@@ -153,6 +154,7 @@ export default function BroadcastPage() {
   const [notifMessage, setNotifMessage] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
+  const [emailCategory, setEmailCategory] = useState<EmailCategory>("transactional");
   const [smsMessage, setSmsMessage] = useState("");
 
   // Saved templates to start a broadcast from — selecting one prefills the
@@ -343,6 +345,7 @@ export default function BroadcastPage() {
         notifMessage: hasDatabase ? notifMessage.trim() : undefined,
         emailSubject: hasEmail ? emailSubject.trim() : undefined,
         emailBody: hasEmail ? emailBody.trim() : undefined,
+        emailCategory,
         smsMessage: hasSms ? smsMessage.trim() : undefined,
         sendNow,
         scheduleDate: sendNow ? null : new Date(scheduleDate).toISOString(),
@@ -359,6 +362,7 @@ export default function BroadcastPage() {
       setNotifMessage("");
       setEmailSubject("");
       setEmailBody("");
+      setEmailCategory("transactional");
       setSmsMessage("");
       setSelectedUsers([]);
       setScheduleMode("now");
@@ -659,6 +663,23 @@ export default function BroadcastPage() {
                 <SectionTitle>Email</SectionTitle>
                 <div className="space-y-3">
                   <div>
+                    <label className="mb-1 block text-xs font-medium text-slate-700" htmlFor="email-category">
+                      Email category
+                    </label>
+                    <select
+                      id="email-category"
+                      value={emailCategory}
+                      onChange={(e) => setEmailCategory(e.target.value as EmailCategory)}
+                      className={inputCls}
+                    >
+                      <option value="transactional">Important / transactional announcement</option>
+                      <option value="marketing">Marketing / promotional email</option>
+                    </select>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Marketing emails include an unsubscribe header. Important account and service messages do not.
+                    </p>
+                  </div>
+                  <div>
                     <input
                       value={emailSubject}
                       onChange={(e) => setEmailSubject(e.target.value.slice(0, 150))}
@@ -850,6 +871,9 @@ export default function BroadcastPage() {
               <p className="text-xs text-slate-500">
                 This reaches <strong>{countLoading ? "…" : (audienceCount ?? 0)} recipient{audienceCount === 1 ? "" : "s"}</strong>, over{" "}
                 <strong>{channels.map((c) => channelOptions.find((o) => o.value === c)?.label).join(", ")}</strong>
+                {hasEmail ? (
+                  <> as a <strong>{emailCategory}</strong> email</>
+                ) : null}
                 {scheduleMode === "later" && scheduleDate ? (
                   <> on <strong>{new Date(scheduleDate).toLocaleString()}</strong></>
                 ) : null}
@@ -957,7 +981,9 @@ export default function BroadcastPage() {
 
               {detailBroadcast.payload?.emailBody && (
                 <div className="rounded-lg border border-gray-100 p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Email body</p>
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                    Email body · {detailBroadcast.payload.emailCategory ?? "transactional"}
+                  </p>
                   <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                     {detailBroadcast.payload.emailBody}
                   </p>

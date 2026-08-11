@@ -299,6 +299,7 @@ export const childBroadcastService = {
         channels: ["Email"],
         emailSubject: subject,
         emailBody: body,
+        emailCategory: "transactional",
         sendNow: true,
         priorityHigh: false,
       })
@@ -321,6 +322,7 @@ export const childBroadcastService = {
         channels: ["Email"],
         emailSubject: subject,
         emailBody: body,
+        emailCategory: "transactional",
         sendNow: true,
         priorityHigh: false,
       })
