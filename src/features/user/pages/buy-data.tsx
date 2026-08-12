@@ -57,7 +57,11 @@ const PLAN_TYPE_LABELS: Record<string, string> = {
   sme: "SME",
   gifting: "Gifting",
   cooperate_gifting: "Cooperate Gifting",
+  "VTU.NG": "VTU.ng",
 };
+
+const isSyncedProviderPlan = (value: string | null | undefined): boolean =>
+  normalizePlanType(value) === "vtu.ng";
 
 export default function BuyDataPage() {
   const navigate = useNavigate();
@@ -146,6 +150,7 @@ export default function BuyDataPage() {
       }
 
       return (
+        isSyncedProviderPlan(plan.plan_type) ||
         !allowedPlanTypes ||
         allowedPlanTypes.size === 0 ||
         allowedPlanTypes.has(normalized)
@@ -154,7 +159,11 @@ export default function BuyDataPage() {
   }, [allowedPlanTypesByNetwork, network, plansByNetwork]);
 
   const planTypes = useMemo(
-    () => Array.from(new Set(availablePlans.map((p) => p.plan_type))),
+    () =>
+      Array.from(new Set(availablePlans.map((p) => p.plan_type))).sort(
+        (a, b) =>
+          Number(isSyncedProviderPlan(b)) - Number(isSyncedProviderPlan(a)),
+      ),
     [availablePlans],
   );
 
