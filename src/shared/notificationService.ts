@@ -27,13 +27,44 @@ export type NotificationPage = {
   meta: PaginatedMeta;
 };
 
+type RawNotification = Omit<AppNotification, "data"> & {
+  data?: Record<string, unknown> | null;
+};
+
+// Broadcast notifications created by older backend versions used `message`
+// instead of `body` and did not include a display type. Normalize them here
+// so existing notification rows remain viewable after deployment.
+const normalizeNotification = (
+  notification: RawNotification,
+): AppNotification => {
+  const data = notification.data ?? {};
+  const stringValue = (value: unknown, fallback: string) =>
+    typeof value === "string" && value.trim() ? value : fallback;
+
+  return {
+    ...notification,
+    data: {
+      ...data,
+      type: stringValue(data.type, "broadcast"),
+      title: stringValue(data.title, "Notification"),
+      body: stringValue(
+        data.body,
+        stringValue(data.message, "No additional details."),
+      ),
+    },
+  };
+};
+
 export const notificationService = {
   getAll: (page = 1, perPage = 10): Promise<NotificationPage> =>
     apiClient
-      .get<PaginatedApiEnvelope<AppNotification[]>>("/notifications", {
+      .get<PaginatedApiEnvelope<RawNotification[]>>("/notifications", {
         params: { page, per_page: perPage },
       })
-      .then((r) => ({ data: r.data.data, meta: r.data.meta })),
+      .then((r) => ({
+        data: r.data.data.map(normalizeNotification),
+        meta: r.data.meta,
+      })),
 
   getUnreadCount: (signal?: AbortSignal): Promise<number> =>
     apiClient

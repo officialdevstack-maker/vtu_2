@@ -138,7 +138,7 @@ export default function NotificationsPage() {
 
   const relatedPath = (notification: AppNotification): string | null => {
     const isAdmin = location.pathname.startsWith("/admin");
-    const type = notification.data.type.toLowerCase();
+    const type = notification.data.type?.toLowerCase() ?? "";
     if (type.includes("transaction") || type.includes("subscription")) {
       return isAdmin ? "/admin/transactions" : "/transactions";
     }
