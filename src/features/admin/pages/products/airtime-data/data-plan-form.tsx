@@ -1052,9 +1052,25 @@ export default function DataPlanFormPage() {
                 </div>
               </div>
 
+              {initial?.provider_price != null && (
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-3.5 py-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-slate-700">Provider price</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        Synced automatically from {initial.provider?.name ?? "the provider"}. Your editable cost price below is not overwritten.
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-sm font-semibold text-slate-900">
+                      ₦{Number(initial.provider_price).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <Field
                 label="Cost price"
-                hint="cost basis for % pricing"
+                hint="editable basis for role pricing"
                 error={errors.cost_price}
               >
                 <NumberInput
@@ -1071,8 +1087,8 @@ export default function DataPlanFormPage() {
           <Card className="p-5">
             <SectionTitle>Pricing by role</SectionTitle>
             <p className="text-xs text-slate-400 -mt-2 mb-4">
-              Price charged per account role — either a fixed naira amount,
-              or a percentage markup over the cost price.
+              Markup added to the editable cost price for each account role —
+              either a fixed Naira amount or a percentage.
             </p>
             {rolesLoading ? (
               <div className="space-y-3">

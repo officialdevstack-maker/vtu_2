@@ -266,6 +266,7 @@ export type DataPlanProvider = {
   name: string;
   pivot?: {
     cost_price?: string | number | null;
+    provider_price?: string | number | null;
     server_id?: string | number | null;
     provider_id?: string | number | null;
   } | null;
@@ -308,6 +309,7 @@ export type DataPlan = {
   price?: string | number | null;
   price_ngn?: string | null;
   cost_price?: string | number | null;
+  provider_price?: string | number | null;
   server_id?: string | number | null;
   provider_id?: string | number | null;
   fallback_provider_id?: string | number | null;
