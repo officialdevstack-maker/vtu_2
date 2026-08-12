@@ -360,6 +360,7 @@ export function DataPlansTab() {
         !q ||
         p.plan_name?.toLowerCase().includes(q) ||
         p.plan?.toLowerCase().includes(q) ||
+        p.provider_plan_name?.toLowerCase().includes(q) ||
         p.network?.toLowerCase().includes(q);
       const matchesNetwork = !networkFilter || p.network?.toLowerCase() === networkFilter;
       const matchesType = !typeFilter || p.plan_type?.toLowerCase() === typeFilter;
@@ -708,8 +709,15 @@ export function DataPlansTab() {
                     <td className="px-4 py-3 text-xs text-slate-400 font-mono">
                       {plan.id}
                     </td>
-                    <td className="px-4 py-3 text-xs font-medium text-slate-900">
-                      {plan.plan ?? `${plan.plan_name}${plan.plan_size}`}
+                    <td className="px-4 py-3 text-xs text-slate-900">
+                      <span className="font-medium">
+                        {plan.plan ?? `${plan.plan_name}${plan.plan_size}`}
+                      </span>
+                      {plan.provider_plan_name && (
+                        <span className="mt-0.5 block max-w-xs text-[11px] leading-snug text-slate-400" title={plan.provider_plan_name}>
+                          Provider: {plan.provider_plan_name}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 text-right capitalize">
                       {plan.network}

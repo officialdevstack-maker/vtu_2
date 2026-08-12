@@ -296,6 +296,9 @@ export type DataPlan = {
   plan_type: string; // e.g. "sme"
   plan?: string; // computed "1GB"
   validity: string;
+  provider_plan_name?: string | null;
+  provider_plan_description?: string | null;
+  provider_plan_parse_confident?: boolean;
   active: boolean;
   // True for a plan auto-created by a vendor plan sync (e.g.
   // Ogdams::syncPlans()) that hasn't been reviewed/priced by an admin yet —

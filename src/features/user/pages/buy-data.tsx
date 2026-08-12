@@ -46,6 +46,7 @@ import {
 } from "../services/customerService";
 import { ServiceTabs } from "../components/service-tabs";
 import { RecentPhoneInput } from "../components/recent-phone-input";
+import { dataPlanDetails } from "../utils/dataPlanDisplay";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -439,9 +440,11 @@ export default function BuyDataPage() {
                       <p className="font-medium text-slate-900 text-sm">
                         {p.plan}
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {p.validity}
-                      </p>
+                      {dataPlanDetails(p) && (
+                        <p className="text-xs leading-snug text-slate-500 mt-0.5">
+                          {dataPlanDetails(p)}
+                        </p>
+                      )}
                       {(() => {
                         const original = Number(p.price ?? 0);
                         const discounted = applyDiscount(
@@ -483,7 +486,9 @@ export default function BuyDataPage() {
                 { label: "Network", value: selectedNetwork.name.toUpperCase() },
                 {
                   label: "Plan",
-                  value: `${selectedPlan.plan} · ${selectedPlan.validity}`,
+                  value: [selectedPlan.plan, dataPlanDetails(selectedPlan)]
+                    .filter(Boolean)
+                    .join(" · "),
                 },
                 { label: "Phone number", value: phone },
                 { label: "Amount", value: fmt(planPrice) },
