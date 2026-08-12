@@ -23,6 +23,7 @@ import {
   type Role,
 } from "./service";
 import { providerService, type Provider } from "../../apis/providerService";
+import { clearCatalogRequestCache } from "@/shared/api/catalogCache";
 
 const BACK = "/admin/products/airtime-data?tab=data-plans";
 const NEW = "/admin/products/airtime-data/data-plans/new";
@@ -616,9 +617,17 @@ export default function DataPlanFormPage() {
       } else {
         await dataPlanService.create(payload);
       }
-      await queryClient.invalidateQueries({
-        queryKey: ["admin", "data-plans", "list"],
-      });
+      // Customer plan reads sit behind both TanStack Query and the shared
+      // request memo. Clear the lower cache first; otherwise invalidating the
+      // query immediately refetches the same pre-save Promise for up to a
+      // minute and the storefront appears not to have changed.
+      clearCatalogRequestCache();
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["admin", "data-plans", "list"],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["data-plans"] }),
+      ]);
 
       if (after === "return") {
         navigate(BACK);

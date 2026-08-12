@@ -72,6 +72,17 @@ for (const key of CATALOG_QUERY_KEYS) {
   });
 }
 
+// Data-plan prices, active state and provider availability are operational
+// values, not static metadata. Revalidate whenever the storefront mounts or
+// regains focus so edits made in another admin session become visible without
+// waiting for the general five-minute catalog freshness window.
+queryClient.setQueryDefaults(["data-plans"], {
+  staleTime: 0,
+  gcTime: CATALOG_GC_TIME,
+  refetchOnMount: "always",
+  refetchOnWindowFocus: true,
+});
+
 export const isCatalogQueryKey = (queryKey: readonly unknown[]): boolean =>
   typeof queryKey[0] === "string" &&
   (CATALOG_QUERY_KEYS as readonly string[]).includes(queryKey[0]);

@@ -364,12 +364,12 @@ export const customerService = {
       .then((r) => r.data.data),
 
   getDataPlans: (): Promise<DataPlan[]> =>
-    memoizedCatalogRequest("customer:data-plans", () =>
-      apiClient
-        .get<ApiEnvelope<DataPlan[]>>("/customer/catalog/data-plans")
-        .then((r) => r.data.data),
-      60_000,
-    ),
+    // Prices and availability are admin-controlled and must reflect plan
+    // edits promptly. The backend already serves this from a versioned cache,
+    // so a second browser-side request memo only makes changed plans stale.
+    apiClient
+      .get<ApiEnvelope<DataPlan[]>>("/customer/catalog/data-plans")
+      .then((r) => r.data.data),
 
   purchaseData: (payload: DataPurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
     apiClient
