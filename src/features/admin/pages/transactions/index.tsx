@@ -244,6 +244,7 @@ export default function TransactionsPage() {
   const [refundModal, setRefundModal] = useState<Transaction | null>(null);
   const [refundReason, setRefundReason] = useState("");
   const [savingRefund, setSavingRefund] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = (message: string, tone: Toast["tone"] = "success") => {
@@ -448,6 +449,19 @@ export default function TransactionsPage() {
     setRefundModal(tx);
     setRefundReason("");
     setOpenMenuId(null);
+  };
+
+  const recheckProvider = async (tx: Transaction) => {
+    setRechecking(true);
+    try {
+      const result = await transactionService.recheckProvider(tx.id);
+      applyUpdate(result.transaction);
+      showToast(`VTU.ng reports ${result.provider_status}.`);
+    } catch (err) {
+      showToast(extractErrorMessage(err), "error");
+    } finally {
+      setRechecking(false);
+    }
   };
 
   const submitRefund = async () => {
@@ -988,6 +1002,22 @@ export default function TransactionsPage() {
               ) : null}
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                {detailTransaction.provider === "vtu_ng" &&
+                detailTransaction.status === "pending" ? (
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    disabled={rechecking}
+                    onClick={() => recheckProvider(detailTransaction)}
+                  >
+                    {rechecking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}{" "}
+                    Recheck provider status
+                  </Button>
+                ) : null}
                 <Button
                   variant="secondary"
                   fullWidth

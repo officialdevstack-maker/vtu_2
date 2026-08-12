@@ -114,4 +114,11 @@ export const transactionService = {
         reason,
       })
       .then((r) => r.data.data),
+
+  recheckProvider: (id: number): Promise<{ provider_status: string; transaction: Transaction }> =>
+    apiClient
+      .post<ApiEnvelope<{ provider_status: string; transaction: Transaction }>>(
+        `/admin/transactions/${id}/recheck-provider`,
+      )
+      .then((r) => r.data.data),
 };

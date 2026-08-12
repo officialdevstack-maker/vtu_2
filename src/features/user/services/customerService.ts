@@ -376,6 +376,11 @@ export const customerService = {
       .post<ApiEnvelope<PurchaseResult>>("/vtu/data", payload)
       .then((r) => r.data.data),
 
+  getTransactionStatus: (id: number): Promise<{ status: PurchaseResult["status"] }> =>
+    apiClient
+      .get<ApiEnvelope<{ status: PurchaseResult["status"] }>>(`/transactions/${id}/status`)
+      .then((r) => r.data.data),
+
   getCableNetworks: (): Promise<CableNetwork[]> =>
     memoizedCatalogRequest("customer:cable-networks", () =>
       apiClient

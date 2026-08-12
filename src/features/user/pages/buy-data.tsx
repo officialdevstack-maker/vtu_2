@@ -263,6 +263,39 @@ export default function BuyDataPage() {
     setError(null);
   };
 
+  useEffect(() => {
+    if (!result || result.status !== "pending") return;
+
+    let stopped = false;
+    let timer: number | undefined;
+    const poll = async () => {
+      if (stopped) return;
+      if (document.visibilityState !== "visible") {
+        timer = window.setTimeout(poll, 10_000);
+        return;
+      }
+      try {
+        const current = await customerService.getTransactionStatus(result.id);
+        if (stopped) return;
+        setResult((previous) => previous ? { ...previous, status: current.status } : previous);
+        if (current.status !== "pending") {
+          await refreshUser();
+          return;
+        }
+      } catch {
+        // A transient status-read failure must not turn the purchase into a
+        // failure. The next controlled poll (or background worker) retries.
+      }
+      timer = window.setTimeout(poll, 5_000);
+    };
+
+    timer = window.setTimeout(poll, 3_000);
+    return () => {
+      stopped = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [result?.id, result?.status, refreshUser]);
+
   if (step === "success" && result) {
     const charged =
       result.discount_applied?.final_amount ?? Number(result.amount);
