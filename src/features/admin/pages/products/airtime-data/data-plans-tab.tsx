@@ -45,6 +45,11 @@ type BulkRolePrice = {
   value: string;
 };
 
+const roleLabel = (role: Role): string =>
+  (role.name || role.slug || "Role")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
 function BulkPricingModal({
   count,
   roles,
@@ -90,7 +95,13 @@ function BulkPricingModal({
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Update role pricing</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Only checked roles will change on {count} selected plans.</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Only checked roles will be updated. Unchecked roles will keep
+              their current pricing.
+            </p>
+            <p className="text-xs text-slate-400">
+              Applying to {count} selected plans.
+            </p>
           </div>
           <button type="button" onClick={onClose} disabled={saving} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
             <X className="h-4 w-4" />
@@ -100,32 +111,46 @@ function BulkPricingModal({
           {roles.map((role) => {
             const entry = values[role.name] ?? { enabled: false, mode: "percentage" as const, value: "" };
             return (
-              <div key={role.id} className="flex items-center gap-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={entry.enabled}
-                  onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, enabled: event.target.checked } }))}
-                  className="h-4 w-4 accent-slate-900"
-                />
-                <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700">{role.name}</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  disabled={!entry.enabled}
-                  value={entry.value}
-                  onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, value: event.target.value } }))}
-                  className={`${inputCls} w-24 py-1.5 disabled:bg-slate-50`}
-                />
-                <select
-                  disabled={!entry.enabled}
-                  value={entry.mode}
-                  onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, mode: event.target.value as "percentage" | "fiat" } }))}
-                  className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs disabled:bg-slate-50"
+              <div
+                key={role.id}
+                className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-2 py-3 sm:grid-cols-[minmax(9rem,1fr)_auto] sm:items-center"
+              >
+                <label
+                  htmlFor={`bulk-role-${role.id}`}
+                  className="block min-w-0 text-sm font-semibold text-slate-800"
                 >
-                  <option value="percentage">%</option>
-                  <option value="fiat">₦</option>
-                </select>
+                  {roleLabel(role)}
+                </label>
+                <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
+                  <input
+                    id={`bulk-role-${role.id}`}
+                    type="checkbox"
+                    checked={entry.enabled}
+                    aria-label={`Update ${roleLabel(role)} pricing`}
+                    onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, enabled: event.target.checked } }))}
+                    className="h-4 w-4 shrink-0 accent-slate-900"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    disabled={!entry.enabled}
+                    value={entry.value}
+                    aria-label={`${roleLabel(role)} markup value`}
+                    onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, value: event.target.value } }))}
+                    className={`${inputCls} min-w-0 flex-1 py-1.5 sm:w-24 sm:flex-none disabled:bg-slate-50`}
+                  />
+                  <select
+                    disabled={!entry.enabled}
+                    value={entry.mode}
+                    aria-label={`${roleLabel(role)} pricing mode`}
+                    onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, mode: event.target.value as "percentage" | "fiat" } }))}
+                    className="h-9 w-16 shrink-0 rounded-lg border border-slate-200 bg-white px-2 text-xs disabled:bg-slate-50"
+                  >
+                    <option value="percentage">%</option>
+                    <option value="fiat">₦</option>
+                  </select>
+                </div>
               </div>
             );
           })}
