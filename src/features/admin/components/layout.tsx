@@ -79,7 +79,15 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
     items: [
       { label: "Dashboard", path: "/admin", icon: LayoutGrid },
       { label: "AI Manager", path: "/admin/ai-manager/chat/new", icon: Bot },
-      { label: "How it works", path: "/admin/help", icon: HelpCircle },
+      {
+        label: "How it works",
+        path: "/admin/help",
+        icon: HelpCircle,
+        children: [
+          { label: "Getting started", path: "/admin/help" },
+          { label: "Error messages", path: "/admin/help/error-messages" },
+        ],
+      },
     ],
   },
   {

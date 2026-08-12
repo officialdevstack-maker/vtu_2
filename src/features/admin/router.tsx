@@ -24,6 +24,14 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "help/error-messages",
+        lazy: async () => {
+          const { default: Component } =
+            await import("./pages/help/error-messages");
+          return { Component };
+        },
+      },
+      {
         path: "ai-manager",
         children: [
           {
