@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 export type SimpleChartPoint = {
   label: string;
@@ -21,7 +21,7 @@ type SimpleChartProps = {
   ariaLabel: string;
 };
 
-const WIDTH = 720;
+const DEFAULT_WIDTH = 720;
 const PADDING = { top: 14, right: 12, bottom: 30, left: 60 };
 const GRID_LINES = 4;
 
@@ -30,6 +30,25 @@ const compactNumber = (value: number) =>
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
+
+type PlotPoint = { x: number; y: number };
+
+const smoothPath = (points: PlotPoint[]): string => {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  return points.slice(0, -1).reduce((path, point, index) => {
+    const previous = points[index - 1] ?? point;
+    const next = points[index + 1];
+    const following = points[index + 2] ?? next;
+    const controlOneX = point.x + (next.x - previous.x) / 6;
+    const controlOneY = point.y + (next.y - previous.y) / 6;
+    const controlTwoX = next.x - (following.x - point.x) / 6;
+    const controlTwoY = next.y - (following.y - point.y) / 6;
+
+    return `${path} C ${controlOneX} ${controlOneY}, ${controlTwoX} ${controlTwoY}, ${next.x} ${next.y}`;
+  }, `M ${points[0].x} ${points[0].y}`);
+};
 
 export default function SimpleChart({
   data,
@@ -40,9 +59,27 @@ export default function SimpleChart({
   ariaLabel,
 }: SimpleChartProps) {
   const rawId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(DEFAULT_WIDTH);
   const gradientId = `chart-gradient-${rawId.replace(/:/g, "")}`;
-  const plotWidth = WIDTH - PADDING.left - PADDING.right;
-  const plotHeight = height - PADDING.top - PADDING.bottom;
+  const chartHeight = height - (showLegend ? 24 : 0);
+  const plotWidth = width - PADDING.left - PADDING.right;
+  const plotHeight = chartHeight - PADDING.top - PADDING.bottom;
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === "undefined") return;
+
+    const updateWidth = () => {
+      const nextWidth = Math.round(container.getBoundingClientRect().width);
+      if (nextWidth > 0) setWidth(nextWidth);
+    };
+    updateWidth();
+
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const { maxValue, paths, labelIndexes } = useMemo(() => {
     const values = data.flatMap((point) =>
@@ -63,15 +100,15 @@ export default function SimpleChart({
         value: Number(point[item.key] ?? 0),
         label: String(point.label),
       }));
+      const line = smoothPath(points);
+      const curvedSegments = line.replace(/^M [^C]+/, "");
       return {
         ...item,
         points,
-        line: points.map(({ x, y }) => `${x},${y}`).join(" "),
+        line,
         area:
           points.length > 0
-            ? `M ${points[0].x} ${PADDING.top + plotHeight} L ${points
-                .map(({ x, y }) => `${x} ${y}`)
-                .join(" L ")} L ${points.at(-1)!.x} ${PADDING.top + plotHeight} Z`
+            ? `M ${points[0].x} ${PADDING.top + plotHeight} L ${points[0].x} ${points[0].y} ${curvedSegments} L ${points.at(-1)!.x} ${PADDING.top + plotHeight} Z`
             : "",
       };
     });
@@ -90,10 +127,10 @@ export default function SimpleChart({
   if (data.length === 0) return null;
 
   return (
-    <div className="h-full w-full">
+    <div ref={containerRef} className="flex h-full w-full min-w-0 flex-col">
       <svg
-        viewBox={`0 0 ${WIDTH} ${height}`}
-        className="h-full w-full overflow-visible"
+        viewBox={`0 0 ${width} ${chartHeight}`}
+        className="min-h-0 w-full flex-1 overflow-visible"
         role="img"
         aria-label={ariaLabel}
       >
@@ -111,7 +148,7 @@ export default function SimpleChart({
             <g key={index}>
               <line
                 x1={PADDING.left}
-                x2={WIDTH - PADDING.right}
+                x2={width - PADDING.right}
                 y1={y}
                 y2={y}
                 stroke="#e2e8f0"
@@ -140,7 +177,7 @@ export default function SimpleChart({
             <text
               key={`${data[index].label}-${index}`}
               x={x}
-              y={height - 7}
+              y={chartHeight - 7}
               textAnchor={
                 index === 0 ? "start" : index === data.length - 1 ? "end" : "middle"
               }
@@ -157,8 +194,8 @@ export default function SimpleChart({
             {path.fill && path.area && (
               <path d={path.area} fill={`url(#${gradientId})`} />
             )}
-            <polyline
-              points={path.line}
+            <path
+              d={path.line}
               fill="none"
               stroke={path.color}
               strokeWidth="2.25"

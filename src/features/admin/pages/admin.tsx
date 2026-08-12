@@ -505,7 +505,7 @@ export default function AdminPage() {
 
       {/* Revenue chart + service breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="min-w-0 p-4 lg:col-span-2">
+        <Card className="min-w-0 p-4 sm:p-5 lg:col-span-2 lg:min-h-[380px]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-slate-900">
@@ -515,7 +515,7 @@ export default function AdminPage() {
             </div>
           </div>
           {analyticsQuery.isPending ? (
-            <SkeletonLine className="h-[170px] w-full" />
+            <SkeletonLine className="h-[280px] w-full sm:h-[300px] lg:h-[305px]" />
           ) : revenueChartData.length === 0 ? (
             <EmptyState
               icon={TrendingUp}
@@ -523,7 +523,7 @@ export default function AdminPage() {
               description={`Successful transactions in the ${rangeLabel.toLowerCase()} will show up here.`}
             />
           ) : (
-            <div className="h-[210px] min-w-0 sm:h-[170px]">
+            <div className="h-[280px] min-w-0 w-full sm:h-[300px] lg:h-[305px]">
               <SimpleChart
                 data={revenueChartData.map((point) => ({
                   label: point.date,
@@ -538,7 +538,7 @@ export default function AdminPage() {
                   },
                 ]}
                 valueFormatter={fmtCompact}
-                height={190}
+                height={305}
                 ariaLabel={`Revenue overview for the ${rangeLabel.toLowerCase()}`}
               />
             </div>
@@ -622,7 +622,7 @@ export default function AdminPage() {
 
       {/* Transaction volume trend + top customers / funding vs spend */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="min-w-0 p-4 lg:col-span-2">
+        <Card className="min-w-0 p-4 sm:p-5 lg:col-span-2 lg:min-h-[430px]">
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-slate-900">
               Transaction volume
@@ -630,7 +630,7 @@ export default function AdminPage() {
             <p className="text-xs text-slate-400 mt-0.5">{rangeLabel}</p>
           </div>
           {analyticsQuery.isPending ? (
-            <SkeletonLine className="h-[200px] w-full" />
+            <SkeletonLine className="h-[320px] w-full sm:h-[340px] lg:h-[350px]" />
           ) : txVolumeData.length === 0 ? (
             <EmptyState
               icon={Activity}
@@ -638,7 +638,7 @@ export default function AdminPage() {
               description={`Transactions in the ${rangeLabel.toLowerCase()} will show up here.`}
             />
           ) : (
-            <div className="h-[250px] min-w-0 sm:h-[200px]">
+            <div className="h-[320px] min-w-0 w-full sm:h-[340px] lg:h-[350px]">
               <SimpleChart
                 data={txVolumeData.map((point) => ({
                   label: point.date,
@@ -664,7 +664,7 @@ export default function AdminPage() {
                   },
                 ]}
                 valueFormatter={(value) => Math.round(value).toLocaleString()}
-                height={210}
+                height={350}
                 showLegend
                 ariaLabel={`Transaction volume for the ${rangeLabel.toLowerCase()}`}
               />
