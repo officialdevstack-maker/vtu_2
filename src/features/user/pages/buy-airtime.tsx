@@ -27,6 +27,7 @@ import {
   type PurchaseResult,
 } from "../services/customerService";
 import { ServiceTabs } from "../components/service-tabs";
+import { RecentPhoneInput } from "../components/recent-phone-input";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -145,6 +146,19 @@ export default function BuyAirtimePage() {
 
   const isConfirmValid = pin.length === 4;
 
+  const changePhone = (digits: string) => {
+    setPhone(digits);
+    if (!ported && digits.length >= 4) {
+      const detected = detectNetwork(digits);
+      if (
+        detected &&
+        networks.some((n) => n.name.toLowerCase() === detected)
+      ) {
+        setNetwork(detected);
+      }
+    }
+  };
+
   const handleConfirm = async () => {
     if (!selectedNetwork) return;
     if (!isConfirmValid) {
@@ -164,6 +178,7 @@ export default function BuyAirtimePage() {
         code: code.trim() || undefined,
         tx_ref: generateTxRef("AT"),
       });
+      await customerService.saveRecentRecipient(phone).catch(() => undefined);
       setResult(purchase);
       setStep("success");
       await refreshUser();
@@ -291,25 +306,9 @@ export default function BuyAirtimePage() {
 
             <div>
               <FieldLabel>Phone number</FieldLabel>
-              <input
-                type="tel"
-                maxLength={11}
+              <RecentPhoneInput
                 value={phone}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "");
-                  setPhone(digits);
-                  if (!ported && digits.length >= 4) {
-                    const detected = detectNetwork(digits);
-                    if (
-                      detected &&
-                      networks.some((n) => n.name.toLowerCase() === detected)
-                    ) {
-                      setNetwork(detected);
-                    }
-                  }
-                }}
-                placeholder="08012345678"
-                className={`${inputCls} font-mono`}
+                onChange={changePhone}
               />
               {phone && phone.length !== 11 && (
                 <p className="text-xs text-red-500 mt-1">

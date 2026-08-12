@@ -45,6 +45,7 @@ import {
   type PurchaseResult,
 } from "../services/customerService";
 import { ServiceTabs } from "../components/service-tabs";
+import { RecentPhoneInput } from "../components/recent-phone-input";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -217,6 +218,20 @@ export default function BuyDataPage() {
     Boolean(selectedNetwork) && Boolean(selectedPlan) && phone.length === 11;
   const isConfirmValid = pin.length === 4;
 
+  const changePhone = (digits: string) => {
+    setPhone(digits);
+    if (digits.length >= 4) {
+      const detected = detectNetwork(digits);
+      if (
+        detected &&
+        networks.some((n) => n.name.toLowerCase() === detected)
+      ) {
+        setNetwork(detected);
+        setSelectedPlanId(null);
+      }
+    }
+  };
+
   const handleConfirm = async () => {
     if (!selectedNetwork || !selectedPlan) return;
     if (!isConfirmValid) {
@@ -238,6 +253,7 @@ export default function BuyDataPage() {
         tx_ref: generateTxRef("DT"),
       };
       const purchase = await customerService.purchaseData(params);
+      await customerService.saveRecentRecipient(phone).catch(() => undefined);
       setResult(purchase);
       setStep("success");
       await refreshUser();
@@ -394,26 +410,9 @@ export default function BuyDataPage() {
 
             <div>
               <FieldLabel>Phone number</FieldLabel>
-              <input
-                type="tel"
-                maxLength={11}
+              <RecentPhoneInput
                 value={phone}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, "");
-                  setPhone(digits);
-                  if (digits.length >= 4) {
-                    const detected = detectNetwork(digits);
-                    if (
-                      detected &&
-                      networks.some((n) => n.name.toLowerCase() === detected)
-                    ) {
-                      setNetwork(detected);
-                      setSelectedPlanId(null);
-                    }
-                  }
-                }}
-                placeholder="08012345678"
-                className={`${inputCls} font-mono`}
+                onChange={changePhone}
               />
               {phone && phone.length !== 11 && (
                 <p className="text-xs text-red-500 mt-1">

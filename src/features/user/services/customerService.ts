@@ -145,6 +145,12 @@ export type DataPurchasePayload = {
   code?: string;
 };
 
+export type RecentRecipient = {
+  id: number;
+  phone: string;
+  last_used_at: string;
+};
+
 export type CablePurchasePayload = {
   cable_network: string;
   iuc: string;
@@ -362,6 +368,22 @@ export const customerService = {
     apiClient
       .post<ApiEnvelope<PurchaseResult>>("/vtu/airtime", payload)
       .then((r) => r.data.data),
+
+  getRecentRecipients: (): Promise<RecentRecipient[]> =>
+    apiClient
+      .get<ApiEnvelope<RecentRecipient[]>>("/recent-recipients")
+      .then((r) => r.data.data),
+
+  saveRecentRecipient: (phone: string): Promise<RecentRecipient> =>
+    apiClient
+      .post<ApiEnvelope<RecentRecipient>>("/recent-recipients", { phone })
+      .then((r) => r.data.data),
+
+  removeRecentRecipient: (id: number): Promise<void> =>
+    apiClient.delete(`/recent-recipients/${id}`).then(() => undefined),
+
+  clearRecentRecipients: (): Promise<void> =>
+    apiClient.delete("/recent-recipients").then(() => undefined),
 
   getDataPlans: (): Promise<DataPlan[]> =>
     // Prices and availability are admin-controlled and must reflect plan
