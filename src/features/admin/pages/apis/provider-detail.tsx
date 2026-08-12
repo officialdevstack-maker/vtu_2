@@ -515,7 +515,7 @@ const ProviderDetailPage = () => {
                   Provider details
                 </h2>
                 <StatusBadge
-                  status={provider.connection ? "active" : "inactive"}
+                  status={provider.active ? "active" : "inactive"}
                 />
               </div>
               <div className="px-5 py-1">

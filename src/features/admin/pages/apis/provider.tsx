@@ -302,7 +302,7 @@ function RowMenu({
               className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               <Power className="w-3.5 h-3.5" />
-              {provider.connection ? "Disconnect" : "Connect"}
+              {provider.active ? "Disconnect" : "Connect"}
             </button>
 
             <button
@@ -382,7 +382,7 @@ const ProviderPage = () => {
       totalProviders === 0 ? null : Math.min(page * PAGE_SIZE, totalProviders),
   };
 
-  const connected = paginatedProviders.filter((p) => p.connection).length;
+  const connected = paginatedProviders.filter((p) => p.active).length;
   const pageBalance = paginatedProviders.reduce((sum, p) => {
     const n = Number(String(p.balance ?? "").replace(/,/g, ""));
     return sum + (Number.isFinite(n) ? n : 0);
@@ -420,7 +420,11 @@ const ProviderPage = () => {
     try {
       const updated = await providerService.toggleConnection(provider);
       setProviders((prev) =>
-        prev.map((p) => (p.id === updated.id ? updated : p)),
+        prev.map((p) =>
+          String(p.id) === String(updated.id)
+            ? { ...p, ...updated, active: updated.active }
+            : p,
+        ),
       );
     } finally {
       setToggling(null);
@@ -592,7 +596,7 @@ const ProviderPage = () => {
 
                         <td className="px-4 py-3">
                           <StatusBadge
-                            status={p.connection ? "active" : "inactive"}
+                            status={p.active ? "active" : "inactive"}
                           />
                         </td>
 
@@ -633,7 +637,7 @@ const ProviderPage = () => {
 
                       <div className="flex items-center gap-3 mt-2 flex-wrap">
                         <StatusBadge
-                          status={p.connection ? "active" : "inactive"}
+                          status={p.active ? "active" : "inactive"}
                         />
                         <span className="text-xs text-slate-500 tabular-nums">
                           {formatBalance(p.balance)}

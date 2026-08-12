@@ -19,6 +19,7 @@ export type Provider = {
   base_url?: string | null;
   balance?: string | number | null;
   manual_balance?: string | number | null;
+  active: boolean;
   connection?: boolean | null;
   username?: string | null;
   password?: string | null;
@@ -178,7 +179,7 @@ export const providerService = {
   toggleConnection: (p: Provider): Promise<Provider> =>
     apiClient
       .put<ApiEnvelope<Provider>>(`${BASE}/${p.id}`, {
-        connection: !p.connection,
+        active: !p.active,
       })
       .then((r) => r.data.data),
 
