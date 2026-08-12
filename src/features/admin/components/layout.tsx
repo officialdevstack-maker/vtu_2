@@ -176,6 +176,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
         path: "/admin/notifications/broadcast",
         icon: BellRing,
         children: [
+          { label: "Inbox", path: "/admin/notifications/inbox" },
           { label: "Broadcast", path: "/admin/notifications/broadcast" },
           { label: "Welcome Message", path: "/admin/notifications/welcome" },
           { label: "Template", path: "/admin/notifications/template" },

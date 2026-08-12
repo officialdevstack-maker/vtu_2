@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Bell, ExternalLink, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   PageHeader,
   Card,
@@ -23,7 +24,10 @@ const PAGE_SIZE = 10;
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<AppNotification | null>(null);
 
   const notifsQuery = useQuery({
     queryKey: ["notifications", page],
@@ -118,6 +122,38 @@ export default function NotificationsPage() {
     markReadMutation.mutate(n.id);
   };
 
+  const handleView = (notification: AppNotification) => {
+    setSelected(notification);
+    handleMarkRead(notification);
+  };
+
+  useEffect(() => {
+    if (!selected) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selected]);
+
+  const relatedPath = (notification: AppNotification): string | null => {
+    const isAdmin = location.pathname.startsWith("/admin");
+    const type = notification.data.type.toLowerCase();
+    if (type.includes("transaction") || type.includes("subscription")) {
+      return isAdmin ? "/admin/transactions" : "/transactions";
+    }
+    if (type.includes("withdrawal")) {
+      return isAdmin ? "/admin/wallet-withdrawals" : "/wallet";
+    }
+    if (type.includes("airtime_to_cash")) {
+      return isAdmin ? "/admin/airtime-to-cash" : "/airtime-to-cash";
+    }
+    if (type.includes("wallet") || type.includes("funding")) {
+      return isAdmin ? "/admin/transactions" : "/wallet";
+    }
+    return null;
+  };
+
   const handleMarkAllRead = () => {
     if (markAllReadMutation.isPending) return;
     markAllReadMutation.mutate();
@@ -164,11 +200,11 @@ export default function NotificationsPage() {
                   <button
                     type="button"
                     key={n.id}
-                    onClick={() => handleMarkRead(n)}
-                    disabled={!unread || markReadMutation.isPending}
-                    className={`flex w-full gap-3.5 p-4 text-left hover:bg-gray-50 transition-colors cursor-pointer disabled:cursor-default ${
+                    onClick={() => handleView(n)}
+                    className={`flex w-full gap-3.5 p-4 text-left hover:bg-gray-50 transition-colors cursor-pointer ${
                       unread ? "brand-unread-row" : ""
                     }`}
+                    aria-label={`View notification: ${n.data.title}`}
                   >
                     <div
                       className={`w-8 h-8 rounded-full ${toneStyles[tone]} flex items-center justify-center shrink-0 mt-0.5`}
@@ -208,6 +244,74 @@ export default function NotificationsPage() {
           </>
         )}
       </Card>
+
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[1px]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelected(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notification-detail-title"
+            className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+          >
+            <div className="flex items-start gap-3 border-b border-slate-100 px-5 py-4">
+              {(() => {
+                const { icon: Icon, tone } = notificationIcon(selected.data.type);
+                return (
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${toneStyles[tone]}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                );
+              })()}
+              <div className="min-w-0 flex-1">
+                <h2 id="notification-detail-title" className="text-base font-semibold text-slate-900">
+                  {selected.data.title}
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-400">{dateLabel(selected.created_at)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Close notification"
+                autoFocus
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="px-5 py-5">
+              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                {selected.data.body}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+              {relatedPath(selected) && (
+                <button
+                  type="button"
+                  onClick={() => navigate(relatedPath(selected)!)}
+                  className="brand-primary-button inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium"
+                >
+                  View related activity <ExternalLink className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
