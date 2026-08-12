@@ -122,6 +122,25 @@ export type ProviderPlanImports = {
   plans: ImportedProviderPlan[];
 };
 
+export type ProviderPlanSyncSummary = {
+  fetched?: number;
+  created: number;
+  matched?: number;
+  updated: number;
+  skipped: number;
+  conflicts?: number;
+  unavailable?: number;
+  pending_pricing?: number;
+};
+
+export type ProviderPlanSyncStatus = {
+  active: boolean;
+  schema_ready: boolean;
+  last_synced_at: string | null;
+  synced_plans: number;
+  available_plans: number;
+};
+
 const BASE = "/table/vendors";
 
 export const providerService = {
@@ -193,23 +212,20 @@ export const providerService = {
   // the backend returns a 422 for unsupported integrations.
   syncPlans: (
     id: string | number,
-  ): Promise<{
-    created: number;
-    updated: number;
-    skipped: number;
-    pending_pricing?: number;
-    message?: string;
-  }> =>
+  ): Promise<ProviderPlanSyncSummary> =>
     apiClient
-      .post<
-        ApiEnvelope<{
-          created: number;
-          updated: number;
-          skipped: number;
-          pending_pricing?: number;
-          message?: string;
-        }>
-      >(`/admin/vendor/${id}/sync-plans`)
+      .post<ApiEnvelope<ProviderPlanSyncSummary>>(
+        `/admin/vendor/${id}/sync-plans`,
+      )
+      .then((r) => r.data.data),
+
+  getPlanSyncStatus: (
+    id: string | number,
+  ): Promise<ProviderPlanSyncStatus> =>
+    apiClient
+      .get<ApiEnvelope<ProviderPlanSyncStatus>>(
+        `/admin/vendor/${id}/plan-sync-status`,
+      )
       .then((r) => r.data.data),
 
   getPlanImports: (id: string | number): Promise<ProviderPlanImports> =>

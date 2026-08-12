@@ -33,6 +33,7 @@ import {
   type AutoFundPayload,
   type FundingRecord,
   type ProviderBank,
+  type ProviderPlanSyncStatus,
 } from "./providerService";
 
 // sub_category "simhost" is a grouping bucket (the actual vendor — SME Plug,
@@ -42,10 +43,17 @@ import {
 const isEngineType = (subCategory: string | null | undefined) =>
   (subCategory ?? "") !== "simhost";
 
-// ADEX and the legacy provider aliases that map to the Adex class can sync
-// remote data plans. Other vendors will still surface the backend's 422 if
-// they do not implement syncPlans().
+// Provider integrations that expose the existing backend syncPlans() action.
 const supportsSyncPlans = (subCategory: string | null | undefined) => {
+  const normalized = (subCategory ?? "").toLowerCase();
+  return ["adex", "spurs", "msorg", "simhost", "vtu_ng"].includes(
+    normalized,
+  );
+};
+
+const supportsManualPlanPricing = (
+  subCategory: string | null | undefined,
+) => {
   const normalized = (subCategory ?? "").toLowerCase();
   return ["adex", "spurs", "msorg", "simhost"].includes(normalized);
 };
@@ -191,6 +199,9 @@ const ProviderDetailPage = () => {
     ok: boolean;
     text: string;
   } | null>(null);
+  const [syncStatus, setSyncStatus] = useState<ProviderPlanSyncStatus | null>(
+    null,
+  );
 
   const back = () => navigate("/admin/apis/provider");
 
@@ -213,6 +224,14 @@ const ProviderDetailPage = () => {
       setAutoFundForm(toAutoFundForm(provider));
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !supportsSyncPlans(provider?.sub_category)) return;
+    providerService
+      .getPlanSyncStatus(id)
+      .then(setSyncStatus)
+      .catch(() => setSyncStatus(null));
+  }, [id, provider?.sub_category]);
 
   useEffect(() => {
     providerService
@@ -334,8 +353,9 @@ const ProviderDetailPage = () => {
       const summary = await providerService.syncPlans(id);
       setSyncMessage({
         ok: true,
-        text: `${summary.message ?? "Plans synced."} ${summary.created} new, ${summary.updated} updated, ${summary.skipped} skipped. ${summary.pending_pricing ?? 0} awaiting provider cost.`,
+        text: `Sync completed. Fetched: ${summary.fetched ?? 0}. Created: ${summary.created}. Matched: ${summary.matched ?? 0}. Updated: ${summary.updated}. Skipped: ${summary.skipped}. Conflicts: ${summary.conflicts ?? 0}. Unavailable: ${summary.unavailable ?? 0}.`,
       });
+      setSyncStatus(await providerService.getPlanSyncStatus(id));
     } catch (err) {
       const text = axios.isAxiosError(err)
         ? ((err.response?.data as { message?: string } | undefined)?.message ??
@@ -422,7 +442,7 @@ const ProviderDetailPage = () => {
               <Button variant="secondary" size="sm" onClick={back}>
                 <ArrowLeft className="w-3.5 h-3.5" /> Back
               </Button>
-              {supportsSyncPlans(provider.sub_category) && (
+              {supportsManualPlanPricing(provider.sub_category) && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -603,6 +623,34 @@ const ProviderDetailPage = () => {
                 </div>
               )}
             </Card>
+
+            {supportsSyncPlans(provider.sub_category) && syncStatus && (
+              <Card>
+                <div className="px-5 py-3.5 border-b border-gray-100">
+                  <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Plan synchronization
+                  </h2>
+                </div>
+                <div className="px-5 py-1">
+                  {row("Provider", provider.name)}
+                  {row("Status", syncStatus.active ? "Active" : "Inactive")}
+                  {row("Synced plans", syncStatus.synced_plans)}
+                  {row("Available plans", syncStatus.available_plans)}
+                  {row(
+                    "Last synced",
+                    syncStatus.last_synced_at
+                      ? new Date(syncStatus.last_synced_at).toLocaleString()
+                      : "Never",
+                  )}
+                  {row(
+                    "Database",
+                    syncStatus.schema_ready
+                      ? "Ready"
+                      : "Migration required",
+                  )}
+                </div>
+              </Card>
+            )}
 
             {/* Funding history */}
             <Card>
