@@ -4,7 +4,10 @@ const normalizePlanType = (value: string | null | undefined): string =>
     .toLowerCase()
     .replace(/[_\s]+/g, "");
 
-/** Types that remain sellable without a matching per-network type toggle. */
-export const isUnrestrictedPlanType = (
-  value: string | null | undefined,
-): boolean => ["standard", "vtu.ng"].includes(normalizePlanType(value));
+/**
+ * Export normalizePlanType for internal use in type filtering logic.
+ * Do NOT create unrestricted types that bypass network type checks.
+ * All customer-facing plan types must be managed through the admin panel.
+ */
+export { normalizePlanType };
+

@@ -187,7 +187,6 @@ function RolePriceInput({
 // ─── Form helpers ─────────────────────────────────────────────────────────────
 
 const SIZE_UNITS = ["MB", "GB"];
-const STANDARD_PLAN_TYPE = "STANDARD";
 
 const blankForm = (): FormState => ({
   network: "",
@@ -482,9 +481,9 @@ export default function DataPlanFormPage() {
       .then((all) => {
         const names = Array.from(
           new Set(
-            [STANDARD_PLAN_TYPE, ...all
+            all
               .filter((t) => t.active && t.service_type === "data")
-              .map((t) => t.name)],
+              .map((t) => t.name),
           ),
         );
         setTypes(names);

@@ -47,21 +47,11 @@ import {
 import { ServiceTabs } from "../components/service-tabs";
 import { RecentPhoneInput } from "../components/recent-phone-input";
 import { dataPlanDetails } from "../utils/dataPlanDisplay";
-import { isUnrestrictedPlanType } from "../utils/buyDataPlanTypes";
-
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
   airtel: "bg-red-500",
   glo: "bg-green-500",
   "9mobile": "bg-cyan-500",
-};
-
-const PLAN_TYPE_LABELS: Record<string, string> = {
-  sme: "SME",
-  gifting: "Gifting",
-  cooperate_gifting: "Cooperate Gifting",
-  STANDARD: "Standard",
-  "VTU.NG": "VTU.ng",
 };
 
 export default function BuyDataPage() {
@@ -150,8 +140,9 @@ export default function BuyDataPage() {
         return false;
       }
 
+      // All plan types must be managed through the admin panel.
+      // Only show plans whose types are configured as active for this network.
       return (
-        isUnrestrictedPlanType(plan.plan_type) ||
         !allowedPlanTypes ||
         allowedPlanTypes.size === 0 ||
         allowedPlanTypes.has(normalized)
@@ -161,10 +152,7 @@ export default function BuyDataPage() {
 
   const planTypes = useMemo(
     () =>
-      Array.from(new Set(availablePlans.map((p) => p.plan_type))).sort(
-        (a, b) =>
-          Number(isUnrestrictedPlanType(b)) - Number(isUnrestrictedPlanType(a)),
-      ),
+      Array.from(new Set(availablePlans.map((p) => p.plan_type))).sort(),
     [availablePlans],
   );
 
@@ -397,7 +385,7 @@ export default function BuyDataPage() {
                 <OptionPicker
                   options={planTypes.map((t) => ({
                     id: t,
-                    label: PLAN_TYPE_LABELS[t] ?? t,
+                    label: t,
                   }))}
                   value={planType}
                   onChange={(value) => {
