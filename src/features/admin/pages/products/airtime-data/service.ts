@@ -427,4 +427,15 @@ export const dataPlanService = {
     }
     return updated;
   },
+
+  bulkUpdatePricing: (
+    planIds: (string | number)[],
+    roles: Record<string, { mode: "percentage" | "fiat"; value: number }>,
+  ): Promise<{ updated: number; roles: string[] }> =>
+    apiClient
+      .post<ApiEnvelope<{ updated: number; roles: string[] }>>(
+        "/admin/data-plans/bulk-pricing",
+        { plan_ids: planIds, roles },
+      )
+      .then((response) => response.data.data),
 };

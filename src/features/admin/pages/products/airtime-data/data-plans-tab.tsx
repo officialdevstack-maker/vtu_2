@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Database,
@@ -14,6 +15,7 @@ import {
   CheckCircle2,
   X,
   XCircle,
+  BadgePercent,
 } from "lucide-react";
 import {
   Card,
@@ -27,10 +29,124 @@ import {
 import { DEFAULT_PAGE_SIZE, usePagination } from "@shared/pagination";
 import { useTableQueryState } from "@shared/table-query-state";
 import { Toolbar, SelectFilter } from "./shared";
-import { dataPlanService, type DataPlan } from "./service";
+import {
+  dataPlanService,
+  roleService,
+  type DataPlan,
+  type Role,
+} from "./service";
+import { clearCatalogRequestCache } from "@/shared/api/catalogCache";
 
 const MENU_WIDTH = 144; // w-36
 const EMPTY_DATA_PLANS: DataPlan[] = [];
+type BulkRolePrice = {
+  enabled: boolean;
+  mode: "percentage" | "fiat";
+  value: string;
+};
+
+function BulkPricingModal({
+  count,
+  roles,
+  saving,
+  onClose,
+  onApply,
+}: {
+  count: number;
+  roles: Role[];
+  saving: boolean;
+  onClose: () => void;
+  onApply: (
+    updates: Record<string, { mode: "percentage" | "fiat"; value: number }>,
+  ) => void;
+}) {
+  const [values, setValues] = useState<Record<string, BulkRolePrice>>(() =>
+    Object.fromEntries(
+      roles.map((role) => [
+        role.name,
+        { enabled: false, mode: "percentage", value: "" },
+      ]),
+    ),
+  );
+  const updates = Object.fromEntries(
+    Object.entries(values)
+      .filter(([, entry]) => entry.enabled && entry.value !== "")
+      .map(([role, entry]) => [
+        role,
+        { mode: entry.mode, value: Number(entry.value) },
+      ]),
+  );
+  const invalid = Object.values(updates).some(
+    (entry) => !Number.isFinite(entry.value) || entry.value < 0,
+  );
+  const summary = Object.entries(updates).map(
+    ([role, entry]) =>
+      `${role} → +${entry.mode === "percentage" ? `${entry.value}%` : `₦${entry.value.toLocaleString()}`}`,
+  );
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Update role pricing</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Only checked roles will change on {count} selected plans.</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={saving} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="max-h-[55vh] divide-y divide-slate-100 overflow-y-auto px-5">
+          {roles.map((role) => {
+            const entry = values[role.name] ?? { enabled: false, mode: "percentage" as const, value: "" };
+            return (
+              <div key={role.id} className="flex items-center gap-3 py-3">
+                <input
+                  type="checkbox"
+                  checked={entry.enabled}
+                  onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, enabled: event.target.checked } }))}
+                  className="h-4 w-4 accent-slate-900"
+                />
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700">{role.name}</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  disabled={!entry.enabled}
+                  value={entry.value}
+                  onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, value: event.target.value } }))}
+                  className={`${inputCls} w-24 py-1.5 disabled:bg-slate-50`}
+                />
+                <select
+                  disabled={!entry.enabled}
+                  value={entry.mode}
+                  onChange={(event) => setValues((current) => ({ ...current, [role.name]: { ...entry, mode: event.target.value as "percentage" | "fiat" } }))}
+                  className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs disabled:bg-slate-50"
+                >
+                  <option value="percentage">%</option>
+                  <option value="fiat">₦</option>
+                </select>
+              </div>
+            );
+          })}
+        </div>
+        {summary.length > 0 && (
+          <div className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-xs text-slate-600">
+            <p className="mb-1 font-medium">Apply role pricing to {count} selected data plans?</p>
+            <p>{summary.join(" · ")}</p>
+          </div>
+        )}
+        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4">
+          <Button variant="secondary" size="sm" disabled={saving} onClick={onClose}>Cancel</Button>
+          <Button size="sm" loading={saving} disabled={saving || invalid || summary.length === 0} onClick={() => onApply(updates)}>
+            Apply to {count} plans
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 // Pull the useful bits out of an axios-style error so a failed bulk action
 // tells the admin *why* (HTTP status + server message) instead of a generic
@@ -148,6 +264,8 @@ export function DataPlansTab() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkPricingOpen, setBulkPricingOpen] = useState(false);
+  const [roles, setRoles] = useState<Role[]>([]);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   const toId = (value: string | number) => String(value);
@@ -155,6 +273,10 @@ export function DataPlansTab() {
   const load = () => {
     void plansQuery.refetch();
   };
+
+  useEffect(() => {
+    roleService.getAll().then(setRoles).catch(() => setRoles([]));
+  }, []);
 
   const toggleMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     if (openMenuId === id) {
@@ -329,6 +451,30 @@ export function DataPlansTab() {
     }
   };
 
+  const handleBulkPricing = async (
+    updates: Record<string, { mode: "percentage" | "fiat"; value: number }>,
+  ) => {
+    setBulkBusy(true);
+    try {
+      const result = await dataPlanService.bulkUpdatePricing(
+        Array.from(selectedIds),
+        updates,
+      );
+      clearCatalogRequestCache();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin", "data-plans", "list"] }),
+        queryClient.invalidateQueries({ queryKey: ["data-plans"] }),
+      ]);
+      setBulkPricingOpen(false);
+      setSelectedIds(new Set());
+      window.alert(`Updated role pricing for ${result.updated} plans.`);
+    } catch (err) {
+      window.alert(`Could not update role pricing — ${describeError(err)}.`);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   return (
     <Card className="min-w-0 overflow-hidden">
       <Toolbar>
@@ -405,6 +551,14 @@ export function DataPlansTab() {
           <div className="flex-1" />
           <button
             type="button"
+            disabled={bulkBusy || roles.length === 0}
+            onClick={() => setBulkPricingOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-50 disabled:opacity-50"
+          >
+            <BadgePercent className="h-3.5 w-3.5" /> Update role pricing
+          </button>
+          <button
+            type="button"
             disabled={bulkBusy}
             onClick={() => void handleBulkSetActive(true)}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-md px-2.5 py-1.5 transition-colors disabled:opacity-50"
@@ -428,6 +582,16 @@ export function DataPlansTab() {
             <Trash2 className="w-3.5 h-3.5" /> Delete
           </button>
         </div>
+      )}
+
+      {bulkPricingOpen && (
+        <BulkPricingModal
+          count={selectedCount}
+          roles={roles}
+          saving={bulkBusy}
+          onClose={() => setBulkPricingOpen(false)}
+          onApply={(updates) => void handleBulkPricing(updates)}
+        />
       )}
 
       {loading ? (
