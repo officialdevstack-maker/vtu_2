@@ -47,6 +47,7 @@ import {
 import { ServiceTabs } from "../components/service-tabs";
 import { RecentPhoneInput } from "../components/recent-phone-input";
 import { dataPlanDetails } from "../utils/dataPlanDisplay";
+import { isUnrestrictedPlanType } from "../utils/buyDataPlanTypes";
 
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
@@ -59,11 +60,9 @@ const PLAN_TYPE_LABELS: Record<string, string> = {
   sme: "SME",
   gifting: "Gifting",
   cooperate_gifting: "Cooperate Gifting",
+  STANDARD: "Standard",
   "VTU.NG": "VTU.ng",
 };
-
-const isSyncedProviderPlan = (value: string | null | undefined): boolean =>
-  normalizePlanType(value) === "vtu.ng";
 
 export default function BuyDataPage() {
   const navigate = useNavigate();
@@ -152,7 +151,7 @@ export default function BuyDataPage() {
       }
 
       return (
-        isSyncedProviderPlan(plan.plan_type) ||
+        isUnrestrictedPlanType(plan.plan_type) ||
         !allowedPlanTypes ||
         allowedPlanTypes.size === 0 ||
         allowedPlanTypes.has(normalized)
@@ -164,7 +163,7 @@ export default function BuyDataPage() {
     () =>
       Array.from(new Set(availablePlans.map((p) => p.plan_type))).sort(
         (a, b) =>
-          Number(isSyncedProviderPlan(b)) - Number(isSyncedProviderPlan(a)),
+          Number(isUnrestrictedPlanType(b)) - Number(isUnrestrictedPlanType(a)),
       ),
     [availablePlans],
   );
