@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { isUnrestrictedPlanType } from "../utils/buyDataPlanTypes";
+import { normalizePlanType } from "../utils/buyDataPlanTypes";
 
 describe("buy-data plan type filtering", () => {
-  it("keeps STANDARD plans compatible without a matching network type", () => {
-    expect(isUnrestrictedPlanType("STANDARD")).toBe(true);
-    expect(isUnrestrictedPlanType("standard")).toBe(true);
+  it("normalizes managed plan types consistently", () => {
+    expect(normalizePlanType("STANDARD")).toBe("standard");
+    expect(normalizePlanType("Data Share")).toBe("datashare");
+    expect(normalizePlanType("cooperate_gifting")).toBe("cooperategifting");
   });
 
-  it("retains the existing VTU.ng synced-plan exception", () => {
-    expect(isUnrestrictedPlanType("VTU.NG")).toBe(true);
-    expect(isUnrestrictedPlanType("SME")).toBe(false);
+  it("does not reinterpret provider-derived names as customer types", () => {
+    expect(normalizePlanType("VTU.NG")).toBe("vtu.ng");
+    expect(normalizePlanType("CheapDataHub")).toBe("cheapdatahub");
   });
 });

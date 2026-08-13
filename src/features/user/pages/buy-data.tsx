@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 
-const normalizePlanType = (value: string | null | undefined): string =>
-  (value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[_\s]+/g, "");
-
 const parsePlanSize = (plan: DataPlan): number => {
   const raw = `${plan.plan_name ?? ""}${plan.plan_size ?? ""}`;
   const match = raw.match(/([0-9.]+)\s*(mb|gb)/i);
@@ -47,6 +41,7 @@ import {
 import { ServiceTabs } from "../components/service-tabs";
 import { RecentPhoneInput } from "../components/recent-phone-input";
 import { dataPlanDetails } from "../utils/dataPlanDisplay";
+import { normalizePlanType } from "../utils/buyDataPlanTypes";
 const NETWORK_COLORS: Record<string, string> = {
   mtn: "bg-yellow-400",
   airtel: "bg-red-500",
