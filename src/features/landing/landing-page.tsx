@@ -35,9 +35,11 @@ const Footer = lazyNamed(() => import("./components/footer"), "Footer");
 function DeferredSection({
   children,
   minHeight = "min-h-[240px]",
+  id,
 }: {
   children: ReactNode;
   minHeight?: string;
+  id?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
@@ -60,7 +62,11 @@ function DeferredSection({
   }, [visible]);
 
   return (
-    <div ref={markerRef} className={visible ? undefined : minHeight}>
+    <div
+      ref={markerRef}
+      id={id}
+      className={`${visible ? "" : minHeight} ${id ? "scroll-mt-24" : ""}`}
+    >
       {visible ? (
         <Suspense fallback={<div className={minHeight} aria-hidden />}>
           {children}
@@ -122,7 +128,7 @@ export default function LandingPage() {
         <DeferredSection minHeight="min-h-[260px]">
           <Stats />
         </DeferredSection>
-        <DeferredSection minHeight="min-h-[420px]">
+        <DeferredSection id="pricing" minHeight="min-h-[420px]">
           <Pricing />
         </DeferredSection>
         <DeferredSection minHeight="min-h-[360px]">
