@@ -6,10 +6,10 @@ import { SectionHeading, GlowOrb, Button } from "./ui";
 import { Reveal } from "./motion";
 
 const NETWORKS = [
-  { id: "mtn", label: "MTN", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/New-mtn-logo.jpg/240px-New-mtn-logo.jpg", selected: "border-yellow-400 bg-yellow-50/70" },
-  { id: "airtel", label: "Airtel", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Airtel_logo.svg/240px-Airtel_logo.svg.png", selected: "border-red-400 bg-red-50/70" },
-  { id: "glo", label: "Glo", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f3/Glo_logo.svg/240px-Glo_logo.svg.png", selected: "border-emerald-400 bg-emerald-50/70" },
-  { id: "9mobile", label: "9mobile", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/9mobile_logo.png/240px-9mobile_logo.png", selected: "border-teal-500 bg-teal-50/70" },
+  { id: "mtn", label: "MTN", logo: "/networks/mtn.jpg", selected: "border-yellow-400 bg-yellow-50/70" },
+  { id: "airtel", label: "Airtel", logo: "/networks/airtel.svg", selected: "border-red-400 bg-red-50/70" },
+  { id: "glo", label: "Glo", logo: "/networks/glo.png", selected: "border-emerald-400 bg-emerald-50/70" },
+  { id: "9mobile", label: "9mobile", logo: "/networks/9mobile.png", selected: "border-teal-500 bg-teal-50/70" },
 ] as const;
 
 const formatNaira = (value: number) =>
