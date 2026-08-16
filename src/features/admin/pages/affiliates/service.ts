@@ -81,6 +81,7 @@ export type ChildTransaction = {
   raw_payload: Record<string, unknown> | null;
   created_at?: string | null;
   updated_at?: string | null;
+  child_customer?: ChildCustomer | null;
 };
 
 export type ActivityPeriod = "24h" | "7d" | "30d" | "all";
@@ -374,7 +375,12 @@ export const childTransactionService = {
   ): Promise<{ data: ChildTransaction[]; meta: PaginatedMeta }> =>
     apiClient
       .get<PaginatedApiEnvelope<ChildTransaction[]>>(TRANSACTIONS, {
-        params: { child_instance_id: instanceId, per_page: DEFAULT_PAGE_SIZE, ...params },
+        params: {
+          child_instance_id: instanceId,
+          with: "childCustomer",
+          per_page: DEFAULT_PAGE_SIZE,
+          ...params,
+        },
       })
       .then((r) => ({ data: r.data.data, meta: r.data.meta })),
 };

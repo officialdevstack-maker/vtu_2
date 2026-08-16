@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Search, Wallet2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Card,
   EmptyState,
@@ -13,11 +14,12 @@ import { DEFAULT_PAGE_SIZE } from "@shared/pagination";
 import { useLocalStorageState } from "@/shared/utils";
 import {
   childTransactionService,
+  type ChildCustomer,
   type ChildTransaction,
   type PaginatedMeta,
 } from "./service";
 import { useAffiliate } from "./affiliate-layout";
-import { fmt } from "./modals";
+import { fmt, MigrateCustomerModal } from "./modals";
 
 type TransactionSortKey =
   "external_id" | "transaction_type" | "amount" | "status" | "created_at";
@@ -54,6 +56,23 @@ export default function AffiliateTransactionsPage() {
     `affiliate:${id}:transactions:page`,
     1,
   );
+  const [migrateTarget, setMigrateTarget] = useState<ChildCustomer | null>(null);
+
+  const refresh = () => {
+    childTransactionService
+      .getPaginatedByInstance(id, {
+        query: query.trim() || undefined,
+        sort: `${sort.key},${sort.direction}`,
+        page,
+        per_page: DEFAULT_PAGE_SIZE,
+        transaction_type: typeFilter === "all" ? undefined : typeFilter,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      })
+      .then(({ data, meta: nextMeta }) => {
+        setTransactions(data);
+        setMeta(nextMeta);
+      });
+  };
 
   const toggleSort = (key: TransactionSortKey) => {
     setSort((prev) =>
@@ -191,7 +210,7 @@ export default function AffiliateTransactionsPage() {
       ) : (
         <>
           <div className="overflow-x-auto overscroll-x-contain">
-            <table className="min-w-[720px] w-full table-fixed text-xs">
+            <table className="min-w-[900px] w-full table-fixed text-xs">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="w-36 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
@@ -208,6 +227,9 @@ export default function AffiliateTransactionsPage() {
                           <ChevronDown className="w-3.5 h-3.5" />
                         ))}
                     </button>
+                  </th>
+                  <th className="w-52 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
+                    Customer
                   </th>
                   <th className="w-40 px-4 py-2.5 text-left font-medium text-slate-400 whitespace-nowrap">
                     <button
@@ -277,6 +299,34 @@ export default function AffiliateTransactionsPage() {
                     <td className="truncate px-4 py-3 font-mono text-slate-500">
                       {t.external_id}
                     </td>
+                    <td className="px-4 py-3">
+                      {t.child_customer ? (
+                        <div className="min-w-0">
+                          {t.child_customer.migrated_to_user_id ? (
+                            <Link
+                              to={`/admin/customers/users/${t.child_customer.migrated_to_user_id}`}
+                              className="block truncate font-medium text-emerald-600 hover:underline"
+                            >
+                              {t.child_customer.username ?? t.child_customer.email ?? `Customer ${t.child_customer.external_id}`}
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setMigrateTarget(t.child_customer ?? null)}
+                              className="block max-w-full truncate text-left font-medium text-[#111827] hover:underline"
+                              title="Migrate this customer to Vendify"
+                            >
+                              {t.child_customer.username ?? t.child_customer.email ?? `Customer ${t.child_customer.external_id}`}
+                            </button>
+                          )}
+                          <span className="block truncate text-[11px] text-slate-400">
+                            {t.child_customer.migrated_to_user_id ? "Migrated" : "Click to migrate"}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">Unlinked customer</span>
+                      )}
+                    </td>
                     <td className="truncate px-4 py-3 text-slate-700">
                       {t.transaction_type ?? "—"}
                     </td>
@@ -305,6 +355,17 @@ export default function AffiliateTransactionsPage() {
             label="transactions"
           />
         </>
+      )}
+      {migrateTarget && (
+        <MigrateCustomerModal
+          instanceId={id}
+          customer={migrateTarget}
+          onClose={() => setMigrateTarget(null)}
+          onMigrated={() => {
+            setMigrateTarget(null);
+            refresh();
+          }}
+        />
       )}
     </Card>
   );
