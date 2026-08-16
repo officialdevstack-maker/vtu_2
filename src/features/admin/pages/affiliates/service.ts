@@ -77,9 +77,30 @@ export type ChildTransaction = {
   transaction_type: string | null;
   amount: string | number;
   status: string | null;
+  transacted_at?: string | null;
   raw_payload: Record<string, unknown> | null;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+export type ActivityPeriod = "24h" | "7d" | "30d" | "all";
+
+export type RecentlyActiveCustomer = Pick<
+  ChildCustomer,
+  "id" | "external_id" | "username" | "email" | "phone" | "migrated_to_user_id"
+> & {
+  latest_transaction_id: string | number;
+  latest_transaction_at: string;
+  latest_transaction_type: string | null;
+  latest_transaction_amount: string | number;
+  latest_transaction_status: string;
+};
+
+export type RecentActivityResponse = {
+  customers: RecentlyActiveCustomer[];
+  period: ActivityPeriod;
+  limit: number;
+  qualifying_statuses: string[];
 };
 
 // "delivered" = acked by a legacy child that doesn't report outcomes;
@@ -194,6 +215,18 @@ export const childCustomerService = {
         params: { child_instance_id: instanceId, per_page: DEFAULT_PAGE_SIZE, ...params },
       })
       .then((r) => ({ data: r.data.data, meta: r.data.meta })),
+
+  getRecentActivity: (
+    instanceId: string | number,
+    period: ActivityPeriod = "30d",
+    limit = 20,
+  ): Promise<RecentActivityResponse> =>
+    apiClient
+      .get<ApiEnvelope<RecentActivityResponse>>(
+        `/admin/child-instances/${instanceId}/customers/recent-activity`,
+        { params: { period, limit } },
+      )
+      .then((r) => r.data.data),
 
   // The "promote to real account" action: creates a parent User (or links an
   // existing one on email/phone match), stamps migrated_to_user_id, auto-queues

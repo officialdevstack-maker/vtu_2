@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronUp,
   Mail,
+  Clock3,
   Search,
   UserCheck,
   Users,
@@ -23,6 +24,8 @@ import { useLocalStorageState } from "@/shared/utils";
 import {
   childCustomerService,
   type ChildCustomer,
+  type ActivityPeriod,
+  type RecentlyActiveCustomer,
   type PaginatedMeta,
 } from "./service";
 import { useAffiliate } from "./affiliate-layout";
@@ -38,6 +41,132 @@ type CustomerSortKey =
   "external_id" | "username" | "email" | "phone" | "wallet_balance" | "status";
 
 type CustomerSortState = { key: CustomerSortKey; direction: "asc" | "desc" };
+
+const activityPeriods: { value: ActivityPeriod; label: string }[] = [
+  { value: "24h", label: "Last 24 hours" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "all", label: "All recent" },
+];
+
+function formatTransactionDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function serviceLabel(value: string | null): string {
+  return value ? value.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Service";
+}
+
+function RecentlyActiveCustomers({ instanceId }: { instanceId: string }) {
+  const [period, setPeriod] = useState<ActivityPeriod>("30d");
+  const [rows, setRows] = useState<RecentlyActiveCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let current = true;
+    setLoading(true);
+    setError(false);
+    childCustomerService.getRecentActivity(instanceId, period, 20)
+      .then((result) => {
+        if (current) setRows(result.customers);
+      })
+      .catch(() => {
+        if (current) {
+          setRows([]);
+          setError(true);
+        }
+      })
+      .finally(() => {
+        if (current) setLoading(false);
+      });
+    return () => { current = false; };
+  }, [instanceId, period]);
+
+  return (
+    <Card>
+      <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Recently Active Customers
+          </h2>
+          <p className="mt-1 text-[11px] text-slate-400">
+            Latest successful MadiTel service purchase per customer
+          </p>
+        </div>
+        <select
+          aria-label="Activity period"
+          value={period}
+          onChange={(event) => setPeriod(event.target.value as ActivityPeriod)}
+          className={`${selectCls} sm:ml-auto`}
+        >
+          {activityPeriods.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="p-5"><SkeletonRows count={4} withAvatar={false} /></div>
+      ) : error ? (
+        <div className="px-5 py-8 text-center">
+          <p className="text-sm font-medium text-slate-700">Recent activity is temporarily unavailable.</p>
+          <p className="mt-1 text-xs text-slate-400">The synced customer list below is still available.</p>
+        </div>
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={Clock3}
+          title="No MadiTel customer transactions found in this period."
+          description="Choose a wider activity period to look further back."
+        />
+      ) : (
+        <div className="overflow-x-auto overscroll-x-contain">
+          <table className="min-w-[1050px] w-full table-fixed text-xs">
+            <thead><tr className="border-b border-gray-100">
+              <th className="w-44 px-4 py-2.5 text-left font-medium text-slate-400">Customer</th>
+              <th className="w-52 px-4 py-2.5 text-left font-medium text-slate-400">Contact</th>
+              <th className="w-28 px-4 py-2.5 text-left font-medium text-slate-400">External ID</th>
+              <th className="w-48 px-4 py-2.5 text-left font-medium text-slate-400">Latest transaction</th>
+              <th className="w-36 px-4 py-2.5 text-left font-medium text-slate-400">Service</th>
+              <th className="w-28 px-4 py-2.5 text-left font-medium text-slate-400">Amount</th>
+              <th className="w-28 px-4 py-2.5 text-left font-medium text-slate-400">Status</th>
+              <th className="w-28 px-4 py-2.5 text-left font-medium text-slate-400">Migration</th>
+            </tr></thead>
+            <tbody className="divide-y divide-gray-50">
+              {rows.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-medium text-slate-800">{row.username ?? "Unnamed customer"}</td>
+                  <td className="px-4 py-3 text-slate-500">
+                    <span className="block truncate">{row.email ?? "—"}</span>
+                    <span className="block truncate text-[11px] text-slate-400">{row.phone ?? "—"}</span>
+                  </td>
+                  <td className="truncate px-4 py-3 font-mono text-slate-500">{row.external_id}</td>
+                  <td className="px-4 py-3 font-semibold tabular-nums text-slate-800">{formatTransactionDate(row.latest_transaction_at)}</td>
+                  <td className="px-4 py-3 text-slate-600">{serviceLabel(row.latest_transaction_type)}</td>
+                  <td className="px-4 py-3 font-medium tabular-nums text-slate-700">{fmt(row.latest_transaction_amount)}</td>
+                  <td className="px-4 py-3"><StatusBadge status={row.latest_transaction_status} /></td>
+                  <td className="px-4 py-3">
+                    {row.migrated_to_user_id ? (
+                      <Link to={`/admin/customers/users/${row.migrated_to_user_id}`} className="font-medium text-emerald-600 hover:underline">Migrated</Link>
+                    ) : (
+                      <span className="font-medium text-amber-600">Pending</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 export default function AffiliateCustomersPage() {
   const { instance } = useAffiliate();
@@ -168,11 +297,12 @@ export default function AffiliateCustomersPage() {
 
   return (
     <div className="space-y-5">
+      <RecentlyActiveCustomers instanceId={id} />
       <Card>
         <div className="border-b border-gray-100 px-4 py-3.5 sm:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-            Customers{" "}
+            All MadiTel Customers{" "}
             {customers.length > 0 && (
               <span className="text-slate-400 normal-case font-normal">
                 — {customers.length} synced
