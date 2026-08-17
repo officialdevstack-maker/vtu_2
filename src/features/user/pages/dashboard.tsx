@@ -3,7 +3,7 @@ import {
   Wallet, ShoppingBag,
   Plus, ChevronRight, Phone, Wifi, Tv, Plug, Gift, Eye, EyeOff, Receipt, LogIn,
   Banknote, Send, Landmark, CheckCircle2, TrendingUp, ArrowUpRight, ArrowDownLeft,
-  Settings2, X, ArrowLeft, ArrowRight,
+  Settings2, X, ArrowLeft, ArrowRight, Trophy,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fmt, fmtCompact } from "../data/mock";
@@ -22,12 +22,15 @@ const quickActions = [
   { label: "Buy airtime", icon: Phone, path: "/buy-airtime" },
   { label: "Buy data", icon: Wifi, path: "/buy-data" },
   { label: "Electricity", icon: Plug, path: "/electricity" },
+  { label: "Betting", icon: Trophy, path: "/betting" },
   { label: "Cable TV", icon: Tv, path: "/cable-tv" },
   { label: "Airtime to cash", icon: Banknote, path: "/airtime-to-cash" },
 ];
 
 const QUICK_ACTIONS_KEY = "vendify-dashboard-quick-actions";
-const defaultQuickActionLabels = ["Buy data", "Buy airtime", "Electricity", "Fund wallet"];
+// Wallet funding already has two prominent actions above this grid, so give
+// the dedicated betting flow a visible dashboard entry by default.
+const defaultQuickActionLabels = ["Buy data", "Buy airtime", "Electricity", "Betting"];
 
 function CountUpAmount({ value }: { value: number }) {
   const [display, setDisplay] = useState(0);
