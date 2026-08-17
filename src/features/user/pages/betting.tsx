@@ -117,7 +117,11 @@ export default function BettingPage() {
             {pending ? <Clock3 className="h-6 w-6 text-amber-600" /> : <CheckCircle2 className="h-6 w-6 text-emerald-600" />}
           </div>
           <h2 className="text-base font-semibold text-slate-900">{pending ? "Funding is processing" : "Account funded"}</h2>
-          <p className="mt-1 text-sm text-slate-500">{result.response_message}</p>
+          <p className="mt-1 text-sm text-slate-500">
+            {result.response_message ?? (pending
+              ? "Your betting funding is being confirmed."
+              : "Your betting account was funded successfully.")}
+          </p>
           <div className="my-5 rounded-lg bg-gray-50 p-3 font-mono text-xs text-slate-500">Ref: {result.transaction_reference}</div>
           <div className="flex gap-3">
             <Button variant="secondary" fullWidth onClick={reset}>Fund again</Button>

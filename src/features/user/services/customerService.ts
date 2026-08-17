@@ -214,6 +214,9 @@ export type PurchaseResult = {
   receiver: string | null;
   account_or_phone: string | null;
   created_at: string;
+  // Customer-safe provider/result copy returned by purchase endpoints.
+  response_message?: string | null;
+  service_fee?: string | number;
   // Electricity only — the real prepaid token to load onto the meter.
   token?: string | null;
   discount_applied?: {
