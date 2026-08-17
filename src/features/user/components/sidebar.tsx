@@ -16,6 +16,7 @@ import {
   Zap,
   ArrowLeftRight,
   ArrowUpCircle,
+  Trophy,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -77,6 +78,7 @@ const sections: { label: string; items: NavItem[] }[] = [
         icon: Plug,
         path: "/electricity",
       },
+      { id: "betting", label: "Betting", icon: Trophy, path: "/betting" },
       {
         id: "airtime-to-cash",
         label: "Airtime to Cash",

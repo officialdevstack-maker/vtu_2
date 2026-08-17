@@ -25,6 +25,7 @@ const servicePaths = new Set([
   "/buy-data",
   "/cable-tv",
   "/electricity",
+  "/betting",
   "/airtime-to-cash",
 ]);
 

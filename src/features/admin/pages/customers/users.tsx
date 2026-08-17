@@ -252,7 +252,7 @@ export default function CustomersPage() {
                   setSearch(e.target.value);
                   setCustomerPage(1);
                 }}
-                placeholder="Search by name, email, or phone"
+                placeholder="Search by ID, name, email, or phone"
                 className={`${inputCls} pl-9 py-2 text-sm`}
               />
             </div>

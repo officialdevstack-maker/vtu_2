@@ -19,6 +19,7 @@ const pageTitles: Record<string, string> = {
   "/buy-data": "Buy Data",
   "/cable-tv": "Cable TV",
   "/electricity": "Electricity",
+  "/betting": "Betting",
   "/pricing": "Pricing",
   "/admin": "Admin Dashboard",
 };

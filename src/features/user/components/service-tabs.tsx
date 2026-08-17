@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Phone, Wifi, Tv, Plug, Banknote, type LucideIcon } from "lucide-react";
+import { Phone, Wifi, Tv, Plug, Banknote, Trophy, type LucideIcon } from "lucide-react";
 
 export type ServiceTab = {
   path: string;
@@ -47,6 +47,14 @@ export const serviceTabs: ServiceTab[] = [
     icon: Plug,
     description: "All DISCOs supported",
     accent: "bg-amber-50 text-amber-600",
+  },
+  {
+    path: "/betting",
+    label: "Betting",
+    short: "Betting",
+    icon: Trophy,
+    description: "Fund your betting account",
+    accent: "bg-orange-50 text-orange-600",
   },
   {
     path: "/airtime-to-cash",

@@ -35,6 +35,7 @@ import {
   Users,
   Wallet2,
   Wifi,
+  Trophy,
   X,
 } from "lucide-react";
 import { useAuth } from "../../../shared/providers/auth";
@@ -120,6 +121,7 @@ const navGroups: Array<{ title: string; items: NavItem[] }> = [
       { label: "Cable", path: "/admin/products/cable", icon: Cable },
       { label: "Bill", path: "/admin/products/bill", icon: ReceiptText },
       { label: "Exam", path: "/admin/products/exam", icon: BookOpenCheck },
+      { label: "Betting", path: "/admin/products/betting", icon: Trophy },
       {
         label: "Airtime to Cash",
         path: "/admin/airtime-to-cash",

@@ -94,6 +94,24 @@ export type BillPlan = {
   active: boolean;
 };
 
+export type BettingProvider = {
+  id: number;
+  name: string;
+  slug: string;
+  verification_supported: boolean;
+  minimum_amount: string | number;
+  maximum_amount: string | number;
+  flat_fee: string | number;
+  percentage_fee: string | number;
+};
+
+export type BettingCatalog = { enabled: boolean; providers: BettingProvider[] };
+export type BettingVerification = {
+  verified: boolean | null;
+  verification_supported: boolean;
+  customer_name?: string | null;
+};
+
 export type AirtimeToCashStatus = "pending" | "approved" | "rejected";
 
 // A customer's own submission — manually reviewed by an admin, never an
@@ -111,6 +129,8 @@ export type AirtimeToCashRequestItem = {
   transaction_reference: string;
   payout_transaction_reference: string | null;
   created_at: string;
+  response_message?: string | null;
+  service_fee?: string | number;
 };
 
 export type AirtimeToCashSubmitPayload = {
@@ -452,6 +472,27 @@ export const customerService = {
   purchaseElectricity: (payload: ElectricityPurchasePayload & { tx_ref: string }): Promise<PurchaseResult> =>
     apiClient
       .post<ApiEnvelope<PurchaseResult>>("/vtu/electricity", payload)
+      .then((r) => r.data.data),
+
+  getBettingProviders: (): Promise<BettingCatalog> =>
+    apiClient
+      .get<ApiEnvelope<BettingCatalog>>("/betting/providers")
+      .then((r) => r.data.data),
+
+  verifyBettingAccount: (provider: string, customerId: string): Promise<BettingVerification> =>
+    apiClient
+      .post<ApiEnvelope<BettingVerification>>("/betting/verify", { provider, customer_id: customerId })
+      .then((r) => r.data.data),
+
+  fundBettingAccount: (payload: {
+    provider: string;
+    customer_id: string;
+    amount: number;
+    pin: string;
+    idempotency_key: string;
+  }): Promise<PurchaseResult> =>
+    apiClient
+      .post<ApiEnvelope<PurchaseResult>>("/betting/fund", payload)
       .then((r) => r.data.data),
 
   // Reuses the same /table/networks read as everywhere else — a network is

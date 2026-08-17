@@ -389,6 +389,13 @@ export const adminRouter: RouteObject[] = [
         },
       },
       {
+        path: "products/betting",
+        lazy: async () => {
+          const { default: Component } = await import("./pages/products/betting");
+          return { Component };
+        },
+      },
+      {
         path: "airtime-to-cash",
         lazy: async () => {
           const { default: Component } =
