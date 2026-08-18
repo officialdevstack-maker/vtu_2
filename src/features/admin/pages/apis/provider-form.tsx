@@ -141,6 +141,7 @@ export default function ProviderFormPage() {
   const { id } = useParams<{ id?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const requestedType = new URLSearchParams(location.search).get("type");
 
   const stateProvider = (location.state as { provider?: Provider } | null)
     ?.provider;
@@ -150,7 +151,15 @@ export default function ProviderFormPage() {
     id != null && !stateProvider,
   );
   const [form, setForm] = useState<FormState>(
-    stateProvider ? toForm(stateProvider) : blankForm(),
+    stateProvider
+      ? toForm(stateProvider)
+      : {
+          ...blankForm(),
+          ...(requestedType === "vtpass"
+            ? { name: "VTpass", base_url: "https://vtpass.com/api" }
+            : {}),
+          sub_category: requestedType ?? "",
+        },
   );
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);

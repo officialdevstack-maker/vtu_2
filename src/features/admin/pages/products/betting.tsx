@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Trophy } from "lucide-react";
+import { AlertTriangle, RefreshCw, Settings, Trophy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/shared/api/apiClient";
 import { extractApiErrorMessage } from "@/shared/utils";
 import { Button, Card, EmptyState, PageHeader, StatusBadge, inputCls } from "../../../user/components/shared-ui";
@@ -11,7 +12,19 @@ type Provider = {
   maximum_amount: string | number; flat_fee: string | number; percentage_fee: string | number;
 };
 type Transaction = { id: number; transaction_reference: string; provider: string; receiver: string; amount: string | number; status: "success" | "pending" | "fail"; created_at: string };
-type BettingAdmin = { enabled: boolean; upstream_provider: string; providers: Provider[]; recent_transactions: Transaction[] };
+type BettingAdmin = {
+  enabled: boolean;
+  upstream_provider: string;
+  gateway: {
+    configured: boolean;
+    active: boolean;
+    provider_id: number | null;
+    name: string | null;
+    missing_credentials: string[];
+  };
+  providers: Provider[];
+  recent_transactions: Transaction[];
+};
 type Envelope<T> = { data: T; message: string };
 
 const service = {
@@ -22,6 +35,7 @@ const service = {
 };
 
 export default function AdminBettingPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["admin-betting"], queryFn: service.get });
   const [error, setError] = useState<string | null>(null);
@@ -32,15 +46,45 @@ export default function AdminBettingPage() {
     onError: (cause) => setError(extractApiErrorMessage(cause, "Could not update betting settings.")),
   });
   const data = query.data;
+  const gatewayReady = Boolean(
+    data?.gateway?.configured &&
+    data.gateway.active &&
+    data.gateway.missing_credentials.length === 0,
+  );
+  const gatewayPath = data?.gateway?.provider_id
+    ? `/admin/apis/provider/${data.gateway.provider_id}/edit`
+    : "/admin/apis/provider/new?type=vtpass";
 
   return (
     <div className="space-y-5">
       <PageHeader title="Betting" description="Manage availability, account limits, charges, and supported betting companies" actions={
-        <Button variant="secondary" disabled={mutation.isPending} onClick={() => mutation.mutate(service.sync)}>
+        <Button variant="secondary" disabled={mutation.isPending || !gatewayReady} onClick={() => mutation.mutate(service.sync)}>
           <RefreshCw className={`h-4 w-4 ${mutation.isPending ? "animate-spin" : ""}`} /> Sync supported providers
         </Button>
       } />
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {data?.gateway && !gatewayReady && (
+        <Card className="border-amber-200 bg-amber-50 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div>
+                <p className="text-sm font-semibold text-amber-900">VTpass setup required</p>
+                <p className="mt-1 text-xs leading-5 text-amber-800">
+                  {!data.gateway.configured
+                    ? "Add a VTpass provider before synchronizing betting companies."
+                    : !data.gateway.active
+                      ? "Your VTpass provider exists but is inactive. Activate it to continue."
+                      : `Complete these fields: ${data.gateway.missing_credentials.join(", ").replaceAll("_", " ")}.`}
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => navigate(gatewayPath)}>
+              <Settings className="h-4 w-4" /> {data.gateway.configured ? "Complete VTpass setup" : "Add VTpass provider"}
+            </Button>
+          </div>
+        </Card>
+      )}
       <Card className="p-4">
         <div className="flex items-center justify-between gap-4">
           <div><p className="text-sm font-semibold text-slate-900">Betting funding</p><p className="text-xs text-slate-500">Globally enable only after your upstream account has been authorised.</p></div>
