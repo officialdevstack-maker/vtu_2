@@ -155,8 +155,8 @@ export default function ProviderFormPage() {
       ? toForm(stateProvider)
       : {
           ...blankForm(),
-          ...(requestedType === "vtpass"
-            ? { name: "VTpass", base_url: "https://vtpass.com/api" }
+          ...(requestedType === "vtu_ng"
+            ? { name: "VTU.ng", base_url: "https://vtu.ng/wp-json/api/v2" }
             : {}),
           sub_category: requestedType ?? "",
         },

@@ -53,7 +53,7 @@ export default function AdminBettingPage() {
   );
   const gatewayPath = data?.gateway?.provider_id
     ? `/admin/apis/provider/${data.gateway.provider_id}/edit`
-    : "/admin/apis/provider/new?type=vtpass";
+    : "/admin/apis/provider/new?type=vtu_ng";
 
   return (
     <div className="space-y-5">
@@ -69,18 +69,18 @@ export default function AdminBettingPage() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
               <div>
-                <p className="text-sm font-semibold text-amber-900">VTpass setup required</p>
+                <p className="text-sm font-semibold text-amber-900">VTU.ng setup required</p>
                 <p className="mt-1 text-xs leading-5 text-amber-800">
                   {!data.gateway.configured
-                    ? "Add a VTpass provider before synchronizing betting companies."
+                    ? "Configure VTU.ng credentials before synchronizing betting companies."
                     : !data.gateway.active
-                      ? "Your VTpass provider exists but is inactive. Activate it to continue."
+                      ? "Your VTU.ng provider exists but is inactive. Activate it to continue."
                       : `Complete these fields: ${data.gateway.missing_credentials.join(", ").replaceAll("_", " ")}.`}
                 </p>
               </div>
             </div>
             <Button onClick={() => navigate(gatewayPath)}>
-              <Settings className="h-4 w-4" /> {data.gateway.configured ? "Complete VTpass setup" : "Add VTpass provider"}
+              <Settings className="h-4 w-4" /> {data.gateway.configured ? "Complete VTU.ng setup" : "Add VTU.ng provider"}
             </Button>
           </div>
         </Card>
