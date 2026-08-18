@@ -45,7 +45,6 @@ const printReceipt = (tx: UserTransaction) => {
     ["Reference", tx.transaction_reference],
     ["Type", meta.label],
     ["Recipient", tx.receiver ?? tx.account_or_phone ?? "—"],
-    ["Provider", tx.provider ?? "—"],
     ["Amount", `${credit ? "+" : "-"}${fmt(amount)}`],
   ];
   const fee = toNumber(tx.service_fee);
@@ -99,12 +98,11 @@ const printReceipt = (tx: UserTransaction) => {
 };
 
 const exportCsv = (rows: UserTransaction[]) => {
-  const header = ["Reference", "Type", "Provider", "Amount", "Status", "Recipient", "Date"];
+  const header = ["Reference", "Type", "Amount", "Status", "Recipient", "Date"];
   const lines = rows.map((tx) =>
     [
       tx.transaction_reference,
       transactionTypeMeta[tx.transaction_type]?.label ?? tx.transaction_type,
-      tx.provider ?? "",
       String(tx.amount),
       tx.status,
       tx.receiver ?? tx.account_or_phone ?? "",
@@ -383,7 +381,6 @@ export default function TransactionsPage() {
 
         const detailRows: [string, string][] = [
           ["Recipient", selectedTx.receiver ?? selectedTx.account_or_phone ?? "—"],
-          ["Provider", selectedTx.provider ?? "—"],
         ];
         if (isDataType && quantity > 0) detailRows.push(["Quantity", `${quantity}GB`]);
         if (fee > 0) detailRows.push(["Fee", fmt(fee)]);

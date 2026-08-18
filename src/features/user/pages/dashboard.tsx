@@ -333,7 +333,7 @@ export default function DashboardPage() {
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-slate-900 text-sm font-medium truncate">
-                      {[lastPurchase.provider?.toUpperCase(), lastPurchase.quantity ? `${lastPurchase.quantity}GB` : null, transactionTypeMeta[lastPurchase.transaction_type]?.label ?? lastPurchase.transaction_type].filter(Boolean).join(" · ")}
+                      {[lastPurchase.quantity ? `${lastPurchase.quantity}GB` : null, transactionTypeMeta[lastPurchase.transaction_type]?.label ?? lastPurchase.transaction_type].filter(Boolean).join(" · ")}
                     </span>
                     <span className="text-sm font-semibold tabular-nums text-slate-900 shrink-0">
                       {fmt(toNumber(lastPurchase.amount))}
