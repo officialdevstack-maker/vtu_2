@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, RefreshCw, Settings, Trophy } from "lucide-react";
+import { AlertTriangle, KeyRound, RefreshCw, Settings, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/shared/api/apiClient";
 import { extractApiErrorMessage } from "@/shared/utils";
@@ -63,6 +63,35 @@ export default function AdminBettingPage() {
         </Button>
       } />
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {data?.gateway && (
+        <Card className="p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
+                <KeyRound className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-900">VTU.ng credentials</p>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${gatewayReady ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                    {gatewayReady ? "Configured" : "Setup required"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {data.gateway.provider_id
+                    ? "Your VTU.ng login is managed from this website. You can update the username, password, API token, or base URL at any time."
+                    : data.gateway.configured
+                      ? "Environment credentials are active. Add website-managed credentials here if you prefer not to edit cPanel."
+                      : "Add your VTU.ng username and password, or a managed API token, directly from the admin website."}
+                </p>
+              </div>
+            </div>
+            <Button variant="secondary" onClick={() => navigate(gatewayPath)}>
+              <Settings className="h-4 w-4" /> {data.gateway.provider_id ? "Edit credentials" : "Add credentials"}
+            </Button>
+          </div>
+        </Card>
+      )}
       {data?.gateway && !gatewayReady && (
         <Card className="border-amber-200 bg-amber-50 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

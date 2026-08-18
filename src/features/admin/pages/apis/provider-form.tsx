@@ -394,6 +394,11 @@ export default function ProviderFormPage() {
               </p>
             ) : (
               <div className="space-y-4">
+                {form.sub_category === "vtu_ng" && (
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700">
+                    Enter your VTU.ng username and password, or paste a managed JWT token into API key. You do not need both methods.
+                  </div>
+                )}
                 {credentialFields.map((f) => {
                   const key = f.key as (typeof CREDENTIAL_KEYS)[number];
                   const value = (form[key] as string | null | undefined) ?? "";
